@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id         Int       @id @default(autoincrement())
+  username        String
+  email           String    @unique
+  password        String
+  location        String
+  profile_picture String?
+  skill_level     String?
+  rating          Float?
+  points          Int       @default(0)
+
+  // User relationships
+  created_teams      Team[]          @relation("TeamCreator")
+  team_memberships   TeamMember[]
+  created_tournaments Tournament[]    @relation("TournamentCreator")
+  created_events     Event[]         @relation("EventCreator")
+  event_participations EventParticipant[]
+  sports            UserSport[]
+  calendar_events   Calendar[]
+  chat_memberships  ChatMember[]
+  sent_messages     Message[]        @relation("MessageSender")
+  achievements      Achievement[]
+  cart              Cart?
+  reports_received  Report[]         @relation("ReportsReceived")
+  reports_sent      Report[]         @relation("ReportsSent")
+  points_logs       PointsLog[]
+  notifications     Notification[]   @relation("UserNotifications") // Added this line
+}
+
+model Sport {
+  sport_id    Int      @id @default(autoincrement())
+  name        String
+  description String?
+
+  users       UserSport[]
+  teams       Team[]
+  tournaments Tournament[]
+}
+
+model UserSport {
+  user_sport_id Int   @id @default(autoincrement())
+  user_id       Int
+  sport_id      Int
+
+  user  User  @relation(fields: [user_id], references: [user_id])
+  sport Sport @relation(fields: [sport_id], references: [sport_id])
+
+  @@index([user_id, sport_id])
+}
+
+model Team {
+  team_id     Int      @id @default(autoincrement())
+  team_name   String
+  sport_id    Int
+  created_by  Int
+
+  sport       Sport    @relation(fields: [sport_id], references: [sport_id])
+  creator     User     @relation("TeamCreator", fields: [created_by], references: [user_id])
+  members     TeamMember[]
+  tournaments TournamentTeam[]
+
+  @@index([sport_id])
+  @@index([created_by])
+}
+
+model TeamMember {
+  team_member_id Int      @id @default(autoincrement())
+  team_id        Int
+  user_id        Int
+  role           String
+  joined_at      DateTime @default(now())
+
+  team Team @relation(fields: [team_id], references: [team_id])
+  user User @relation(fields: [user_id], references: [user_id])
+
+  @@index([team_id, user_id])
+}
+
+model Tournament {
+  tournament_id    Int        @id @default(autoincrement())
+  tournament_name  String
+  sport_id        Int
+  created_by      Int
+  start_date      DateTime
+  end_date        DateTime
+  point_reward    Int
+
+  sport           Sport      @relation(fields: [sport_id], references: [sport_id])
+  creator         User       @relation("TournamentCreator", fields: [created_by], references: [user_id])
+  teams           TournamentTeam[]
+
+  @@index([sport_id])
+  @@index([created_by])
+}
+
+model TournamentTeam {
+  tournament_team_id Int   @id @default(autoincrement())
+  tournament_id      Int
+  team_id           Int
+
+  tournament Tournament @relation(fields: [tournament_id], references: [tournament_id])
+  team       Team       @relation(fields: [team_id], references: [team_id])
+
+  @@index([tournament_id, team_id])
+}
+
+model Event {
+  event_id      Int        @id @default(autoincrement())
+  event_name    String
+  location      String
+  created_by    Int
+  date          DateTime
+  point_reward  Int
+  description   String
+
+  creator       User       @relation("EventCreator", fields: [created_by], references: [user_id])
+  participants  EventParticipant[]
+  calendar_entries Calendar[]
+
+  @@index([created_by])
+}
+
+model EventParticipant {
+  event_participant_id Int   @id @default(autoincrement())
+  event_id            Int
+  user_id             Int
+
+  event Event @relation(fields: [event_id], references: [event_id])
+  user  User  @relation(fields: [user_id], references: [user_id])
+
+  @@index([event_id, user_id])
+}
+
+model Calendar {
+  calendar_id Int      @id @default(autoincrement())
+  user_id     Int
+  event_id    Int
+  date        DateTime
+
+  user  User  @relation(fields: [user_id], references: [user_id])
+  event Event @relation(fields: [event_id], references: [event_id])
+
+  @@index([user_id, event_id])
+}
+
+model Chat {
+  chat_id     Int       @id @default(autoincrement())
+  is_group    Boolean
+  created_at  DateTime  @default(now())
+  
+  messages    Message[]
+  chat_members ChatMember[]
+}
+
+model ChatMember {
+  chat_member_id Int   @id @default(autoincrement())
+  chat_id        Int
+  user_id        Int
+
+  chat Chat @relation(fields: [chat_id], references: [chat_id])
+  user User @relation(fields: [user_id], references: [user_id])
+
+  @@index([chat_id, user_id])
+}
+
+model Message {
+  message_id    Int      @id @default(autoincrement())
+  chat_id       Int
+  sender_id     Int
+  content       String
+  message_type  String
+  sent_at       DateTime @default(now())
+
+  chat    Chat  @relation(fields: [chat_id], references: [chat_id])
+  sender  User  @relation("MessageSender", fields: [sender_id], references: [user_id])
+
+  @@index([chat_id])
+  @@index([sender_id])
+}
+
+model Achievement {
+  achievement_id    Int      @id @default(autoincrement())
+  user_id          Int
+  achievement_name String
+  description      String?
+  achieved_at      DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [user_id])
+
+  @@index([user_id])
+}
+
+model MarketplaceProduct {
+  product_id   Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  price        Float
+  image_url    String
+  point_reward Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  cart_items   CartItem[]
+}
+
+model Cart {
+  cart_id     Int        @id @default(autoincrement())
+  user_id     Int        @unique
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  user        User       @relation(fields: [user_id], references: [user_id])
+  items       CartItem[]
+}
+
+model CartItem {
+  cart_item_id Int    @id @default(autoincrement())
+  cart_id      Int
+  product_id   Int
+  quantity     Int
+  price        Float
+  subtotal     Float
+
+  cart         Cart    @relation(fields: [cart_id], references: [cart_id])
+  product      MarketplaceProduct @relation(fields: [product_id], references: [product_id])
+
+  @@index([cart_id])
+  @@index([product_id])
+}
+
+model Report {
+  report_id        Int      @id @default(autoincrement())
+  reported_user_id Int
+  reported_by      Int
+  reason           String
+  report_date      DateTime @default(now())
+  status           String   // Pending, Resolved
+
+  reported_user    User     @relation("ReportsReceived", fields: [reported_user_id], references: [user_id])
+  reporter         User     @relation("ReportsSent", fields: [reported_by], references: [user_id])
+
+  @@index([reported_user_id])
+  @@index([reported_by])
+}
+
+model PointsLog {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  activity  String   // EVENT_PARTICIPATION, PURCHASE, etc.
+  points    Int
+  timestamp DateTime @default(now())
+
+  user      User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([user_id])
+}
+
+model Notification {
+  notification_id Int      @id @default(autoincrement())
+  user_id        Int
+  type_id        Int
+  title          String
+  content        String
+  is_read        Boolean  @default(false)
+  created_at     DateTime @default(now())
+  action_url     String?  
+
+  user           User     @relation("UserNotifications", fields: [user_id], references: [user_id])
+  type           NotificationType @relation(fields: [type_id], references: [type_id])
+
+  @@index([user_id])
+  @@index([type_id])
+}
+
+model NotificationType {
+  type_id     Int      @id @default(autoincrement())
+  name        String   
+  description String?
+  icon        String?  
+  
+  notifications Notification[]
+}
