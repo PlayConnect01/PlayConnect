@@ -1,11 +1,14 @@
 import React from "react";
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const App = () => {
   const categories = [
     { id: "1", icon: "🏀", name: "Basketball" },
     { id: "2", icon: "🏓", name: "Tennis" },
     { id: "3", icon: "🎮", name: "E-Sports" },
+    { id: "4", icon: "🏋️‍♂️", name: "Gym" },
   ];
 
   const competitions = ["Football", "Tennis", "E-Sports"];
@@ -28,8 +31,8 @@ const App = () => {
           <Text style={styles.greeting}>Good Morning</Text>
         </View>
         <View style={styles.headerIcons}>
-          <Text style={styles.icon}>🔔</Text>
-          <Text style={{ ...styles.icon, marginLeft: 15 }}>⚙️</Text>
+          <Ionicons name="notifications-outline" size={24} color="#555" />
+          <Ionicons name="settings-outline" size={24} color="#555" style={{ marginLeft: 15 }} />
         </View>
       </View>
 
@@ -42,33 +45,33 @@ const App = () => {
       {/* Categories Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Category</Text>
-        <a href="#" style={styles.seeAll}>
-          See All
-        </a>
+        <TouchableOpacity>
+          <Text style={styles.seeAll}>See All</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.categories}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
         {categories.map((category) => (
           <View key={category.id} style={styles.categoryItem}>
-            <Text>{category.icon}</Text>
+            <Text style={styles.categoryIcon}>{category.icon}</Text>
           </View>
         ))}
-      </View>
+      </ScrollView>
 
       {/* Competitions Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Competition of the Week</Text>
-        <a href="#" style={styles.seeAll}>
-          See All
-        </a>
+        <TouchableOpacity>
+          <Text style={styles.seeAll}>See All</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.competitions}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.competitions}>
         {competitions.map((competition, index) => (
           <View key={index} style={styles.competitionItem}>
-            <Text style={styles.icon}>🏆</Text>
+            <MaterialCommunityIcons name="trophy-outline" size={24} color="#555" />
             <Text style={styles.competitionText}>{competition}</Text>
           </View>
         ))}
-      </View>
+      </ScrollView>
 
       {/* Events Grid */}
       <View style={styles.sectionHeader}>
@@ -77,11 +80,7 @@ const App = () => {
       <View style={styles.eventsGrid}>
         {events.map((event) => (
           <View key={event.id} style={styles.eventItem}>
-            <img
-              src={event.image}
-              alt={event.name}
-              style={styles.eventImage}
-            />
+            <Image source={{ uri: event.image }} style={styles.eventImage} />
             <Text style={styles.eventText}>{event.name}</Text>
           </View>
         ))}
@@ -89,25 +88,25 @@ const App = () => {
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNav}>
-        <View style={styles.navButton}>
-          <Text style={styles.icon}>🏠</Text>
+        <TouchableOpacity style={styles.navButton}>
+          <Ionicons name="home-outline" size={24} color="#555" />
           <Text style={styles.navButtonText}>Home</Text>
-        </View>
-        <View style={styles.navButton}>
-          <Text style={styles.icon}>📅</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton}>
+          <Ionicons name="calendar-outline" size={24} color="#555" />
           <Text style={styles.navButtonText}>Events</Text>
-        </View>
-        <View style={styles.navButtonCenter}>
-          <Text style={styles.icon}>➕</Text>
-        </View>
-        <View style={styles.navButton}>
-          <Text style={styles.icon}>💬</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButtonCenter}>
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton}>
+          <Ionicons name="chatbubble-outline" size={24} color="#555" />
           <Text style={styles.navButtonText}>Chat</Text>
-        </View>
-        <View style={styles.navButton}>
-          <Text style={styles.icon}>👤</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton}>
+          <Ionicons name="person-outline" size={24} color="#555" />
           <Text style={styles.navButtonText}>Profile</Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -115,136 +114,145 @@ const App = () => {
 
 export default App;
 
-// Updated styles for JSX
-const styles = {
+const styles = StyleSheet.create({
   container: {
-    fontFamily: "Arial, sans-serif",
-    padding: "20px",
+    flex: 1,
     backgroundColor: "#fff",
+    padding: 20,
   },
   header: {
-    display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: "40px",
+    marginBottom: 20,
   },
   date: {
-    fontSize: "14px",
+    fontSize: 14,
     color: "#666",
   },
   greeting: {
-    fontSize: "24px",
+    fontSize: 24,
     fontWeight: "bold",
+    color: "#000",
   },
   headerIcons: {
-    display: "flex",
-  },
-  icon: {
-    fontSize: "24px",
-    color: "#555",
+    flexDirection: "row",
   },
   eventsCard: {
-    backgroundColor: "#000",
-    color: "#fff",
-    padding: "20px",
-    borderRadius: "15px",
-    marginTop: "20px",
-    marginBottom: "20px",
-    display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    backgroundColor: "#000",
+    borderRadius: 15,
+    padding: 15,
+    marginVertical: 20,
   },
   cardText: {
-    fontSize: "16px",
+    color: "#fff",
+    fontSize: 16,
   },
   cardProgress: {
-    fontSize: "16px",
+    color: "#fff",
+    fontSize: 16,
     fontWeight: "bold",
   },
   sectionHeader: {
-    display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "10px",
+    marginBottom: 10,
+    marginTop: 10,
   },
   sectionTitle: {
-    fontSize: "18px",
+    fontSize: 18,
     fontWeight: "bold",
   },
   seeAll: {
-    fontSize: "14px",
+    fontSize: 14,
     color: "#007BFF",
-    textDecoration: "none",
   },
   categories: {
-    display: "flex",
-    overflowX: "auto",
+    flexDirection: "row",
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    minWidth: '100%',
   },
   categoryItem: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: "#f5f5f5",
-    padding: "15px",
-    borderRadius: "50%",
-    margin: "10px",
-    display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    width: "70px",
-    height: "70px",
+    marginRight: 10,
+    aspectRatio: 1,
+  },
+  categoryIcon: {
+    fontSize: 24,
   },
   competitions: {
-    display: "flex",
-    overflowX: "auto",
+    flexDirection: "row",
+    marginBottom: 20,
   },
   competitionItem: {
-    margin: "10px",
-    textAlign: "center",
+    alignItems: "center",
+    marginRight: 20,
   },
   competitionText: {
-    marginTop: "5px",
-    fontSize: "14px",
+    marginTop: 5,
+    fontSize: 14,
     color: "#555",
   },
   eventsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "10px",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   eventItem: {
-    borderRadius: "15px",
+    width: "48%",
+    borderRadius: 15,
     overflow: "hidden",
+    marginBottom: 15,
     backgroundColor: "#f0f0f0",
-    textAlign: "center",
   },
   eventImage: {
     width: "100%",
-    height: "120px",
-    objectFit: "cover",
+    height: 120,
   },
   eventText: {
-    fontSize: "14px",
+    padding: 10,
+    fontSize: 14,
     fontWeight: "bold",
-    padding: "10px",
+    textAlign: "center",
     color: "#333",
   },
   bottomNav: {
-    display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingVertical: 10,
     backgroundColor: "#fff",
-    padding: "10px",
-    borderTop: "1px solid #eee",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
   },
   navButton: {
-    textAlign: "center",
-  },
-  navButtonText: {
-    fontSize: "12px",
-    color: "#555",
-    marginTop: "5px",
+    alignItems: "center",
   },
   navButtonCenter: {
-    position: "absolute",
-    bottom: "10px",
-    left: "calc(50% - 24px)",
+    width: 50,
+    height: 50,
+    backgroundColor: "#007BFF",
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: -25,
   },
-};
+  navButtonText: {
+    fontSize: 12,
+    color: "#555",
+    marginTop: 5,
+  },
+});

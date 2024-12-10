@@ -1,16 +1,27 @@
 import * as React from 'react';
-import {Text} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Homep from './Homepage/Homep.jsx';
+import AddNewEvent from "./Homepage/CreateEvent"
+import Test from './Homepage/Test';
+import Homep from './Homepage/Homep'
+
 const Tab = createBottomTabNavigator();
+
 function TabsNavigation() {
     return (
-        <Tab.Navigator initialRouteName="Home">
-          <Tab.Screen name="Home" component={Homep} />
-         
+        <Tab.Navigator 
+            screenOptions={{
+                headerShown: false,
+                tabBarShowLabel: false ,
+                tabBarStyle: { 
+                  display: 'none', 
+                }
+            }}
+        >
+                    <Tab.Screen name="Homep" component={Homep} />
+          <Tab.Screen name="Create Event" component={AddNewEvent} />
+          <Tab.Screen name="Tab2" component={Test} />
         </Tab.Navigator>
     );
-  }
+}
 
-  export default TabsNavigation;
+export default TabsNavigation;
