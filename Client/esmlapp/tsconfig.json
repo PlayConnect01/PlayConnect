@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "app/Homepage/Test.jsx", "app/Homepage/CreateEvent.jsx", "app/index.jsx"  ]
 }

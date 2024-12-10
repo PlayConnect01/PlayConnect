@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // For dropdowns
+import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useNavigation } from "@react-navigation/native";
 
-const AddNewEvent = () => {
+const AddNewEvent = ({ navigation }) => {
+  const navigate = useNavigation()
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
-  const [date, setDate] = useState<Date | null>(null);
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [endTime, setEndTime] = useState<Date | null>(null);
+  const [date, setDate] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("Sports");
   const [participants, setParticipants] = useState("10");
@@ -18,10 +20,10 @@ const AddNewEvent = () => {
 
   const toggleFree = () => {
     setIsFree(!isFree);
-    if (!isFree) setPrice("0"); // If toggled to free, reset price to 0
+    if (!isFree) setPrice("0");
   };
 
-  const onDateChange = (event: any, selectedDate: Date | undefined) => {
+  const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) setDate(selectedDate);
   };
@@ -29,31 +31,24 @@ const AddNewEvent = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Add New Event</Text>
-      {/* Event Name */}
       <TextInput
         style={styles.input}
         placeholder="Event name*"
         value={eventName}
         onChangeText={setEventName}
       />
-
-      {/* Note */}
       <TextInput
-        style={styles.input}
+        style={styles.note}
         placeholder="Type the note here..."
         value={note}
         onChangeText={setNote}
       />
-
-      {/* Date */}
       <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
         <Text>{date ? date.toDateString() : "Date"}</Text>
       </TouchableOpacity>
       {showDatePicker && (
         <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
       )}
-
-      {/* Start Time and End Time */}
       <View style={styles.timeContainer}>
         <TextInput
           style={[styles.input, styles.timeInput]}
@@ -66,28 +61,21 @@ const AddNewEvent = () => {
           value={endTime ? endTime.toTimeString() : ""}
         />
       </View>
-
-      {/* Location */}
       <TextInput
         style={styles.input}
         placeholder="Location"
         value={location}
         onChangeText={setLocation}
       />
-
-      {/* Category Dropdown */}
       <Picker
         selectedValue={category}
-        style={styles.input}
+        style={styles.select}
         onValueChange={(itemValue) => setCategory(itemValue)}
       >
         <Picker.Item label="Sports" value="Sports" />
         <Picker.Item label="Music" value="Music" />
         <Picker.Item label="Education" value="Education" />
-        {/* Add more categories here */}
       </Picker>
-
-      {/* Participants and Price */}
       <View style={styles.row}>
         <View style={styles.column}>
           <Text>Participants:</Text>
@@ -109,15 +97,13 @@ const AddNewEvent = () => {
           />
         </View>
       </View>
-
-      {/* Free Switch */}
       <View style={styles.row}>
         <Text>Free</Text>
         <Switch value={isFree} onValueChange={toggleFree} />
       </View>
-
-      {/* Create Event Button */}
-      <TouchableOpacity style={styles.createButton}>
+      <TouchableOpacity
+        style={styles.createButton}
+        onPress={() => navigation.navigate("/Test")}       >
         <Text style={styles.createButtonText}>Create Event</Text>
       </TouchableOpacity>
     </View>
@@ -145,6 +131,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f9f9f9",
   },
+  note : {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingBottom : 50,
+    marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+
   timeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -159,6 +155,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 8,
   },
+  select :  {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  } , 
   column: {
     flex: 1,
     marginHorizontal: 4,
