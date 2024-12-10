@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from 'expo-router';
 
-const AddNewEvent = ({ navigation }) => {
-  const navigate = useNavigation()
+const AddNewEvent = () => {
+  const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(null);
@@ -61,12 +61,23 @@ const AddNewEvent = ({ navigation }) => {
           value={endTime ? endTime.toTimeString() : ""}
         />
       </View>
-      <TextInput
-        style={styles.input}
-        placeholder="Location"
-        value={location}
-        onChangeText={setLocation}
-      />
+
+      {/* Custom Location Input with Custom Image from URL */}
+      <View style={styles.locationInputContainer}>
+        <TextInput
+          style={styles.locationInput}
+          placeholder="Location"
+          value={location}
+          onChangeText={setLocation}
+        />
+        {/* External Image as Icon from URL */}
+        <Image
+  source={{ uri: 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1733847829/l1wz4julzrm1jrukqatv.png' }}
+  style={styles.mapIcon}
+/>
+
+      </View>
+
       <Picker
         selectedValue={category}
         style={styles.select}
@@ -103,7 +114,8 @@ const AddNewEvent = ({ navigation }) => {
       </View>
       <TouchableOpacity
         style={styles.createButton}
-        onPress={() => navigation.navigate("/Test")}       >
+        onPress={() => router.push('/Homepage/Test')}
+      >
         <Text style={styles.createButtonText}>Create Event</Text>
       </TouchableOpacity>
     </View>
@@ -131,16 +143,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f9f9f9",
   },
-  note : {
+  note: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    paddingBottom : 50,
+    paddingBottom: 50,
     marginVertical: 8,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
   },
-
   timeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -155,14 +166,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 8,
   },
-  select :  {
+  select: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     marginVertical: 8,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
-  } , 
+  },
   column: {
     flex: 1,
     marginHorizontal: 4,
@@ -178,6 +189,29 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+
+  // Custom Location Input Styles
+  locationInputContainer: {
+    position: 'relative',
+    marginVertical: 8,
+  },
+  locationInput: {
+    paddingRight: 30,  // Add space for the image
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  mapIcon: {
+    position: 'absolute',
+    right: 17,
+    top: '50%',
+    transform: [{ translateY: -12 }],
+    width: 25, // Set width and height for the image
+    height: 20,
   },
 });
 
