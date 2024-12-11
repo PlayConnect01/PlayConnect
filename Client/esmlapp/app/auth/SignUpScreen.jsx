@@ -1,19 +1,32 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';  // Import useRouter
+import { useRouter } from 'expo-router';
+import axios from 'axios'; // Import axios
 
 const SignUpScreen = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter();  // Initialize useRouter for navigation
+  const router = useRouter();
 
-  const handleSignUp = () => {
-    // Implement sign-up logic here
-    console.log('Sign up with:', username, email, password);
-    // After successful sign-up, navigate to the login screen or home screen
-    router.push('/auth/LoginScreen');  // Use router.push() for navigation
+  const handleSignUp = async () => {
+    try {
+      // Send a POST request to the backend API
+      const response = await axios.post('http://localhost:3000/users/signup', {
+        email,
+        password,
+        username,
+      });
+
+      // Handle successful signup
+      console.log('Sign-up successful:', response.data);
+      // Navigate to the login screen after successful signup
+      router.push('/auth/LoginScreen');
+    } catch (error) {
+      console.error('Sign-up error:', error.response.data);
+      alert('Error signing up. Please try again.');
+    }
   };
 
   return (
@@ -22,7 +35,10 @@ const SignUpScreen = () => {
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
+        <KeyboardAvoidingView
+          style={styles.content}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <Text style={styles.title}>Sign Up</Text>
           <TextInput
             style={styles.input}
@@ -50,10 +66,10 @@ const SignUpScreen = () => {
           <TouchableOpacity style={styles.button} onPress={handleSignUp}>
             <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/auth/LoginScreen')}>  {/* Use router.push() for navigation */}
+          <TouchableOpacity onPress={() => router.push('/auth/LoginScreen')}>
             <Text style={styles.linkText}>Already have an account? Login</Text>
           </TouchableOpacity>
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -83,8 +99,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Slightly lighter background for the inputs
+    paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 25,
     marginBottom: 15,
@@ -104,7 +120,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   linkText: {
-    color: '#aaa',
+    color: '#ddd',
     textAlign: 'center',
     marginTop: 15,
     textDecorationLine: 'underline',
