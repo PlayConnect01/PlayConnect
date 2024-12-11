@@ -38,31 +38,31 @@ const createEvent = async (req, res) => {
   try {
     console.log("Request received: POST /create", req.body);
     const {
-      event_name,
-      location,
+      eventName, // This is the field from the request body
+      note, // Assuming you want to use this field as well
       date,
-      start_time,
-      end_time,
-      description,
+      startTime,
+      endTime,
+      location,
       category,
       participants,
       price,
-      is_free,
+      isFree,
     } = req.body;
 
     const newEvent = await prisma.event.create({
       data: {
-        event_name,
+        event_name: eventName, // Map eventName to event_name
         location,
         date: new Date(date),
-        start_time: start_time ? new Date(start_time) : null,
-        end_time: end_time ? new Date(end_time) : null,
-        description,
+        start_time: startTime ? new Date(startTime) : null,
+        end_time: endTime ? new Date(endTime) : null,
+        description: note, // Assuming you want to save the note as description
         category,
-        participants: parseInt(participants),
-        price: parseFloat(price),
-        is_free,
-        creator_id: 1, // Set creator_id directly to 1
+        participants: parseInt(participants), // Ensure this is an integer
+        price: parseFloat(price), // Ensure this is a float
+        is_free: isFree, // Map isFree to is_free
+        creator_id: 1, // Assuming you want to set this to a default user
       },
     });
 

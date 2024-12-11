@@ -1,258 +1,295 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import axios from 'axios';
+import { useRouter } from 'expo-router';
+import MapPicker from '../Homepage/Mappicker'; 
+import Icon from 'react-native-vector-icons/Ionicons'; 
 
-const App = () => {
-  const categories = [
-    { id: "1", icon: "🏀", name: "Basketball" },
-    { id: "2", icon: "🏓", name: "Tennis" },
-    { id: "3", icon: "🎮", name: "E-Sports" },
-    { id: "4", icon: "🏋️‍♂️", name: "Gym" },
-  ];
+const AddNewEvent = () => {
+  const router = useRouter();
+  const [eventName, setEventName] = useState("");
+  const [note, setNote] = useState("");
+  const [date, setDate] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
+  const [location, setLocation] = useState("");
+  const [category, setCategory] = useState("Sports");
+  const [participants, setParticipants] = useState("10");
+  const [price, setPrice] = useState("0");
+  const [isFree, setIsFree] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false); 
+  const [mapLocation, setMapLocation] = useState({ latitude: 37.78825, longitude: -122.4324 });
 
-  const competitions = ["Football", "Tennis", "E-Sports"];
+  const toggleFree = () => {
+    setIsFree(!isFree);
+    if (!isFree) setPrice("0");
+  };
 
-  const events = [
-    { id: "1", image: "https://via.placeholder.com/150", name: "Football" },
-    { id: "2", image: "https://via.placeholder.com/150", name: "Basketball" },
-    { id: "3", image: "https://via.placeholder.com/150", name: "Gym" },
-    { id: "4", image: "https://via.placeholder.com/150", name: "Box" },
-    { id: "5", image: "https://via.placeholder.com/150", name: "E-Gaming" },
-    { id: "6", image: "https://via.placeholder.com/150", name: "Swimming" },
-  ];
+  const onDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) setDate(selectedDate);
+  };
+
+  const onStartTimeChange = (event, selectedTime) => {
+    setShowStartTimePicker(false);
+    if (selectedTime) setStartTime(selectedTime);
+  };
+
+  const onEndTimeChange = (event, selectedTime) => {
+    setShowEndTimePicker(false);
+    if (selectedTime) setEndTime(selectedTime);
+  };
+
+  const handleLocationSelect = (location) => {
+    setMapLocation(location);
+    setLocation(`Lat: ${location.latitude}, Lon: ${location.longitude}`); // Update location input
+    setShowMapModal(false); // Close the map modal
+  };
+
+  const createEvent = async () => {
+    // Frontend validation
+    if (!eventName || !note || !date || !startTime || !endTime || !location || !participants || !price) {
+      Alert.alert(
+        'Error!',
+        'Please fill in all fields before creating the event.',
+        [{ text: 'Okay' }]
+      );
+      return; // Exit the function if validation fails
+    }
+
+    try {
+      const eventData = {
+        eventName,
+        note,
+        date,
+        startTime,
+        endTime,
+        location,
+        category,
+        participants,
+        price,
+        isFree
+      };
+
+      await axios.post('http://192.168.103.8:3000/events/create', eventData);
+      
+      Alert.alert(
+        'Success!',
+        'Event created successfully!', 
+        [{ text: 'Okay', onPress: () => router.push('Homepage/Test') }]
+      );
+
+      setEventName('');
+      setNote('');
+      setDate(null);
+      setStartTime(null);
+      setEndTime(null);
+      setLocation('');
+      setCategory('Sports');
+      setParticipants('10');
+      setPrice('0');
+      setIsFree(false);
+
+    } catch (error) {
+      Alert.alert(
+        'Error!',
+        'There was an issue creating the event.',
+        [{ text: 'Okay' }]
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.date}>Friday, 20 May</Text>
-          <Text style={styles.greeting}>Good Morning</Text>
+      <Text style={styles.header}>Add New Event</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Event name*"
+        value={eventName}
+        onChangeText={setEventName}
+      />
+      <TextInput
+        style={styles.note}
+        placeholder="Type the note here..."
+        value={note}
+        onChangeText={setNote}
+      />
+      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+        <Text>{date ? date.toDateString() : "Date"}</Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
+      )}
+      <View style={styles.timeContainer}>
+        <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{startTime ? startTime.toLocaleTimeString() : "Start time"}</Text>
+        </TouchableOpacity>
+        {showStartTimePicker && (
+          <DateTimePicker
+            value={startTime || new Date()}
+            onChange={onStartTimeChange}
+            mode="time"
+          />
+        )}
+        <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{endTime ? endTime.toLocaleTimeString() : "End time"}</Text>
+        </TouchableOpacity>
+        {showEndTimePicker && (
+          <DateTimePicker
+            value={endTime || new Date()}
+            onChange={onEndTimeChange}
+            mode="time"
+          />
+        )}
+      </View>
+
+      {/* Change this TouchableOpacity to open the map modal */}
+      <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.input}>
+        <Text>{location || "Select Location"}</Text>
+      </TouchableOpacity>
+
+      {/* Modal for the MapPicker */}
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)} // Close modal on back press
+        transparent={false} // Make sure the modal is not transparent
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeArrow}>
+            <Icon name="arrow-back" size={30} color="#fff" />
+          </TouchableOpacity>
+          <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
         </View>
-        <View style={styles.headerIcons}>
-          <Ionicons name="notifications-outline" size={24} color="#555" />
-          <Ionicons name="settings-outline" size={24} color="#555" style={{ marginLeft: 15 }} />
+      </Modal>
+
+      <Picker
+        selectedValue={category}
+        style={styles.select}
+        onValueChange={(itemValue) => setCategory(itemValue)}
+      >
+        <Picker.Item label="Sports" value="Sports" />
+        <Picker.Item label="Music" value="Music" />
+        <Picker.Item label="Education" value="Education" />
+      </Picker>
+      <View style={styles.row}>
+        <View style={styles.column}>
+          <Text>Participants:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={participants}
+            onChangeText={setParticipants}
+          />
+        </View>
+        <View style={styles.column}>
+          <Text>Price:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={price}
+            onChangeText={setPrice}
+            editable={!isFree}
+          />
         </View>
       </View>
-
-      {/* Today's Events */}
-      <View style={styles.eventsCard}>
-        <Text style={styles.cardText}>Today's Events</Text>
-        <Text style={styles.cardProgress}>15/20</Text>
+      <View style={styles.row}>
+        <Text>Free</Text>
+        <Switch value={isFree} onValueChange={toggleFree} />
       </View>
-
-      {/* Categories Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Category</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
-        {categories.map((category) => (
-          <View key={category.id} style={styles.categoryItem}>
-            <Text style={styles.categoryIcon}>{category.icon}</Text>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Competitions Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Competition of the Week</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.competitions}>
-        {competitions.map((competition, index) => (
-          <View key={index} style={styles.competitionItem}>
-            <MaterialCommunityIcons name="trophy-outline" size={24} color="#555" />
-            <Text style={styles.competitionText}>{competition}</Text>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Events Grid */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Events</Text>
-      </View>
-      <View style={styles.eventsGrid}>
-        {events.map((event) => (
-          <View key={event.id} style={styles.eventItem}>
-            <Image source={{ uri: event.image }} style={styles.eventImage} />
-            <Text style={styles.eventText}>{event.name}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="home-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="calendar-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Events</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButtonCenter}>
-          <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="chatbubble-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="person-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.createButton}
+        onPress={createEvent}
+      >
+        <Text style={styles.createButtonText}>Create Event</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-export default App;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
     backgroundColor: "#fff",
-    padding: 20,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  date: {
-    fontSize: 14,
-    color: "#666",
-  },
-  greeting: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#000",
+    marginBottom: 16,
+    textAlign: "center",
   },
-  headerIcons: {
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  note: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingBottom: 50,
+    marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  timeContainer: {
     flexDirection: "row",
+    justifyContent: "space-between",
   },
-  eventsCard: {
+  timeInput: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#000",
-    borderRadius: 15,
-    padding: 15,
-    marginVertical: 20,
+    marginVertical: 8,
   },
-  cardText: {
-    color: "#fff",
+  select: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginVertical: 8,
     fontSize: 16,
+    backgroundColor: "#f9f9f9",
   },
-  cardProgress: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+  column: {
+    flex: 1,
+    marginHorizontal: 4,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  createButton: {
+    backgroundColor: "#6200ee",
+    padding: 16,
+    borderRadius: 8,
     alignItems: "center",
-    marginBottom: 10,
-    marginTop: 10,
+    marginTop: 16,
   },
-  sectionTitle: {
+  createButtonText: {
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
-  seeAll: {
-    fontSize: 14,
-    color: "#007BFF",
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000', // Optional: Set a background color for the modal
   },
-  categories: {
-    flexDirection: "row",
-    marginBottom: 20,
-    paddingHorizontal: 10,
-    minWidth: '100%',
-  },
-  categoryItem: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#f5f5f5",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-    aspectRatio: 1,
-  },
-  categoryIcon: {
-    fontSize: 24,
-  },
-  competitions: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  competitionItem: {
-    alignItems: "center",
-    marginRight: 20,
-  },
-  competitionText: {
-    marginTop: 5,
-    fontSize: 14,
-    color: "#555",
-  },
-  eventsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  eventItem: {
-    width: "48%",
-    borderRadius: 15,
-    overflow: "hidden",
-    marginBottom: 15,
-    backgroundColor: "#f0f0f0",
-  },
-  eventImage: {
-    width: "100%",
-    height: 120,
-  },
-  eventText: {
-    padding: 10,
-    fontSize: 14,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#333",
-  },
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-  },
-  navButton: {
-    alignItems: "center",
-  },
-  navButtonCenter: {
-    width: 50,
-    height: 50,
-    backgroundColor: "#007BFF",
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: -25,
-  },
-  navButtonText: {
-    fontSize: 12,
-    color: "#555",
-    marginTop: 5,
+  closeArrow: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1, // Ensure the arrow is above the map
   },
 });
+
+export default AddNewEvent;

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import Swal from 'sweetalert2';
 import axios from 'axios';
+import { useRouter } from 'expo-router';
+import MapPicker from '../Homepage/Mappicker'; 
 
 const AddNewEvent = () => {
+  const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(null);
@@ -17,6 +19,10 @@ const AddNewEvent = () => {
   const [price, setPrice] = useState("0");
   const [isFree, setIsFree] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [mapLocation, setMapLocation] = useState({ latitude: 36.65640, longitude: 10.18991 });
 
   const toggleFree = () => {
     setIsFree(!isFree);
@@ -28,7 +34,33 @@ const AddNewEvent = () => {
     if (selectedDate) setDate(selectedDate);
   };
 
+  const onStartTimeChange = (event, selectedTime) => {
+    setShowStartTimePicker(false);
+    if (selectedTime) setStartTime(selectedTime);
+  };
+
+  const onEndTimeChange = (event, selectedTime) => {
+    setShowEndTimePicker(false);
+    if (selectedTime) setEndTime(selectedTime);
+  };
+
+  const handleLocationSelect = (location) => {
+    setMapLocation(location);
+    setLocation(`Lat: ${location.latitude}, Lon: ${location.longitude}`);  
+    setShowMapModal(false); 
+  };
+
   const createEvent = async () => {
+    // Frontend validation
+    if (!eventName || !note || !date || !startTime || !endTime || !location || !participants || !price) {
+      Alert.alert(
+        'Error!',
+        'Please fill in all fields before creating the event.',
+        [{ text: 'Okay' }]
+      );
+      return; 
+    }
+
     try {
       const eventData = {
         eventName,
@@ -43,14 +75,15 @@ const AddNewEvent = () => {
         isFree
       };
 
-      await axios.post('http://localhost:3000/events/create', eventData);
-      Swal.fire({
-        title: 'Success!',
-        text: 'Event created successfully!',
-        icon: 'success',
-        confirmButtonText: 'Okay'
-      });
+      await axios.post('http://192.168.100.120:3000/events/create', eventData);
+      
+      Alert.alert(
+        'Success!',
+        'Event created successfully!', 
+        [{ text: 'Okay', onPress: () => router.push('Match/Matchingpage') }]
+      );
 
+      // Reset form
       setEventName('');
       setNote('');
       setDate(null);
@@ -61,13 +94,13 @@ const AddNewEvent = () => {
       setParticipants('10');
       setPrice('0');
       setIsFree(false);
+
     } catch (error) {
-      Swal.fire({
-        title: 'Error!',
-        text: 'There was an issue creating the event.',
-        icon: 'error',
-        confirmButtonText: 'Okay'
-      });
+      Alert.alert(
+        'Error!',
+        'There was an issue creating the event.',
+        [{ text: 'Okay' }]
+      );
     }
   };
 
@@ -93,30 +126,39 @@ const AddNewEvent = () => {
         <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
       )}
       <View style={styles.timeContainer}>
-        <TextInput
-          style={[styles.input, styles.timeInput]}
-          placeholder="Start time"
-          value={startTime ? startTime.toTimeString() : ""}
-        />
-        <TextInput
-          style={[styles.input, styles.timeInput]}
-          placeholder="End time"
-          value={endTime ? endTime.toTimeString() : ""}
-        />
+        <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{startTime ? startTime.toLocaleTimeString() : "Start time"}</Text>
+        </TouchableOpacity>
+        {showStartTimePicker && (
+          <DateTimePicker
+            value={startTime || new Date()}
+            onChange={onStartTimeChange}
+            mode="time"
+          />
+        )}
+        <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{endTime ? endTime.toLocaleTimeString() : "End time"}</Text>
+        </TouchableOpacity>
+        {showEndTimePicker && (
+          <DateTimePicker
+            value={endTime || new Date()}
+            onChange={onEndTimeChange}
+            mode="time"
+          />
+        )}
       </View>
 
-      <View style={styles.locationInputContainer}>
-        <TextInput
-          style={styles.locationInput}
-          placeholder="Location"
-          value={location}
-          onChangeText={setLocation}
-        />
-        <Image
-          source={{ uri: 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1733847829/l1wz4julzrm1jrukqatv.png' }}
-          style={styles.mapIcon}
-        />
-      </View>
+      <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.input}>
+        <Text>{location || "Select Location"}</Text>
+      </TouchableOpacity>
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)}
+      >
+        <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
+        
+      </Modal>
 
       <Picker
         selectedValue={category}
@@ -230,27 +272,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  locationInputContainer: {
-    position: 'relative',
-    marginVertical: 8,
-  },
-  locationInput: {
-    paddingRight: 30,
-    borderWidth: 1,
-    borderColor: "#ccc",
+  closeButton: {
+    backgroundColor: "#6200ee",
+    padding: 16,
     borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    alignItems: "center",
+    marginTop: 16,
   },
-  mapIcon: {
-    position: 'absolute',
-    right: 17,
-    top: '50%',
-    transform: [{ translateY: -12 }],
-    width: 25,
-    height: 20,
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 
-// export default AddNewEvent;
+export default AddNewEvent;
