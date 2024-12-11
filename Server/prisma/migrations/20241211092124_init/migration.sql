@@ -122,6 +122,12 @@ CREATE TABLE `Chat` (
     `chat_id` INTEGER NOT NULL AUTO_INCREMENT,
     `is_group` BOOLEAN NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `call_type` ENUM('NONE', 'VOICE', 'VIDEO') NULL DEFAULT 'NONE',
+    `call_status` ENUM('INITIATED', 'IN_PROGRESS', 'ENDED', 'MISSED') NULL,
+    `call_initiator_id` INTEGER NULL,
+    `call_start_time` DATETIME(3) NULL,
+    `call_end_time` DATETIME(3) NULL,
+    `call_duration` DOUBLE NULL,
 
     PRIMARY KEY (`chat_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -142,8 +148,10 @@ CREATE TABLE `Message` (
     `chat_id` INTEGER NOT NULL,
     `sender_id` INTEGER NOT NULL,
     `content` VARCHAR(191) NOT NULL,
-    `message_type` VARCHAR(191) NOT NULL,
+    `message_type` ENUM('TEXT', 'VOICE', 'IMAGE', 'VIDEO', 'SYSTEM') NOT NULL,
     `sent_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `voice_duration` DOUBLE NULL,
+    `voice_file_url` VARCHAR(191) NULL,
 
     INDEX `Message_chat_id_idx`(`chat_id`),
     INDEX `Message_sender_id_idx`(`sender_id`),
@@ -227,6 +235,38 @@ CREATE TABLE `PointsLog` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Notification` (
+    `notification_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `type` VARCHAR(191) NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `content` VARCHAR(191) NOT NULL,
+    `is_read` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `action_url` VARCHAR(191) NULL,
+
+    INDEX `Notification_user_id_idx`(`user_id`),
+    PRIMARY KEY (`notification_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Match` (
+    `match_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id_1` INTEGER NOT NULL,
+    `user_id_2` INTEGER NOT NULL,
+    `sport_id` INTEGER NOT NULL,
+    `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED') NOT NULL,
+    `matched_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `accepted_at` DATETIME(3) NULL,
+    `rejected_at` DATETIME(3) NULL,
+
+    INDEX `Match_user_id_1_idx`(`user_id_1`),
+    INDEX `Match_user_id_2_idx`(`user_id_2`),
+    INDEX `Match_sport_id_idx`(`sport_id`),
+    PRIMARY KEY (`match_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `UserSport` ADD CONSTRAINT `UserSport_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -273,6 +313,9 @@ ALTER TABLE `Calendar` ADD CONSTRAINT `Calendar_user_id_fkey` FOREIGN KEY (`user
 ALTER TABLE `Calendar` ADD CONSTRAINT `Calendar_event_id_fkey` FOREIGN KEY (`event_id`) REFERENCES `Event`(`event_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Chat` ADD CONSTRAINT `Chat_call_initiator_id_fkey` FOREIGN KEY (`call_initiator_id`) REFERENCES `User`(`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `ChatMember` ADD CONSTRAINT `ChatMember_chat_id_fkey` FOREIGN KEY (`chat_id`) REFERENCES `Chat`(`chat_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -304,3 +347,15 @@ ALTER TABLE `Report` ADD CONSTRAINT `Report_reported_by_fkey` FOREIGN KEY (`repo
 
 -- AddForeignKey
 ALTER TABLE `PointsLog` ADD CONSTRAINT `PointsLog_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Match` ADD CONSTRAINT `Match_user_id_1_fkey` FOREIGN KEY (`user_id_1`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Match` ADD CONSTRAINT `Match_user_id_2_fkey` FOREIGN KEY (`user_id_2`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Match` ADD CONSTRAINT `Match_sport_id_fkey` FOREIGN KEY (`sport_id`) REFERENCES `Sport`(`sport_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
