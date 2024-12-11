@@ -1,9 +1,16 @@
 {
   "dependencies": {
     "@prisma/client": "^6.0.1",
-    "init": "^0.1.2"
+    "init": "^0.1.2",
+    "socket.io": "^4.8.1"
   },
+
+  
   "devDependencies": {
-    "prisma": "^6.0.1"
+    "prisma": "^6.0.1",
+    "nodemon": "^3.0.0"
+  },
+  "scripts": {
+    "start": "nodemon server.js"
   }
 }

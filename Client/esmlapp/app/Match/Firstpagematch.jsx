@@ -7,8 +7,15 @@ import {
   TouchableOpacity, 
   SafeAreaView 
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const App = () => {
+  const navigation = useNavigation();
+  
+  const handleChatNow = () => {
+    navigation.navigate('Matchingpage');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Image 
@@ -28,7 +35,7 @@ const App = () => {
           Matches are with online users who share interests and are nearby.
         </Text>
         
-        <TouchableOpacity style={styles.chatButton}>
+        <TouchableOpacity style={styles.chatButton} onPress={handleChatNow}>
           <Text style={styles.chatButtonText}>Chat now</Text>
         </TouchableOpacity>
         
@@ -60,7 +67,7 @@ const styles = StyleSheet.create({
   matchImage: {
     width: 250,
     height: 250,
-    marginTop: 200,
+    marginTop: 100,
     borderRadius: 15,
     marginBottom: 20,
   },
