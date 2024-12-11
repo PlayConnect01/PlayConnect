@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const eventRoutes = require("./routes/events");
 const sportRoutes= require("./routes/sport")
 const userRouter = require('./routes/user');
 
@@ -16,6 +17,7 @@ app.use('/sports', sportRoutes);
 app.use('/users', userRouter); 
 
 
+app.use("/events", eventRoutes);
 
 
 app.listen(PORT, () => {
