@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const sportRoutes= require("./routes/sport")
+const userRouter = require('./routes/user');
+
 
 const app = express()
 
@@ -11,6 +13,8 @@ const PORT = 3000;
 
 
 app.use('/sports', sportRoutes); 
+app.use('/users', userRouter); 
+
 
 
 
