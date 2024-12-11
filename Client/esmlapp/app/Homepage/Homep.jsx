@@ -1,15 +1,29 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import axios from "axios"; // Import axios for API requests
+
+const { width } = Dimensions.get("window"); // Get device width for responsiveness
 
 const App = () => {
-  const categories = [
-    { id: "1", icon: "🏀", name: "Basketball" },
-    { id: "2", icon: "🏓", name: "Tennis" },
-    { id: "3", icon: "🎮", name: "E-Sports" },
-    { id: "4", icon: "🏋️‍♂️", name: "Gym" },
-  ];
+  const [categories, setCategories] = useState([]); // State to store categories data
+  const [loading, setLoading] = useState(true); // Loading state to handle API request state
+
+  // Fetch categories from the backend
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/sports")
+      .then((response) => {
+        setCategories(response.data); // Set the response data to categories
+        setLoading(false); // Set loading to false once data is fetched
+        console.log(response.data,'888888888888888888888888888888888888888')
+      })
+      .catch((error) => {
+        console.error("Error fetching categories:", error);
+        setLoading(false); // Set loading to false if there’s an error
+      });
+  }, []);
 
   const competitions = ["Football", "Tennis", "E-Sports"];
 
@@ -21,6 +35,10 @@ const App = () => {
     { id: "5", image: "https://via.placeholder.com/150", name: "E-Gaming" },
     { id: "6", image: "https://via.placeholder.com/150", name: "Swimming" },
   ];
+
+  if (loading) {
+    return <Text>Loading...</Text>; // Display a loading message while waiting for the data
+  }
 
   return (
     <View style={styles.container}>
@@ -53,6 +71,7 @@ const App = () => {
         {categories.map((category) => (
           <View key={category.id} style={styles.categoryItem}>
             <Text style={styles.categoryIcon}>{category.icon}</Text>
+            <Text style={styles.categoryName}>{category.name}</Text> {/* Display the name property */}
           </View>
         ))}
       </ScrollView>
@@ -77,37 +96,14 @@ const App = () => {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Events</Text>
       </View>
-      <View style={styles.eventsGrid}>
+      <ScrollView contentContainerStyle={styles.eventsGrid}>
         {events.map((event) => (
           <View key={event.id} style={styles.eventItem}>
             <Image source={{ uri: event.image }} style={styles.eventImage} />
             <Text style={styles.eventText}>{event.name}</Text>
           </View>
         ))}
-      </View>
-
-      {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="home-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="calendar-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Events</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButtonCenter}>
-          <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="chatbubble-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="person-outline" size={24} color="#555" />
-          <Text style={styles.navButtonText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -165,7 +161,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+fontWeight: "bold",
   },
   seeAll: {
     fontSize: 14,
@@ -175,7 +171,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: 20,
     paddingHorizontal: 10,
-    minWidth: '100%',
+    minWidth: "100%",
   },
   categoryItem: {
     width: 70,
@@ -188,7 +184,12 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
   },
   categoryIcon: {
-    fontSize: 24,
+    fontSize: 30,
+  },
+  categoryName: {
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 5,
   },
   competitions: {
     flexDirection: "row",
@@ -207,9 +208,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    paddingBottom: 20,
   },
   eventItem: {
-    width: "48%",
+    width: width * 0.45,
     borderRadius: 15,
     overflow: "hidden",
     marginBottom: 15,
@@ -225,34 +227,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-  },
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-  },
-  navButton: {
-    alignItems: "center",
-  },
-  navButtonCenter: {
-    width: 50,
-    height: 50,
-    backgroundColor: "#007BFF",
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: -25,
-  },
-  navButtonText: {
-    fontSize: 12,
-    color: "#555",
-    marginTop: 5,
   },
 });
