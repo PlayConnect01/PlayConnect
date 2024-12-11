@@ -3,10 +3,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Import components
-import AddNewEvent from "./Homepage/CreateEvent";
+// import AddNewEvent from "./Homepage/CreateEvent";
 import Test from './Homepage/Test';
 import Homep from './Homepage/Homep';
-import CreateEvent from "./Homepage/CreateEvent";
+
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -36,9 +36,8 @@ function TabsNavigation() {
                 <Tab.Screen name="SignUp" component={SignUp} />
                 <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
                 <Tab.Screen name="Homep" component={Homep} />
-                <Tab.Screen name="CreateEvent" component={CreateEvent} />
                 <Tab.Screen name="Test" component={Test} />
-                <Tab.Screen name="AddNewEvent" component={AddNewEvent} />
+                {/* <Tab.Screen name="AddNewEvent" component={AddNewEvent} /> */}
                 <Tab.Screen name="Match" component={Match} />
                 <Tab.Screen name="Matchingpage" component={Matchingpage} />
                 <Tab.Screen name="Messages" component={MessagePage} />
