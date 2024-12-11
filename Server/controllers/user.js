@@ -10,4 +10,35 @@ const prisma = require('../prisma');
     }
   };
 
-  module.exports = {getAllUsers}
+
+   const getUserSports = async (userId) => {
+    return await prisma.userSport.findMany({
+      where: { user_id: userId },
+      include: { sport: true }, 
+    });
+  };
+
+  module.exports = {getAllUsers,getUserSports}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
