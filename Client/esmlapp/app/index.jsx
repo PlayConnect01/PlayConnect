@@ -2,7 +2,7 @@ import * as React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AddNewEvent from "./Homepage/CreateEvent";
 import Test from './Homepage/Test';
-import Map from './Homepage/Map'
+import Homep from './Homepage/Homep'
 
 const Tab = createBottomTabNavigator();
 
@@ -17,7 +17,8 @@ function TabsNavigation() {
     >
       <Tab.Screen name="Create Event" component={AddNewEvent} />
       <Tab.Screen name="Tab2" component={Test} />
-      <Tab.Screen name="MapScreen" component={Map} /> 
+      <Tab.Screen name="Homep" component={Homep} />
+
     </Tab.Navigator>
   );
 }

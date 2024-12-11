@@ -114,20 +114,27 @@ model TournamentTeam {
 }
 
 model Event {
-  event_id      Int        @id @default(autoincrement())
-  event_name    String
-  location      String
-  created_by    Int
-  date          DateTime
-  point_reward  Int
-  description   String
+  event_id       Int         @id @default(autoincrement())
+  event_name     String
+  location       String
+  date           DateTime
+  start_time     DateTime?
+  end_time       DateTime?
+  description    String
+  category       String
+  participants   Int
+  price          Float
+  is_free        Boolean
 
-  creator       User       @relation("EventCreator", fields: [created_by], references: [user_id])
-  participants  EventParticipant[]
-  calendar_entries Calendar[]
+  event_participants EventParticipant[]
+  calendar_entries   Calendar[]
 
-  @@index([created_by])
+  creator_id    Int
+  creator       User @relation("EventCreator", fields: [creator_id], references: [user_id])
+
+  @@index([event_name])
 }
+
 
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())

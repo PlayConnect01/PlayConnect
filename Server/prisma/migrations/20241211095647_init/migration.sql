@@ -87,12 +87,17 @@ CREATE TABLE `Event` (
     `event_id` INTEGER NOT NULL AUTO_INCREMENT,
     `event_name` VARCHAR(191) NOT NULL,
     `location` VARCHAR(191) NOT NULL,
-    `created_by` INTEGER NOT NULL,
     `date` DATETIME(3) NOT NULL,
-    `point_reward` INTEGER NOT NULL,
+    `start_time` DATETIME(3) NULL,
+    `end_time` DATETIME(3) NULL,
     `description` VARCHAR(191) NOT NULL,
+    `category` VARCHAR(191) NOT NULL,
+    `participants` INTEGER NOT NULL,
+    `price` DOUBLE NOT NULL,
+    `is_free` BOOLEAN NOT NULL,
+    `creator_id` INTEGER NOT NULL,
 
-    INDEX `Event_created_by_idx`(`created_by`),
+    INDEX `Event_event_name_idx`(`event_name`),
     PRIMARY KEY (`event_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -227,6 +232,32 @@ CREATE TABLE `PointsLog` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Notification` (
+    `notification_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `type_id` INTEGER NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `content` VARCHAR(191) NOT NULL,
+    `is_read` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `action_url` VARCHAR(191) NULL,
+
+    INDEX `Notification_user_id_idx`(`user_id`),
+    INDEX `Notification_type_id_idx`(`type_id`),
+    PRIMARY KEY (`notification_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `NotificationType` (
+    `type_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NULL,
+    `icon` VARCHAR(191) NULL,
+
+    PRIMARY KEY (`type_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `UserSport` ADD CONSTRAINT `UserSport_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -258,7 +289,7 @@ ALTER TABLE `TournamentTeam` ADD CONSTRAINT `TournamentTeam_tournament_id_fkey` 
 ALTER TABLE `TournamentTeam` ADD CONSTRAINT `TournamentTeam_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Team`(`team_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Event` ADD CONSTRAINT `Event_created_by_fkey` FOREIGN KEY (`created_by`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Event` ADD CONSTRAINT `Event_creator_id_fkey` FOREIGN KEY (`creator_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `EventParticipant` ADD CONSTRAINT `EventParticipant_event_id_fkey` FOREIGN KEY (`event_id`) REFERENCES `Event`(`event_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -304,3 +335,9 @@ ALTER TABLE `Report` ADD CONSTRAINT `Report_reported_by_fkey` FOREIGN KEY (`repo
 
 -- AddForeignKey
 ALTER TABLE `PointsLog` ADD CONSTRAINT `PointsLog_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_type_id_fkey` FOREIGN KEY (`type_id`) REFERENCES `NotificationType`(`type_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

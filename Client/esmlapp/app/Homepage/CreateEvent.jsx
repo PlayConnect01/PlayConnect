@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useRouter } from 'expo-router';
+import Swal from 'sweetalert2';
+import axios from 'axios';
 
 const AddNewEvent = () => {
-  const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(null);
@@ -26,6 +26,49 @@ const AddNewEvent = () => {
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) setDate(selectedDate);
+  };
+
+  const createEvent = async () => {
+    try {
+      const eventData = {
+        eventName,
+        note,
+        date,
+        startTime,
+        endTime,
+        location,
+        category,
+        participants,
+        price,
+        isFree
+      };
+
+      await axios.post('http://localhost:3000/events/create', eventData);
+      Swal.fire({
+        title: 'Success!',
+        text: 'Event created successfully!',
+        icon: 'success',
+        confirmButtonText: 'Okay'
+      });
+
+      setEventName('');
+      setNote('');
+      setDate(null);
+      setStartTime(null);
+      setEndTime(null);
+      setLocation('');
+      setCategory('Sports');
+      setParticipants('10');
+      setPrice('0');
+      setIsFree(false);
+    } catch (error) {
+      Swal.fire({
+        title: 'Error!',
+        text: 'There was an issue creating the event.',
+        icon: 'error',
+        confirmButtonText: 'Okay'
+      });
+    }
   };
 
   return (
@@ -62,7 +105,6 @@ const AddNewEvent = () => {
         />
       </View>
 
-      {/* Custom Location Input with Custom Image from URL */}
       <View style={styles.locationInputContainer}>
         <TextInput
           style={styles.locationInput}
@@ -70,12 +112,10 @@ const AddNewEvent = () => {
           value={location}
           onChangeText={setLocation}
         />
-        {/* External Image as Icon from URL */}
         <Image
-  source={{ uri: 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1733847829/l1wz4julzrm1jrukqatv.png' }}
-  style={styles.mapIcon}
-/>
-
+          source={{ uri: 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1733847829/l1wz4julzrm1jrukqatv.png' }}
+          style={styles.mapIcon}
+        />
       </View>
 
       <Picker
@@ -114,7 +154,7 @@ const AddNewEvent = () => {
       </View>
       <TouchableOpacity
         style={styles.createButton}
-        onPress={() => router.push('/Homepage/Test')}
+        onPress={createEvent}
       >
         <Text style={styles.createButtonText}>Create Event</Text>
       </TouchableOpacity>
@@ -190,14 +230,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-
-  // Custom Location Input Styles
   locationInputContainer: {
     position: 'relative',
     marginVertical: 8,
   },
   locationInput: {
-    paddingRight: 30,  // Add space for the image
+    paddingRight: 30,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
@@ -210,7 +248,7 @@ const styles = StyleSheet.create({
     right: 17,
     top: '50%',
     transform: [{ translateY: -12 }],
-    width: 25, // Set width and height for the image
+    width: 25,
     height: 20,
   },
 });
