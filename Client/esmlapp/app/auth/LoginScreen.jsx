@@ -8,12 +8,6 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const router = useRouter();  // Initialize router
 
-  const handleLogin = () => {
-    // Implement login logic here
-    console.log('Login with:', email, password);
-    // For example, after successful login, navigate to the home screen:
-    router.push('/auth/HomeScreen');  // Replace '/Home' with the appropriate screen path
-  };
 
   return (
     <ImageBackground
@@ -50,7 +44,7 @@ const LoginScreen = () => {
             <Text style={styles.link}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <TouchableOpacity style={styles.button} onPress={()=>router.push('/Homepage/Homep')}>
             <Text style={styles.buttonText}>Sign in</Text>
           </TouchableOpacity>
 

@@ -1,7 +1,21 @@
 {
+  "name": "server",
+  "version": "1.0.0",
+  "description": "the server",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.0.1",
-    "init": "^0.1.2"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "init": "^0.1.2",
+    "mysql2": "^3.11.4",
+    "nodemon": "^3.1.7"
   },
   "devDependencies": {
     "prisma": "^6.0.1"
