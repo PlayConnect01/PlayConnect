@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View  , Button} from 'react-native'
 
-const test = () => {
+const Test = () => {
   return (
     <View>test
  <Button
@@ -12,4 +12,4 @@ const test = () => {
   )
 }
 
-export default test
+export default Test

@@ -12,7 +12,7 @@ model User {
   username        String
   email           String    @unique
   password        String
-  location        String
+  location        String?   // Changed to nullable
   profile_picture String?
   skill_level     String?
   rating          Float?
@@ -20,19 +20,19 @@ model User {
 
   // User relationships
   created_teams      Team[]          @relation("TeamCreator")
-  team_memberships   TeamMember[]
+  team_memberships   TeamMember[]    
   created_tournaments Tournament[]    @relation("TournamentCreator")
   created_events     Event[]         @relation("EventCreator")
-  event_participations EventParticipant[]
-  sports            UserSport[]
-  calendar_events   Calendar[]
-  chat_memberships  ChatMember[]
+  event_participations EventParticipant[]    
+  sports            UserSport[]    
+  calendar_events   Calendar[]    
+  chat_memberships  ChatMember[]    
   sent_messages     Message[]        @relation("MessageSender")
-  achievements      Achievement[]
-  cart              Cart?
+  achievements      Achievement[]    
+  cart              Cart?    
   reports_received  Report[]         @relation("ReportsReceived")
   reports_sent      Report[]         @relation("ReportsSent")
-  points_logs       PointsLog[]
+  points_logs       PointsLog[]    
   notifications     Notification[]   @relation("UserNotifications")
 
   // New relationships for matching and communication
@@ -45,6 +45,7 @@ model Sport {
   sport_id    Int      @id @default(autoincrement())
   name        String
   description String?
+  icon        String?  // New icon field, nullable
 
   users       UserSport[]
   teams       Team[]
@@ -120,20 +121,27 @@ model TournamentTeam {
 }
 
 model Event {
-  event_id      Int        @id @default(autoincrement())
-  event_name    String
-  location      String
-  created_by    Int
-  date          DateTime
-  point_reward  Int
-  description   String
+  event_id       Int         @id @default(autoincrement())
+  event_name     String
+  location       String
+  date           DateTime
+  start_time     DateTime?
+  end_time       DateTime?
+  description    String
+  category       String
+  participants   Int
+  price          Float
+  is_free        Boolean
 
-  creator       User       @relation("EventCreator", fields: [created_by], references: [user_id])
-  participants  EventParticipant[]
-  calendar_entries Calendar[]
+  event_participants EventParticipant[]
+  calendar_entries   Calendar[]
 
-  @@index([created_by])
+  creator_id    Int
+  creator       User @relation("EventCreator", fields: [creator_id], references: [user_id])
+
+  @@index([event_name])
 }
+
 
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())

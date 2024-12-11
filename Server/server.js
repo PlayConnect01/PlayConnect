@@ -1,7 +1,8 @@
-const  express  = require('express');
-const cors = require ('cors');
-// import sportRoutes from './routes/sport.js';
-const userRouter = require ('./routes/user.js') ;
+const express = require("express");
+const cors = require("cors");
+const eventRoutes = require("./routes/events");
+const sportRoutes= require("./routes/sport")
+const userRouter = require('./routes/user');
 
 const app = express();
 
@@ -10,8 +11,13 @@ app.use(express.json());
 
 const PORT = 3000;
 
-// app.use('/sports', sportRoutes);
-app.use('/users', userRouter);
+
+app.use('/sports', sportRoutes); 
+app.use('/users', userRouter); 
+
+
+app.use("/events", eventRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
