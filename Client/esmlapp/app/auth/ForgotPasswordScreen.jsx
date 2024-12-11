@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from './styles';
+import { useRouter } from 'expo-router';
 
 const PasswordRecoveryScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);
@@ -10,6 +11,7 @@ const PasswordRecoveryScreen = ({ navigation }) => {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
+  const  router =useRouter()
 
   const handleNextStep = () => {
     if (step < 3) setStep(step + 1);
@@ -92,7 +94,7 @@ const PasswordRecoveryScreen = ({ navigation }) => {
           <Text style={styles.continueButtonText}>{step < 3 ? 'Continue' : 'Save'}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => router.push('/auth/LoginScreen')}
           style={styles.cancelButton}
         >
           <Text style={styles.cancelText}>Cancel</Text>
