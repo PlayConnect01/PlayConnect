@@ -1,25 +1,36 @@
-import * as React from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import AddNewEvent from "./Homepage/CreateEvent"
-import Test from './Homepage/Test';
 
-const Tab = createBottomTabNavigator();
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-function TabsNavigation() {
-    return (
-        <Tab.Navigator 
-            screenOptions={{
-                headerShown: false,
-                tabBarShowLabel: false ,
-                tabBarStyle: { 
-                  display: 'none', 
-                }
-            }}
-        >
-          <Tab.Screen name="Create Event" component={AddNewEvent} />
-          <Tab.Screen name="Tab2" component={Test} />
-        </Tab.Navigator>
-    );
-}
+// Import pages
+import Landing from "./auth/LandingScreen";
+import Login from "./auth/LoginScreen";
+import SignUp from "./auth/SignUpScreen";
+import ForgotPassword from "./auth/ForgotPasswordScreen";
+import Home from "./auth/HomeScreen";
+import CreateEvent from "./Homepage/CreateEvent";
+import Test from "./Homepage/Test";
 
-export default TabsNavigation;
+const Stack = createNativeStackNavigator();
+
+const App = () => {
+  return (
+   
+      <Stack.Navigator 
+        initialRouteName="Landing"
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="Landing" component={Landing} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="SignUp" component={SignUp} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="CreateEvent" component={CreateEvent} />
+        <Stack.Screen name="Test" component={Test} />
+      </Stack.Navigator>
+    
+  );
+};
+
+export default App;
