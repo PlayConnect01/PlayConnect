@@ -1,6 +1,4 @@
 import * as React from 'react';
-import {Text} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AddNewEvent from "./Homepage/CreateEvent"
@@ -11,6 +9,7 @@ import ChatDetails from './Chat/ChatDetails';
 
 
 const Tab = createBottomTabNavigator();
+
 function TabsNavigation() {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
