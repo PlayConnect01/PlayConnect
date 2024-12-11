@@ -2,7 +2,16 @@ import * as React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AddNewEvent from "./Homepage/CreateEvent";
 import Test from './Homepage/Test';
-import Homep from './Homepage/Homep'
+import Homep from './Homepage/Homep';
+
+import Landing from "./auth/LandingScreen";
+import Login from "./auth/LoginScreen";
+import SignUp from "./auth/SignUpScreen";
+import ForgotPassword from "./auth/ForgotPasswordScreen";
+import Match from "./Match/Firstpagematch";
+import Matchingpage from "./Match/Matchingpage";
+import MessagePage from "./Chat/MessagePage";
+import ChatDetails from './Chat/ChatDetails';
 
 const Tab = createBottomTabNavigator();
 

@@ -62,6 +62,7 @@ const createEvent = async (req, res) => {
         participants: parseInt(participants),
         price: parseFloat(price),
         is_free,
+        creator_id: 1, // Set creator_id directly to 1
       },
     });
 
@@ -72,7 +73,6 @@ const createEvent = async (req, res) => {
     res.status(500).json({ error: "Error creating event", details: error.message });
   }
 };
-
 const updateEvent = async (req, res) => {
   try {
     console.log("Request received: PUT /update", req.params, req.body);
