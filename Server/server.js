@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 app.use('/sports', sportRoutes); 
 app.use('/users', userRouter); 
 app.use('/competetion', competetionRouter); 
-app.use('/pass', passwordRouter);
+app.use('/password', passwordRouter);
 
 app.use("/events", eventRoutes);
 

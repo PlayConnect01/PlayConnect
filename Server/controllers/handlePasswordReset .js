@@ -1,136 +1,114 @@
+const express = require('express');
 const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
-const dotenv = require('dotenv');
 
-dotenv.config();
-const prismaClient = new PrismaClient();
+const prisma = new PrismaClient();
+const app = express();
+app.use(bodyParser.json());
 
-// In-memory store for reset codes (use something like Redis in production)
-const resetCodes = new Map();
-
-// Set up the email transporter with Zoho SMTP details
+// Email transporter setup
 const transporter = nodemailer.createTransport({
   host: 'smtp.zoho.com',
   port: 465,
-  secure: true, // Use SSL
+  secure: true,
   auth: {
-    user: process.env.EMAIL_USER, // Ensure this is set in your .env file
-    pass: process.env.EMAIL_PASS  // Ensure this is set in your .env file
-  }
+    user: 'ahmedboukottaya@zohomail.com',
+    pass: '53nDUtDC4CKF',
+  },
 });
 
-// Helper function for email validation
-const isValidEmail = (email) => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-};
+// In-memory store for codes (for demonstration purposes)
+const recoveryCodes = {};
 
-// Controller 1: Send Password Reset Code to Email
-const sendPasswordResetCode = async (req, res) => {
+// Send recovery code via email
+const sendCode = async (req, res) => {
   const { email } = req.body;
-
-  // Basic email validation
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ message: 'Invalid email format' });
-  }
+  const code = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit code
 
   try {
-    // Check if the user exists
-    const user = await prismaClient.user.findUnique({
-      where: { email }
+    // Verify email exists in the database
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { username: true }, // Select only the username
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'No user found with this email' });
+      return res.status(404).json({ message: 'Email not found' });
     }
 
-    // Generate a random 6-digit verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000); // 6-digit code
+    // Store the code with the email as key
+    recoveryCodes[email] = code;
 
-    // Store the verification code and expiration time temporarily in memory
-    const resetData = {
-      code: verificationCode,
-      expiresAt: new Date(Date.now() + 3600000) // Valid for 1 hour
-    };
-
-    // Store the reset code temporarily (for example, in-memory or in a database)
-    resetCodes.set(email, resetData);
-
-    // Send the reset code via email
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const mailOptions = {
+      from: 'ahmedboukottaya@zohomail.com',
       to: email,
-      subject: 'Password Reset Code',
-      html: `
-        <h1>Password Reset Request</h1>
-        <p>We received a request to reset your password. Please use the following code to reset your password:</p>
-        <h2>${verificationCode}</h2>
-        <p>This code will expire in 1 hour.</p>
-        <p>If you did not request a password reset, please ignore this email.</p>
-      `
-    });
+      subject: 'Password Recovery Code',
+  text: `Hello ${user.username},\n\nYour password recovery code is: ${code}\n\nPlease use this code to reset your password.`,
+};
 
-    return res.status(200).json({ message: 'Password reset email sent' });
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Error sending email', error });
+      }
+      res.status(200).json({ message: 'Recovery code sent successfully via email' });
+    });
   } catch (error) {
-    console.error('Error in sending password reset email:', error);
-    return res.status(500).json({ message: 'Failed to send password reset email', error: error.message });
+    console.error('Error sending code:', error);
+    res.status(500).json({ message: 'Failed to send recovery code' });
   }
 };
 
-// Controller 2: Update Password after Verification
-const updatePassword = async (req, res) => {
-  const { email, verificationCode, newPassword, confirmPassword } = req.body;
-
-  // Basic email validation
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ message: 'Invalid email format' });
-  }
-
-  // Validate that the password meets the criteria
-  if (newPassword && !isValidPassword(newPassword)) {
-    return res.status(400).json({ message: 'Password must be at least 6 characters long' });
-  }
+// Verify the recovery code
+const verifyCode = (req, res) => {
+  const { email, code } = req.body;
 
   try {
-    // Retrieve the stored reset code and expiration time from memory
-    const resetData = resetCodes.get(email);
-
-    if (!resetData) {
-      return res.status(400).json({ message: 'No password reset request found for this email' });
+    if (recoveryCodes[email] === parseInt(code)) {
+      // Code is valid
+      delete recoveryCodes[email]; // Remove the code after successful verification
+      res.status(200).json({ message: 'Code verified successfully' });
+    } else {
+      // Code is invalid
+      res.status(400).json({ message: 'Invalid recovery code' });
     }
+  } catch (error) {
+    console.error('Error verifying code:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
-    // Check if the verification code matches and has not expired
-    if (resetData.code !== parseInt(verificationCode)) {
-      return res.status(400).json({ message: 'Invalid verification code' });
-    }
+// Update password
+const updatePassword = async (req, res) => {
+  const { email, newPassword } = req.body;
 
-    if (new Date() > new Date(resetData.expiresAt)) {
-      return res.status(400).json({ message: 'Verification code has expired' });
-    }
-
-    // Validate that passwords match
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
+  try {
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update the user's password in the database
-    await prismaClient.user.update({
+    // Update the password in the database using Prisma
+    const updatedUser = await prisma.user.update({
       where: { email },
-      data: { password: hashedPassword }
+      data: { password: hashedPassword },
     });
 
-    // Clear the reset data from memory after successful password update
-    resetCodes.delete(email);
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-    return res.status(200).json({ message: 'Password updated successfully' });
+    res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
-    console.error('Error in updating password:', error);
-    return res.status(500).json({ message: 'Failed to update password', error: error.message });
+    console.error('Error updating password:', error);
+    res.status(500).json({ message: 'Failed to update password' });
   }
 };
 
-module.exports = { sendPasswordResetCode, updatePassword };
+// Export all functions
+module.exports = {
+  sendCode,
+  verifyCode,
+  updatePassword,
+};
