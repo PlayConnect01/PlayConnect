@@ -4,7 +4,7 @@ CREATE TABLE `User` (
     `username` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
-    `location` VARCHAR(191) NOT NULL,
+    `location` VARCHAR(191) NULL,
     `profile_picture` VARCHAR(191) NULL,
     `skill_level` VARCHAR(191) NULL,
     `rating` DOUBLE NULL,
@@ -19,6 +19,7 @@ CREATE TABLE `Sport` (
     `sport_id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NULL,
+    `icon` VARCHAR(191) NULL,
 
     PRIMARY KEY (`sport_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -87,12 +88,17 @@ CREATE TABLE `Event` (
     `event_id` INTEGER NOT NULL AUTO_INCREMENT,
     `event_name` VARCHAR(191) NOT NULL,
     `location` VARCHAR(191) NOT NULL,
-    `created_by` INTEGER NOT NULL,
     `date` DATETIME(3) NOT NULL,
-    `point_reward` INTEGER NOT NULL,
+    `start_time` DATETIME(3) NULL,
+    `end_time` DATETIME(3) NULL,
     `description` VARCHAR(191) NOT NULL,
+    `category` VARCHAR(191) NOT NULL,
+    `participants` INTEGER NOT NULL,
+    `price` DOUBLE NOT NULL,
+    `is_free` BOOLEAN NOT NULL,
+    `creator_id` INTEGER NOT NULL,
 
-    INDEX `Event_created_by_idx`(`created_by`),
+    INDEX `Event_event_name_idx`(`event_name`),
     PRIMARY KEY (`event_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -298,7 +304,7 @@ ALTER TABLE `TournamentTeam` ADD CONSTRAINT `TournamentTeam_tournament_id_fkey` 
 ALTER TABLE `TournamentTeam` ADD CONSTRAINT `TournamentTeam_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Team`(`team_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Event` ADD CONSTRAINT `Event_created_by_fkey` FOREIGN KEY (`created_by`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Event` ADD CONSTRAINT `Event_creator_id_fkey` FOREIGN KEY (`creator_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `EventParticipant` ADD CONSTRAINT `EventParticipant_event_id_fkey` FOREIGN KEY (`event_id`) REFERENCES `Event`(`event_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

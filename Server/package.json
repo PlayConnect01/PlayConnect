@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "description": "the server",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "nodemon server.js"
   },
@@ -10,17 +10,23 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.0.1",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
+    "firebase": "^11.0.2",
+    "firebase-admin": "^13.0.1",
     "init": "^0.1.2",
+    "jsonwebtoken": "^9.0.2",
+    "jwt-simple": "^0.5.6",
     "mysql2": "^3.11.4",
-    "nodemon": "^3.1.7"
+    "nodemailer": "^6.9.16",
+    "nodemon": "^3.1.7",
+    "socket.io": "^4.8.1"
   },
-
-  
   "devDependencies": {
-    "prisma": "^6.0.1",
-    "nodemon": "^3.0.0"
+    "nodemon": "^3.0.0",
+    "prisma": "^6.0.1"
   }
 }

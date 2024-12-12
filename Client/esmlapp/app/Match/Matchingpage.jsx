@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, Animated, PanResponder, TouchableOpacity
 import { Ionicons } from '@expo/vector-icons';
 import userData from './data';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 const Match = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
@@ -21,6 +22,36 @@ const Match = () => {
     navigation.navigate('Messages'); // Navigue vers l'écran Messages
   };
 
+  const handleLike = async () => {
+    try {
+      // Envoyer une demande de match
+      await axios.post('http://localhost:3000/api/matches/create', {
+        user_id_1: currentUser.id, // Assurez-vous d'avoir l'ID de l'utilisateur connecté
+        user_id_2: userData[currentUserIndex].id
+      });
+
+      // Animation vers la droite
+      Animated.timing(position, {
+        toValue: { x: 500, y: 0 },
+        duration: 300,
+        useNativeDriver: false,
+      }).start(() => handleNextUser());
+
+    } catch (error) {
+      console.error('Erreur lors de la création du match:', error);
+      // Gérer l'erreur (peut-être afficher une notification)
+    }
+  };
+
+  const handleDislike = () => {
+    // Animation vers la gauche
+    Animated.timing(position, {
+      toValue: { x: -500, y: 0 },
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => handleNextUser());
+  };
+
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: Animated.event(
@@ -32,19 +63,9 @@ const Match = () => {
     ),
     onPanResponderRelease: (_, gesture) => {
       if (gesture.dx > 120) {
-        // Swipe right - Like
-        Animated.timing(position, {
-          toValue: { x: 500, y: gesture.dy },
-          duration: 300,
-          useNativeDriver: false,
-        }).start(() => handleNextUser());
+        handleLike();
       } else if (gesture.dx < -120) {
-        // Swipe left - Dislike
-        Animated.timing(position, {
-          toValue: { x: -500, y: gesture.dy },
-          duration: 300,
-          useNativeDriver: false,
-        }).start(() => handleNextUser());
+        handleDislike();
       } else {
         // Return to center
         Animated.spring(position, {
@@ -109,10 +130,16 @@ const Match = () => {
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity style={[styles.actionButton, styles.dislikeButton]} onPress={() => handleNextUser()}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.dislikeButton]} 
+          onPress={handleDislike}
+        >
           <Ionicons name="close" size={30} color="#FF3B30" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.likeButton]} onPress={() => handleNextUser()}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.likeButton]} 
+          onPress={handleLike}
+        >
           <Ionicons name="checkmark" size={30} color="#34C759" />
         </TouchableOpacity>
       </View>
