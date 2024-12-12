@@ -12,7 +12,7 @@ model User {
   username        String
   email           String    @unique
   password        String
-  location        String
+  location        String?   // Changed to nullable
   profile_picture String?
   skill_level     String?
   rating          Float?
@@ -20,30 +20,37 @@ model User {
 
   // User relationships
   created_teams      Team[]          @relation("TeamCreator")
-  team_memberships   TeamMember[]
+  team_memberships   TeamMember[]    
   created_tournaments Tournament[]    @relation("TournamentCreator")
   created_events     Event[]         @relation("EventCreator")
-  event_participations EventParticipant[]
-  sports            UserSport[]
-  calendar_events   Calendar[]
-  chat_memberships  ChatMember[]
+  event_participations EventParticipant[]    
+  sports            UserSport[]    
+  calendar_events   Calendar[]    
+  chat_memberships  ChatMember[]    
   sent_messages     Message[]        @relation("MessageSender")
-  achievements      Achievement[]
-  cart              Cart?
+  achievements      Achievement[]    
+  cart              Cart?    
   reports_received  Report[]         @relation("ReportsReceived")
   reports_sent      Report[]         @relation("ReportsSent")
-  points_logs       PointsLog[]
-  notifications     Notification[]   @relation("UserNotifications") // Added this line
+  points_logs       PointsLog[]    
+  notifications     Notification[]   @relation("UserNotifications")
+
+  // New relationships for matching and communication
+  matches_as_user_1   Match[]        @relation("User1Matches")
+  matches_as_user_2   Match[]        @relation("User2Matches")
+  initiated_chats     Chat[]         @relation("ChatInitiator")
 }
 
 model Sport {
   sport_id    Int      @id @default(autoincrement())
   name        String
   description String?
+  icon        String?  // New icon field, nullable
 
   users       UserSport[]
   teams       Team[]
   tournaments Tournament[]
+  matches     Match[]
 }
 
 model UserSport {
@@ -114,20 +121,27 @@ model TournamentTeam {
 }
 
 model Event {
-  event_id      Int        @id @default(autoincrement())
-  event_name    String
-  location      String
-  created_by    Int
-  date          DateTime
-  point_reward  Int
-  description   String
+  event_id       Int         @id @default(autoincrement())
+  event_name     String
+  location       String
+  date           DateTime
+  start_time     DateTime?
+  end_time       DateTime?
+  description    String
+  category       String
+  participants   Int
+  price          Float
+  is_free        Boolean
 
-  creator       User       @relation("EventCreator", fields: [created_by], references: [user_id])
-  participants  EventParticipant[]
-  calendar_entries Calendar[]
+  event_participants EventParticipant[]
+  calendar_entries   Calendar[]
 
-  @@index([created_by])
+  creator_id    Int
+  creator       User @relation("EventCreator", fields: [creator_id], references: [user_id])
+
+  @@index([event_name])
 }
+
 
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())
@@ -153,12 +167,23 @@ model Calendar {
 }
 
 model Chat {
-  chat_id     Int       @id @default(autoincrement())
-  is_group    Boolean
-  created_at  DateTime  @default(now())
+  chat_id         Int       @id @default(autoincrement())
+  is_group        Boolean
+  created_at      DateTime  @default(now())
   
-  messages    Message[]
-  chat_members ChatMember[]
+  // Nouvelle fonctionnalité d'appel
+  call_type       CallType?  @default(NONE)
+  call_status     CallStatus? 
+  call_initiator_id Int?
+  call_start_time DateTime?
+  call_end_time   DateTime?
+  call_duration   Float?    // Durée en secondes
+
+  // Relation avec l'initiateur de l'appel
+  call_initiator  User?     @relation("ChatInitiator", fields: [call_initiator_id], references: [user_id])
+  
+  messages        Message[]
+  chat_members    ChatMember[]
 }
 
 model ChatMember {
@@ -177,8 +202,12 @@ model Message {
   chat_id       Int
   sender_id     Int
   content       String
-  message_type  String
+  message_type  MessageType
   sent_at       DateTime @default(now())
+
+  // Pour les messages vocaux
+  voice_duration Float?   // Durée du message vocal en secondes
+  voice_file_url String?  // URL du fichier audio
 
   chat    Chat  @relation(fields: [chat_id], references: [chat_id])
   sender  User  @relation("MessageSender", fields: [sender_id], references: [user_id])
@@ -267,7 +296,7 @@ model PointsLog {
 model Notification {
   notification_id Int      @id @default(autoincrement())
   user_id        Int
-  type_id        Int
+  type           String   // Direct string type instead of type_id
   title          String
   content        String
   is_read        Boolean  @default(false)
@@ -275,17 +304,55 @@ model Notification {
   action_url     String?  
 
   user           User     @relation("UserNotifications", fields: [user_id], references: [user_id])
-  type           NotificationType @relation(fields: [type_id], references: [type_id])
 
   @@index([user_id])
-  @@index([type_id])
 }
 
-model NotificationType {
-  type_id     Int      @id @default(autoincrement())
-  name        String   
-  description String?
-  icon        String?  
-  
-  notifications Notification[]
+// Nouveau modèle pour les matchs
+model Match {
+  match_id         Int       @id @default(autoincrement())
+  user_id_1        Int
+  user_id_2        Int
+  sport_id         Int
+  status           MatchStatus
+  matched_at       DateTime  @default(now())
+  accepted_at      DateTime?
+  rejected_at      DateTime?
+
+  user_1           User     @relation("User1Matches", fields: [user_id_1], references: [user_id])
+  user_2           User     @relation("User2Matches", fields: [user_id_2], references: [user_id])
+  sport            Sport    @relation(fields: [sport_id], references: [sport_id])
+
+  @@index([user_id_1])
+  @@index([user_id_2])
+  @@index([sport_id])
+}
+
+// Enums
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
+
+enum CallType {
+  NONE
+  VOICE
+  VIDEO
+}
+
+enum CallStatus {
+  INITIATED
+  IN_PROGRESS
+  ENDED
+  MISSED
+}
+
+enum MessageType {
+  TEXT
+  VOICE
+  IMAGE
+  VIDEO
+  SYSTEM
 }

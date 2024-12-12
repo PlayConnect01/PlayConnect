@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useNavigation } from "@react-navigation/native";
+import Swal from 'sweetalert2';
+import axios from 'axios';
 
-const AddNewEvent = ({ navigation }) => {
-  const navigate = useNavigation()
+const AddNewEvent = () => {
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(null);
@@ -26,6 +26,49 @@ const AddNewEvent = ({ navigation }) => {
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) setDate(selectedDate);
+  };
+
+  const createEvent = async () => {
+    try {
+      const eventData = {
+        eventName,
+        note,
+        date,
+        startTime,
+        endTime,
+        location,
+        category,
+        participants,
+        price,
+        isFree
+      };
+
+      await axios.post('http://localhost:3000/events/create', eventData);
+      Swal.fire({
+        title: 'Success!',
+        text: 'Event created successfully!',
+        icon: 'success',
+        confirmButtonText: 'Okay'
+      });
+
+      setEventName('');
+      setNote('');
+      setDate(null);
+      setStartTime(null);
+      setEndTime(null);
+      setLocation('');
+      setCategory('Sports');
+      setParticipants('10');
+      setPrice('0');
+      setIsFree(false);
+    } catch (error) {
+      Swal.fire({
+        title: 'Error!',
+        text: 'There was an issue creating the event.',
+        icon: 'error',
+        confirmButtonText: 'Okay'
+      });
+    }
   };
 
   return (
@@ -61,12 +104,20 @@ const AddNewEvent = ({ navigation }) => {
           value={endTime ? endTime.toTimeString() : ""}
         />
       </View>
-      <TextInput
-        style={styles.input}
-        placeholder="Location"
-        value={location}
-        onChangeText={setLocation}
-      />
+
+      <View style={styles.locationInputContainer}>
+        <TextInput
+          style={styles.locationInput}
+          placeholder="Location"
+          value={location}
+          onChangeText={setLocation}
+        />
+        <Image
+          source={{ uri: 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1733847829/l1wz4julzrm1jrukqatv.png' }}
+          style={styles.mapIcon}
+        />
+      </View>
+
       <Picker
         selectedValue={category}
         style={styles.select}
@@ -103,7 +154,8 @@ const AddNewEvent = ({ navigation }) => {
       </View>
       <TouchableOpacity
         style={styles.createButton}
-        onPress={() => navigation.navigate("/Test")}       >
+        onPress={createEvent}
+      >
         <Text style={styles.createButtonText}>Create Event</Text>
       </TouchableOpacity>
     </View>
@@ -131,16 +183,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f9f9f9",
   },
-  note : {
+  note: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    paddingBottom : 50,
+    paddingBottom: 50,
     marginVertical: 8,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
   },
-
   timeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -155,14 +206,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 8,
   },
-  select :  {
+  select: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     marginVertical: 8,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
-  } , 
+  },
   column: {
     flex: 1,
     marginHorizontal: 4,
@@ -179,6 +230,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  locationInputContainer: {
+    position: 'relative',
+    marginVertical: 8,
+  },
+  locationInput: {
+    paddingRight: 30,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  mapIcon: {
+    position: 'absolute',
+    right: 17,
+    top: '50%',
+    transform: [{ translateY: -12 }],
+    width: 25,
+    height: 20,
+  },
 });
 
-export default AddNewEvent;
+// export default AddNewEvent;

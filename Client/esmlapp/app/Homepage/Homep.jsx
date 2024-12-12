@@ -9,7 +9,8 @@ const { width } = Dimensions.get("window"); // Get device width for responsivene
 const App = () => {
   const [categories, setCategories] = useState([]); // State to store categories data
   const [loading, setLoading] = useState(true); // Loading state to handle API request state
-
+  const [competitions, setCompetitions] = useState([]);
+ 
   // Fetch categories from the backend
   useEffect(() => {
     axios
@@ -23,9 +24,14 @@ const App = () => {
         console.error("Error fetching categories:", error);
         setLoading(false); // Set loading to false if there’s an error
       });
+
+      axios.get("http://localhost:3000/competetion").then((response) => {
+        setCompetitions(response.data);
+      });
+
   }, []);
 
-  const competitions = ["Football", "Tennis", "E-Sports"];
+
 
   const events = [
     { id: "1", image: "https://via.placeholder.com/150", name: "Football" },
@@ -63,9 +69,9 @@ const App = () => {
       {/* Categories Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Category</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("SeeAllNavigation")}>
+  <Text style={styles.seeAll}>See All</Text>
+</TouchableOpacity>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
         {categories.map((category) => (
@@ -84,10 +90,10 @@ const App = () => {
         </TouchableOpacity>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.competitions}>
-        {competitions.map((competition, index) => (
-          <View key={index} style={styles.competitionItem}>
-            <MaterialCommunityIcons name="trophy-outline" size={24} color="#555" />
-            <Text style={styles.competitionText}>{competition}</Text>
+        {competitions.map((competition) => (
+          <View key={competition.tournament_id} style={styles.competitionItem}>
+              <MaterialCommunityIcons name="trophy-outline" size={24} color="#555" />
+            <Text style={styles.competitionTitle}>{competition.tournament_name}</Text>
           </View>
         ))}
       </ScrollView>
@@ -157,7 +163,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
-    marginTop: 10,
   },
   sectionTitle: {
     fontSize: 18,
@@ -182,6 +187,7 @@ fontWeight: "bold",
     alignItems: "center",
     marginRight: 10,
     aspectRatio: 1,
+    marginBottom: 20,
   },
   categoryIcon: {
     fontSize: 30,
@@ -189,7 +195,7 @@ fontWeight: "bold",
   categoryName: {
     fontSize: 12,
     textAlign: "center",
-    marginTop: 5,
+    marginTop: 5
   },
   competitions: {
     flexDirection: "row",
@@ -197,7 +203,8 @@ fontWeight: "bold",
   },
   competitionItem: {
     alignItems: "center",
-    marginRight: 20,
+    marginRight: 100,
+    marginBottom: 10
   },
   competitionText: {
     marginTop: 5,
