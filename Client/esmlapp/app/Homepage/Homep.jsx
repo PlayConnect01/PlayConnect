@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation } from '@react-navigation/native';
 import axios from "axios";
 
 const { width } = Dimensions.get("window");
@@ -24,10 +25,12 @@ const App = () => {
   const [selectedCategory, setSelectedCategory] = useState("All Type");
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
+  const navigation = useNavigation();
+
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/sports")
+      .get("http://192.168.104.4:3000/sports")
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -38,7 +41,7 @@ const App = () => {
       });
 
     axios
-      .get("http://localhost:3000/competetion")
+      .get("http://192.168.104.4:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -47,7 +50,7 @@ const App = () => {
       });
 
     axios
-      .get("http://localhost:3000/events/getAll")
+      .get("http://192.168.104.4:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
@@ -84,6 +87,7 @@ const App = () => {
   }
 
   return (
+    <ScrollView>
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
@@ -91,7 +95,7 @@ const App = () => {
           <Text style={styles.greeting}>Good Morning</Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={() => navigation.navigate("CalendarPage")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Homepage/CalendarPage")}>
             <MaterialCommunityIcons
               name="calendar-outline"
               size={24}
@@ -191,6 +195,7 @@ const App = () => {
         ))}
       </ScrollView>
     </View>
+    </ScrollView>
   );
 };
 

@@ -12,7 +12,7 @@ import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
-import CalendarPage from "../Homepage/CalendarPage"
+import CalendarPage from "./Homepage/CalendarPage"
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); 
