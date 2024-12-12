@@ -55,7 +55,13 @@ const App = () => {
           <Text style={styles.greeting}>Good Morning</Text>
         </View>
         <View style={styles.headerIcons}>
-          <Ionicons name="notifications-outline" size={24} color="#555" />
+        <TouchableOpacity onPress={() => navigation.navigate("CalendarPage")}>
+          <MaterialCommunityIcons
+            name="calendar-outline"
+            size={24}
+            color="#555"
+          />
+        </TouchableOpacity>
           <Ionicons name="settings-outline" size={24} color="#555" style={{ marginLeft: 15 }} />
         </View>
       </View>
@@ -66,7 +72,6 @@ const App = () => {
         <Text style={styles.cardProgress}>15/20</Text>
       </View>
 
-      {/* Categories Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Category</Text>
         <TouchableOpacity onPress={() => navigation.navigate("SeeAllNavigation")}>
@@ -77,7 +82,7 @@ const App = () => {
         {categories.map((category) => (
           <View key={category.id} style={styles.categoryItem}>
             <Text style={styles.categoryIcon}>{category.icon}</Text>
-            <Text style={styles.categoryName}>{category.name}</Text> {/* Display the name property */}
+            <Text style={styles.categoryName}>{category.name}</Text> 
           </View>
         ))}
       </ScrollView>
