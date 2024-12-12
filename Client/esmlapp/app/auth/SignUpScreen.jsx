@@ -9,24 +9,27 @@ const SignUpScreen = () => {
   const [password, setPassword] = useState('');
   const navigate  = useNavigation();
 
+  
   const handleSignUp = async () => {
     try {
-      // Send a POST request to the backend API
-      const response = await axios.post('http://localhost:3000/users/signup', {
+      // Replace '192.168.x.x' with your local machine's IP address
+      const response = await axios.post('http://192.168.103.10:3000/users/signup', {
         email,
         password,
         username,
       });
-
+  
       // Handle successful signup
       console.log('Sign-up successful:', response.data);
       // Navigate to the login screen after successful signup
       navigate.navigate('Login');
     } catch (error) {
-      console.error('Sign-up error:', error.response.data);
+      console.log(error , "error")
+      console.error('Sign-up error:', error.response?.data || error.message);
       alert('Error signing up. Please try again.');
     }
   };
+  
 
   return (
     <ImageBackground
@@ -62,7 +65,7 @@ const SignUpScreen = () => {
             secureTextEntry
             placeholderTextColor="#ccc"
           />
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+          <TouchableOpacity style={styles.button} onPress={()=>handleSignUp()}>
             <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigate.navigate('Login')}>

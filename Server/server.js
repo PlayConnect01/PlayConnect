@@ -19,6 +19,6 @@ app.use('/users', userRouter);
 app.use("/events", eventRoutes);
 
 
-app.listen(PORT, () => {
-  console.log(`Listening on port ${PORT}`);
+app.listen(PORT,  () => {
+  console.log('Server is running on port 3000');
 });

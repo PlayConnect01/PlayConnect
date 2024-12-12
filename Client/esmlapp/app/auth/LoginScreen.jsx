@@ -12,7 +12,7 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     try {
       // Send POST request to the backend API
-      const response = await axios.post('http://localhost:3000/users/login', {
+      const response = await axios.post('http://192.168.103.10:3000/users/login', {
         email,
         password,
       });
