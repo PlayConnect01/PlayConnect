@@ -4,8 +4,9 @@ const eventRoutes = require("./routes/events");
 const sportRoutes= require("./routes/sport")
 const userRouter = require('./routes/user');
 const competetionRouter = require('./routes/competetion');
-const bodyParser = require('body-parser');
+const passwordRouter = require('./routes/handlePasswordReset '); 
 const app = express();
+
 
 app.use(cors());
 app.use(express.json());
@@ -15,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 app.use('/sports', sportRoutes); 
 app.use('/users', userRouter); 
 app.use('/competetion', competetionRouter); 
-
+app.use('/pass', passwordRouter);
 
 app.use("/events", eventRoutes);
 

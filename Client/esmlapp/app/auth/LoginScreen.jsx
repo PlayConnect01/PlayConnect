@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesome } from '@expo/vector-icons'; // For social icons
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -18,7 +19,10 @@ export default function LoginScreen() {
       });
 
       console.log('Login successful:', response.data);
-      const { token, user } = response.data;
+      const { token  } = response.data;
+
+      // Store the token in AsyncStorage
+      await AsyncStorage.setItem('userToken', token);
 
       // Navigate to home page after successful login
       navigate.navigate('Homep'); // Adjust the route accordingly

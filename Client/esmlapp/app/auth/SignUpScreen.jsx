@@ -39,10 +39,8 @@ const SignUpScreen = () => {
           style={styles.content}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <Image
-           source={require('../../assets/images/sportscube.png')}// Replace with your cube image URL
-            style={styles.image}
-          />
+          
+          
           <Text style={styles.title}>Welcome</Text>
           <Text style={styles.subtitle}>Join the Team Today!</Text>
 
