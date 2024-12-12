@@ -4,21 +4,20 @@ import { createStackNavigator } from "@react-navigation/stack";
 import AddNewEvent from "./Homepage/CreateEvent";
 import Test from "./Homepage/Test";
 import Homep from "./Homepage/Homep";
-import SeeAllPage from "./Homepage/SeeAllNavigation"; // Import SeeAllPage
+import SeeAllPage from "./Homepage/SeeAllNavigation"; 
 import CalendarPage from "./Homepage/CalendarPage";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
 import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
-import Matchingpage from "./Match/Matchingpage";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator(); // Stack for Homep and SeeAllPage
+const Stack = createStackNavigator(); 
 
-// Stack Navigator for Homep and SeeAllPage
+
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -29,16 +28,21 @@ function HomeStack() {
   );
 }
 
-// Bottom Tab Navigator
+
 function TabsNavigation() {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: { display: "none" }, // Hide bottom tab bar
+        tabBarStyle: { display: "none" }, 
       }}
     >
+
+      <Tab.Screen name="Landing" component={Landing} />
+      <Tab.Screen name="Login" component={Login} />
+      <Tab.Screen name="SignUp" component={SignUp } />
+      <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
       <Tab.Screen name="Landing" component={Landing} />
       <Tab.Screen name="Login" component={Login} />
       <Tab.Screen name="SignUp" component={SignUp} />

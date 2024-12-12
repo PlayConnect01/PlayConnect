@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios'; // Import Axios
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter();
+  const navigate = useNavigation();
 
   const handleLogin = async () => {
     try {
@@ -26,7 +26,7 @@ const LoginScreen = () => {
       // AsyncStorage.setItem('userToken', token);
 
       // Navigate to the home screen or dashboard after successful login
-      router.push('/home'); // Adjust the route accordingly
+     navigate.navigate('Homep'); // Adjust the route accordingly
 
     } catch (error) {
       console.error('Login error:', error.response.data);
@@ -57,7 +57,7 @@ const LoginScreen = () => {
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/auth/SignUpScreen')}>
+        <TouchableOpacity onPress={() => navigate.navigate('SignUp')}>
           <Text style={styles.linkText}>Don't have an account? Sign up</Text>
         </TouchableOpacity>
       </View>

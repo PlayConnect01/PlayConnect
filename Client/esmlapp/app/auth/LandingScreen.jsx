@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 const AuthOptionsScreen = () => {
-  const router = useRouter();
+  const navigate = useNavigation();
 
  
 
@@ -20,7 +20,7 @@ const AuthOptionsScreen = () => {
         
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/auth/LoginScreen')}
+          onPress={() =>  navigate.navigate('Login')}
         >
           <LinearGradient
             colors={['#ff9a9e', '#fad0c4']}
@@ -35,7 +35,7 @@ const AuthOptionsScreen = () => {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/auth/SignUpScreen')}
+          onPress={() => navigate.navigate('SignUp')}
         >
           <LinearGradient
             colors={['#a18cd1', '#fbc2eb']}
