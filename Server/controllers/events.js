@@ -131,4 +131,29 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-module.exports = {getAllEvents,getEventById,createEvent,updateEvent,deleteEvent};
+const getEventsByDate = async (req, res) => {
+  try {
+    console.log("GET /getByDate", req.params);
+    const { date } = req.params;
+
+    // Fetch events for the specified date
+    const events = await prisma.event.findMany({
+      where: {
+        date: new Date(date), // Ensure the date is in the correct format
+      },
+    });
+
+    if (events.length === 0) {
+      console.warn("No events found for date:", date);
+      return res.status(404).json({ error: "No events found for this date" });
+    }
+
+    console.log("Events fetched successfully for date:", date, events);
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events by date:", error);
+    res.status(500).json({ error: "Error fetching events by date", details: error.message });
+  }
+};
+
+module.exports = {getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getEventsByDate};
