@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import axios from 'axios'; // Import axios
-
+import { useNavigation } from '@react-navigation/native';
 const SignUpScreen = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter();
-
+  const navigate  = useNavigation();
   const handleSignUp = async () => {
     try {
       // Send a POST request to the backend API
-      const response = await axios.post('http://localhost:3000/users/signup', {
+      const response = await axios.post('http://192.168.103.11:3000/users/signup', {
         email,
         password,
         username,
@@ -22,7 +20,7 @@ const SignUpScreen = () => {
       // Handle successful signup
       console.log('Sign-up successful:', response.data);
       // Navigate to the login screen after successful signup
-      router.push('/auth/LoginScreen');
+      navigate.navigate('Login');
     } catch (error) {
       console.error('Sign-up error:', error.response.data);
       alert('Error signing up. Please try again.');
@@ -66,7 +64,7 @@ const SignUpScreen = () => {
           <TouchableOpacity style={styles.button} onPress={handleSignUp}>
             <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/auth/LoginScreen')}>
+          <TouchableOpacity onPress={() => navigate.navigate('Login')}>
             <Text style={styles.linkText}>Already have an account? Login</Text>
           </TouchableOpacity>
         </KeyboardAvoidingView>

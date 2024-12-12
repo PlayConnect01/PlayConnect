@@ -1,30 +1,46 @@
 const express = require('express');
-const router = express.Router();
-const matchController = require('../controllers/match');
+const match = require("../controllers/match");
 
-// Route pour trouver des matches potentiels
-router.get('/potential/:userId', async (req, res) => {
-    try {
-        const matches = await matchController.findMatches(req.params.userId);
-        res.json(matches);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+const router = express.Router();
+
+router.get("/common-sports/:userId", async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const usersWithCommonSports = await match.getUsersWithCommonSports(userId);
+    res.json(usersWithCommonSports);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Route pour créer une demande de match
-router.post('/create', matchController.createMatch);
+router.post("/create", async (req, res) => {
+  try {
+    const { userId1, userId2, sportId } = req.body;
+    const newMatch = await match.createMatch(userId1, userId2, sportId);
+    res.status(201).json(newMatch);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-// Route pour accepter un match
-router.put('/:matchId/accept', matchController.acceptMatch);
+router.patch("/accept/:matchId", async (req, res) => {
+  try {
+    const matchId = parseInt(req.params.matchId);
+    const updatedMatch = await match.acceptMatch(matchId);
+    res.json(updatedMatch);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-// Route pour rejeter un match
-router.put('/:matchId/reject', matchController.rejectMatch);
-
-// Route pour obtenir tous les matches d'un utilisateur
-router.get('/user/:userId', matchController.getUserMatches);
-
-// Route pour obtenir les matches en attente d'un utilisateur
-router.get('/pending/:userId', matchController.getPendingMatches);
+router.patch("/reject/:matchId", async (req, res) => {
+  try {
+    const matchId = parseInt(req.params.matchId);
+    const updatedMatch = await match.rejectMatch(matchId);
+    res.json(updatedMatch);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;

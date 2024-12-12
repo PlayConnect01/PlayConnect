@@ -1,19 +1,69 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Animated, PanResponder, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, StyleSheet, Animated, PanResponder, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import userData from './data';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import jwtDecode from 'jwt-decode'; // Import jwt-decode
+
+// Configuration globale d'Axios pour le timeout et la gestion des erreurs
+axios.defaults.timeout = 5000; // Timeout de 5 secondes
 
 const Match = () => {
+  const [users, setUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
-  const currentUser = userData[currentUserIndex];
   const position = useRef(new Animated.ValueXY()).current;
   const navigation = useNavigation();
+  const [currentUserId, setCurrentUserId] = useState(null); // State to hold the user ID
+
+  // Configuration de l'URL de base de votre API
+  const API_BASE_URL = 'http://192.168.103.11:3000';
+
+  // Fonction pour récupérer les utilisateurs potentiels
+  const fetchPotentialMatches = async () => {
+    if (!currentUserId) return; // Ensure we have a user ID
+
+    try {
+      const response = await axios.get(`${API_BASE_URL}/matches/common-sports/${currentUserId}`);
+      
+      if (response.data.length > 0) {
+        setUsers(response.data);
+      } else {
+        Alert.alert('Pas de matchs', 'Aucun utilisateur avec des sports communs trouvé.');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des utilisateurs:', error);
+      Alert.alert('Erreur', 'Impossible de charger les utilisateurs potentiels.');
+    }
+  };
+
+  useEffect(() => {
+    const getUserIdFromToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken'); // Retrieve the token
+        if (token) {
+          const decodedToken = jwtDecode(token); // Decode the token
+          setCurrentUserId(decodedToken.id); // Set the user ID from the token
+        }
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
+    };
+
+    getUserIdFromToken(); // Call the function to get the user ID
+  }, []);
+
+  useEffect(() => {
+    fetchPotentialMatches(); // Fetch potential matches when user ID is set
+  }, [currentUserId]); // Dependency on currentUserId
+
+  const currentUser = users[currentUserIndex];
 
   const handleNextUser = () => {
-    if (currentUserIndex < userData.length - 1) {
+    if (currentUserIndex < users.length - 1) {
       setCurrentUserIndex(prev => prev + 1);
+    } else {
+      Alert.alert('Terminé', 'Vous avez vu tous les utilisateurs disponibles.');
     }
     position.setValue({ x: 0, y: 0 }); // Reset position
   };
@@ -23,14 +73,27 @@ const Match = () => {
   };
 
   const handleLike = async () => {
-    try {
-      // Envoyer une demande de match
-      await axios.post('http://localhost:3000/api/matches/create', {
-        user_id_1: currentUser.id, // Assurez-vous d'avoir l'ID de l'utilisateur connecté
-        user_id_2: userData[currentUserIndex].id
-      });
+    if (!currentUser) return;
 
-      // Animation vers la droite
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/matches/create`, 
+        {
+          userId1: currentUserId,
+          userId2: currentUser.user_id,
+          sportId: currentUser.sports[0]?.sport_id // Prendre le premier sport commun
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      console.log('Match créé avec succès:', response.data);
+
+      // Animation et passage à l'utilisateur suivant
       Animated.timing(position, {
         toValue: { x: 500, y: 0 },
         duration: 300,
@@ -38,8 +101,8 @@ const Match = () => {
       }).start(() => handleNextUser());
 
     } catch (error) {
-      console.error('Erreur lors de la création du match:', error);
-      // Gérer l'erreur (peut-être afficher une notification)
+      console.error('Détails de l\'erreur:', error);
+      Alert.alert('Erreur', 'Impossible de créer le match. Vérifiez votre connexion.');
     }
   };
 
@@ -76,26 +139,17 @@ const Match = () => {
     },
   });
 
+  // Écran de chargement si pas d'utilisateurs
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <Text>Chargement des utilisateurs...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Find your team member</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity 
-            style={styles.iconButton} 
-            onPress={handleMessagePress}
-          >
-            <Ionicons name="mail-outline" size={24} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Ionicons name="notifications-outline" size={24} color="#000" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <View style={styles.cardContainer}>
         <Animated.View
           {...panResponder.panHandlers}
@@ -114,16 +168,20 @@ const Match = () => {
             },
           ]}
         >
-          <Image source={{ uri: currentUser.image }} style={styles.image} resizeMode="cover" />
+          <Image 
+            source={{ uri: currentUser.image }} 
+            style={styles.image} 
+            resizeMode="cover" 
+          />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {currentUser.name}, {currentUser.age}
+              {currentUser.first_name} {currentUser.last_name}, {/* Ajoutez l'âge si disponible */}
             </Text>
             <Text style={styles.location}>
-              © {currentUser.location} • {currentUser.distance}
+              Sports partagés : {currentUser.sports.map(sport => sport.name).join(', ')}
             </Text>
             <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{currentUser.status}</Text>
+              <Text style={styles.statusText}>Disponible</Text>
             </View>
           </View>
         </Animated.View>

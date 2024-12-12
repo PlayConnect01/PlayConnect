@@ -16,15 +16,18 @@ const server = http.createServer(app);
 // Initialiser Socket.IO
 initializeSocket(server);
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: '*', // À modifier en production
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));app.use(express.json());
 
 const PORT = 3000;
 
 app.use('/sports', sportRoutes); 
 app.use('/users', userRouter); 
-app.use('/api/matches', matchRouter);
-app.use("/events", eventRoutes);
+app.use('/matches', matchRouter);
+app.use('/events', eventRoutes);
 app.use('/chat', chatRouter);
 
 // Utiliser server.listen au lieu de app.listen
