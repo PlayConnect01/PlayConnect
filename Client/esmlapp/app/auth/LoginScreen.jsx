@@ -20,16 +20,11 @@ const LoginScreen = () => {
       // Handle successful login
       console.log('Login successful:', response.data);
       const { token, user } = response.data;
-      
-      // Store the token locally (you can use AsyncStorage or context API for global state management)
-      // Example of storing the token:
-      // AsyncStorage.setItem('userToken', token);
 
       // Navigate to the home screen or dashboard after successful login
-     navigate.navigate('Homep'); // Adjust the route accordingly
-
+      navigate.navigate('Homep'); // Adjust the route accordingly
     } catch (error) {
-      console.error('Login error:', error.response.data);
+      console.error('Login error:', error.response?.data || error.message);
       alert('Invalid credentials. Please try again.');
     }
   };
@@ -59,6 +54,10 @@ const LoginScreen = () => {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigate.navigate('SignUp')}>
           <Text style={styles.linkText}>Don't have an account? Sign up</Text>
+        </TouchableOpacity>
+        {/* Forgot Password */}
+        <TouchableOpacity onPress={() => navigate.navigate('ForgotPassword')}>
+          <Text style={styles.linkText}>Forgot Password?</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
