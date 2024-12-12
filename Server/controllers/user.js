@@ -21,7 +21,6 @@ const isValidPassword = (password) => {
 
 module.exports = { isValidEmail, isValidPassword };
 
-// Handle user signup
 const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
@@ -43,7 +42,6 @@ const signup = async (req, res) => {
       return res.status(400).json({ error: 'Email is already registered' });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create the user in Prisma DB
@@ -55,21 +53,19 @@ const signup = async (req, res) => {
       },
     });
 
-    // Generate JWT token
     const token = jwt.sign(
       { id: user.user_id, email: user.email, username: user.username },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Send response with user and token (excluding location or extra fields)
     res.status(200).json({
       user: {
         user_id: user.user_id,
         email: user.email,
         username: user.username,
       },
-      token, // JWT token
+      token, 
     });
   } catch (error) {
     console.error('Signup error:', error);
