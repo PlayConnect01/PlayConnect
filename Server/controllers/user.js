@@ -1,20 +1,41 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dotenv = require("dotenv");
-const prisma = require('../prisma');
+const { PrismaClient } = require('@prisma/client'); // Ensure you have Prisma client set up
 const nodemailer = require('nodemailer');
+
 dotenv.config();
 
+const prismaClient = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
-console.log(JWT_SECRET, "salem");
+
+const isValidEmail = (email) => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+const isValidPassword = (password) => {
+  const minLength = 6;
+  return password.length >= minLength;
+};
+
+module.exports = { isValidEmail, isValidPassword };
 
 // Handle user signup
 const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+  }
+
   try {
     // Check if the user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prismaClient.user.findUnique({
       where: { email },
     });
 
@@ -26,7 +47,7 @@ const signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create the user in Prisma DB
-    const user = await prisma.user.create({
+    const user = await prismaClient.user.create({
       data: {
         email,
         password: hashedPassword,
@@ -56,7 +77,6 @@ const signup = async (req, res) => {
   }
 };
 
-
 // Handle user login
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -65,9 +85,13 @@ const login = async (req, res) => {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
   try {
     // Find the user by email
-    const user = await prisma.user.findUnique({
+    const user = await prismaClient.user.findUnique({
       where: { email },
     });
 
@@ -105,67 +129,6 @@ const login = async (req, res) => {
   }
 };
 
-// Handle password reset (forgot password)
-const forgotPassword = async (req, res) => {
-  const { email } = req.body;
-
-  try {
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Generate a reset token
-    const resetToken = jwt.sign(
-      { email: user.email },
-      JWT_SECRET,
-      { expiresIn: '1h' } // Token expires in 1 hour
-    );
-
-    // Save the reset token in the database
-    await prisma.user.update({
-      where: { email },
-      data: { resetToken },
-    });
-
-    // Set up the transporter for sending emails using Gmail
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_FROM,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    // Generate the password reset link
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
-    const mailOptions = {
-      from: process.env.EMAIL_FROM,
-      to: user.email,
-      subject: 'Password Reset Request',
-      text: `Click the following link to reset your password: ${resetLink}`,
-    };
-
-    // Send the email
-    await transporter.sendMail(mailOptions);
-
-    res.status(200).json({ message: 'Password reset email sent' });
-  } catch (error) {
-    console.error('Forgot password error:', error);
-
-    // Log the specific error from nodemailer
-    if (error.response) {
-      console.error('Email sending failed with response:', error.response);
-    }
-
-    res.status(500).json({ error: 'Error sending password reset email' });
-  }
-};
 
 
 // Handle user logout
@@ -173,11 +136,11 @@ const logout = (req, res) => {
   try {
     // If you're using cookies for JWT, clear the token cookie
     res.clearCookie('token'); // Clears token cookie if you're using cookies for JWT
-    res.status(200).json({ message: 'Logged out successfully' });
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({ error: 'Error logging out' });
-  }
+   res.status(200).json({ message: 'Logged out successfully' });
+   } catch (error) {
+     console.error('Logout error:', error);
+     res.status(500).json({ error: 'Error logging out' });
+   }
 };
 
-module.exports = { signup, login, logout, forgotPassword };
+module.exports = { signup, login, logout };

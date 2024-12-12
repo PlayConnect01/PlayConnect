@@ -1,6 +1,6 @@
 const  express  = require('express');
-const {signup,login,logout,forgotPassword} = require('../controllers/user.js') ;
-
+const {signup,login,logout} = require('../controllers/user.js') ;
+const { forgotPassword } = require('../controllers/passwordReset.js');
 const router = express.Router();
 
 // Auth routes
