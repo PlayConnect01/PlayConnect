@@ -16,7 +16,7 @@ const PasswordRecoveryScreen = () => {
     if (step === 1) {
       // Step 1: Send a password reset request to the backend
       try {
-        const response = await axios.post('http://localhost:3000/users/forgotPassword', { email });
+        const response = await axios.post('http://192.168.103.10:3000/users/forgotPassword', { email });
         console.log('Password reset request sent:', response.data);
         setStep(2); // Go to step 2 (enter the code)
       } catch (error) {

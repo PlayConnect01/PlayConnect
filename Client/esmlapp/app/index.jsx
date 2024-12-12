@@ -11,7 +11,7 @@ import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
-
+// import Matchingpage from './Match/Matchingpage'
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
@@ -40,6 +40,7 @@ function TabsNavigation() {
       <Tab.Screen name="SignUp" component={SignUp} />
       <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
       <Tab.Screen name="Match" component={Match} />
+      {/* <Tab.Screen name="Matchingpage" component={Matchingpage} /> */}
       <Tab.Screen name="MessagePage" component={MessagePage} />
       <Tab.Screen name="HomeStack" component={HomeStack} />
       
