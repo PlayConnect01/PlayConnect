@@ -5,7 +5,6 @@ import EventDetails from "./Homepage/EventDetails";
 import AddNewEvent from "./Homepage/CreateEvent";
 import Homep from './Homepage/Homep';
 import Matchingpage from "./Match/Matchingpage"
-import SeeAllPage from "./Homepage/SeeAllNavigation"; 
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -13,7 +12,7 @@ import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
-// import CalendarPage from "../Homepage/CalendarPage"
+import CalendarPage from "./Homepage/CalendarPage"
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); 
@@ -23,8 +22,7 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="SeeAllPage" component={SeeAllPage} />
-      {/* <Stack.Screen name="CalendarPage" component={CalendarPage} /> */}
+      <Stack.Screen name="CalendarPage" component={CalendarPage} />
     </Stack.Navigator>
   );
 }
