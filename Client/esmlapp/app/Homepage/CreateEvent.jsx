@@ -3,7 +3,7 @@ import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Mod
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from 'axios';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import MapPicker from '../Homepage/Mappicker'; 
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,8 @@ import { Buffer } from 'buffer';
 
 
 const decodeToken = (token) => {
+
+
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace('-', '+').replace('_', '/');
@@ -24,7 +26,8 @@ const decodeToken = (token) => {
 global.Buffer = Buffer;
 
 const AddNewEvent = () => { 
-  const router = useRouter();
+
+  const navigation = useNavigation();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(null);
@@ -123,7 +126,7 @@ const AddNewEvent = () => {
 
       console.log("Event data being sent:", eventData);
 
-      const response = await axios.post('http://192.168.103.8:3000/events/create', eventData, {
+      const response = await axios.post('http://192.168.103.8:3000/events/getEventWithCreator', eventData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -134,7 +137,7 @@ const AddNewEvent = () => {
       Alert.alert(
         'Success!',
         'Event created successfully!', 
-        [{ text: 'Okay', onPress: () => router.push('Homepage/Test') }]
+        [{ text: 'Okay', onPress: () =>navigation.navigate('Homepage/EventDetails')}]
       );
 
       setEventName('');

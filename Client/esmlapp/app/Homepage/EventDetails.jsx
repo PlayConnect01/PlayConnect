@@ -12,7 +12,7 @@ const EventDetails = () => {
     const fetchEvent = async () => {
       try {
         const response = await axios.get('http://192.168.103.8:3000/events/getAll'); 
-        setEvent(response.data[0]);
+        setEvent(response.data[0]); 
       } catch (err) {
         setError(err.message);
       } finally {
@@ -32,7 +32,7 @@ const EventDetails = () => {
   }
 
   if (!event) {
-    return <Text>No event found.</Text>;
+    return <Text>No event found.</Text>; 
   }
 
   return (
@@ -73,8 +73,9 @@ const EventDetails = () => {
                   <Ionicons name="star" size={16} color="gold" />
                 </View>
               ))}
+      
             </View>
-
+          
             <View style={styles.teamSection}>
               <Text style={styles.teamTitle}>Away</Text>
               <Text>4/5</Text>

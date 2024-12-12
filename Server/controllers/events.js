@@ -86,6 +86,29 @@ const createEvent = async (req, res) => {
 };
 
 
+const EventWithCreator = async (req, res) => {
+  try {
+    const event = await prisma.event.findFirst({
+      include: {
+        creator: true 
+      }
+    });
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    res.json(event);
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    res.status(500).json({ message: 'Error fetching event', error: error.message });
+  }
+};
+
+
+
+
+
 const updateEvent = async (req, res) => {
   try {
     console.log("Request received: PUT /update", req.params, req.body);
@@ -148,11 +171,9 @@ const getEventsByDate = async (req, res) => {
   try {
     console.log("GET /getByDate", req.params);
     const { date } = req.params;
-
-    // Fetch events for the specified date
     const events = await prisma.event.findMany({
       where: {
-        date: new Date(date), // Ensure the date is in the correct format
+        date: new Date(date), 
       },
     });
 
@@ -169,4 +190,4 @@ const getEventsByDate = async (req, res) => {
   }
 };
 
-module.exports = {getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getEventsByDate};
+module.exports = {EventWithCreator, getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getEventsByDate };

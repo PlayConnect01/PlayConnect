@@ -38,7 +38,7 @@ function TabsNavigation() {
         tabBarStyle: { display: "none" }, 
       }}
     >
-      <Tab.Screen name="SignUp " component={SignUp } />
+      <Tab.Screen name="SignUp" component={SignUp } />
       <Tab.Screen name="Create Event" component={AddNewEvent} />
       <Tab.Screen name="Event Details" component={EventDetails} />
       <Tab.Screen name="Landing" component={Landing} />
