@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import AddNewEvent from "./Homepage/CreateEvent";
+// import AddNewEvent from "./Homepage/CreateEvent";
 import Test from './Homepage/Test';
 import Homep from './Homepage/Homep';
+import Matchingpage from "./Match/Matchingpage";
 
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
 import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
-import Matchingpage from "./Match/Matchingpage";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from './Chat/ChatDetails';
 
@@ -24,10 +24,11 @@ function TabsNavigation() {
         tabBarStyle: { display: 'none' },
       }}
     >
-       <Tab.Screen name="Landing" component={Landing} />
-       <Tab.Screen name="Login" component={Login} />
-       <Tab.Screen name="SignUp " component={SignUp } />
-       <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
+      {/* <Tab.Screen name="Create Event" component={AddNewEvent} /> */}
+      <Tab.Screen name="Landing" component={Landing} />
+      <Tab.Screen name="Login" component={Login} />
+      <Tab.Screen name="SignUp" component={SignUp } />
+      <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
       <Tab.Screen name="Match" component={Match} />
       <Tab.Screen name="Matchingpage" component={Matchingpage} />
       <Tab.Screen name="MessagePage" component={MessagePage} />
