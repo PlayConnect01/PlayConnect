@@ -1,11 +1,11 @@
 import * as React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import AddNewEvent from "./Homepage/CreateEvent";
+// import AddNewEvent from "./Homepage/CreateEvent";
 import Test from "./Homepage/Test";
 import Homep from "./Homepage/Homep";
 import SeeAllPage from "./Homepage/SeeAllNavigation"; 
-import CalendarPage from "./Homepage/CalendarPage";
+// import CalendarPage from "./Homepage/CalendarPage";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -23,7 +23,7 @@ function HomeStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Homep" component={Homep} />
       <Stack.Screen name="SeeAllPage" component={SeeAllPage} />
-      <Stack.Screen name="CalendarPage" component={CalendarPage} />
+      {/* <Stack.Screen name="CalendarPage" component={CalendarPage} /> */}
     </Stack.Navigator>
   );
 }

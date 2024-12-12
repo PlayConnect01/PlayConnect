@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@firebase/firestore": "^4.7.5",
     "@prisma/client": "^6.0.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",

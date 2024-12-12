@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dotenv = require("dotenv");
 const { PrismaClient } = require('@prisma/client'); // Ensure you have Prisma client set up
-const nodemailer = require('nodemailer');
+
 
 dotenv.config();
 
