@@ -1,11 +1,9 @@
 import * as React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import AddNewEvent from "./Homepage/CreateEvent";
-import Test from "./Homepage/Test";
 import Homep from "./Homepage/Homep";
-import SeeAllPage from "./Homepage/SeeAllNavigation"; 
-import CalendarPage from "./Homepage/CalendarPage";
+import SeeAllNavigation from "./Homepage/SeeAllNavigation";  // Assuming this imports the navigator that leads to SeeAllPage
+import CalendarPage from "./Homepage/CalendarPage.jsx";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -15,19 +13,18 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator(); 
+const Stack = createStackNavigator();
 
-
+// Create the Home Stack Navigator
 function HomeStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator>
       <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="SeeAllPage" component={SeeAllPage} />
+      <Stack.Screen name="SeeAllPage" component={SeeAllNavigation} />
       <Stack.Screen name="CalendarPage" component={CalendarPage} />
     </Stack.Navigator>
   );
 }
-
 
 function TabsNavigation() {
   return (
@@ -35,23 +32,17 @@ function TabsNavigation() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: { display: "none" }, 
+        tabBarStyle: { display: "none" },
       }}
     >
-
-      <Tab.Screen name="Landing" component={Landing} />
-      <Tab.Screen name="Login" component={Login} />
-      <Tab.Screen name="SignUp" component={SignUp } />
-      <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
       <Tab.Screen name="Landing" component={Landing} />
       <Tab.Screen name="Login" component={Login} />
       <Tab.Screen name="SignUp" component={SignUp} />
       <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
       <Tab.Screen name="Match" component={Match} />
-      <Tab.Screen name="Matchingpage" component={Matchingpage} />
       <Tab.Screen name="MessagePage" component={MessagePage} />
-      <Tab.Screen name="Tab2" component={Test} />
-      <Tab.Screen name="Homep" component={HomeStack} /> 
+      <Tab.Screen name="HomeStack" component={HomeStack} />
+      
       <Tab.Screen name="ChatDetails" component={ChatDetails} />
     </Tab.Navigator>
   );
