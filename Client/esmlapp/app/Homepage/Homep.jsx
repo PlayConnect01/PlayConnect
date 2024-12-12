@@ -85,7 +85,6 @@ const App = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.date}>Friday, 20 May</Text>
@@ -108,20 +107,13 @@ const App = () => {
         </View>
       </View>
 
-      {/* Today's Events */}
       <View style={styles.eventsCard}>
         <Text style={styles.cardText}>Today's Events</Text>
         <Text style={styles.cardProgress}>15/20</Text>
       </View>
 
-      {/* Categories */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Category</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("SeeAllNavigation")}
-        >
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
       </View>
       <ScrollView
         horizontal
@@ -136,12 +128,8 @@ const App = () => {
         ))}
       </ScrollView>
 
-      {/* Competitions Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Competition of the Week</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
       </View>
       <ScrollView
         horizontal
