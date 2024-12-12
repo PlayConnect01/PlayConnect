@@ -33,7 +33,7 @@ const SignUpScreen = () => {
 
   return (
     <ImageBackground
-      source={{ uri: 'https://via.placeholder.com/1080x1920' }} // Replace with your background image URL
+      source={{ url: '/Client/esmlapp/assets/images/sportscube.png' }} // Replace with your background image URL
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>
