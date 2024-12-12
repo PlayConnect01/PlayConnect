@@ -40,6 +40,7 @@ const EventDetails = () => {
       <View style={styles.header}>
         <Ionicons name="arrow-back" size={24} color="black" />
         <Ionicons name="football-outline" size={24} color="black" style={styles.icon} />
+        <Ionicons name="menu" size={24} color="black" style={styles.icon} />
       </View>
 
       <ScrollView>
@@ -57,10 +58,38 @@ const EventDetails = () => {
         </View>
 
         <View style={styles.participantsContainer}>
-          <Text style={styles.sectionTitle}>Participants: {event.participants || 0}/10</Text>
-          <TouchableOpacity style={styles.addButton}>
-            <Ionicons name="add-circle" size={24} color="purple" />
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>
+            Participants: {event.participants || 0}/10
+          </Text>
+
+          <View style={styles.teamsContainer}>
+            <View style={styles.teamSection}>
+              <Text style={styles.teamTitle}>Home</Text>
+              <Text>5/5</Text>
+              {[...Array(5)].map((_, index) => (
+                <View key={index} style={styles.participantItem}>
+                  <Ionicons name="person-circle" size={24} color="black" />
+                  <Text>Participant {index + 1}</Text>
+                  <Ionicons name="star" size={16} color="gold" />
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.teamSection}>
+              <Text style={styles.teamTitle}>Away</Text>
+              <Text>4/5</Text>
+              {[...Array(4)].map((_, index) => (
+                <View key={index} style={styles.participantItem}>
+                  <Ionicons name="person-circle" size={24} color="black" />
+                  <Text>Participant {index + 1}</Text>
+                  <Ionicons name="star" size={16} color="gold" />
+                </View>
+              ))}
+              <TouchableOpacity style={styles.addButton}>
+                <Ionicons name="add-circle" size={24} color="purple" />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
@@ -119,9 +148,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
+  teamsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  teamSection: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  teamTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  participantItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   addButton: {
-    alignSelf: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
   navbar: {
     flexDirection: 'row',

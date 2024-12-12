@@ -282,13 +282,13 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#000', // Optional: Set a background color for the modal
+    backgroundColor: '#000', 
   },
   closeArrow: {
     position: 'absolute',
     top: 40,
     left: 20,
-    zIndex: 1, // Ensure the arrow is above the map
+    zIndex: 1, 
   },
 });
 

@@ -4,8 +4,7 @@ const eventRoutes = require("./routes/events");
 const sportRoutes= require("./routes/sport")
 const userRouter = require('./routes/user');
 
-
-const app = express()
+const app = express();
 
 app.use(cors());
 app.use(express.json());
@@ -23,6 +22,3 @@ app.use("/events", eventRoutes);
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
 });
-
-
-
