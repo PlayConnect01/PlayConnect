@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from "react
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import axios from "axios";
 
-const SeeAllPage = ({ navigation }) => {
+const SeeAllPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +55,6 @@ const SeeAllPage = ({ navigation }) => {
   );
 };
 
-export default SeeAllPage;
 
 const styles = StyleSheet.create({
   container: {
@@ -107,3 +106,6 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 });
+
+
+export default SeeAllPage;

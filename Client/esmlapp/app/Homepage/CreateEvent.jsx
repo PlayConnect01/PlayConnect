@@ -5,9 +5,25 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import MapPicker from '../Homepage/Mappicker'; 
-import Icon from 'react-native-vector-icons/Ionicons'; 
+import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
 
-const AddNewEvent = () => {
+
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace('-', '+').replace('_', '/');
+    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+  } catch (error) {
+    console.error('Token decoding error:', error); 
+    return null;
+  }
+};
+
+global.Buffer = Buffer;
+
+const AddNewEvent = () => { 
   const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
@@ -62,21 +78,59 @@ const AddNewEvent = () => {
     }
 
     try {
+      const token = await AsyncStorage.getItem('userToken');
+
+      if (!token) {
+        Alert.alert(
+          'Error!',
+          'No authentication token found. Please log in again.',
+          [{ text: 'Okay' }]
+        );
+        return;
+      }
+
+      // Manual token decoding
+      const decodedToken = decodeToken(token);
+
+      if (!decodedToken) {
+        throw new Error('Failed to decode token');
+      }
+
+      // Try multiple ways to get user ID
+      const userId = decodedToken.id || 
+                     decodedToken.user_id || 
+                     decodedToken.userId;
+
+      if (!userId) {
+        throw new Error('Could not find user ID in token');
+      }
+
+      console.log("Decoded user ID:", userId);
+
       const eventData = {
         eventName,
         note,
-        date,
-        startTime,
-        endTime,
+        date: date.toISOString(),
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
         location,
         category,
-        participants,
-        price,
-        isFree
+        participants: parseInt(participants, 10),
+        price: parseFloat(price),
+        isFree,
+        creator_id: userId
       };
 
-      await axios.post('http://192.168.103.8:3000/events/create', eventData);
-      
+      console.log("Event data being sent:", eventData);
+
+      const response = await axios.post('http://192.168.103.8:3000/events/create', eventData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log("Event created response:", response.data);
+
       Alert.alert(
         'Success!',
         'Event created successfully!', 
@@ -95,9 +149,11 @@ const AddNewEvent = () => {
       setIsFree(false);
 
     } catch (error) {
+      console.error('Full error details:', error);
+      console.error('Event creation error:', error.response ? error.response.data : error.message);
       Alert.alert(
         'Error!',
-        'There was an issue creating the event.',
+        'There was an issue creating the event. Please check the console for details.',
         [{ text: 'Okay' }]
       );
     }
