@@ -8,12 +8,10 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 console.log(JWT_SECRET, "salem");
 
-// Handle user signup
 const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
   try {
-    // Check if the user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -22,10 +20,8 @@ const signup = async (req, res) => {
       return res.status(400).json({ error: 'Email is already registered' });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user in Prisma DB
     const user = await prisma.user.create({
       data: {
         email,
@@ -34,14 +30,12 @@ const signup = async (req, res) => {
       },
     });
 
-    // Generate JWT token
     const token = jwt.sign(
       { id: user.user_id, email: user.email, username: user.username },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Send response with user and token (excluding location or extra fields)
     res.status(200).json({
       user: {
         user_id: user.user_id,

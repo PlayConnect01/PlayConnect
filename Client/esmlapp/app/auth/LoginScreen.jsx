@@ -1,32 +1,30 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import axios from 'axios'; // Import Axios
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter();
+  const navigate = useNavigation();
 
   const handleLogin = async () => {
     try {
-      // Send POST request to the backend API
       const response = await axios.post('http://localhost:3000/users/login', {
         email,
         password,
       });
 
-      // Handle successful login
       console.log('Login successful:', response.data);
       const { token, user } = response.data;
       
       // Store the token locally (you can use AsyncStorage or context API for global state management)
       // Example of storing the token:
-      // AsyncStorage.setItem('userToken', token);
+      // AsyncStorage.setItem('userToken', token); 
 
       // Navigate to the home screen or dashboard after successful login
-      router.push('/home'); // Adjust the route accordingly
+     navigate.navigate('Homep'); 
 
     } catch (error) {
       console.error('Login error:', error.response.data);
@@ -57,7 +55,7 @@ const LoginScreen = () => {
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/auth/SignUpScreen')}>
+        <TouchableOpacity onPress={() => navigate.navigate('SignUp')}>
           <Text style={styles.linkText}>Don't have an account? Sign up</Text>
         </TouchableOpacity>
       </View>
@@ -65,7 +63,6 @@ const LoginScreen = () => {
   );
 };
 
-// Styles for the login screen
 const styles = StyleSheet.create({
   container: {
     flex: 1,

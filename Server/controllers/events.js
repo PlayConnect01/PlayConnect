@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
+
 const getAllEvents = async (req, res) => {
   try {
     console.log("Request received: GET /getAll");
