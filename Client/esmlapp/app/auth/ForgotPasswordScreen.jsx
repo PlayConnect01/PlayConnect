@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 
 const PasswordRecoveryScreen = () => {
@@ -10,7 +10,7 @@ const PasswordRecoveryScreen = () => {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
-  const router = useRouter();
+  const navigate = useNavigation();
 
   const handleNextStep = async () => {
     if (step === 1) {
@@ -39,7 +39,7 @@ const PasswordRecoveryScreen = () => {
         try {
           const response = await axios.post('http://localhost:3000/users/resetPassword', { email, newPassword });
           console.log('Password updated:', response.data);
-          router.push('/auth/LoginScreen'); // Redirect to login
+          navigate.navigate('Login'); // Redirect to login
         } catch (error) {
           console.error('Error resetting password:', error.response.data);
           alert('Error resetting password. Please try again.');
