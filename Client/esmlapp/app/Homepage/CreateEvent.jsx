@@ -1,75 +1,210 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from "react";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from 'axios';
+import { useRouter } from 'expo-router';
+import MapPicker from '../Homepage/Mappicker'; 
+import Icon from 'react-native-vector-icons/Ionicons'; 
 
-const EventDetails = () => {
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const AddNewEvent = () => {
+  const router = useRouter();
+  const [eventName, setEventName] = useState("");
+  const [note, setNote] = useState("");
+  const [date, setDate] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
+  const [location, setLocation] = useState("");
+  const [category, setCategory] = useState("Sports");
+  const [participants, setParticipants] = useState("10");
+  const [price, setPrice] = useState("0");
+  const [isFree, setIsFree] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false); 
+  const [mapLocation, setMapLocation] = useState({ latitude: 37.78825, longitude: -122.4324 });
 
-  useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        const response = await axios.get('http://192.168.103.8:3000/events/getAll'); 
-        setEvent(response.data[0]);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const toggleFree = () => {
+    setIsFree(!isFree);
+    if (!isFree) setPrice("0");
+  };
 
-    fetchEvent();
-  }, []);
+  const onDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) setDate(selectedDate);
+  };
 
-  if (loading) {
-    return <Text>Loading...</Text>;
-  }
+  const onStartTimeChange = (event, selectedTime) => {
+    setShowStartTimePicker(false);
+    if (selectedTime) setStartTime(selectedTime);
+  };
 
-  if (error) {
-    return <Text>Error: {error}</Text>;
-  }
+  const onEndTimeChange = (event, selectedTime) => {
+    setShowEndTimePicker(false);
+    if (selectedTime) setEndTime(selectedTime);
+  };
 
-  if (!event) {
-    return <Text>No event found.</Text>;
-  }
+  const handleLocationSelect = (location) => {
+    setMapLocation(location);
+    setLocation(`Lat: ${location.latitude}, Lon: ${location.longitude}`);
+    setShowMapModal(false);
+  };
+
+  const createEvent = async () => {
+    if (!eventName || !note || !date || !startTime || !endTime || !location || !participants || !price) {
+      Alert.alert(
+        'Error!',
+        'Please fill in all fields before creating the event.',
+        [{ text: 'Okay' }]
+      );
+      return; 
+    }
+
+    try {
+      const eventData = {
+        eventName,
+        note,
+        date,
+        startTime,
+        endTime,
+        location,
+        category,
+        participants,
+        price,
+        isFree
+      };
+
+      await axios.post('http://192.168.103.8:3000/events/create', eventData);
+      
+      Alert.alert(
+        'Success!',
+        'Event created successfully!', 
+        [{ text: 'Okay', onPress: () => router.push('Homepage/Test') }]
+      );
+
+      setEventName('');
+      setNote('');
+      setDate(null);
+      setStartTime(null);
+      setEndTime(null);
+      setLocation('');
+      setCategory('Sports');
+      setParticipants('10');
+      setPrice('0');
+      setIsFree(false);
+
+    } catch (error) {
+      Alert.alert(
+        'Error!',
+        'There was an issue creating the event.',
+        [{ text: 'Okay' }]
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="arrow-back" size={24} color="black" />
-        <Ionicons name="football-outline" size={24} color="black" style={styles.icon} />
+      <Text style={styles.header}>Add New Event</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Event name*"
+        value={eventName}
+        onChangeText={setEventName}
+      />
+      <TextInput
+        style={styles.note}
+        placeholder="Type the note here..."
+        value={note}
+        onChangeText={setNote}
+      />
+      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+        <Text>{date ? date.toDateString() : "Date"}</Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
+      )}
+      <View style={styles.timeContainer}>
+        <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{startTime ? startTime.toLocaleTimeString() : "Start time"}</Text>
+        </TouchableOpacity>
+        {showStartTimePicker && (
+          <DateTimePicker
+            value={startTime || new Date()}
+            onChange={onStartTimeChange}
+            mode="time"
+          />
+        )}
+        <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{endTime ? endTime.toLocaleTimeString() : "End time"}</Text>
+        </TouchableOpacity>
+        {showEndTimePicker && (
+          <DateTimePicker
+            value={endTime || new Date()}
+            onChange={onEndTimeChange}
+            mode="time"
+          />
+        )}
       </View>
 
-      <ScrollView>
-        <Text style={styles.eventName}>{event.event_name}</Text>
-        <Text style={styles.description}>{event.description}</Text>
+      <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.input}>
+        <Text>{location || "Select Location"}</Text>
+      </TouchableOpacity>
 
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>Event creator: {event.creator_id}</Text>
-          <Text style={styles.infoText}>Date: {new Date(event.date).toLocaleString()}</Text>
-          <Text style={styles.infoText}>Location: {event.location}</Text>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/150' }}
-            style={styles.map}
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)} 
+        transparent={false}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeArrow}>
+            <Icon name="arrow-back" size={30} color="#fff" />
+          </TouchableOpacity>
+          <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
+        </View>
+      </Modal>
+
+      <Picker
+        selectedValue={category}
+        style={styles.select}
+        onValueChange={(itemValue) => setCategory(itemValue)}
+      >
+        <Picker.Item label="Sports" value="Sports" />
+        <Picker.Item label="Music" value="Music" />
+        <Picker.Item label="Education" value="Education" />
+      </Picker>
+      <View style={styles.row}>
+        <View style={styles.column}>
+          <Text>Participants:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={participants}
+            onChangeText={setParticipants}
           />
         </View>
-
-        <View style={styles.participantsContainer}>
-          <Text style={styles.sectionTitle}>Participants: {event.participants || 0}/10</Text>
-          <TouchableOpacity style={styles.addButton}>
-            <Ionicons name="add-circle" size={24} color="purple" />
-          </TouchableOpacity>
+        <View style={styles.column}>
+          <Text>Price:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={price}
+            onChangeText={setPrice}
+            editable={!isFree}
+          />
         </View>
-      </ScrollView>
-
-      <View style={styles.navbar}>
-        <Ionicons name="home-outline" size={24} color="black" />
-        <Ionicons name="search" size={24} color="purple" />
-        <Ionicons name="chatbubble-outline" size={24} color="black" />
-        <Ionicons name="person-outline" size={24} color="black" />
       </View>
+      <View style={styles.row}>
+        <Text>Free</Text>
+        <Switch value={isFree} onValueChange={toggleFree} />
+      </View>
+      <TouchableOpacity
+        style={styles.createButton}
+        onPress={createEvent}
+      >
+        <Text style={styles.createButtonText}>Create Event</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -77,59 +212,81 @@ const EventDetails = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    padding: 16,
+    backgroundColor: "#fff",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  icon: {
-    marginHorizontal: 8,
-  },
-  eventName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    margin: 16,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
   },
-  description: {
-    fontSize: 14,
-    color: 'gray',
-    marginHorizontal: 16,
-  },
-  infoContainer: {
-    padding: 16,
-  },
-  infoText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  map: {
-    width: '100%',
-    height: 150,
-    marginTop: 8,
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
     borderRadius: 8,
+    padding: 10,
+    marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
   },
-  participantsContainer: {
+  note: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingBottom: 50,
+    marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  timeInput: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  select: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  column: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  createButton: {
+    backgroundColor: "#6200ee",
     padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  addButton: {
-    alignSelf: 'center',
+    borderRadius: 8,
+    alignItems: "center",
     marginTop: 16,
   },
-  navbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'lightgray',
+  createButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000', 
+  },
+  closeArrow: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1, 
   },
 });
 
-export default EventDetails;
+export default AddNewEvent;
