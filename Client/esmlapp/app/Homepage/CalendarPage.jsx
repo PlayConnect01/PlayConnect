@@ -65,7 +65,7 @@ const CalendarPage = () => {
             );
           })}
         </View>
-      </View>
+      </View> 
     );
   };
 
