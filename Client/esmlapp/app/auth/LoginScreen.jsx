@@ -25,7 +25,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('userToken', token);
 
       // Navigate to home page after successful login
-      navigate.navigate('Homepage/CreateEvent'); // Adjust the route accordingly
+      navigate.navigate('Homepage/Homep'); // Adjust the route accordingly
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
       alert('Invalid credentials. Please try again.');
