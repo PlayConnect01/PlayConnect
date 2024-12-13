@@ -7,7 +7,8 @@ const sportRoutes = require("./routes/sport");
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
 const chatRoutes = require('./routes/chat');
-
+ const  competetionRouter = require ('./routes/competetion.js')
+ const  passwordRouter = require ('./routes/handlePasswordReset .js')
 const app = express();
 
 // Créer le serveur HTTP
