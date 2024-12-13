@@ -21,8 +21,9 @@ const Stack = createStackNavigator();
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="CalendarPage" component={CalendarPage} />
+       <Stack.Screen name="Homep" component={Homep} /> 
+      <Stack.Screen name="SeeAllPage" component={SeeAllPage} /> 
+      <Stack.Screen name="CalendarPage" component={CalendarPage} /> 
     </Stack.Navigator>
   );
 }
@@ -47,7 +48,7 @@ function TabsNavigation() {
       <Tab.Screen name="Match" component={Match} />
       <Tab.Screen name="Matchingpage" component={Matchingpage} />
       <Tab.Screen name="MessagePage" component={MessagePage} />
-      <Tab.Screen name="Homep" component={HomeStack} /> 
+       <Tab.Screen name="Homep" component={HomeStack} /> 
       <Tab.Screen name="ChatDetails" component={ChatDetails} />
       </Tab.Navigator>
   );
