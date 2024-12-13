@@ -1,100 +1,130 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+// import * as React from 'react';
+// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+// // import AddNewEvent from "./Homepage/CreateEvent";
+// import Test from './Homepage/Test';
+// import Homep from './Homepage/Homep';
+// import Matchingpage from "./Match/Matchingpage";
 
-const AuthOptionsScreen = () => {
-  const navigate = useNavigation();
+// import Landing from "./auth/LandingScreen";
+// import Login from "./auth/LoginScreen";
+// import SignUp from "./auth/SignUpScreen";
+// import ForgotPassword from "./auth/ForgotPasswordScreen";
+// import Match from "./Match/Firstpagematch";
+// import MessagePage from "./Chat/MessagePage";
+// import ChatDetails from './Chat/ChatDetails';
 
- 
 
+// const Tab = createBottomTabNavigator();
+
+// function TabsNavigation() {
+//   return (
+//     <Tab.Navigator
+//       screenOptions={{
+//         headerShown: false,
+//         tabBarShowLabel: false,
+//         tabBarStyle: { display: 'none' },
+//       }}
+//     >
+//       {/* <Tab.Screen name="Create Event" component={AddNewEvent} /> */}
+//       <Tab.Screen name="Landing" component={Landing} />
+//       <Tab.Screen name="Login" component={Login} />
+//       <Tab.Screen name="SignUp" component={SignUp } />
+//       <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
+//       <Tab.Screen name="Match" component={Match} />
+//       <Tab.Screen name="Matchingpage" component={Matchingpage} />
+//       <Tab.Screen name="MessagePage" component={MessagePage} />
+//       <Tab.Screen name="Tab2" component={Test} />
+//       <Tab.Screen name="Homep" component={Homep} />
+//       <Tab.Screen name="ChatDetails" component={ChatDetails} />
+
+//     </Tab.Navigator>
+//   );
+// }
+
+// export default TabsNavigation;
+
+// import * as React from 'react';
+// import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+// import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// import AddNewEvent from "./Homepage/CreateEvent"
+// import Match from "./Match/Firstpagematch"
+// import Matchingpage from "./Match/Matchingpage"
+// import MessagePage from "./Chat/MessagePage"
+// import ChatDetails from './Chat/ChatDetails';
+
+
+// const Tab = createBottomTabNavigator();
+
+// function TabsNavigation() {
+//     return (
+//         <GestureHandlerRootView style={{ flex: 1 }}>
+//             <Tab.Navigator
+//                 screenOptions={{
+//                     headerShown: false,
+//                     tabBarActiveTintColor: '#6200ee',
+//                     tabBarInactiveTintColor: 'gray',
+//                 }}
+//             >
+//                 <Tab.Screen name="Tab1" component={Match} />
+//                 <Tab.Screen name="Matchingpage" component={Matchingpage} />
+//                 <Tab.Screen name="Messages" component={MessagePage} />
+//                 <Tab.Screen 
+//                     name="ChatDetails"
+//                     component={ChatDetails}
+//                     options={{
+//                         tabBarButton: () => null,
+//                         tabBarStyle: { display: 'none' },
+//                     }}
+//                 />
+//             </Tab.Navigator>
+//         </GestureHandlerRootView>
+//     );
+// }
+
+// export default TabsNavigation;
+
+import * as React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+// import AddNewEvent from "./Homepage/CreateEvent";
+// import Test from './Homepage/Test';
+// import Homep from './Homepage/Homep';
+import Matchingpage from "../Match/Matchingpage"
+// import Landing from "./auth/LandingScreen";
+import Login from "../auth/LoginScreen";
+import SignUp from "../auth/SignUpScreen";
+import ForgotPassword from "../auth/ForgotPasswordScreen";
+import Match from "../Match/Firstpagematch";
+import MessagePage from "../Chat/MessagePage";
+import ChatDetails from '../Chat/ChatDetails';
+
+const Tab = createBottomTabNavigator();
+
+function TabsNavigation() {
   return (
-    <LinearGradient
-      colors={['#4c669f', '#3b5998', '#192f6a']}
-      style={styles.container}
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarStyle: { display: 'none' },
+      }}
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome to SportsMate</Text>
-        <Text style={styles.subtitle}>Get started with your sports journey</Text>
-        
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() =>  navigate.navigate('Login')}
-        >
-          <LinearGradient
-            colors={['#ff9a9e', '#fad0c4']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.buttonGradient}
-          >
-            <Ionicons name="log-in-outline" size={24} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Login</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+      {/* <Tab.Screen name="Create Event" component={AddNewEvent} />
+      <Tab.Screen name="Landing" component={Landing} />
+      <Tab.Screen name="Login" component={Login} />
+      <Tab.Screen name="SignUp " component={SignUp } />
+      <Tab.Screen name="ForgotPassword" component={ForgotPassword} /> */}
+          <Tab.Screen name="SignUp " component={SignUp } />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigate.navigate('SignUp')}
-        >
-          <LinearGradient
-            colors={['#a18cd1', '#fbc2eb']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.buttonGradient}
-          >
-            <Ionicons name="person-add-outline" size={24} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-    </LinearGradient>
+    <Tab.Screen name="Login" component={Login} />
+    <Tab.Screen name="Match" component={Match} />
+    <Tab.Screen name="Matchingpage" component={Matchingpage} />
+    <Tab.Screen name="MessagePage" component={MessagePage} />
+    {/* <Tab.Screen name="Tab2" component={Test} /> */}
+    {/* <Tab.Screen name="Homep" component={Homep} /> */}
+    <Tab.Screen name="ChatDetails" component={ChatDetails} />
+
+    </Tab.Navigator>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    width: '80%',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#ffffff',
-    marginBottom: 40,
-    textAlign: 'center',
-  },
-  button: {
-    width: '100%',
-    marginBottom: 20,
-    borderRadius: 25,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  icon: {
-    marginRight: 10,
-  },
-});
-
-export default AuthOptionsScreen;
+export default TabsNavigation;

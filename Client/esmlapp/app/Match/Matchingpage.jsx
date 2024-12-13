@@ -1,52 +1,141 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Animated, PanResponder, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Animated,
+  PanResponder,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import userData from './data';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
+
+axios.defaults.timeout = 5000;
+
+const decodeJWT = (token) => {
+  const base64Payload = token.split('.')[1];
+  const payload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+  return JSON.parse(payload);
+};
 
 const Match = () => {
+  const [users, setUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
-  const currentUser = userData[currentUserIndex];
+  const [currentUserId, setCurrentUserId] = useState(null);
   const position = useRef(new Animated.ValueXY()).current;
   const navigation = useNavigation();
 
-  const handleNextUser = () => {
-    if (currentUserIndex < userData.length - 1) {
-      setCurrentUserIndex(prev => prev + 1);
+  useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          throw new Error('Token not found');
+        }
+
+        const decodedToken = decodeJWT(token);
+        if (decodedToken?.id) {
+          setCurrentUserId(decodedToken.id);
+          console.log('User ID:', decodedToken.id);
+        } else {
+          throw new Error('User ID not found in token');
+        }
+      } catch (error) {
+        console.error('Error loading token:', error);
+        Alert.alert('Error', 'Failed to load user data. Please log in again.');
+      }
+    };
+
+    loadToken();
+  }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      const fetchPotentialMatches = async () => {
+        try {
+          const response = await axios.get(
+            `http://192.168.104.10:3000/matches/common-sports/${currentUserId}`
+          );
+
+          if (response.data.length > 0) {
+            setUsers(response.data);
+            console.log('Données récupérées:', response.data);
+          } else {
+            Alert.alert('No Matches', 'No users with common sports found.');
+          }
+        } catch (error) {
+          console.error('Error fetching users:', error.message);
+          Alert.alert('Error', 'Failed to load potential matches.');
+        }
+      };
+
+      fetchPotentialMatches();
     }
-    position.setValue({ x: 0, y: 0 }); // Reset position
+  }, [currentUserId]);
+
+  const handleNextUser = () => {
+    if (currentUserIndex < users.length - 1) {
+      setCurrentUserIndex((prev) => prev + 1);
+    } else {
+      Alert.alert('Finished', 'You have viewed all available users.');
+    }
+    position.setValue({ x: 0, y: 0 });
   };
 
-  const handleMessagePress = () => {
-    navigation.navigate('Messages'); // Navigue vers l'écran Messages
+  const handleLike = async () => {
+    if (!users[currentUserIndex]) return;
+
+    try {
+      const currentUser = users[currentUserIndex];
+      await axios.post(
+        `http://192.168.104.10:3000/matches/create`,
+        {
+          userId1: currentUserId,
+          userId2: currentUser.user_id,
+          sportId: currentUser.sports[0]?.sport_id,
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000,
+        }
+      );
+
+      Animated.timing(position, {
+        toValue: { x: 500, y: 0 },
+        duration: 300,
+        useNativeDriver: false,
+      }).start(() => handleNextUser());
+    } catch (error) {
+      console.error('Error creating match:', error.message);
+      Alert.alert('Error', `Failed to create the match. ${error.message}`);
+    }
+  };
+
+  const handleDislike = () => {
+    Animated.timing(position, {
+      toValue: { x: -500, y: 0 },
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => handleNextUser());
   };
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: Animated.event(
-      [
-        null,
-        { dx: position.x, dy: position.y },
-      ],
+      [null, { dx: position.x, dy: position.y }],
       { useNativeDriver: false }
     ),
     onPanResponderRelease: (_, gesture) => {
       if (gesture.dx > 120) {
-        // Swipe right - Like
-        Animated.timing(position, {
-          toValue: { x: 500, y: gesture.dy },
-          duration: 300,
-          useNativeDriver: false,
-        }).start(() => handleNextUser());
+        handleLike();
       } else if (gesture.dx < -120) {
-        // Swipe left - Dislike
-        Animated.timing(position, {
-          toValue: { x: -500, y: gesture.dy },
-          duration: 300,
-          useNativeDriver: false,
-        }).start(() => handleNextUser());
+        handleDislike();
       } else {
-        // Return to center
         Animated.spring(position, {
           toValue: { x: 0, y: 0 },
           useNativeDriver: false,
@@ -55,24 +144,33 @@ const Match = () => {
     },
   });
 
+  if (!currentUserId) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading user data...</Text>
+      </View>
+    );
+  }
+
+  const currentUser = users[currentUserIndex];
+
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading users...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="chevron-back" size={24} color="#000" />
+        <TouchableOpacity onPress={() => navigation.navigate('MessagePage')}>
+          <Ionicons name="chatbubble-ellipses-outline" size={30} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Find your team member</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity 
-            style={styles.iconButton} 
-            onPress={handleMessagePress}
-          >
-            <Ionicons name="mail-outline" size={24} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Ionicons name="notifications-outline" size={24} color="#000" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => Alert.alert('Notifications', 'No new notifications.')}>
+          <Ionicons name="notifications-outline" size={30} color="#000" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.cardContainer}>
@@ -84,7 +182,8 @@ const Match = () => {
               transform: [
                 { translateX: position.x },
                 { translateY: position.y },
-                { rotate: position.x.interpolate({
+                {
+                  rotate: position.x.interpolate({
                     inputRange: [-200, 0, 200],
                     outputRange: ['-10deg', '0deg', '10deg'],
                   }),
@@ -93,26 +192,36 @@ const Match = () => {
             },
           ]}
         >
-          <Image source={{ uri: currentUser.image }} style={styles.image} resizeMode="cover" />
+          <Image
+            source={{ uri: currentUser.profile_picture }} // Utilisez la photo de profil
+            style={styles.image}
+            resizeMode="cover"
+          />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {currentUser.name}, {currentUser.age}
+              {currentUser.username || 'Unknown User'} {/* Safeguard for username */}
             </Text>
             <Text style={styles.location}>
-              © {currentUser.location} • {currentUser.distance}
+              {currentUser.location || 'Location not available'} {/* Safeguard for location */}
             </Text>
             <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{currentUser.status}</Text>
+              <Text style={styles.statusText}>Online</Text>
             </View>
           </View>
         </Animated.View>
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity style={[styles.actionButton, styles.dislikeButton]} onPress={() => handleNextUser()}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.dislikeButton]}
+          onPress={handleDislike}
+        >
           <Ionicons name="close" size={30} color="#FF3B30" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.likeButton]} onPress={() => handleNextUser()}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.likeButton]}
+          onPress={handleLike}
+        >
           <Ionicons name="checkmark" size={30} color="#34C759" />
         </TouchableOpacity>
       </View>
@@ -127,22 +236,16 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 44,
-    paddingBottom: 16,
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: '600',
+    padding: 16,
+    backgroundColor: '#fff',
+    elevation: 3,
   },
   cardContainer: {
     flex: 1,
     margin: 16,
     borderRadius: 20,
     overflow: 'hidden',
-    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -150,8 +253,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 20,
-    overflow: 'hidden',
-    position: 'absolute',
   },
   image: {
     width: '100%',
@@ -169,17 +270,10 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   location: {
     color: '#fff',
     fontSize: 16,
-    marginBottom: 12,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   statusBadge: {
     backgroundColor: 'rgba(147, 51, 234, 0.9)',
@@ -209,22 +303,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 3,
   },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
+  dislikeButton: {
+    borderColor: '#FF3B30',
   },
-  iconButton: {
-    padding: 5,
+  likeButton: {
+    borderColor: '#34C759',
   },
 });
 
