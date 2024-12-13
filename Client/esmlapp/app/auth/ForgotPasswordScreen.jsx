@@ -141,7 +141,6 @@ const PasswordRecoveryScreen = () => {
   );
 };
 
-// Styles for the password recovery screen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
