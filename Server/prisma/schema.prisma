@@ -207,7 +207,7 @@ model Message {
   sent_at       DateTime @default(now())
 
   // Pour les messages vocaux
-  voice_duration Float?   // Durée du message vocal en secondes
+  voice_duration Float?   
   voice_file_url String?  // URL du fichier audio
 
   chat    Chat  @relation(fields: [chat_id], references: [chat_id])
@@ -216,6 +216,10 @@ model Message {
   @@index([chat_id])
   @@index([sender_id])
 }
+
+
+
+
 
 model Achievement {
   achievement_id    Int      @id @default(autoincrement())

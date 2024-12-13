@@ -177,23 +177,28 @@ const App = () => {
         ))}
       </ScrollView>
       <ScrollView contentContainerStyle={styles.eventsGrid}>
-        {filteredEvents.map((event) => (
-          <View key={event.id} style={styles.eventItem}>
-            <Image source={{ uri: event.image }} style={styles.eventImage} />
-            <View style={styles.eventDetails}>
-              <Text style={styles.eventText}>{event.name}</Text>
-              <View style={styles.eventRow}>
-                <Ionicons name="location-outline" size={16} color="#555" />
-                <Text style={styles.eventDetailText}>{event.location}</Text>
-              </View>
-              <View style={styles.eventRow}>
-                <Ionicons name="calendar-outline" size={16} color="#555" />
-                <Text style={styles.eventDetailText}>{event.date}</Text>
-              </View>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+  {filteredEvents.map((event) => (
+    <TouchableOpacity
+      key={event.id}
+      style={styles.eventItem}
+      onPress={() => navigation.navigate('Homepage/EventDetails', { eventId: event.event_id })}
+    >
+<Image source={{ uri: event.image || 'https://via.placeholder.com/300x200' }} style={styles.eventImage} />
+      <View style={styles.eventDetails}>
+        <Text style={styles.eventText}>{event.name}</Text>
+        <View style={styles.eventRow}>
+          <Ionicons name="location-outline" size={16} color="#555" />
+          <Text style={styles.eventDetailText}>{event.location}</Text> 
+        </View>
+        <View style={styles.eventRow}>
+          <Ionicons name="calendar-outline" size={16} color="#555" />
+          <Text style={styles.eventDetailText}>{event.date}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  ))}
+</ScrollView>
+
     </View>
     </ScrollView>
   );
