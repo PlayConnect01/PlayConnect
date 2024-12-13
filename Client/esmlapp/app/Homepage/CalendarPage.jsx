@@ -1,45 +1,72 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
-import { useNavigation } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from "@react-navigation/native";
 
 const CalendarPage = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
   const navigation = useNavigation();
 
   const fetchEvents = (date) => {
     setLoading(true);
-    const formattedDate = new Date(date).toISOString().split("T")[0];
+
     axios
-      .get(`http://192.168.104.4:3000/events/getByDate/${formattedDate}`)
+      .get(`http://192.168.104.4:3000/events/getByDate/${date}`)
       .then((response) => {
         setEvents(response.data);
-        setLoading(false);
+        setLoading(false);        
       })
       .catch((error) => {
-        console.error("Error fetching events:", error);
-        Alert.alert("Error", "Failed to load events. Please try again later.");
+        setEvents([]);
         setLoading(false);
       });
   };
 
   useEffect(() => {
-    const today = new Date().toISOString().split("T")[0];
-    setSelectedDate(today);
-    fetchEvents(today);
-  }, []);
+    fetchEvents(selectedDate);
+  }, [selectedDate]);
 
-  const handleDateChange = (event, date) => {
-    setShowPicker(false);
-    if (date) {
-      setSelectedDate(date);
-      fetchEvents(date.toISOString().split("T")[0]);
-    }
+  const renderCalendar = () => {
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+    const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    return (
+      <View style={styles.calendar}>
+        <View style={styles.calendarHeader}>
+          <Text style={styles.calendarMonth}>
+            {today.toLocaleString("default", { month: "long" })} {today.getFullYear()}
+          </Text>
+        </View>
+        <View style={styles.calendarGrid}>
+          {Array(firstDay)
+            .fill(null)
+            .map((_, index) => (
+              <View key={`empty-${index}`} style={styles.calendarDay} />
+            ))}
+          {calendarDays.map((day) => {
+            const dateString = `${today.getFullYear()}-${(today.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+            const isSelected = dateString === selectedDate;
+
+            return (
+              <TouchableOpacity
+                key={day}
+                style={[styles.calendarDay, isSelected && styles.selectedDay]}
+                onPress={() => setSelectedDate(dateString)}
+              >
+                <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>{day}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    );
   };
 
   if (loading) {
@@ -53,49 +80,22 @@ const CalendarPage = () => {
           <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Calendar</Text>
-        <TouchableOpacity>
-          <MaterialCommunityIcons name="calendar-outline" size={24} color="#555" />
-        </TouchableOpacity>
       </View>
 
-      {/* Date Picker */}
-      <View style={styles.datePickerContainer}>
-        <TouchableOpacity onPress={() => setShowPicker(true)}>
-          <Text>Select a date</Text>
-        </TouchableOpacity>
-        {showPicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
-        )}
-      </View>
+      {renderCalendar()}
 
-      {/* Event List */}
+      
       <View style={styles.eventsContainer}>
-        {loading ? (
-          <Text style={styles.loadingText}>Loading...</Text>
-        ) : events.length > 0 ? (
-          <FlatList
-            data={events}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.eventItem}>
-                <View style={styles.eventTimeContainer}>
-                  <Text style={styles.eventTime}>{item.time}</Text>
-                  <MaterialCommunityIcons name="map-marker-outline" size={16} color="#555" />
-                  <Text style={styles.eventLocation}>{item.location}</Text>
-                </View>
-                <Text style={styles.eventTitle}>{item.title}</Text>
-                <Text style={styles.eventParticipants}>
-                  <MaterialCommunityIcons name="account-multiple" size={16} color="#555" />
-                  {` Participants: ${item.participants}`}
-                </Text>
-              </View>
-            )}
-          />
+        {events.length > 0 ? (
+          events.map((item) => (
+            <View key={item.event_id} style={styles.eventCard}>
+              <Text style={styles.eventName}>{item.event_name}</Text>
+              <Text style={styles.eventDate}>
+                {new Date(item.start_time).toLocaleString()} - {new Date(item.end_time).toLocaleString()}
+              </Text>
+              <Text style={styles.eventLocation}>{item.location}</Text>
+            </View>
+          ))
         ) : (
           <Text style={styles.noEventsText}>No events for this day.</Text>
         )}
@@ -120,56 +120,69 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#555",
   },
-  datePickerContainer: {
-    marginVertical: 20,
-    alignItems: 'center',
+  calendar: {
+    padding: 20,
+  },
+  calendarHeader: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  calendarMonth: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  calendarGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  calendarDay: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    margin: 5,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+  },
+  dayText: {
+    fontSize: 14,
+  },
+  selectedDay: {
+    backgroundColor: "#007BFF",
+    borderColor: "#007BFF",
+  },
+  selectedDayText: {
+    color: "#fff",
   },
   eventsContainer: {
     flex: 1,
     padding: 20,
   },
-  loadingText: {
-    textAlign: "center",
-    color: "#555",
-    fontSize: 16,
-  },
-  noEventsText: {
-    textAlign: "center",
-    color: "#aaa",
-    fontSize: 16,
-  },
-  eventItem: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 10,
+  eventCard: {
     padding: 15,
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+    backgroundColor: "#f9f9f9",
   },
-  eventTimeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
+  eventName: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
-  eventTime: {
+  eventDate: {
     fontSize: 14,
     color: "#555",
-    marginRight: 5,
   },
   eventLocation: {
     fontSize: 14,
-    color: "#555",
+    color: "#007BFF",
   },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 5,
-  },
-  eventParticipants: {
-    fontSize: 14,
+  noEventsText: {
+    textAlign: "center",
+    marginTop: 20,
     color: "#555",
   },
 });
