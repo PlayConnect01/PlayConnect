@@ -5,24 +5,28 @@ const chatController = require('../controllers/chat');
 
 // Route pour récupérer l'historique des messages d'un chat
 router.get('/:chatId/messages', async (req, res) => {
+    const { chatId } = req.params;
     try {
-        const { chatId } = req.params;
         const messages = await chatController.getChatMessages(chatId);
         res.json(messages);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching messages:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
 // Route pour envoyer un nouveau message
 router.post('/:chatId/messages', async (req, res) => {
+    const { chatId } = req.params;
+    const { senderId, content } = req.body;
+
     try {
-        const { chatId } = req.params;
-        const { senderId, content } = req.body;
-        const message = await chatController.sendMessage(chatId, senderId, content);
-        res.json(message);
+        // Logic to save the message to the database
+        const newMessage = await chatController.sendMessage(chatId, senderId, content);
+        res.status(201).json(newMessage); // Respond with the created message
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error sending message:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
@@ -91,5 +95,7 @@ router.get('/user/:userId', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
 
 module.exports = router; 

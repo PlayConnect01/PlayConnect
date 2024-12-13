@@ -6,7 +6,7 @@ let io;
 const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "*", // Ajustez selon vos besoins en production
+      origin: "*", // Adjust according to your production needs
       methods: ["GET", "POST"]
     }
   });
@@ -15,40 +15,60 @@ const initializeSocket = (server) => {
     console.log('Nouvelle connexion socket:', socket.id);
 
     // Rejoindre un chat spécifique
-    socket.on('join_chat', async ({ chatId, userId }) => {
+    socket.on('join_chat', async (data) => {
+      // Check if data is valid
+      if (!data || !data.chatId || !data.userId) {
+        console.error('Received invalid data for join_chat:', data);
+        return; // Exit if data is null or missing properties
+      }
+
+      const { chatId, userId } = data; // Destructure after validation
+
       try {
-        // Vérifier si l'utilisateur fait partie du match
-        const chatMember = await prisma.chat_members.findFirst({
+        // Verify if user is in chat
+        const chatMember = await prisma.chatMember.findFirst({
           where: {
-            chat_id: chatId,
-            user_id: userId
+            chat_id: parseInt(chatId),
+            user_id: parseInt(userId)
           }
         });
 
-        if (chatMember) {
-          socket.join(chatId);
-          console.log(`User ${userId} a rejoint le chat ${chatId}`);
+        if (!chatMember) {
+          console.error('User is not a member of the chat');
+          return; // Exit if user is not a member
         }
+
+        // Proceed with joining the chat
+        socket.join(`chat_${chatId}`);
+        console.log(`User ${userId} joined chat ${chatId}`);
       } catch (error) {
-        console.error('Erreur lors de la connexion au chat:', error);
+        console.error('Error verifying user in chat:', error);
       }
     });
 
     // Gestion des messages
-    socket.on('send_message', async ({ chatId, senderId, content }) => {
+    socket.on('send_message', async (data) => {
+      // Check if data is valid
+      if (!data || !data.chatId || !data.senderId || !data.content) {
+        console.error('Received invalid data for send_message:', data);
+        return; // Exit if data is null or missing properties
+      }
+
+      const { chatId, senderId, content } = data; // Destructure after validation
+
       try {
-        // Créer le message dans la base de données
+        // Create the message in the database
         const newMessage = await prisma.message.create({
           data: {
-            chat_id: chatId,
-            sender_id: senderId,
+            chat_id: parseInt(chatId),
+            sender_id: parseInt(senderId),
             content: content,
             message_type: 'text'
           }
         });
 
-        // Envoyer le message à tous les membres du chat
-        io.to(chatId).emit('receive_message', newMessage);
+        // Send the message to all members of the chat
+        io.to(`chat_${chatId}`).emit('receive_message', newMessage);
       } catch (error) {
         console.error('Erreur lors de l\'envoi du message:', error);
       }

@@ -38,9 +38,9 @@ function TabsNavigation() {
       }}
     >
       <Tab.Screen name="SignUp " component={SignUp } />
-      <Tab.Screen name="Create Event" component={AddNewEvent} />
-      <Tab.Screen name="Event Details" component={EventDetails} />
-      <Tab.Screen name="Landing" component={Landing} />
+      {/* <Tab.Screen name="Create Event" component={AddNewEvent} /> */}
+      {/* <Tab.Screen name="Event Details" component={EventDetails} /> */}
+      {/* <Tab.Screen name="Landing" component={Landing} /> */}
       <Tab.Screen name="Login" component={Login} />
       <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
       <Tab.Screen name="Match" component={Match} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     View, 
     Text, 
@@ -6,12 +6,143 @@ import {
     TouchableOpacity, 
     Image, 
     TextInput,
-    ScrollView 
+    ScrollView,
+    Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import io from 'socket.io-client';
+import axios from 'axios';
+
+const API_URL = 'http://192.168.1.191:3000';
+
+// Créer une instance axios configurée
+const axiosInstance = axios.create({
+    baseURL: API_URL,
+    timeout: 10000,
+    headers: {
+        'Content-Type': 'application/json',
+    }
+});
+
+// Intercepteur pour gérer les erreurs
+axiosInstance.interceptors.response.use(
+    response => response,
+    error => {
+        console.error('API Error:', error);
+        const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+        Alert.alert('Error', errorMessage);
+        return Promise.reject(error);
+    }
+);
+
+const socket = io(API_URL, {
+    transports: ['websocket'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: 10
+});
 
 const ChatDetails = ({ route, navigation }) => {
-    const { user } = route.params;
+    const { user, chatId, currentUserId } = route.params;
+    console.log('Chat ID:', chatId);
+
+    const [messages, setMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const scrollViewRef = useRef();
+
+    // Charger l'historique des messages
+    const loadMessages = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axiosInstance.get(`http://192.168.1.191:3000/chats/${chatId}/messages`);
+            console.log(response.data)
+            if (response.data) {
+                setMessages(response.data);
+            }
+        } catch (error) {
+            console.error('Error loading messages:', error);
+            Alert.alert('Error', 'Failed to load messages. Please try again later.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Envoyer un message
+    const sendMessage = async () => {
+        if (!newMessage.trim()) return;
+
+        try {
+            const messageData = {
+                senderId: currentUserId,
+                content: newMessage.trim()
+            };
+
+            const response = await axiosInstance.post(`/chats/${chatId}/messages`, messageData);
+            
+            if (response.data) {
+                // Émettre le message via socket
+                socket.emit('send_message', {
+                    chatId,
+                    message: response.data
+                });
+                
+                setNewMessage('');
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+            }
+        } catch (error) {
+            // L'intercepteur gèrera l'erreur
+        }
+    };
+
+    useEffect(() => {
+        const setupSocketConnection = () => {
+            socket.on('connect', () => {
+                console.log('Connected to socket server');
+                socket.emit('join_chat', { chatId, userId: currentUserId });
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('Socket connection error:', error);
+                Alert.alert('Connection Error', 'Unable to connect to chat server');
+            });
+
+            socket.on('receive_message', (message) => {
+                setMessages(prev => [...prev, message]);
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+            });
+        };
+
+        setupSocketConnection();
+        loadMessages();
+
+        return () => {
+            socket.off('connect');
+            socket.off('connect_error');
+            socket.off('receive_message');
+            socket.emit('leave_chat', chatId);
+        };
+    }, [chatId, currentUserId]);
+
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('fr-FR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+    const fetchMessages = async (chatId) => {
+        try {
+            const response = await axios.get(`http://192.168.1.191:3000/chats/${chatId}/messages`);
+            // Process the response
+            console.log('Messagessssssssss:', response.data);
+        } catch (error) {
+            console.error('Error loading messages:', error);
+            Alert.alert('Error', 'Failed to load messages. ' + error.message);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -38,32 +169,47 @@ const ChatDetails = ({ route, navigation }) => {
             </View>
 
             {/* Messages */}
-            <ScrollView style={styles.messagesContainer}>
-                <View style={styles.messageReceived}>
-                    <Text style={styles.messageText}>Are you still travelling?</Text>
-                </View>
+            <ScrollView 
+                ref={scrollViewRef}
+                style={styles.messagesContainer}
+                onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <Text>Loading messages...</Text>
+                    </View>
+                ) : messages.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Text>No messages yet. Start the conversation!</Text>
+                    </View>
+                ) : (
+                    messages.map((message, index) => {
+                        const isCurrentUser = message.sender_id === currentUserId;
+                        const showDate = index === 0 || 
+                            formatDate(message.sent_at) !== formatDate(messages[index - 1].sent_at);
 
-                <View style={styles.messageSent}>
-                    <Text style={styles.messageText}>Yes, I'm at Istanbul..</Text>
-                </View>
-
-                <View style={styles.messageReceived}>
-                    <Text style={styles.messageText}>OoOo, Thats so Cool!</Text>
-                </View>
-
-                <View style={styles.messageReceived}>
-                    <Text style={styles.messageText}>Raining??</Text>
-                </View>
-
-                <View style={styles.messageSent}>
-                    <Text style={styles.messageText}>Yes, I'm at Istanbul..</Text>
-                </View>
-
-                <Text style={styles.dateText}>Thursday 24, 2022</Text>
-
-                <View style={styles.messageReceived}>
-                    <Text style={styles.messageText}>Hi, Did you heared?</Text>
-                </View>
+                        return (
+                            <React.Fragment key={message.message_id}>
+                                {showDate && (
+                                    <Text style={styles.dateText}>
+                                        {formatDate(message.sent_at)}
+                                    </Text>
+                                )}
+                                <View style={[
+                                    styles.messageContainer,
+                                    isCurrentUser ? styles.messageSent : styles.messageReceived
+                                ]}>
+                                    <Text style={[
+                                        styles.messageText,
+                                        isCurrentUser && { color: '#fff' }
+                                    ]}>
+                                        {message.content}
+                                    </Text>
+                                </View>
+                            </React.Fragment>
+                        );
+                    })
+                )}
             </ScrollView>
 
             {/* Input Area */}
@@ -72,9 +218,19 @@ const ChatDetails = ({ route, navigation }) => {
                     style={styles.input}
                     placeholder="Send Message"
                     placeholderTextColor="#666"
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                    onSubmitEditing={sendMessage}
                 />
-                <TouchableOpacity style={styles.sendButton}>
-                    <Ionicons name="mic" size={24} color="#fff" />
+                <TouchableOpacity 
+                    style={styles.sendButton}
+                    onPress={sendMessage}
+                >
+                    <Ionicons 
+                        name={newMessage.trim() ? "send" : "mic"} 
+                        size={24} 
+                        color="#fff" 
+                    />
                 </TouchableOpacity>
             </View>
         </View>
@@ -123,22 +279,20 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
     },
-    messageReceived: {
-        backgroundColor: '#f0f0f0',
+    messageContainer: {
         padding: 12,
         borderRadius: 20,
-        borderTopLeftRadius: 5,
         maxWidth: '80%',
         marginBottom: 12,
+    },
+    messageReceived: {
+        backgroundColor: '#f0f0f0',
+        borderTopLeftRadius: 5,
         alignSelf: 'flex-start',
     },
     messageSent: {
         backgroundColor: '#6200ee',
-        padding: 12,
-        borderRadius: 20,
         borderTopRightRadius: 5,
-        maxWidth: '80%',
-        marginBottom: 12,
         alignSelf: 'flex-end',
     },
     messageText: {
@@ -174,6 +328,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    }
 });
 
 export default ChatDetails;

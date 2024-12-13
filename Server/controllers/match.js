@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const chatController = require('./chat'); // Import the chat controller
 
 const getUsersWithCommonSports = async (userId) => {
   try {
@@ -76,6 +77,15 @@ const acceptMatch = async (matchId) => {
       accepted_at: new Date(),
     },
   });
+
+  // Create a chat and send a welcome message after accepting the match
+  try {
+    await chatController.createChatWithWelcomeMessage(matchId);
+  } catch (error) {
+    console.error('Error creating chat after accepting match:', error);
+    // Optionally, you can handle the error here (e.g., log it, notify the user, etc.)
+  }
+
   return updatedMatch;
 };
 
@@ -90,39 +100,45 @@ const rejectMatch = async (matchId) => {
   return updatedMatch;
 };
 
-
 const getAcceptedMatches = async (userId) => {
   console.log('Fetching accepted matches for user ID:', userId);
   try {
-    // Convert userId to an integer
     const numericUserId = parseInt(userId, 10);
-    
+
     const matches = await prisma.match.findMany({
       where: {
         OR: [
           {
-            user_id_1: numericUserId, // Use numericUserId here
+            user_id_1: numericUserId,
             status: "ACCEPTED"
           },
           {
-            user_id_2: numericUserId, // Use numericUserId here
+            user_id_2: numericUserId,
             status: "ACCEPTED"
           }
         ]
       },
       include: {
         user_1: true,
-        user_2: true
+        user_2: true,
+        sport: true,
+        chat: true // Include the chat relationship
       }
     });
-    
-    console.log('Matches found:', matches); // Log the matches found
-    return matches;
+
+    console.log('Matches found:', matches);
+
+    return matches.map(match => ({
+      ...match,
+      chatId: match.chat_id, // Use the chat_id directly from the match
+    }));
   } catch (error) {
-    console.error('Error fetching matches:', error); // Log any errors
-    throw error; // Rethrow the error to be caught in the route
+    console.error('Error fetching matches:', error);
+    throw error;
   }
 };
+
+
 
 const getMatchDetails = async (matchId) => {
   const match = await prisma.match.findUnique({
@@ -138,6 +154,8 @@ const getMatchDetails = async (matchId) => {
   }
   return match;
 };
+
+
 
 module.exports = {
   getUsersWithCommonSports,
