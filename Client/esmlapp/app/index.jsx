@@ -22,7 +22,6 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
        <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="SeeAllPage" component={SeeAllPage} /> 
       <Stack.Screen name="CalendarPage" component={CalendarPage} /> 
     </Stack.Navigator>
   );
@@ -36,12 +35,13 @@ function TabsNavigation() {
         tabBarShowLabel: false,
         tabBarStyle: { display: "none" }, 
       }}
+      
     >
-      <Tab.Screen name="Homep" component={HomeStack} /> 
-      <Tab.Screen name="SignUp" component={SignUp } />
       <Tab.Screen name="Create Event" component={AddNewEvent} />
+      <Tab.Screen name="SignUp" component={SignUp } />
+      <Tab.Screen name="Homep" component={HomeStack} /> 
       <Tab.Screen name="Event Details" component={EventDetails} />
-      <Tab.Screen name="Landing" component={Landing} />
+     
       <Tab.Screen name="Login" component={Login} />
       <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
       <Tab.Screen name="Match" component={Match} />

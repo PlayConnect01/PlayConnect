@@ -96,6 +96,7 @@ CREATE TABLE `Event` (
     `participants` INTEGER NOT NULL,
     `price` DOUBLE NOT NULL,
     `is_free` BOOLEAN NOT NULL,
+    `image` VARCHAR(191) NULL,
     `creator_id` INTEGER NOT NULL,
 
     INDEX `Event_event_name_idx`(`event_name`),
