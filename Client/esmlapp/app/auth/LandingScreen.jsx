@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, TextInput, Alert, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -10,6 +10,7 @@ const AuthOptionsScreen = () => {
   const navigate = useNavigation();
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email.trim());
 
@@ -42,17 +43,28 @@ const AuthOptionsScreen = () => {
           easing: Easing.linear,
           useNativeDriver: true,
         }),
+        Animated.timing(titleAnim, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.bounce,
+          useNativeDriver: true,
+        }),
       ]).start();
     });
   };
 
   const renderContent = () => {
+    const titleStyle = {
+      opacity: titleAnim,
+      transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-30, 0] }) }],
+    };
+
     switch (currentPage) {
       case 0:
         return (
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-            <Text style={styles.title}>Welcome to SportsMate</Text>
-            <Text style={styles.subtitle}>Your journey in sports starts here!</Text>
+            <Animated.Text style={[styles.title, titleStyle]}>Welcome to SportsMate</Animated.Text>
+            <Animated.Text style={[styles.subtitle, titleStyle]}>Your journey in sports starts here!</Animated.Text>
             <TouchableOpacity 
               style={styles.button} 
               onPress={() => handlePageChange(1)}
@@ -64,7 +76,7 @@ const AuthOptionsScreen = () => {
       case 1:
         return (
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-            <Text style={styles.title}>Get Started</Text>
+            <Animated.Text style={[styles.title, titleStyle]}>Get Started</Animated.Text>
             <TouchableOpacity
               style={styles.button}
               onPress={() => navigate.navigate('Login')}
@@ -82,7 +94,7 @@ const AuthOptionsScreen = () => {
       case 2:
         return (
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-            <Text style={styles.title}>Password Recovery</Text>
+            <Animated.Text style={[styles.title, titleStyle]}>Password Recovery</Animated.Text>
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
@@ -107,7 +119,7 @@ const AuthOptionsScreen = () => {
       case 3:
         return (
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-            <Text style={styles.title}>Verification Code</Text>
+            <Animated.Text style={[styles.title, titleStyle]}>Verification Code</Animated.Text>
             <TextInput
               style={styles.input}
               placeholder="Enter verification code"
@@ -135,9 +147,15 @@ const AuthOptionsScreen = () => {
   };
 
   return (
-    <LinearGradient colors={['#000', '#333']} style={styles.container}>
+    <View style={styles.container}>
+      <LinearGradient colors={['#1c1c1c', '#333']} style={styles.gradientBackground} />
+      <View style={styles.dynamicShapes}>
+        {/* Dynamic Shapes */}
+        <View style={styles.shape1} />
+        <View style={styles.shape2} />
+      </View>
       {renderContent()}
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -146,31 +164,83 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  gradientBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  dynamicShapes: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 0,
+  },
+  shape1: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 150,
+    top: -100,
+    left: -100,
+    transform: [{ rotate: '30deg' }],
+  },
+  shape2: {
+    position: 'absolute',
+    width: 400,
+    height: 400,
+    backgroundColor: 'rgba(255, 0, 150, 0.1)',
+    borderRadius: 200,
+    bottom: -150,
+    right: -150,
+    transform: [{ rotate: '-30deg' }],
   },
   content: {
     width: '80%',
     alignItems: 'center',
+    zIndex: 1, // Ensure content is above the background image
   },
   title: {
     fontSize: 32,
     color: '#fff',
     marginBottom: 10,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   subtitle: {
     fontSize: 18,
     color: '#fff',
     marginBottom: 30,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   button: {
-    backgroundColor: '#555',
+    backgroundColor: 'linear-gradient(90deg, #ff4081, #ff80ab)', // Gradient background for buttons
     padding: 12,
     marginTop: 20,
     borderRadius: 5,
     width: '100%',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff', // White border for contrast
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   buttonText: {
     color: '#fff',
+    fontWeight: 'bold',
   },
   input: {
     borderBottomWidth: 1,

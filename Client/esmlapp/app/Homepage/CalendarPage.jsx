@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
+import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const CalendarPage = () => {
@@ -9,12 +10,13 @@ const CalendarPage = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const navigation = useNavigation();
 
   const fetchEvents = (date) => {
     setLoading(true);
     const formattedDate = new Date(date).toISOString().split("T")[0];
     axios
-      .get(`http://localhost:3000/events/getByDate/${formattedDate}`)
+      .get(`http://192.168.104.4:3000/events/getByDate/${formattedDate}`)
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
@@ -47,7 +49,7 @@ const CalendarPage = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate("Homep")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Calendar</Text>
