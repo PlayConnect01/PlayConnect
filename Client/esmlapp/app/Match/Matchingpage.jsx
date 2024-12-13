@@ -1,113 +1,122 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Animated, PanResponder, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Animated,
+  PanResponder,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import jwtDecode from 'jwt-decode'; // Import jwt-decode
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
 
-// Configuration globale d'Axios pour le timeout et la gestion des erreurs
-axios.defaults.timeout = 5000; // Timeout de 5 secondes
+axios.defaults.timeout = 5000;
+
+const decodeJWT = (token) => {
+  const base64Payload = token.split('.')[1];
+  const payload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+  return JSON.parse(payload);
+};
 
 const Match = () => {
   const [users, setUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const position = useRef(new Animated.ValueXY()).current;
   const navigation = useNavigation();
-  const [currentUserId, setCurrentUserId] = useState(null); // State to hold the user ID
-
-  // Configuration de l'URL de base de votre API
-  const API_BASE_URL = 'http://192.168.103.11:3000';
-
-  // Fonction pour récupérer les utilisateurs potentiels
-  const fetchPotentialMatches = async () => {
-    if (!currentUserId) return; // Ensure we have a user ID
-
-    try {
-      const response = await axios.get(`${API_BASE_URL}/matches/common-sports/${currentUserId}`);
-      
-      if (response.data.length > 0) {
-        setUsers(response.data);
-      } else {
-        Alert.alert('Pas de matchs', 'Aucun utilisateur avec des sports communs trouvé.');
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des utilisateurs:', error);
-      Alert.alert('Erreur', 'Impossible de charger les utilisateurs potentiels.');
-    }
-  };
 
   useEffect(() => {
-    const getUserIdFromToken = async () => {
+    const loadToken = async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken'); // Retrieve the token
-        if (token) {
-          const decodedToken = jwtDecode(token); // Decode the token
-          setCurrentUserId(decodedToken.id); // Set the user ID from the token
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          throw new Error('Token not found');
+        }
+
+        const decodedToken = decodeJWT(token);
+        if (decodedToken?.id) {
+          setCurrentUserId(decodedToken.id);
+          console.log('User ID:', decodedToken.id);
+        } else {
+          throw new Error('User ID not found in token');
         }
       } catch (error) {
-        console.error('Error decoding token:', error);
+        console.error('Error loading token:', error);
+        Alert.alert('Error', 'Failed to load user data. Please log in again.');
       }
     };
 
-    getUserIdFromToken(); // Call the function to get the user ID
+    loadToken();
   }, []);
 
   useEffect(() => {
-    fetchPotentialMatches(); // Fetch potential matches when user ID is set
-  }, [currentUserId]); // Dependency on currentUserId
+    if (currentUserId) {
+      const fetchPotentialMatches = async () => {
+        try {
+          const response = await axios.get(
+            `http://192.168.104.10:3000/matches/common-sports/${currentUserId}`
+          );
 
-  const currentUser = users[currentUserIndex];
+          if (response.data.length > 0) {
+            setUsers(response.data);
+            console.log('Données récupérées:', response.data);
+          } else {
+            Alert.alert('No Matches', 'No users with common sports found.');
+          }
+        } catch (error) {
+          console.error('Error fetching users:', error.message);
+          Alert.alert('Error', 'Failed to load potential matches.');
+        }
+      };
+
+      fetchPotentialMatches();
+    }
+  }, [currentUserId]);
 
   const handleNextUser = () => {
     if (currentUserIndex < users.length - 1) {
-      setCurrentUserIndex(prev => prev + 1);
+      setCurrentUserIndex((prev) => prev + 1);
     } else {
-      Alert.alert('Terminé', 'Vous avez vu tous les utilisateurs disponibles.');
+      Alert.alert('Finished', 'You have viewed all available users.');
     }
-    position.setValue({ x: 0, y: 0 }); // Reset position
-  };
-
-  const handleMessagePress = () => {
-    navigation.navigate('Messages'); // Navigue vers l'écran Messages
+    position.setValue({ x: 0, y: 0 });
   };
 
   const handleLike = async () => {
-    if (!currentUser) return;
+    if (!users[currentUserIndex]) return;
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/matches/create`, 
+      const currentUser = users[currentUserIndex];
+      await axios.post(
+        `http://192.168.104.10:3000/matches/create`,
         {
           userId1: currentUserId,
           userId2: currentUser.user_id,
-          sportId: currentUser.sports[0]?.sport_id // Prendre le premier sport commun
+          sportId: currentUser.sports[0]?.sport_id,
         },
         {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000,
         }
       );
 
-      console.log('Match créé avec succès:', response.data);
-
-      // Animation et passage à l'utilisateur suivant
       Animated.timing(position, {
         toValue: { x: 500, y: 0 },
         duration: 300,
         useNativeDriver: false,
       }).start(() => handleNextUser());
-
     } catch (error) {
-      console.error('Détails de l\'erreur:', error);
-      Alert.alert('Erreur', 'Impossible de créer le match. Vérifiez votre connexion.');
+      console.error('Error creating match:', error.message);
+      Alert.alert('Error', `Failed to create the match. ${error.message}`);
     }
   };
 
   const handleDislike = () => {
-    // Animation vers la gauche
     Animated.timing(position, {
       toValue: { x: -500, y: 0 },
       duration: 300,
@@ -118,10 +127,7 @@ const Match = () => {
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: Animated.event(
-      [
-        null,
-        { dx: position.x, dy: position.y },
-      ],
+      [null, { dx: position.x, dy: position.y }],
       { useNativeDriver: false }
     ),
     onPanResponderRelease: (_, gesture) => {
@@ -130,7 +136,6 @@ const Match = () => {
       } else if (gesture.dx < -120) {
         handleDislike();
       } else {
-        // Return to center
         Animated.spring(position, {
           toValue: { x: 0, y: 0 },
           useNativeDriver: false,
@@ -139,17 +144,35 @@ const Match = () => {
     },
   });
 
-  // Écran de chargement si pas d'utilisateurs
+  if (!currentUserId) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading user data...</Text>
+      </View>
+    );
+  }
+
+  const currentUser = users[currentUserIndex];
+
   if (!currentUser) {
     return (
       <View style={styles.container}>
-        <Text>Chargement des utilisateurs...</Text>
+        <Text>Loading users...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('MessagePage')}>
+          <Ionicons name="chatbubble-ellipses-outline" size={30} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => Alert.alert('Notifications', 'No new notifications.')}>
+          <Ionicons name="notifications-outline" size={30} color="#000" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.cardContainer}>
         <Animated.View
           {...panResponder.panHandlers}
@@ -159,7 +182,8 @@ const Match = () => {
               transform: [
                 { translateX: position.x },
                 { translateY: position.y },
-                { rotate: position.x.interpolate({
+                {
+                  rotate: position.x.interpolate({
                     inputRange: [-200, 0, 200],
                     outputRange: ['-10deg', '0deg', '10deg'],
                   }),
@@ -168,34 +192,34 @@ const Match = () => {
             },
           ]}
         >
-          <Image 
-            source={{ uri: currentUser.image }} 
-            style={styles.image} 
-            resizeMode="cover" 
+          <Image
+            source={{ uri: currentUser.profile_picture }} // Utilisez la photo de profil
+            style={styles.image}
+            resizeMode="cover"
           />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {currentUser.first_name} {currentUser.last_name}, {/* Ajoutez l'âge si disponible */}
+              {currentUser.username || 'Unknown User'} {/* Safeguard for username */}
             </Text>
             <Text style={styles.location}>
-              Sports partagés : {currentUser.sports.map(sport => sport.name).join(', ')}
+              {currentUser.location || 'Location not available'} {/* Safeguard for location */}
             </Text>
             <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>Disponible</Text>
+              <Text style={styles.statusText}>Online</Text>
             </View>
           </View>
         </Animated.View>
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.dislikeButton]} 
+        <TouchableOpacity
+          style={[styles.actionButton, styles.dislikeButton]}
           onPress={handleDislike}
         >
           <Ionicons name="close" size={30} color="#FF3B30" />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.likeButton]} 
+        <TouchableOpacity
+          style={[styles.actionButton, styles.likeButton]}
           onPress={handleLike}
         >
           <Ionicons name="checkmark" size={30} color="#34C759" />
@@ -212,22 +236,16 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 44,
-    paddingBottom: 16,
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: '600',
+    padding: 16,
+    backgroundColor: '#fff',
+    elevation: 3,
   },
   cardContainer: {
     flex: 1,
     margin: 16,
     borderRadius: 20,
     overflow: 'hidden',
-    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -235,8 +253,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 20,
-    overflow: 'hidden',
-    position: 'absolute',
   },
   image: {
     width: '100%',
@@ -254,17 +270,10 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   location: {
     color: '#fff',
     fontSize: 16,
-    marginBottom: 12,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   statusBadge: {
     backgroundColor: 'rgba(147, 51, 234, 0.9)',
@@ -294,22 +303,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 3,
   },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
+  dislikeButton: {
+    borderColor: '#FF3B30',
   },
-  iconButton: {
-    padding: 5,
+  likeButton: {
+    borderColor: '#34C759',
   },
 });
 

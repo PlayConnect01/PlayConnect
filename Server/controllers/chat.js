@@ -1,7 +1,6 @@
 const prisma = require('../prisma');
 const { getIO } = require('../config/socket');
 
-// Création d'un chat avec message de bienvenue
 async function createChatWithWelcomeMessage(matchId) {
   try {
     // Récupérer les détails du match
@@ -13,52 +12,61 @@ async function createChatWithWelcomeMessage(matchId) {
       },
     });
 
-    if (!match || match.status !== 'accepted') {
+    if (!match || match.status !== 'ACCEPTED') {
       throw new Error("Match not found or not accepted.");
     }
 
-    // Créer un chat
-    const chat = await prisma.chat.create({
-      data: {
-        is_group: false,
-        chat_members: {
-          create: [
-            { user_id: match.user_id_1 },
-            { user_id: match.user_id_2 },
-          ],
+    // Créer un chat et un message de bienvenue dans une seule transaction
+    const chatWithMessage = await prisma.$transaction(async (tx) => {
+      // Créer le chat
+      const chat = await tx.chat.create({
+        data: {
+          is_group: false,
+          chat_members: {
+            create: [
+              { user_id: match.user_id_1 },
+              { user_id: match.user_id_2 },
+            ],
+          },
         },
-      },
+      });
+
+      // Créer le message de bienvenue lié au chat
+      const welcomeMessage = await tx.message.create({
+        data: {
+          chat_id: chat.chat_id,
+          sender_id: null,
+          content: "You can now start your discussion!",
+          message_type: 'SYSTEM',
+        },
+      });
+
+      return { chat, welcomeMessage };
     });
 
-    // Créer le message de bienvenue
-    await prisma.message.create({
-      data: {
-        chat_id: chat.chat_id,
-        sender_id: null, 
-        content: "You can now start your discussion!",
-        message_type: "text", 
-      },
-    });
-
-    return chat;
+    return chatWithMessage.chat;
   } catch (error) {
     console.error('Error creating chat:', error);
     throw error;
   }
 }
 
-// Récupérer l'historique des messages
+module.exports = {
+  createChatWithWelcomeMessage,
+};
+
+// Get chat message history
 async function getChatMessages(chatId) {
   try {
     const messages = await prisma.message.findMany({
       where: {
-        chat_id: chatId
+        chat_id: parseInt(chatId)
       },
       include: {
-        sender: true // Inclure les informations de l'expéditeur
+        sender: true 
       },
       orderBy: {
-        timestamp: 'asc'
+        sent_at: 'asc'
       }
     });
     return messages;
@@ -68,13 +76,13 @@ async function getChatMessages(chatId) {
   }
 }
 
-// Vérifier si un utilisateur fait partie du chat
+// Verify if user is in chat
 async function verifyUserInChat(userId, chatId) {
   try {
-    const chatMember = await prisma.chat_members.findFirst({
+    const chatMember = await prisma.chatMember.findFirst({
       where: {
-        chat_id: chatId,
-        user_id: userId
+        chat_id: parseInt(chatId),
+        user_id: parseInt(userId)
       }
     });
     return !!chatMember;
@@ -84,31 +92,31 @@ async function verifyUserInChat(userId, chatId) {
   }
 }
 
-// Envoyer un message
-async function sendMessage(chatId, senderId, content) {
+// Send a message
+async function sendMessage(chatId, senderId, content, messageType = 'TEXT') {
   try {
-    // Vérifier si l'utilisateur fait partie du chat
+    // Verify if user is in chat
     const isUserInChat = await verifyUserInChat(senderId, chatId);
     if (!isUserInChat) {
       throw new Error('User not authorized to send messages in this chat');
     }
 
-    // Créer le message
+    // Create the message
     const newMessage = await prisma.message.create({
       data: {
-        chat_id: chatId,
-        sender_id: senderId,
+        chat_id: parseInt(chatId),
+        sender_id: parseInt(senderId),
         content: content,
-        message_type: 'text'
+        message_type: messageType
       },
       include: {
         sender: true
       }
     });
 
-    // Utiliser getIO() pour émettre des événements
+    // Emit message via socket
     const io = getIO();
-    io.to(chatId).emit('receive_message', newMessage);
+    io.to(`chat_${chatId}`).emit('receive_message', newMessage);
 
     return newMessage;
   } catch (error) {
@@ -117,33 +125,9 @@ async function sendMessage(chatId, senderId, content) {
   }
 }
 
-// Routes HTTP pour le chat
-const getChatHistory = async (req, res) => {
-  try {
-    const { chatId } = req.params;
-    const messages = await getChatMessages(chatId);
-    res.json(messages);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const sendNewMessage = async (req, res) => {
-  try {
-    const { chatId } = req.params;
-    const { senderId, content } = req.body;
-    const message = await sendMessage(chatId, senderId, content);
-    res.json(message);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 module.exports = {
   createChatWithWelcomeMessage,
-  getChatHistory,
-  sendNewMessage,
+  getChatMessages,
   verifyUserInChat,
   sendMessage
 };
-  

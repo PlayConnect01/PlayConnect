@@ -6,7 +6,7 @@ const eventRoutes = require("./routes/events");
 const sportRoutes = require("./routes/sport");
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
-const chatRouter = require('./routes/chat');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 
@@ -28,7 +28,8 @@ app.use('/sports', sportRoutes);
 app.use('/users', userRouter); 
 app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
-app.use('/chat', chatRouter);
+app.use('/chats', chatRoutes);  
+
 
 // Utiliser server.listen au lieu de app.listen
 server.listen(PORT, () => {

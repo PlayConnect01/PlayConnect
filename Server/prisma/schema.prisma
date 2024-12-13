@@ -200,7 +200,7 @@ model ChatMember {
 model Message {
   message_id    Int      @id @default(autoincrement())
   chat_id       Int
-  sender_id     Int
+  sender_id     Int?     // Note the nullable
   content       String
   message_type  MessageType
   sent_at       DateTime @default(now())
@@ -210,7 +210,7 @@ model Message {
   voice_file_url String?  // URL du fichier audio
 
   chat    Chat  @relation(fields: [chat_id], references: [chat_id])
-  sender  User  @relation("MessageSender", fields: [sender_id], references: [user_id])
+  sender  User?  @relation("MessageSender", fields: [sender_id], references: [user_id])
 
   @@index([chat_id])
   @@index([sender_id])

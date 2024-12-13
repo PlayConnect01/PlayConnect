@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,12 +6,61 @@ import {
   TouchableOpacity, 
   Image, 
   TextInput, 
-  ScrollView 
+  ScrollView, 
+  Alert 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import userData from '../Match/data.js';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
+
+// Extracted decodeJWT function from Matchingpage.jsx
+const decodeJWT = (token) => {
+  const base64Payload = token.split('.')[1];
+  const payload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+  return JSON.parse(payload);
+};
 
 const MessagePage = ({ navigation }) => {
+  const [matches, setMatches] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          throw new Error('Token not found');
+        }
+
+        const decodedToken = decodeJWT(token);
+        if (decodedToken?.id) {
+          setCurrentUserId(decodedToken.id);
+          console.log('User ID:', decodedToken.id);
+          fetchAcceptedMatches(decodedToken.id);
+        } else {
+          throw new Error('User ID not found in token');
+        }
+      } catch (error) {
+        console.error('Error loading token:', error);
+        Alert.alert('Error', 'Failed to load user data. Please log in again.');
+        navigation.navigate('Login'); // Optional: redirect to login if token is invalid
+      }
+    };
+
+    loadToken();
+  }, []);
+
+  const fetchAcceptedMatches = async (userId) => {
+    try {
+      const response = await axios.get(`http://192.168.104.10:3000/matches/accepted/${userId}`);
+      setMatches(response.data);
+    } catch (error) {
+      console.error('Error fetching accepted matches:', error);
+      Alert.alert('Error', 'Failed to load accepted matches.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -19,36 +68,26 @@ const MessagePage = ({ navigation }) => {
         <TouchableOpacity>
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Message</Text>
-        <View style={{width: 24}} /> {/* Pour équilibrer le header */}
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-        <TextInput 
-          style={styles.searchInput}
-          placeholder="Search here"
-          placeholderTextColor="#666"
-        />
+        <Text style={styles.headerTitle}>Messages</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Messages List */}
       <ScrollView style={styles.messagesList}>
-        {userData.map((user, index) => (
-          <TouchableOpacity 
-            key={index} 
+        {matches.map((match, index) => (
+          <TouchableOpacity
+            key={index}
             style={styles.messageItem}
-            onPress={() => navigation.navigate('ChatDetails', { user })}
+            onPress={() => navigation.navigate('ChatDetails', { user: match.user_1.user_id === currentUserId ? match.user_2 : match.user_1 })}
           >
-            <Image source={{ uri: user.image }} style={styles.userImage} />
+            <Image source={{ uri: match.user_1.profile_picture || match.user_2.profile_picture }} style={styles.userImage} />
             <View style={styles.messageContent}>
               <View style={styles.messageHeader}>
-                <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.messageTime}>{user.date}</Text>
+                <Text style={styles.userName}>{match.user_1.user_id === currentUserId ? match.user_2.username : match.user_1.username}</Text>
+                <Text style={styles.messageTime}>{new Date(match.matched_at).toLocaleDateString()}</Text>
               </View>
               <Text style={styles.messageText} numberOfLines={1}>
-                {user.lastMessage}
+                You can start your discussion!
               </Text>
             </View>
           </TouchableOpacity>
@@ -76,23 +115,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    margin: 16,
-    paddingHorizontal: 12,
-    borderRadius: 25,
-    height: 40,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#000',
   },
   messagesList: {
     flex: 1,

@@ -253,4 +253,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// export default AddNewEvent;
+export default AddNewEvent;

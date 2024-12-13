@@ -152,7 +152,7 @@ CREATE TABLE `ChatMember` (
 CREATE TABLE `Message` (
     `message_id` INTEGER NOT NULL AUTO_INCREMENT,
     `chat_id` INTEGER NOT NULL,
-    `sender_id` INTEGER NOT NULL,
+    `sender_id` INTEGER NULL,
     `content` VARCHAR(191) NOT NULL,
     `message_type` ENUM('TEXT', 'VOICE', 'IMAGE', 'VIDEO', 'SYSTEM') NOT NULL,
     `sent_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -331,7 +331,7 @@ ALTER TABLE `ChatMember` ADD CONSTRAINT `ChatMember_user_id_fkey` FOREIGN KEY (`
 ALTER TABLE `Message` ADD CONSTRAINT `Message_chat_id_fkey` FOREIGN KEY (`chat_id`) REFERENCES `Chat`(`chat_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Message` ADD CONSTRAINT `Message_sender_id_fkey` FOREIGN KEY (`sender_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Message` ADD CONSTRAINT `Message_sender_id_fkey` FOREIGN KEY (`sender_id`) REFERENCES `User`(`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Achievement` ADD CONSTRAINT `Achievement_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
