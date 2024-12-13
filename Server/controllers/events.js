@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
+
 const getAllEvents = async (req, res) => {
   try {
     console.log("Request received: GET /getAll");
@@ -38,31 +39,41 @@ const createEvent = async (req, res) => {
   try {
     console.log("Request received: POST /create", req.body);
     const {
-      event_name,
-      location,
+      eventName,
+      note,
       date,
-      start_time,
-      end_time,
-      description,
+      startTime,
+      endTime,
+      location,
       category,
       participants,
       price,
-      is_free,
+      isFree,
+      creator_id // Ensure this is being passed correctly in the request body
     } = req.body;
 
+    if (!creator_id) {
+      return res.status(400).json({ error: "Creator ID is required" });
+    }
+
+    // Create the event, including the creator relation
     const newEvent = await prisma.event.create({
       data: {
-        event_name,
+        event_name: eventName,
         location,
         date: new Date(date),
-        start_time: start_time ? new Date(start_time) : null,
-        end_time: end_time ? new Date(end_time) : null,
-        description,
+        start_time: startTime ? new Date(startTime) : null,
+        end_time: endTime ? new Date(endTime) : null,
+        description: note,
         category,
         participants: parseInt(participants),
         price: parseFloat(price),
-        is_free,
-        creator_id: 1, // Set creator_id directly to 1
+        is_free: isFree,
+        creator: {
+          connect: {
+            user_id: creator_id, // Ensure creator_id is passed as a valid user ID
+          },
+        },
       },
     });
 
@@ -73,6 +84,8 @@ const createEvent = async (req, res) => {
     res.status(500).json({ error: "Error creating event", details: error.message });
   }
 };
+
+
 const updateEvent = async (req, res) => {
   try {
     console.log("Request received: PUT /update", req.params, req.body);
@@ -131,4 +144,29 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-module.exports = {getAllEvents,getEventById,createEvent,updateEvent,deleteEvent};
+const getEventsByDate = async (req, res) => {
+  try {
+    console.log("GET /getByDate", req.params);
+    const { date } = req.params;
+
+    // Fetch events for the specified date
+    const events = await prisma.event.findMany({
+      where: {
+        date: new Date(date), // Ensure the date is in the correct format
+      },
+    });
+
+    if (events.length === 0) {
+      console.warn("No events found for date:", date);
+      return res.status(404).json({ error: "No events found for this date" });
+    }
+
+    console.log("Events fetched successfully for date:", date, events);
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events by date:", error);
+    res.status(500).json({ error: "Error fetching events by date", details: error.message });
+  }
+};
+
+module.exports = {getAllEvents,getEventById,createEvent,updateEvent,deleteEvent,getEventsByDate};

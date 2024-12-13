@@ -1,116 +1,201 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import axios from "axios"; // Import axios for API requests
+import { useNavigation } from '@react-navigation/native';
+import axios from "axios";
 
-const { width } = Dimensions.get("window"); // Get device width for responsiveness
+const { width } = Dimensions.get("window");
 
 const App = () => {
-  const [categories, setCategories] = useState([]); // State to store categories data
-  const [loading, setLoading] = useState(true); // Loading state to handle API request state
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [competitions, setCompetitions] = useState([]);
- 
-  // Fetch categories from the backend
+  const [eventCategories, setEventCategories] = useState([
+    { id: "1", name: "All Type" },
+  ]);
+  const [selectedCategory, setSelectedCategory] = useState("All Type");
+  const [events, setEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const navigation = useNavigation();
+
+
   useEffect(() => {
     axios
-      .get("http://localhost:3000/sports")
+      .get("http://192.168.104.4:3000/sports")
       .then((response) => {
-        setCategories(response.data); // Set the response data to categories
-        setLoading(false); // Set loading to false once data is fetched
-        console.log(response.data,'888888888888888888888888888888888888888')
+        setCategories(response.data);
+        setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching categories:", error);
-        setLoading(false); // Set loading to false if there’s an error
+        setLoading(false);
       });
 
-      axios.get("http://localhost:3000/competetion").then((response) => {
+    axios
+      .get("http://192.168.104.4:3000/competetion")
+      .then((response) => {
         setCompetitions(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching competitions:", error);
       });
 
+    axios
+      .get("http://192.168.104.4:3000/events/getAll")
+      .then((response) => {
+        const fetchedEvents = response.data;
+        setEvents(fetchedEvents);
+        setFilteredEvents(fetchedEvents);
+
+        const uniqueCategories = [
+          { id: "1", name: "All Type" },
+          ...Array.from(
+            new Set(fetchedEvents.map((event) => event.category))
+          ).map((category, index) => ({
+            id: (index + 2).toString(),
+            name: category,
+          })),
+        ];
+        setEventCategories(uniqueCategories);
+      })
+      .catch((error) => {
+        console.error("Error fetching events:", error);
+      });
   }, []);
 
-
-
-  const events = [
-    { id: "1", image: "https://via.placeholder.com/150", name: "Football" },
-    { id: "2", image: "https://via.placeholder.com/150", name: "Basketball" },
-    { id: "3", image: "https://via.placeholder.com/150", name: "Gym" },
-    { id: "4", image: "https://via.placeholder.com/150", name: "Box" },
-    { id: "5", image: "https://via.placeholder.com/150", name: "E-Gaming" },
-    { id: "6", image: "https://via.placeholder.com/150", name: "Swimming" },
-  ];
+  useEffect(() => {
+    if (selectedCategory === "All Type") {
+      setFilteredEvents(events);
+    } else {
+      setFilteredEvents(
+        events.filter((event) => event.category === selectedCategory)
+      );
+    }
+  }, [selectedCategory, events]);
 
   if (loading) {
-    return <Text>Loading...</Text>; // Display a loading message while waiting for the data
+    return <Text>Loading...</Text>;
   }
 
   return (
+    <ScrollView>
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.date}>Friday, 20 May</Text>
           <Text style={styles.greeting}>Good Morning</Text>
         </View>
         <View style={styles.headerIcons}>
-          <Ionicons name="notifications-outline" size={24} color="#555" />
-          <Ionicons name="settings-outline" size={24} color="#555" style={{ marginLeft: 15 }} />
+          <TouchableOpacity onPress={() => navigation.navigate("Homepage/CalendarPage")}>
+            <MaterialCommunityIcons
+              name="calendar-outline"
+              size={24}
+              color="#555"
+            />
+          </TouchableOpacity>
+          <Ionicons
+            name="settings-outline"
+            size={24}
+            color="#555"
+            style={{ marginLeft: 15 }}
+          />
         </View>
       </View>
 
-      {/* Today's Events */}
       <View style={styles.eventsCard}>
         <Text style={styles.cardText}>Today's Events</Text>
         <Text style={styles.cardProgress}>15/20</Text>
       </View>
 
-      {/* Categories Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Category</Text>
-        <TouchableOpacity onPress={() => navigation.navigate("SeeAllNavigation")}>
-  <Text style={styles.seeAll}>See All</Text>
-</TouchableOpacity>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categories}
+      >
         {categories.map((category) => (
           <View key={category.id} style={styles.categoryItem}>
             <Text style={styles.categoryIcon}>{category.icon}</Text>
-            <Text style={styles.categoryName}>{category.name}</Text> {/* Display the name property */}
+            <Text style={styles.categoryName}>{category.name}</Text>
           </View>
         ))}
       </ScrollView>
 
-      {/* Competitions Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Competition of the Week</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.competitions}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.competitions}
+      >
         {competitions.map((competition) => (
           <View key={competition.tournament_id} style={styles.competitionItem}>
-              <MaterialCommunityIcons name="trophy-outline" size={24} color="#555" />
-            <Text style={styles.competitionTitle}>{competition.tournament_name}</Text>
+            <MaterialCommunityIcons
+              name="trophy-outline"
+              size={24}
+              color="#555"
+            />
+            <Text style={styles.competitionTitle}>
+              {competition.tournament_name}
+            </Text>
           </View>
         ))}
       </ScrollView>
 
-      {/* Events Grid */}
+      {/* Events Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Events</Text>
       </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categories}
+      >
+        {eventCategories.map((category) => (
+          <TouchableOpacity
+            key={category.id}
+            style={[
+              styles.categoryButton,
+              selectedCategory === category.name && styles.selectedCategory,
+            ]}
+            onPress={() => setSelectedCategory(category.name)}
+          >
+            <Text style={styles.categoryText}>{category.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
       <ScrollView contentContainerStyle={styles.eventsGrid}>
-        {events.map((event) => (
+        {filteredEvents.map((event) => (
           <View key={event.id} style={styles.eventItem}>
             <Image source={{ uri: event.image }} style={styles.eventImage} />
-            <Text style={styles.eventText}>{event.name}</Text>
+            <View style={styles.eventDetails}>
+              <Text style={styles.eventText}>{event.name}</Text>
+              <View style={styles.eventRow}>
+                <Ionicons name="location-outline" size={16} color="#555" />
+                <Text style={styles.eventDetailText}>{event.location}</Text>
+              </View>
+              <View style={styles.eventRow}>
+                <Ionicons name="calendar-outline" size={16} color="#555" />
+                <Text style={styles.eventDetailText}>{event.date}</Text>
+              </View>
+            </View>
           </View>
         ))}
       </ScrollView>
     </View>
+    </ScrollView>
   );
 };
 
@@ -166,7 +251,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-fontWeight: "bold",
+    fontWeight: "bold",
   },
   seeAll: {
     fontSize: 14,
@@ -195,7 +280,7 @@ fontWeight: "bold",
   categoryName: {
     fontSize: 12,
     textAlign: "center",
-    marginTop: 5
+    marginTop: 5,
   },
   competitions: {
     flexDirection: "row",
@@ -204,7 +289,7 @@ fontWeight: "bold",
   competitionItem: {
     alignItems: "center",
     marginRight: 100,
-    marginBottom: 10
+    marginBottom: 10,
   },
   competitionText: {
     marginTop: 5,
@@ -215,24 +300,44 @@ fontWeight: "bold",
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    paddingBottom: 20,
   },
   eventItem: {
-    width: width * 0.45,
-    borderRadius: 15,
-    overflow: "hidden",
-    marginBottom: 15,
-    backgroundColor: "#f0f0f0",
+    width: width * 0.44,
+    marginBottom: 20,
   },
   eventImage: {
     width: "100%",
-    height: 120,
+    height: 150,
+    borderRadius: 10,
+  },
+  eventDetails: {
+    marginTop: 10,
   },
   eventText: {
-    padding: 10,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
-    textAlign: "center",
-    color: "#333",
+  },
+  eventRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  eventDetailText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: "#555",
+  },
+  categoryButton: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 15,
+    padding: 10,
+    marginRight: 10,
+  },
+  selectedCategory: {
+    backgroundColor: "#007BFF",
+  },
+  categoryText: {
+    fontSize: 14,
+    color: "#000",
   },
 });

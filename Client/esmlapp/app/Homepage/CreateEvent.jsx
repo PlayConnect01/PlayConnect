@@ -1,11 +1,30 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import Swal from 'sweetalert2';
 import axios from 'axios';
+import { useRouter } from 'expo-router';
+import MapPicker from '../Homepage/Mappicker'; 
+import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
 
-const AddNewEvent = () => {
+
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace('-', '+').replace('_', '/');
+    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+  } catch (error) {
+    console.error('Token decoding error:', error); 
+    return null;
+  }
+};
+
+global.Buffer = Buffer;
+
+const AddNewEvent = () => { 
+  const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(null);
@@ -17,6 +36,10 @@ const AddNewEvent = () => {
   const [price, setPrice] = useState("0");
   const [isFree, setIsFree] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false); 
+  const [mapLocation, setMapLocation] = useState({ latitude: 37.78825, longitude: -122.4324 });
 
   const toggleFree = () => {
     setIsFree(!isFree);
@@ -28,28 +51,91 @@ const AddNewEvent = () => {
     if (selectedDate) setDate(selectedDate);
   };
 
+  const onStartTimeChange = (event, selectedTime) => {
+    setShowStartTimePicker(false);
+    if (selectedTime) setStartTime(selectedTime);
+  };
+
+  const onEndTimeChange = (event, selectedTime) => {
+    setShowEndTimePicker(false);
+    if (selectedTime) setEndTime(selectedTime);
+  };
+
+  const handleLocationSelect = (location) => {
+    setMapLocation(location);
+    setLocation(`Lat: ${location.latitude}, Lon: ${location.longitude}`);
+    setShowMapModal(false);
+  };
+
   const createEvent = async () => {
+    if (!eventName || !note || !date || !startTime || !endTime || !location || !participants || !price) {
+      Alert.alert(
+        'Error!',
+        'Please fill in all fields before creating the event.',
+        [{ text: 'Okay' }]
+      );
+      return; 
+    }
+
     try {
+      const token = await AsyncStorage.getItem('userToken');
+
+      if (!token) {
+        Alert.alert(
+          'Error!',
+          'No authentication token found. Please log in again.',
+          [{ text: 'Okay' }]
+        );
+        return;
+      }
+
+      // Manual token decoding
+      const decodedToken = decodeToken(token);
+
+      if (!decodedToken) {
+        throw new Error('Failed to decode token');
+      }
+
+      // Try multiple ways to get user ID
+      const userId = decodedToken.id || 
+                     decodedToken.user_id || 
+                     decodedToken.userId;
+
+      if (!userId) {
+        throw new Error('Could not find user ID in token');
+      }
+
+      console.log("Decoded user ID:", userId);
+
       const eventData = {
         eventName,
         note,
-        date,
-        startTime,
-        endTime,
+        date: date.toISOString(),
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
         location,
         category,
-        participants,
-        price,
-        isFree
+        participants: parseInt(participants, 10),
+        price: parseFloat(price),
+        isFree,
+        creator_id: userId
       };
 
-      await axios.post('http://localhost:3000/events/create', eventData);
-      Swal.fire({
-        title: 'Success!',
-        text: 'Event created successfully!',
-        icon: 'success',
-        confirmButtonText: 'Okay'
+      console.log("Event data being sent:", eventData);
+
+      const response = await axios.post('http://192.168.103.8:3000/events/create', eventData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+
+      console.log("Event created response:", response.data);
+
+      Alert.alert(
+        'Success!',
+        'Event created successfully!', 
+        [{ text: 'Okay', onPress: () => router.push('Homepage/Test') }]
+      );
 
       setEventName('');
       setNote('');
@@ -61,13 +147,15 @@ const AddNewEvent = () => {
       setParticipants('10');
       setPrice('0');
       setIsFree(false);
+
     } catch (error) {
-      Swal.fire({
-        title: 'Error!',
-        text: 'There was an issue creating the event.',
-        icon: 'error',
-        confirmButtonText: 'Okay'
-      });
+      console.error('Full error details:', error);
+      console.error('Event creation error:', error.response ? error.response.data : error.message);
+      Alert.alert(
+        'Error!',
+        'There was an issue creating the event. Please check the console for details.',
+        [{ text: 'Okay' }]
+      );
     }
   };
 
@@ -93,30 +181,45 @@ const AddNewEvent = () => {
         <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
       )}
       <View style={styles.timeContainer}>
-        <TextInput
-          style={[styles.input, styles.timeInput]}
-          placeholder="Start time"
-          value={startTime ? startTime.toTimeString() : ""}
-        />
-        <TextInput
-          style={[styles.input, styles.timeInput]}
-          placeholder="End time"
-          value={endTime ? endTime.toTimeString() : ""}
-        />
+        <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{startTime ? startTime.toLocaleTimeString() : "Start time"}</Text>
+        </TouchableOpacity>
+        {showStartTimePicker && (
+          <DateTimePicker
+            value={startTime || new Date()}
+            onChange={onStartTimeChange}
+            mode="time"
+          />
+        )}
+        <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{endTime ? endTime.toLocaleTimeString() : "End time"}</Text>
+        </TouchableOpacity>
+        {showEndTimePicker && (
+          <DateTimePicker
+            value={endTime || new Date()}
+            onChange={onEndTimeChange}
+            mode="time"
+          />
+        )}
       </View>
 
-      <View style={styles.locationInputContainer}>
-        <TextInput
-          style={styles.locationInput}
-          placeholder="Location"
-          value={location}
-          onChangeText={setLocation}
-        />
-        <Image
-          source={{ uri: 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1733847829/l1wz4julzrm1jrukqatv.png' }}
-          style={styles.mapIcon}
-        />
-      </View>
+      <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.input}>
+        <Text>{location || "Select Location"}</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)} 
+        transparent={false}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeArrow}>
+            <Icon name="arrow-back" size={30} color="#fff" />
+          </TouchableOpacity>
+          <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
+        </View>
+      </Modal>
 
       <Picker
         selectedValue={category}
@@ -230,26 +333,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  locationInputContainer: {
-    position: 'relative',
-    marginVertical: 8,
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000', 
   },
-  locationInput: {
-    paddingRight: 30,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
-  },
-  mapIcon: {
+  closeArrow: {
     position: 'absolute',
-    right: 17,
-    top: '50%',
-    transform: [{ translateY: -12 }],
-    width: 25,
-    height: 20,
+    top: 40,
+    left: 20,
+    zIndex: 1, 
   },
 });
 

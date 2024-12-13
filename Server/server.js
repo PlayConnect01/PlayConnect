@@ -29,6 +29,9 @@ app.use('/users', userRouter);
 app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
 app.use('/chats', chatRoutes);  
+app.use('/competetion', competetionRouter); 
+app.use('/password', passwordRouter);
+
 
 
 // Utiliser server.listen au lieu de app.listen
