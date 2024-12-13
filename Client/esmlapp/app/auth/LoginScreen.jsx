@@ -13,19 +13,31 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
+<<<<<<< HEAD
+      const response = await axios.post('http://192.168.104.10:3000/users/login', {
+=======
       const response = await axios.post('http://192.168.103.8:3000/users/login', {
+>>>>>>> be6a981928988c0bd682665a5a6d0d777a657340
         email,
         password,
       });
 
       console.log('Login successful:', response.data);
-      const { token  } = response.data;
+      const { token  , user  } = response.data;
+// console.log(user , "user");
 
       // Store the token in AsyncStorage
       await AsyncStorage.setItem('userToken', token);
-
+      // let user1 = JSON.stringify(user)
+      console.log(token , "saaa");
+      
+      // await AsyncStorage.setItem("user", user1);
       // Navigate to home page after successful login
+<<<<<<< HEAD
+      navigate.navigate('Match'); // Adjust the route accordingly
+=======
       navigate.navigate('Homepage/Homep'); // Adjust the route accordingly
+>>>>>>> be6a981928988c0bd682665a5a6d0d777a657340
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
       alert('Invalid credentials. Please try again.');

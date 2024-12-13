@@ -21,8 +21,9 @@ const Stack = createStackNavigator();
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="CalendarPage" component={CalendarPage} />
+       <Stack.Screen name="Homep" component={Homep} />
+      <Stack.Screen name="SeeAllPage" component={SeeAllPage} /> 
+      <Stack.Screen name="CalendarPage" component={CalendarPage} /> 
     </Stack.Navigator>
   );
 }
