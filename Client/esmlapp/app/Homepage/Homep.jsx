@@ -30,7 +30,7 @@ const App = () => {
 
   useEffect(() => {
     axios
-      .get("http://192.168.104.4:3000/sports")
+      .get("http://192.168.103.8:3000/sports")
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -41,7 +41,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.4:3000/competetion")
+      .get("http://192.168.103.8:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -50,7 +50,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.4:3000/events/getAll")
+      .get("http://192.168.103.8:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
@@ -177,23 +177,28 @@ const App = () => {
         ))}
       </ScrollView>
       <ScrollView contentContainerStyle={styles.eventsGrid}>
-        {filteredEvents.map((event) => (
-          <View key={event.id} style={styles.eventItem}>
-            <Image source={{ uri: event.image }} style={styles.eventImage} />
-            <View style={styles.eventDetails}>
-              <Text style={styles.eventText}>{event.name}</Text>
-              <View style={styles.eventRow}>
-                <Ionicons name="location-outline" size={16} color="#555" />
-                <Text style={styles.eventDetailText}>{event.location}</Text>
-              </View>
-              <View style={styles.eventRow}>
-                <Ionicons name="calendar-outline" size={16} color="#555" />
-                <Text style={styles.eventDetailText}>{event.date}</Text>
-              </View>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+  {filteredEvents.map((event) => (
+    <TouchableOpacity
+      key={event.id}
+      style={styles.eventItem}
+      onPress={() => navigation.navigate('Homepage/EventDetails', { eventId: event.event_id })}
+    >
+      <Image source={{ uri: event.image }} style={styles.eventImage} />
+      <View style={styles.eventDetails}>
+        <Text style={styles.eventText}>{event.name}</Text>
+        <View style={styles.eventRow}>
+          <Ionicons name="location-outline" size={16} color="#555" />
+          <Text style={styles.eventDetailText}>{event.location}</Text>
+        </View>
+        <View style={styles.eventRow}>
+          <Ionicons name="calendar-outline" size={16} color="#555" />
+          <Text style={styles.eventDetailText}>{event.date}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  ))}
+</ScrollView>
+
     </View>
     </ScrollView>
   );

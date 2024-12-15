@@ -1,33 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons'; // For social icons
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'; // Import GoogleSignin
-import { auth } from '../../firebaseconfig'; // Adjust the path to your firebase config
-import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { useAuth } from '../../context/AuthContext';
 
-// Initialize GoogleSignin
-GoogleSignin.configure({
-  webClientId: '366055990385-nvsn346jorhtur3fclmo8p9jg5blunuv.apps.googleusercontent.com', // Replace with your Google OAuth Client ID
-});
+WebBrowser.maybeCompleteAuthSession();
+
+const API_URL = "http://localhost:3000"; // Update accordingly
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
+  const { setUser } = useAuth();
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: 'YOUR_GOOGLE_OAUTH_CLIENT_ID', // Replace with your Google OAuth Client ID
+  });
 
+  // Handle regular login with email and password
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://192.168.103.10:3000/users/login', {
+      const response = await axios.post('http://192.168.163.101:3000/users/login', {
         email,
         password,
       });
 
       console.log('Login successful:', response.data);
-      const { token, user } = response.data;
+      const { token } = response.data;
 
       // Store the token in AsyncStorage
       await AsyncStorage.setItem('userToken', token);
@@ -40,35 +45,48 @@ export default function LoginScreen() {
     }
   };
 
+  // Handle Google login
   const handleGoogleLogin = async () => {
     try {
-      // Get Google sign-in credentials
-      const userInfo = await GoogleSignin.signIn();
-      const { idToken } = userInfo;
+      const result = await promptAsync();
+      if (result.type === 'success') {
+        const { id_token } = result.params;
 
-      // Create a Google credential with the token
-      const googleCredential = GoogleAuthProvider.credential(idToken);
-
-      // Sign in with the credential from Google
-      const userCredential = await signInWithCredential(auth, googleCredential);
-
-      // Store the user token and navigate
-      const token = await userCredential.user.getIdToken();
-      await AsyncStorage.setItem('userToken', token);
-      
-      console.log('Google login successful:', userCredential.user);
-
-      // Navigate to home page after successful login
-      navigation.navigate('Homep'); // Adjust the route accordingly
-    } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('User cancelled the login');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log('Sign-in is in progress');
+        const response = await axios.post(`${API_URL}/users/auth/google-token`, {
+          idToken: id_token,
+        });
+        const { user, token } = response.data;
+        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userData', JSON.stringify(user));
+        setUser(user);
+        navigation.navigate('Homep');
       } else {
-        console.error('Google login error:', error);
-        alert('Google login failed. Please try again.');
+        Alert.alert('Error', 'Google login failed');
       }
+    } catch (error) {
+      Alert.alert('Error', 'Google login failed');
+    }
+  };
+
+  // Handle Facebook login
+  const handleFacebookLogin = async () => {
+    try {
+      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+      if (result.isCancelled) {
+        throw new Error('User cancelled login');
+      }
+
+      const data = await AccessToken.getCurrentAccessToken();
+      const response = await axios.post(`${API_URL}/users/auth/facebook-token`, {
+        accessToken: data.accessToken,
+      });
+      const { user, token } = response.data;
+      await AsyncStorage.setItem('userToken', token);
+      await AsyncStorage.setItem('userData', JSON.stringify(user));
+      setUser(user);
+      navigation.navigate('Homep');
+    } catch (error) {
+      Alert.alert('Error', 'Facebook login failed');
     }
   };
 
@@ -83,7 +101,7 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Image
-        source={require('../../assets/images/sportscube.png')} // Replace with your image URL
+        source={require('../../assets/images/sportscube.png')}
         style={styles.image}
       />
       <Text style={styles.title}>Welcome Back</Text>
@@ -128,9 +146,12 @@ export default function LoginScreen() {
 
       <Text style={styles.socialText}>Sign in With</Text>
       <View style={styles.socialContainer}>
-        <FontAwesome name="facebook" size={30} color="#fff" style={styles.socialIcon} />
-        <FontAwesome name="google" size={30} color="#fff" style={styles.socialIcon} onPress={handleGoogleLogin} />
-        <FontAwesome name="envelope" size={30} color="#fff" style={styles.socialIcon} />
+        <TouchableOpacity onPress={handleFacebookLogin}>
+          <FontAwesome name="facebook" size={30} color="#fff" style={styles.socialIcon} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleGoogleLogin}>
+          <FontAwesome name="google" size={30} color="#fff" style={styles.socialIcon} />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -212,4 +233,4 @@ const styles = StyleSheet.create({
   socialIcon: {
     marginHorizontal: 10,
   },
-})
+});

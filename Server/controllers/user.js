@@ -1,8 +1,7 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const { PrismaClient } = require('@prisma/client'); // Ensure you have Prisma client set up
-
+const { PrismaClient } = require("@prisma/client"); // Ensure you have Prisma client set up
 
 dotenv.config();
 
@@ -25,11 +24,13 @@ const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
   if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
+    return res.status(400).json({ error: "Invalid email format" });
   }
 
   if (!isValidPassword(password)) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters long" });
   }
 
   try {
@@ -39,7 +40,7 @@ const signup = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'Email is already registered' });
+      return res.status(400).json({ error: "Email is already registered" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -56,7 +57,7 @@ const signup = async (req, res) => {
     const token = jwt.sign(
       { id: user.user_id, email: user.email, username: user.username },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" }
     );
 
     res.status(200).json({
@@ -65,78 +66,63 @@ const signup = async (req, res) => {
         email: user.email,
         username: user.username,
       },
-      token, 
+      token,
     });
   } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ error: 'Error creating user' });
+    console.error("Signup error:", error);
+    res.status(500).json({ error: "Error creating user" });
   }
 };
 
-// Handle user login
+// Regular login
 const login = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
-
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
-  }
-
   try {
-    // Find the user by email
-    const user = await prismaClient.user.findUnique({
-      where: { email },
-    });
+    const { email, password } = req.body;
+    const user = await prismaClient.user.findUnique({ where: { email } });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!user || !user.password) {
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Compare the password with the hashed password in the database
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user.user_id, email: user.email, username: user.username },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    // Send response with user and token
-    res.status(200).json({
-      user: {
-        user_id: user.user_id,
-        email: user.email,
-        username: user.username,
-        location: user.location,
-      },
-      token, // JWT token
+    const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
     });
+
+    res.json({ user, token });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Error logging in' });
+    res.status(500).json({ error: "Login failed" });
   }
 };
 
+// Social auth handler
+const handleSocialAuth = async (req, res) => {
+  try {
+    const user = req.user;
+    const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
 
+    res.json({ user, token });
+  } catch (error) {
+    res.status(500).json({ error: "Authentication failed" });
+  }
+};
 
 // Handle user logout
 const logout = (req, res) => {
   try {
     // If you're using cookies for JWT, clear the token cookie
-    res.clearCookie('token'); // Clears token cookie if you're using cookies for JWT
-   res.status(200).json({ message: 'Logged out successfully' });
-   } catch (error) {
-     console.error('Logout error:', error);
-     res.status(500).json({ error: 'Error logging out' });
-   }
+    res.clearCookie("token"); // Clears token cookie if you're using cookies for JWT
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ error: "Error logging out" });
+  }
 };
 
-module.exports = { signup, login, logout };
+module.exports = { signup, login, logout, handleSocialAuth };

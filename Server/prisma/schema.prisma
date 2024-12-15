@@ -11,7 +11,9 @@ model User {
   user_id         Int       @id @default(autoincrement())
   username        String
   email           String    @unique
-  password        String
+  password          String?
+  auth_provider     String?  // 'local', 'google', 'facebook'
+  auth_provider_id  String?
   location        String?   // Changed to nullable
   profile_picture String?
   skill_level     String?
@@ -207,7 +209,7 @@ model Message {
   sent_at       DateTime @default(now())
 
   // Pour les messages vocaux
-  voice_duration Float?   // Durée du message vocal en secondes
+  voice_duration Float?   
   voice_file_url String?  // URL du fichier audio
 
   chat    Chat  @relation(fields: [chat_id], references: [chat_id])
@@ -216,6 +218,10 @@ model Message {
   @@index([chat_id])
   @@index([sender_id])
 }
+
+
+
+
 
 model Achievement {
   achievement_id    Int      @id @default(autoincrement())

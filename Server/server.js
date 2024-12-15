@@ -9,6 +9,7 @@ const matchRouter = require('./routes/match');
 const chatRoutes = require('./routes/chat');
  const  competetionRouter = require ('./routes/competetion.js')
  const  passwordRouter = require ('./routes/handlePasswordReset .js')
+  const passport = require ('./config/passport.js')
 const app = express();
 
 // Créer le serveur HTTP
@@ -32,6 +33,23 @@ app.use('/events', eventRoutes);
 app.use('/chats', chatRoutes);  
 app.use('/competetion', competetionRouter); 
 app.use('/password', passwordRouter);
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user.user_id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await prismaClient.user.findUnique({
+      where: { user_id: id }
+    });
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
 
 
 
