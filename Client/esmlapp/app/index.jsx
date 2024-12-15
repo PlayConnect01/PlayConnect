@@ -13,6 +13,7 @@ import Match from "./Match/Firstpagematch";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage"
+import Profile from "./profile/ProfilePage"
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); 
@@ -37,6 +38,7 @@ function TabsNavigation() {
       }}
       
     >
+      <Tab.Screen name="Profile" component={Profile} /> 
       <Tab.Screen name="Homep" component={HomeStack} /> 
       <Tab.Screen name="SignUp" component={SignUp } />
       <Tab.Screen name="Create Event" component={AddNewEvent} />
