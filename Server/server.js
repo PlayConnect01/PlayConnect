@@ -12,14 +12,12 @@ const passwordRouter = require('./routes/handlePasswordReset .js')
 
 const app = express();
 
-// Créer le serveur HTTP
 const server = http.createServer(app);
 
-// Initialiser Socket.IO
 initializeSocket(server);
 
 app.use(cors({
-  origin: '*', // À modifier en production
+  origin: '*', 
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));app.use(express.json());

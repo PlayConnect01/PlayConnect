@@ -16,7 +16,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await axios.get(`http://192.168.103.8:3000/events/getById/${eventId}`);
+        const response = await axios.get(`http://192.168.103.11:3000/events/getById/${eventId}`);
         setEvent(response.data);
         setLoading(false);
       } catch (err) {
@@ -31,13 +31,13 @@ const EventDetails = () => {
   const handleAddParticipant = async () => {
     try {
       const userId = event.creator_id;
-      await axios.post('http://192.168.103.8:3000/events/addParticipant', {
+      await axios.post('http://192.168.103.11:3000/events/addParticipant', {
         eventId,
         userId,
       });
 
       Alert.alert('Success', 'You have been added to the event!');
-      const updatedEvent = await axios.get(`http://192.168.103.8:3000/events/getById/${eventId}`);
+      const updatedEvent = await axios.get(`http://192.168.103.11:3000/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
     } catch (error) {
       if (error.response && error.response.status === 400 && error.response.data.error) {

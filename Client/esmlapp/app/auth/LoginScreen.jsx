@@ -13,7 +13,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://192.168.103.8:3000/users/login', {
+      const response = await axios.post('http://192.168.103.11:3000/users/login', {
         email,
         password,
       });
@@ -29,7 +29,7 @@ export default function LoginScreen() {
       
       // await AsyncStorage.setItem("user", user1);
       // Navigate to home page after successful login
-      navigate.navigate('Homep'); // Adjust the route accordingly
+      navigate.navigate('Homepage/Homep'); // Adjust the route accordingly
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
       alert('Invalid credentials. Please try again.');

@@ -17,7 +17,7 @@ const PasswordRecoveryScreen = () => {
     if (step === 1) {
       // Step 1: Send a password reset request to the backend
       try {
-        const response = await axios.post(`http://192.168.103.10:3000/password/request-password-reset`, { 
+        const response = await axios.post(`http://192.168.103.11:3000/password/request-password-reset`, { 
           email,
           method 
         });
@@ -30,7 +30,7 @@ const PasswordRecoveryScreen = () => {
     } else if (step === 2) {
       // Step 2: Verify the code
       try {
-        const response = await axios.post(`http://192.168.103.10:3000/password/verify-reset-code`, { 
+        const response = await axios.post(`http://192.168.103.11:3000/password/verify-reset-code`, { 
           email, 
           code,
           method 
@@ -45,7 +45,7 @@ const PasswordRecoveryScreen = () => {
       // Step 3: Update the password
       if (newPassword === repeatPassword) {
         try {
-          const response = await axios.post(`http://192.168.103.10:3000/password/update-password`, { 
+          const response = await axios.post(`http://192.168.103.11:3000/password/update-password`, { 
             email, 
             newPassword 
           });
