@@ -47,32 +47,28 @@ const initializeSocket = (server) => {
     });
 
     // Gestion des messages
-    socket.on('send_message', async (data) => {
-      // Check if data is valid
-      if (!data || !data.chatId || !data.senderId || !data.content) {
-        console.error('Received invalid data for send_message:', data);
-        return; // Exit if data is null or missing properties
-      }
-
-      const { chatId, senderId, content } = data; // Destructure after validation
-
+    io.on('send_message', async (data) => {
+      if (!data || !data.chatId || !data.senderId || !data.content) return;
+  
+      const { chatId, senderId, content } = data;
+  
       try {
-        // Create the message in the database
-        const newMessage = await prisma.message.create({
-          data: {
-            chat_id: parseInt(chatId),
-            sender_id: parseInt(senderId),
-            content: content,
-            message_type: 'text'
+          const existingMessage = await prisma.message.findFirst({
+              where: { chat_id: chatId, sender_id: senderId, content }
+          });
+  
+          if (!existingMessage) {
+              const newMessage = await prisma.message.create({
+                  data: { chat_id: chatId, sender_id: senderId, content }
+              });
+  
+              io.to(`chat_${chatId}`).emit('receive_message', newMessage);
           }
-        });
-
-        // Send the message to all members of the chat
-        io.to(`chat_${chatId}`).emit('receive_message', newMessage);
       } catch (error) {
-        console.error('Erreur lors de l\'envoi du message:', error);
+          console.error('Error in send_message:', error);
       }
-    });
+  });
+  
 
     // Déconnexion
     socket.on('disconnect', () => {

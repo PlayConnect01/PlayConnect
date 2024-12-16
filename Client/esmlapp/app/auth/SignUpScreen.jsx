@@ -31,7 +31,7 @@ const SignUpScreen = () => {
 
   return (
     <ImageBackground
-    source={require('../../assets/images/sportscube.png')} // Replace with your actual background image URL
+    source={require('../../assets/images/sportscube.png')}
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>

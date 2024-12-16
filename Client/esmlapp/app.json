@@ -13,7 +13,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.esmlapp"
     },
     "web": {
       "bundler": "metro",

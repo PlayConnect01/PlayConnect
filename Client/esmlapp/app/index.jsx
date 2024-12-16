@@ -14,6 +14,9 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage"
 
+
+
+
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); 
 
@@ -49,6 +52,7 @@ function TabsNavigation() {
       {/* <Tab.Screen name="Tab2" component={Test} /> */}
       {/* <Tab.Screen name="Homep" component={HomeStack} />  */}
       <Tab.Screen name="ChatDetails" component={ChatDetails} />
+
       </Tab.Navigator>
   );
 }

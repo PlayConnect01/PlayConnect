@@ -13,9 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import io from 'socket.io-client';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.1.191:3000';
+const API_URL = 'http://192.168.103.3:3000';
 
-// Créer une instance axios configurée
+// Axios instance
 const axiosInstance = axios.create({
     baseURL: API_URL,
     timeout: 10000,
@@ -24,7 +24,6 @@ const axiosInstance = axios.create({
     }
 });
 
-// Intercepteur pour gérer les erreurs
 axiosInstance.interceptors.response.use(
     response => response,
     error => {
@@ -45,22 +44,17 @@ const socket = io(API_URL, {
 
 const ChatDetails = ({ route, navigation }) => {
     const { user, chatId, currentUserId } = route.params;
-    console.log('Chat ID:', chatId);
 
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const scrollViewRef = useRef();
 
-    // Charger l'historique des messages
     const loadMessages = async () => {
         try {
             setIsLoading(true);
-            const response = await axiosInstance.get(`http://192.168.1.191:3000/chats/${chatId}/messages`);
-            console.log(response.data)
-            if (response.data) {
-                setMessages(response.data);
-            }
+            const response = await axiosInstance.get(`/chats/${chatId}/messages`);
+            setMessages(response.data || []);
         } catch (error) {
             console.error('Error loading messages:', error);
             Alert.alert('Error', 'Failed to load messages. Please try again later.');
@@ -69,7 +63,6 @@ const ChatDetails = ({ route, navigation }) => {
         }
     };
 
-    // Envoyer un message
     const sendMessage = async () => {
         if (!newMessage.trim()) return;
 
@@ -82,35 +75,40 @@ const ChatDetails = ({ route, navigation }) => {
             const response = await axiosInstance.post(`/chats/${chatId}/messages`, messageData);
             
             if (response.data) {
-                // Émettre le message via socket
+                // Emit the message to other users
                 socket.emit('send_message', {
                     chatId,
                     message: response.data
                 });
-                
+
+                // Optimistically add message to UI
+                setMessages(prev => [...prev, response.data]);
                 setNewMessage('');
                 scrollViewRef.current?.scrollToEnd({ animated: true });
             }
         } catch (error) {
-            // L'intercepteur gèrera l'erreur
+            // Error interceptor handles error
         }
     };
 
     useEffect(() => {
         const setupSocketConnection = () => {
             socket.on('connect', () => {
-                console.log('Connected to socket server');
                 socket.emit('join_chat', { chatId, userId: currentUserId });
+            });
+
+            socket.on('receive_message', (message) => {
+                // Avoid duplicates
+                setMessages(prev => {
+                    const isDuplicate = prev.some(m => m.message_id === message.message_id);
+                    return isDuplicate ? prev : [...prev, message];
+                });
+                scrollViewRef.current?.scrollToEnd({ animated: true });
             });
 
             socket.on('connect_error', (error) => {
                 console.error('Socket connection error:', error);
                 Alert.alert('Connection Error', 'Unable to connect to chat server');
-            });
-
-            socket.on('receive_message', (message) => {
-                setMessages(prev => [...prev, message]);
-                scrollViewRef.current?.scrollToEnd({ animated: true });
             });
         };
 
@@ -118,124 +116,47 @@ const ChatDetails = ({ route, navigation }) => {
         loadMessages();
 
         return () => {
+            // Cleanup socket listeners
             socket.off('connect');
-            socket.off('connect_error');
             socket.off('receive_message');
+            socket.off('connect_error');
             socket.emit('leave_chat', chatId);
         };
     }, [chatId, currentUserId]);
 
-    const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    };
-    const fetchMessages = async (chatId) => {
-        try {
-            const response = await axios.get(`http://192.168.1.191:3000/chats/${chatId}/messages`);
-            // Process the response
-            console.log('Messagessssssssss:', response.data);
-        } catch (error) {
-            console.error('Error loading messages:', error);
-            Alert.alert('Error', 'Failed to load messages. ' + error.message);
-        }
-    };
+    const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
 
     return (
         <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="chevron-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <View style={styles.userInfo}>
-                    <Image source={{ uri: user.image }} style={styles.userImage} />
-                    <View>
-                        <Text style={styles.userName}>{user.name}</Text>
-                        <Text style={styles.userStatus}>{user.status}</Text>
-                    </View>
-                </View>
-                <View style={styles.headerIcons}>
-                    <TouchableOpacity>
-                        <Ionicons name="call" size={24} color="#6200ee" />
-                    </TouchableOpacity>
-                    <TouchableOpacity>
-                        <Ionicons name="videocam" size={24} color="#6200ee" />
-                    </TouchableOpacity>
-                </View>
-            </View>
+            {/* Other UI Elements */}
+            <ScrollView ref={scrollViewRef}>
+                {messages.map((message, index) => {
+                    const isCurrentUser = message.sender_id === currentUserId;
+                    const showDate = index === 0 || 
+                        formatDate(message.sent_at) !== formatDate(messages[index - 1].sent_at);
 
-            {/* Messages */}
-            <ScrollView 
-                ref={scrollViewRef}
-                style={styles.messagesContainer}
-                onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-            >
-                {isLoading ? (
-                    <View style={styles.loadingContainer}>
-                        <Text>Loading messages...</Text>
-                    </View>
-                ) : messages.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Text>No messages yet. Start the conversation!</Text>
-                    </View>
-                ) : (
-                    messages.map((message, index) => {
-                        const isCurrentUser = message.sender_id === currentUserId;
-                        const showDate = index === 0 || 
-                            formatDate(message.sent_at) !== formatDate(messages[index - 1].sent_at);
-
-                        return (
-                            <React.Fragment key={message.message_id}>
-                                {showDate && (
-                                    <Text style={styles.dateText}>
-                                        {formatDate(message.sent_at)}
-                                    </Text>
-                                )}
-                                <View style={[
-                                    styles.messageContainer,
-                                    isCurrentUser ? styles.messageSent : styles.messageReceived
-                                ]}>
-                                    <Text style={[
-                                        styles.messageText,
-                                        isCurrentUser && { color: '#fff' }
-                                    ]}>
-                                        {message.content}
-                                    </Text>
-                                </View>
-                            </React.Fragment>
-                        );
-                    })
-                )}
+                    return (
+                        <React.Fragment key={message.message_id}>
+                            {showDate && <Text>{formatDate(message.sent_at)}</Text>}
+                            <View style={isCurrentUser ? styles.messageSent : styles.messageReceived}>
+                                <Text>{message.content}</Text>
+                            </View>
+                        </React.Fragment>
+                    );
+                })}
             </ScrollView>
-
-            {/* Input Area */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Send Message"
-                    placeholderTextColor="#666"
-                    value={newMessage}
-                    onChangeText={setNewMessage}
-                    onSubmitEditing={sendMessage}
-                />
-                <TouchableOpacity 
-                    style={styles.sendButton}
-                    onPress={sendMessage}
-                >
-                    <Ionicons 
-                        name={newMessage.trim() ? "send" : "mic"} 
-                        size={24} 
-                        color="#fff" 
-                    />
-                </TouchableOpacity>
-            </View>
+            {/* Input and Send Button */}
         </View>
     );
 };
+
+
+
 
 const styles = StyleSheet.create({
     container: {
