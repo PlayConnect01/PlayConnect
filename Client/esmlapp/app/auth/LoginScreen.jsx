@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, Animated, Easing } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -12,7 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const API_URL = "http://localhost:3000"; // Update accordingly
+// const API_URL = "https://localhost:3000"; // Update accordingly
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -20,13 +20,34 @@ export default function LoginScreen() {
   const navigation = useNavigation();
   const { setUser } = useAuth();
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: 'YOUR_GOOGLE_OAUTH_CLIENT_ID', // Replace with your Google OAuth Client ID
+    clientId: '730813875128-11hvkldvgco1nrb3ueig2kbsok77le3t.apps.googleusercontent.com', // Replace with your Google OAuth Client ID
   });
+
+  // Animation references
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000,
+        easing: Easing.bounce,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   // Handle regular login with email and password
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://192.168.163.101:3000/users/login', {
+      const response = await axios.post('http://192.168.103.10:3000/users/login', {
         email,
         password,
       });
@@ -52,7 +73,7 @@ export default function LoginScreen() {
       if (result.type === 'success') {
         const { id_token } = result.params;
 
-        const response = await axios.post(`${API_URL}/users/auth/google-token`, {
+        const response = await axios.post('http://localhost:3000/users/auth/google-token', {
           idToken: id_token,
         });
         const { user, token } = response.data;
@@ -77,7 +98,7 @@ export default function LoginScreen() {
       }
 
       const data = await AccessToken.getCurrentAccessToken();
-      const response = await axios.post(`${API_URL}/users/auth/facebook-token`, {
+      const response = await axios.post('http://localhost:3000/users/auth/facebook-token', {
         accessToken: data.accessToken,
       });
       const { user, token } = response.data;
@@ -100,12 +121,12 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Image
+      <Animated.Image
         source={require('../../assets/images/sportscube.png')}
-        style={styles.image}
+        style={[styles.image, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
       />
-      <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to access your account</Text>
+      <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>Welcome Back</Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>Sign in to access your account</Animated.Text>
 
       <View style={styles.inputContainer}>
         <FontAwesome name="envelope" size={20} color="#999" />

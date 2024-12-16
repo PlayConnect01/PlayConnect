@@ -12,18 +12,13 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/users/auth/google/callback",
-      profileFields: ['id', 'emails', 'name', 'picture']
+      callbackURL: `${process.env.FRONTEND_URL}/users/auth/google/callback`,
+      scope: ['profile', 'email'],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
         let user = await prisma.user.findFirst({
-          where: { 
-            OR: [
-              { email: profile.emails[0].value },
-              { auth_provider_id: profile.id }
-            ]
-          }
+          where: { email: profile.emails[0].value },
         });
 
         if (!user) {
@@ -33,13 +28,14 @@ passport.use(
               username: profile.displayName,
               auth_provider: 'google',
               auth_provider_id: profile.id,
-              profile_picture: profile.photos[0].value
-            }
+              profile_picture: profile.photos[0].value,
+            },
           });
         }
 
         return done(null, user);
       } catch (error) {
+        console.error("Google Strategy Error:", error);
         return done(error, null);
       }
     }
@@ -52,18 +48,13 @@ passport.use(
     {
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: "http://localhost:3000/users/auth/facebook/callback",
-      profileFields: ['id', 'emails', 'name', 'picture']
+      callbackURL: `${process.env.FRONTEND_URL}/users/auth/facebook/callback`,
+      profileFields: ['id', 'emails', 'name', 'picture'],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
         let user = await prisma.user.findFirst({
-          where: { 
-            OR: [
-              { email: profile.emails[0].value },
-              { auth_provider_id: profile.id }
-            ]
-          }
+          where: { email: profile.emails[0].value },
         });
 
         if (!user) {
@@ -73,13 +64,14 @@ passport.use(
               username: `${profile.name.givenName} ${profile.name.familyName}`,
               auth_provider: 'facebook',
               auth_provider_id: profile.id,
-              profile_picture: profile.photos[0].value
-            }
+              profile_picture: profile.photos[0].value,
+            },
           });
         }
 
         return done(null, user);
       } catch (error) {
+        console.error("Facebook Strategy Error:", error);
         return done(error, null);
       }
     }
