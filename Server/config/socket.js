@@ -6,80 +6,95 @@ let io;
 const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "*", // Adjust according to your production needs
-      methods: ["GET", "POST"]
-    }
+      origin: '*', 
+      methods: ['GET', 'POST'],
+    },
   });
 
   io.on('connection', (socket) => {
-    console.log('Nouvelle connexion socket:', socket.id);
+    console.log(`New socket connection: ${socket.id}`);
 
-    // Rejoindre un chat spécifique
     socket.on('join_chat', async (data) => {
-      // Check if data is valid
       if (!data || !data.chatId || !data.userId) {
-        console.error('Received invalid data for join_chat:', data);
-        return; // Exit if data is null or missing properties
+        console.error('Invalid data for join_chat:', data);
+        return;
       }
 
-      const { chatId, userId } = data; // Destructure after validation
+      const { chatId, userId } = data;
 
       try {
-        // Verify if user is in chat
         const chatMember = await prisma.chatMember.findFirst({
           where: {
             chat_id: parseInt(chatId),
-            user_id: parseInt(userId)
-          }
+            user_id: parseInt(userId),
+          },
         });
 
         if (!chatMember) {
           console.error('User is not a member of the chat');
-          return; // Exit if user is not a member
+          return;
         }
 
-        // Proceed with joining the chat
         socket.join(`chat_${chatId}`);
         console.log(`User ${userId} joined chat ${chatId}`);
       } catch (error) {
-        console.error('Error verifying user in chat:', error);
+        console.error('Error verifying chat membership:', error);
       }
     });
 
-    // Gestion des messages
-    io.on('send_message', async (data) => {
-      if (!data || !data.chatId || !data.senderId || !data.content) return;
+    socket.on('send_message', async (data) => {
+      if (!data || !data.chatId || !data.senderId || !data.message) {
+          console.error('Invalid data for send_message:', data);
+          return;
+      }
   
-      const { chatId, senderId, content } = data;
+      const { chatId, senderId, message } = data;
   
       try {
           const existingMessage = await prisma.message.findFirst({
-              where: { chat_id: chatId, sender_id: senderId, content }
+              where: {
+                  chat_id: parseInt(chatId),
+                  sender_id: parseInt(senderId),
+                  content: message.content,
+                  sent_at: {
+                      gte: new Date(Date.now() - 5000) 
+                  }
+              }
+          });
+
+          if (existingMessage) {
+              console.log('Duplicate message detected, skipping:', existingMessage);
+              return;
+          }
+
+          const newMessage = await prisma.message.create({
+              data: {
+                  chat_id: parseInt(chatId),
+                  sender_id: parseInt(senderId),
+                  content: message.content,
+              },
           });
   
-          if (!existingMessage) {
-              const newMessage = await prisma.message.create({
-                  data: { chat_id: chatId, sender_id: senderId, content }
-              });
-  
-              io.to(`chat_${chatId}`).emit('receive_message', newMessage);
-          }
+          console.log('Broadcasting message:', newMessage);
+          io.to(`chat_${chatId}`).emit('receive_message', newMessage);
       } catch (error) {
-          console.error('Error in send_message:', error);
+          console.error('Error handling send_message:', error);
       }
   });
-  
 
-    // Déconnexion
+    socket.on('leave_chat', (chatId) => {
+      socket.leave(`chat_${chatId}`);
+      console.log(`Socket ${socket.id} left chat ${chatId}`);
+    });
+
     socket.on('disconnect', () => {
-      console.log('Socket déconnecté:', socket.id);
+      console.log(`Socket disconnected: ${socket.id}`);
     });
   });
 
   return io;
 };
 
-// Fonction pour obtenir l'instance io
 const getIO = () => {
   if (!io) {
     throw new Error('Socket.io not initialized');
@@ -89,5 +104,5 @@ const getIO = () => {
 
 module.exports = {
   initializeSocket,
-  getIO
-}; 
+  getIO,
+};

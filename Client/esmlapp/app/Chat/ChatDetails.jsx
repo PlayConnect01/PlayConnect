@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     View, 
     Text, 
@@ -15,7 +15,6 @@ import axios from 'axios';
 
 const API_URL = 'http://192.168.103.3:3000';
 
-// Axios instance
 const axiosInstance = axios.create({
     baseURL: API_URL,
     timeout: 10000,
@@ -34,23 +33,59 @@ axiosInstance.interceptors.response.use(
     }
 );
 
-const socket = io(API_URL, {
-    transports: ['websocket'],
-    reconnection: true,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-    reconnectionAttempts: 10
-});
-
 const ChatDetails = ({ route, navigation }) => {
     const { user, chatId, currentUserId } = route.params;
-
+    
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
-    const scrollViewRef = useRef();
+    const scrollViewRef = useRef(null);
+    const socketRef = useRef(null);
+    const sentMessagesRef = useRef(new Set());
 
-    const loadMessages = async () => {
+    const initializeSocket = useCallback(() => {
+        if (socketRef.current) {
+            socketRef.current.disconnect();
+        }
+
+        socketRef.current = io(API_URL, {
+            transports: ['websocket'],
+            reconnection: true,
+        });
+
+        const socket = socketRef.current;
+
+        socket.on('connect', () => {
+            console.log('Connected to socket server');
+            socket.emit('join_chat', { chatId, userId: currentUserId });
+        });
+
+        socket.on('receive_message', (message) => {
+            setMessages((prevMessages) => {
+                if (message.sender_id === currentUserId && 
+                    sentMessagesRef.current.has(message.message_id)) {
+                    return prevMessages;
+                }
+                const isDuplicate = prevMessages.some((msg) => 
+                    msg.message_id === message.message_id
+                );
+
+                if (isDuplicate) return prevMessages;
+                const filteredMessages = prevMessages.filter(
+                    msg => msg.message_id !== `temp_${message.content}`
+                );
+
+                return [...filteredMessages, message];
+            });
+            sentMessagesRef.current.delete(message.message_id);
+        });
+
+        return () => {
+            socket.emit('leave_chat', chatId);
+            socket.disconnect();
+        };
+    }, [chatId, currentUserId]);
+    const loadMessages = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await axiosInstance.get(`/chats/${chatId}/messages`);
@@ -61,102 +96,159 @@ const ChatDetails = ({ route, navigation }) => {
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const sendMessage = async () => {
+    }, [chatId]);
+    const sendMessage = useCallback(async () => {
         if (!newMessage.trim()) return;
 
+        const tempMessageId = `temp_${newMessage.trim()}`;
+        const tempMessage = {
+            message_id: tempMessageId,
+            sender_id: currentUserId,
+            content: newMessage.trim(),
+            sent_at: new Date().toISOString(),
+            status: 'sending',
+        };
+
+        setMessages((prev) => [...prev, tempMessage]);
+        setNewMessage('');
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+
         try {
-            const messageData = {
+            const response = await axiosInstance.post(`/chats/${chatId}/messages`, {
                 senderId: currentUserId,
-                content: newMessage.trim()
-            };
-
-            const response = await axiosInstance.post(`/chats/${chatId}/messages`, messageData);
-            
-            if (response.data) {
-                // Emit the message to other users
-                socket.emit('send_message', {
-                    chatId,
-                    message: response.data
-                });
-
-                // Optimistically add message to UI
-                setMessages(prev => [...prev, response.data]);
-                setNewMessage('');
-                scrollViewRef.current?.scrollToEnd({ animated: true });
-            }
+                content: tempMessage.content,
+            });
+            sentMessagesRef.current.add(response.data.message_id);
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.message_id === tempMessageId ? { ...response.data, status: 'sent' } : msg
+                )
+            );
+            socketRef.current?.emit('send_message', {
+                chatId,
+                senderId: currentUserId,
+                message: response.data,
+            });
         } catch (error) {
-            // Error interceptor handles error
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.message_id === tempMessageId ? { ...msg, status: 'failed' } : msg
+                )
+            );
+            Alert.alert('Error', 'Failed to send message. Please try again.');
         }
-    };
-
+    }, [chatId, currentUserId, newMessage]);
     useEffect(() => {
-        const setupSocketConnection = () => {
-            socket.on('connect', () => {
-                socket.emit('join_chat', { chatId, userId: currentUserId });
-            });
-
-            socket.on('receive_message', (message) => {
-                // Avoid duplicates
-                setMessages(prev => {
-                    const isDuplicate = prev.some(m => m.message_id === message.message_id);
-                    return isDuplicate ? prev : [...prev, message];
-                });
-                scrollViewRef.current?.scrollToEnd({ animated: true });
-            });
-
-            socket.on('connect_error', (error) => {
-                console.error('Socket connection error:', error);
-                Alert.alert('Connection Error', 'Unable to connect to chat server');
-            });
-        };
-
-        setupSocketConnection();
         loadMessages();
+        const cleanup = initializeSocket();
 
-        return () => {
-            // Cleanup socket listeners
-            socket.off('connect');
-            socket.off('receive_message');
-            socket.off('connect_error');
-            socket.emit('leave_chat', chatId);
-        };
-    }, [chatId, currentUserId]);
+        return cleanup;
+    }, [initializeSocket, loadMessages]);
 
-    const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('fr-FR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
+    };
 
     return (
         <View style={styles.container}>
-            {/* Other UI Elements */}
-            <ScrollView ref={scrollViewRef}>
-                {messages.map((message, index) => {
-                    const isCurrentUser = message.sender_id === currentUserId;
-                    const showDate = index === 0 || 
-                        formatDate(message.sent_at) !== formatDate(messages[index - 1].sent_at);
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="chevron-back" size={24} color="#000" />
+                </TouchableOpacity>
+                <View style={styles.userInfo}>
+                    <Image source={{ uri: user.image }} style={styles.userImage} />
+                    <View>
+                        <Text style={styles.userName}>{user.name}</Text>
+                        <Text style={styles.userStatus}>{user.status}</Text>
+                    </View>
+                </View>
+                <View style={styles.headerIcons}>
+                    <TouchableOpacity>
+                        <Ionicons name="call" size={24} color="#6200ee" />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                        <Ionicons name="videocam" size={24} color="#6200ee" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <ScrollView 
+                ref={scrollViewRef}
+                style={styles.messagesContainer}
+                onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <Text>Loading messages...</Text>
+                    </View>
+                ) : messages.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Text>No messages yet. Start the conversation!</Text>
+                    </View>
+                ) : (
+                    messages.map((message, index) => {
+                        const isCurrentUser = message.sender_id === currentUserId;
+                        const showDate = index === 0 || 
+                            formatDate(message.sent_at) !== formatDate(messages[index - 1].sent_at);
+                        const uniqueKey = `${message.message_id || 'temp'}-${index}`;
 
-                    return (
-                        <React.Fragment key={message.message_id}>
-                            {showDate && <Text>{formatDate(message.sent_at)}</Text>}
-                            <View style={isCurrentUser ? styles.messageSent : styles.messageReceived}>
-                                <Text>{message.content}</Text>
-                            </View>
-                        </React.Fragment>
-                    );
-                })}
+                        return (
+                            <React.Fragment key={uniqueKey}>
+                                {showDate && (
+                                    <Text style={styles.dateText}>
+                                        {formatDate(message.sent_at)}
+                                    </Text>
+                                )}
+                                <View style={[
+                                    styles.messageContainer,
+                                    isCurrentUser ? styles.messageSent : styles.messageReceived,
+                                    message.status === 'failed' && styles.messageFailedStatus
+                                ]}>
+                                    <Text style={[
+                                        styles.messageText,
+                                        isCurrentUser && { color: '#fff' }
+                                    ]}>
+                                        {message.content}
+                                    </Text>
+                                    {message.status === 'sending' && (
+                                        <Text style={styles.messageSendingStatus}>Sending...</Text>
+                                    )}
+                                    {message.status === 'failed' && (
+                                        <Text style={styles.messageFailedText}>Failed to send</Text>
+                                    )}
+                                </View>
+                            </React.Fragment>
+                        );
+                    })
+                )}
             </ScrollView>
-            {/* Input and Send Button */}
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Send Message"
+                    placeholderTextColor="#666"
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                    onSubmitEditing={sendMessage}
+                />
+                <TouchableOpacity 
+                    style={styles.sendButton}
+                    onPress={sendMessage}
+                >
+                    <Ionicons 
+                        name={newMessage.trim() ? "send" : "mic"} 
+                        size={24} 
+                        color="#fff" 
+                    />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
-
-
-
 
 const styles = StyleSheet.create({
     container: {
@@ -260,6 +352,21 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
+    },
+    messageSendingStatus: {
+        fontSize: 10,
+        color: '#888',
+        marginTop: 4,
+        alignSelf: 'flex-end',
+    },
+    messageFailedStatus: {
+        backgroundColor: '#ff4444',
+    },
+    messageFailedText: {
+        fontSize: 10,
+        color: '#fff',
+        marginTop: 4,
+        alignSelf: 'flex-end',
     }
 });
 
