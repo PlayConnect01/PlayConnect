@@ -59,7 +59,7 @@ const Match = () => {
       const fetchPotentialMatches = async () => {
         try {
           const response = await axios.get(
-            `http://192.168.103.3:3000/matches/common-sports/${currentUserId}`
+            `http://192.168.103.14:3000/matches/common-sports/${currentUserId}`
           );
 
           if (response.data.length > 0) {
@@ -93,7 +93,7 @@ const Match = () => {
     try {
       const currentUser = users[currentUserIndex];
       await axios.post(
-        `http://192.168.103.3:3000/matches/create`,
+        `http://192.168.103.14:3000/matches/create`,
         {
           userId1: currentUserId,
           userId2: currentUser.user_id,
@@ -158,6 +158,7 @@ const Match = () => {
     return (
       <View style={styles.container}>
         <Text>Loading users...</Text>
+        <Text>Utilisez la photo de profil</Text>
       </View>
     );
   }
@@ -193,16 +194,16 @@ const Match = () => {
           ]}
         >
           <Image
-            source={{ uri: currentUser.profile_picture }} // Utilisez la photo de profil
+            source={{ uri: currentUser.profile_picture }} // 
             style={styles.image}
             resizeMode="cover"
           />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {currentUser.username || 'Unknown User'} {/* Safeguard for username */}
+              {currentUser.username || 'Unknown User'} 
             </Text>
             <Text style={styles.location}>
-              {currentUser.location || 'Location not available'} {/* Safeguard for location */}
+              {currentUser.location || 'Location not available'}
             </Text>
             <View style={styles.statusBadge}>
               <Text style={styles.statusText}>Online</Text>

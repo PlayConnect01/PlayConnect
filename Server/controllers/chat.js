@@ -12,7 +12,6 @@ async function createChatWithWelcomeMessage(matchId) {
       throw new Error("Match not found or not accepted.");
     }
 
-    // Create chat and return it
     const chat = await prisma.$transaction(async (prisma) => {
       const newChat = await prisma.chat.create({
         data: {
@@ -28,16 +27,15 @@ async function createChatWithWelcomeMessage(matchId) {
         },
       });
 
-      // Update the match with the chat ID
       await prisma.match.update({
         where: { match_id: matchId },
-        data: { chat_id: newChat.chat_id },
+        data: { chat_id: newChat.chat_id },         // Update statuts match and taking the id chat 
+
       });
 
       return newChat;
     });
 
-    // Create system message
     await prisma.message.create({
       data: {
         chat_id: chat.chat_id,
@@ -53,7 +51,8 @@ async function createChatWithWelcomeMessage(matchId) {
   }
 }
 
-// Get chat message history
+//  message history
+
 async function getChatMessages(chatId) {
   try {
     const messages = await prisma.message.findMany({
@@ -75,6 +74,7 @@ async function getChatMessages(chatId) {
 }
 
 // Verify if user is in chat
+
 async function verifyUserInChat(userId, chatId) {
   try {
     const chatMember = await prisma.chatMember.findFirst({
@@ -93,39 +93,91 @@ async function verifyUserInChat(userId, chatId) {
 // Send a message
 async function sendMessage(chatId, senderId, content, messageType = "TEXT") {
   try {
-    // Verify if user is in chat
     const isUserInChat = await verifyUserInChat(senderId, chatId);
     if (!isUserInChat) {
       throw new Error("User not authorized to send messages in this chat");
     }
 
-    // Create the message
     const newMessage = await prisma.message.create({
       data: {
         chat_id: parseInt(chatId),
         sender_id: parseInt(senderId),
         content: content,
         message_type: messageType,
+        sent_at: new Date()
       },
       include: {
-        sender: true,
+        sender: {
+          select: {
+            username: true,
+            profile_picture: true
+          }
+        }
       },
     });
 
-    // Emit message via socket
-    const io = getIO();
-    io.to(`chat_${chatId}`).emit("receive_message", newMessage);
+    const formattedMessage = {
+      ...newMessage,
+      sent_at: newMessage.sent_at.toISOString()
+    };
 
-    return newMessage;
+    const io = getIO();
+    io.to(`chat_${chatId}`).emit("receive_message", formattedMessage);
+
+    return formattedMessage;
   } catch (error) {
     console.error("Error sending message:", error);
     throw error;
   }
 }
+///////// handle message voc /////////////
+async function handleAudioMessage(chatId, senderId, fileUrl) {
+    try {
+        console.log('Creating audio message for chat:', chatId);
+        console.log('Sender ID:', senderId);
+        console.log('File URL:', fileUrl);
+
+        // Create the audio message
+        const audioMessage = await prisma.message.create({
+            data: {
+                chat_id: parseInt(chatId),
+                sender_id: parseInt(senderId),
+                content: fileUrl,  // Store the URL in content
+                message_type: "AUDIO",
+                voice_file_url: fileUrl,
+                sent_at: new Date(),
+            },
+            include: {
+                sender: true,
+            },
+        });
+
+        // Get socket instance
+        const io = getIO();
+        
+        // Emit the message to all users in the chat
+        if (io) {
+            console.log('Broadcasting audio message to chat:', chatId);
+            io.to(`chat_${chatId}`).emit('receive_message', {
+                ...audioMessage,
+                voice_file_url: fileUrl  // Ensure voice_file_url is included
+            });
+        }
+
+        return {
+            ...audioMessage,
+            voice_file_url: fileUrl  // Include voice_file_url in the response
+        };
+    } catch (error) {
+        console.error('Error handling audio message:', error);
+        throw error;
+    }
+}
 
 module.exports = {
-  createChatWithWelcomeMessage,
-  getChatMessages,
-  verifyUserInChat,
-  sendMessage,
+    createChatWithWelcomeMessage,
+    getChatMessages,
+    verifyUserInChat,
+    sendMessage,
+    handleAudioMessage,
 };

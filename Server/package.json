@@ -20,13 +20,15 @@
     "express": "^4.21.2",
     "firebase": "^11.0.2",
     "firebase-admin": "^13.0.1",
-    "init": "^0.1.2",
     "jsonwebtoken": "^9.0.2",
     "jwt-simple": "^0.5.6",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.4",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "stream-chat": "^8.47.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0",

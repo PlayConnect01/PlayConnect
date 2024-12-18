@@ -13,47 +13,47 @@ import Match from "./Match/Firstpagematch";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage"
-
-
-
+import Profile from "./profile/ProfilePage"
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); 
-
 
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="SeeAllPage" component={SeeAllPage} />
       <Stack.Screen name="CalendarPage" component={CalendarPage} />
     </Stack.Navigator>
   );
 }
 
-function TabsNavigation() {
+function MainNavigation() {
   return (
-    <Tab.Navigator
-      screenOptions={{
+    <Stack.Navigator 
+      initialRouteName="Login"
+      screenOptions={{ 
         headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: { display: "none" }, 
       }}
     >
-      <Tab.Screen name="SignUp " component={SignUp } />
-      <Tab.Screen name="Create Event" component={AddNewEvent} />
-      <Tab.Screen name="Event Details" component={EventDetails} />
-      <Tab.Screen name="Landing" component={Landing} />
-      <Tab.Screen name="Login" component={Login} />
-      <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
-      <Tab.Screen name="Match" component={Match} />
-      <Tab.Screen name="Matchingpage" component={Matchingpage} />
-      <Tab.Screen name="MessagePage" component={MessagePage} />
-      <Tab.Screen name="Homep" component={HomeStack} /> 
-      <Tab.Screen name="ChatDetails" component={ChatDetails} />
+      {/* Auth Screens */}
+      <Stack.Screen name="Landing" component={Landing} />
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="SignUp" component={SignUp} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
 
-      </Tab.Navigator>
+      {/* Main Flow */}
+      <Stack.Screen name="Match" component={Match} />
+      <Stack.Screen name="Matchingpage" component={Matchingpage} />
+      <Stack.Screen name="MessagePage" component={MessagePage} />
+      <Stack.Screen name="ChatDetails" component={ChatDetails} />
+
+      {/* Other Screens */}
+      <Stack.Screen name="Profile" component={Profile} />
+      <Stack.Screen name="Home" component={HomeStack} />
+      <Stack.Screen name="Create Event" component={AddNewEvent} />
+      <Stack.Screen name="Event Details" component={EventDetails} />
+    </Stack.Navigator>
   );
 }
 
-export default TabsNavigation;
+export default MainNavigation;

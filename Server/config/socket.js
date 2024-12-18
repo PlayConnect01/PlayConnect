@@ -72,6 +72,7 @@ const initializeSocket = (server) => {
                   chat_id: parseInt(chatId),
                   sender_id: parseInt(senderId),
                   content: message.content,
+                  message_type: message.type || "TEXT", 
               },
           });
   
@@ -79,6 +80,38 @@ const initializeSocket = (server) => {
           io.to(`chat_${chatId}`).emit('receive_message', newMessage);
       } catch (error) {
           console.error('Error handling send_message:', error);
+      }
+  });
+
+    socket.on('send_audio', async (data) => {
+      if (!data || !data.chatId || !data.senderId || !data.audioUrl) {
+          console.error('Invalid data for send_audio:', data);
+          return;
+      }
+  
+      const { chatId, senderId, audioUrl, message } = data;
+  
+      try {
+          const newMessage = await prisma.message.create({
+              data: {
+                  chat_id: parseInt(chatId),
+                  sender_id: parseInt(senderId),
+                  content: audioUrl,
+                  message_type: "AUDIO",
+                  voice_file_url: audioUrl
+              },
+              include: {
+                  sender: true
+              }
+          });
+  
+          console.log('Broadcasting audio message:', newMessage);
+          io.to(`chat_${chatId}`).emit('receive_message', {
+              ...newMessage,
+              voice_file_url: audioUrl
+          });
+      } catch (error) {
+          console.error('Error handling send_audio:', error);
       }
   });
 

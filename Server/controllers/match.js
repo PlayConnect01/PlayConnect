@@ -1,16 +1,14 @@
 const prisma = require('../prisma');
-const chatController = require('./chat'); // Import the chat controller
+const chatController = require('./chat'); 
 
 const getUsersWithCommonSports = async (userId) => {
   try {
     console.log('User ID reçu:', userId);
     
-    // Validation plus stricte de l'ID
     if (!userId || userId === 'undefined' || userId === 'null' || isNaN(userId)) {
       throw new Error('ID utilisateur invalide');
     }
 
-    // Conversion en nombre si nécessaire
     const numericUserId = parseInt(userId, 10);
 
     const userSports = await prisma.userSport.findMany({
@@ -19,7 +17,7 @@ const getUsersWithCommonSports = async (userId) => {
     });
 
     if (!userSports.length) {
-      return []; // Retourner un tableau vide si l'utilisateur n'a pas de sports
+      return []; 
     }
 
     const sportIds = userSports.map(us => us.sport_id);
@@ -36,13 +34,13 @@ const getUsersWithCommonSports = async (userId) => {
       include: {
         sports: {
           include: {
-            sport: true // Inclure les détails du sport
+            sport: true // inclu sport id for tracking 
           }
         },
       },
     });
 
-    // Transformer les données pour inclure le nom du sport
+    // envoi les donneé pour inclu  le nom de sport 
     return usersWithCommonSports.map(user => ({
       ...user,
       sports: user.sports.map(us => ({
@@ -83,7 +81,6 @@ const acceptMatch = async (matchId) => {
     await chatController.createChatWithWelcomeMessage(matchId);
   } catch (error) {
     console.error('Error creating chat after accepting match:', error);
-    // Optionally, you can handle the error here (e.g., log it, notify the user, etc.)
   }
 
   return updatedMatch;
@@ -122,7 +119,7 @@ const getAcceptedMatches = async (userId) => {
         user_1: true,
         user_2: true,
         sport: true,
-        chat: true // Include the chat relationship
+        chat: true 
       }
     });
 
@@ -130,7 +127,7 @@ const getAcceptedMatches = async (userId) => {
 
     return matches.map(match => ({
       ...match,
-      chatId: match.chat_id, // Use the chat_id directly from the match
+      chatId: match.chat_id, // take the match id directly 
     }));
   } catch (error) {
     console.error('Error fetching matches:', error);
