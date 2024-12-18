@@ -17,6 +17,9 @@ import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import Profile from "./profile/ProfilePage";
 import Home from "./marketplace/Home";
+import products from "./marketplace/products ";
+
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -50,6 +53,7 @@ function MarketplaceStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="MarketplaceHome" component={Home} />
+      <Stack.Screen name="products" component={products} />
     </Stack.Navigator>
   );
 }

@@ -47,24 +47,24 @@ export default function LoginScreen() {
   // Handle regular login with email and password
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://192.168.103.10:3000/users/login', {
-        email,
-        password,
-      });
+        const response = await axios.post('http://192.168.103.10:3000/users/login', {
+            email,
+            password,
+        });
 
-      console.log('Login successful:', response.data);
-      const { token } = response.data;
+        console.log('Login successful:', response.data);
+        const { token } = response.data;
 
-      // Store the token in AsyncStorage
-      await AsyncStorage.setItem('userToken', token);
-      
-      // Navigate to home page after successful login
-      navigation.navigate('Main', { screen: 'MarketplaceTab' });; // Adjust the route accordingly
+        // Store the token in AsyncStorage
+        await AsyncStorage.setItem('userToken', token);
+        
+        // Navigate to home page after successful login
+        navigation.navigate('Main', { screen: 'MarketplaceTab' });
     } catch (error) {
-      console.error('Login error:', error.response?.data || error.message);
-      alert('Invalid credentials. Please try again.');
+        console.error('Login error:', error.response ? error.response.data : error.message);
+        alert('Invalid credentials. Please try again.');
     }
-  };
+};
 
   // Handle Google login
   const handleGoogleLogin = async () => {
