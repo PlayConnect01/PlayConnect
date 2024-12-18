@@ -29,7 +29,7 @@ const App = () => {
 
   useEffect(() => {
     axios
-      .get("http://192.168.104.10:3000/sports")
+      .get("http://192.168.103.11:3000/sports")
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -40,7 +40,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.10:3000/competetion")
+      .get("http://192.168.103.11:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -49,7 +49,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.10:3000/events/getAll")
+      .get("http://192.168.103.11:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
@@ -128,9 +128,13 @@ const App = () => {
           {categories.map((category) => (
             <View key={category.id} style={styles.categoryItem}>
               <MaterialCommunityIcons
-                name={category.icon || "help-circle-outline"} // Fallback icon
+                name={category.icon || "help-circle-outline"} 
                 size={30}
                 color="#555"
+                onPress={() =>
+                  navigation.navigate("CategoryEvents", {
+                    categoryName: category.name,
+                  })}
               />
               <Text style={styles.categoryName}>{category.name}</Text>
             </View>

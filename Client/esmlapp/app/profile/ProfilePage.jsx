@@ -1,39 +1,80 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // Expo-compatible gradient
-import { MaterialIcons } from '@expo/vector-icons'; // Icons from Expo's built-in support
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, ActivityIndicator, FlatList } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Function to calculate user level based on points
+  const calculateLevel = (points) => {
+    if (points < 1000) return 1;
+    if (points < 2000) return 2;
+    if (points < 3000) return 3;
+    if (points < 5000) return 4;
+    return 5;
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // Simulated fetch call
-      const data = {
-        name: 'Arya Muller',
-        email: 'albertflores@gmail.com',
-        profilePic: 'https://via.placeholder.com/150', // Example image URL
-        leaderboardRank: 2,
-        events: 55,
-        level: 2,
-        currentPoints: 5200,
-        totalPoints: 6000,
-        achievement: 'Gold Medal in Football Tournament',
-        achievementDate: 'May 1, 2022',
-      };
-      setUserData(data);
+      try {
+        const pointsResponse = await fetchUserPoints();
+        const userResponse = await axios.get('http://192.168.103.8:3000/user');
+        setUserData({ ...userResponse.data, currentPoints: pointsResponse });
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
     };
 
-    fetchUserData();
+    const fetchLeaderboard = async () => {
+      try {
+        const response = await axios.get('http://192.168.103.8:3000/leaderboard');
+        setLeaderboard(response.data);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    };
+
+    const loadData = async () => {
+      await Promise.all([fetchUserData(), fetchLeaderboard()]);
+      setLoading(false);
+    };
+
+    loadData();
   }, []);
 
-  if (!userData) return null; // Prevent rendering until data is fetched
+  const fetchUserPoints = async () => {
+    try {
+      const response = await axios.get('http://192.168.103.8:3000/points/userPoints');
+      return response.data.points;
+    } catch (error) {
+      console.error('Error fetching points:', error);
+      return 0;
+    }
+  };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#6F61E8" style={styles.loader} />;
+  }
+
+  if (!userData) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load user data.</Text>
+      </View>
+    );
+  }
+
+  const userLevel = calculateLevel(userData.currentPoints);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Profile */}
       <View style={styles.profileContainer}>
-        <Image source={{ uri: userData.profilePic }} style={styles.profileImage} />
+        <Image source={{ uri: userData.profilePic || 'https://via.placeholder.com/150' }} style={styles.profileImage} />
         <Text style={styles.profileName}>{userData.name}</Text>
         <Text style={styles.email}>
           {userData.email} <MaterialIcons name="verified" size={16} color="green" />
@@ -42,6 +83,14 @@ const ProfilePage = () => {
           <Text style={styles.editProfileText}>Edit Profile</Text>
           <MaterialIcons name="arrow-drop-down" size={18} color="gray" />
         </TouchableOpacity>
+      </View>
+
+      {/* Level Display */}
+      <View style={styles.levelContainer}>
+        <Text style={styles.levelText}>Level: {userLevel}</Text>
+        <Text style={styles.pointsText}>
+          {userData.totalPoints - userData.currentPoints} Points to next level
+        </Text>
       </View>
 
       {/* Tabs */}
@@ -69,27 +118,6 @@ const ProfilePage = () => {
         </View>
       </View>
 
-      {/* Level */}
-      <View style={styles.levelContainer}>
-        <Text style={styles.levelText}>Level {userData.level}</Text>
-        <Text style={styles.pointsText}>
-          {userData.totalPoints - userData.currentPoints} Points to next level
-        </Text>
-        <View style={styles.progressBar}>
-          <LinearGradient
-            colors={['#FFC107', '#FFD54F']}
-            style={[styles.progressFill, { width: `${(userData.currentPoints / userData.totalPoints) * 100}%` }]}
-          />
-        </View>
-        <View style={styles.progressTextContainer}>
-          <Text style={styles.levelIndicator}>2</Text>
-          <Text style={styles.levelPoints}>
-            {userData.currentPoints}/{userData.totalPoints}
-          </Text>
-          <Text style={styles.levelIndicator}>3</Text>
-        </View>
-      </View>
-
       {/* Achievement */}
       <View style={styles.achievementContainer}>
         <MaterialIcons name="emoji-events" size={30} color="#FFC107" />
@@ -100,6 +128,22 @@ const ProfilePage = () => {
           <Text style={styles.dateText}>{userData.achievementDate}</Text>
         </View>
       </View>
+
+      {/* Leaderboard */}
+      <View style={styles.leaderboardContainer}>
+        <Text style={styles.leaderboardTitle}>Leaderboard</Text>
+        <FlatList
+          data={leaderboard}
+          keyExtractor={(item) => item.user_id.toString()}
+          renderItem={({ item, index }) => (
+            <View style={styles.leaderboardItem}>
+              <Text style={styles.leaderboardRank}>{index + 1}.</Text>
+              <Text style={styles.leaderboardUsername}>{item.username}</Text>
+              <Text style={styles.leaderboardPoints}>{item.points} points</Text>
+            </View>
+          )}
+        />
+      </View>
     </ScrollView>
   );
 };
@@ -108,6 +152,20 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#fff',
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
   },
   profileContainer: {
     alignItems: 'center',
@@ -138,6 +196,18 @@ const styles = StyleSheet.create({
   editProfileText: {
     fontSize: 14,
     color: 'gray',
+  },
+  levelContainer: {
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  levelText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  pointsText: {
+    color: 'gray',
+    marginVertical: 5,
   },
   tabs: {
     flexDirection: 'row',
@@ -174,42 +244,6 @@ const styles = StyleSheet.create({
     color: 'gray',
     fontSize: 14,
   },
-  levelContainer: {
-    marginVertical: 10,
-    alignItems: 'center',
-  },
-  levelText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  pointsText: {
-    color: 'gray',
-    marginVertical: 5,
-  },
-  progressBar: {
-    height: 10,
-    width: '90%',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-  },
-  progressTextContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    marginTop: 5,
-  },
-  levelIndicator: {
-    fontWeight: 'bold',
-    color: 'gray',
-  },
-  levelPoints: {
-    fontWeight: 'bold',
-    color: '#6F61E8',
-  },
   achievementContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -226,6 +260,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'gray',
     marginLeft: 10,
+  },
+  leaderboardContainer: {
+    marginVertical: 20,
+  },
+  leaderboardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  leaderboardItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+  },
+  leaderboardRank: {
+    fontWeight: 'bold',
+  },
+  leaderboardUsername: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  leaderboardPoints: {
+    fontWeight: 'bold',
   },
 });
 

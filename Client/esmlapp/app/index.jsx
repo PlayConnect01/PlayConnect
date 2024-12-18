@@ -1,29 +1,39 @@
-import * as React from "react";
+import * as React from "react"; 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import EventDetails from "./Homepage/EventDetails";
-import AddNewEvent from "./Homepage/CreateEvent";
-import Homep from './Homepage/Homep';
-import Matchingpage from "./Match/Matchingpage"
-import Landing from "./auth/LandingScreen";
-import Login from "./auth/LoginScreen";
-import SignUp from "./auth/SignUpScreen";
-import ForgotPassword from "./auth/ForgotPasswordScreen";
-import Match from "./Match/Firstpagematch";
-import MessagePage from "./Chat/MessagePage";
-import ChatDetails from "./Chat/ChatDetails";
-import CalendarPage from "./Homepage/CalendarPage"
-import Profile from "./profile/ProfilePage"
+import EventDetailsScreen from "./Homepage/EventDetails";
+import CreateEventScreen from "./Homepage/CreateEvent"; 
+import HomeScreen from './Homepage/Homep';
+import MatchingPageScreen from "./Match/Matchingpage";
+import LandingScreen from "./auth/LandingScreen";
+import LoginScreen from "./auth/LoginScreen";
+import SignUpScreen from "./auth/SignUpScreen";
+import ForgotPasswordScreen from "./auth/ForgotPasswordScreen";
+import MessagePageScreen from "./Chat/ChatDetails";
+import CalendarPageScreen from "./Homepage/CalendarPage";
+import ProfileScreen from "./profile/ProfilePage";
+import CategoryEventsScreen from "./Homepage/EventPage";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); 
 
-
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="CalendarPage" component={CalendarPage} />
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="CalendarPage" component={CalendarPageScreen} />
+      <Stack.Screen name="CategoryEvents" component={CategoryEventsScreen} />
+      <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function AuthStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   );
 }
@@ -34,24 +44,30 @@ function TabsNavigation() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: { display: "none" }, 
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          borderTopWidth: 1,
+          borderTopColor: "#e6e6e6",
+          paddingBottom: 10,
+          paddingTop: 10,
+        },
       }}
-      
     >
-      <Tab.Screen name="Profile" component={Profile} /> 
-      <Tab.Screen name="Homep" component={HomeStack} /> 
-      <Tab.Screen name="SignUp" component={SignUp } />
-      <Tab.Screen name="Create Event" component={AddNewEvent} />
-      <Tab.Screen name="Event Details" component={EventDetails} />
-     
-      <Tab.Screen name="Login" component={Login} />
-      <Tab.Screen name="ForgotPassword" component={ForgotPassword} />
-      <Tab.Screen name="Match" component={Match} />
-      <Tab.Screen name="Matchingpage" component={Matchingpage} />
-      <Tab.Screen name="MessagePage" component={MessagePage} />
-      <Tab.Screen name="ChatDetails" component={ChatDetails} />
-      </Tab.Navigator>
+      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="MessagePage" component={MessagePageScreen} />
+      <Tab.Screen name="MatchingPage" component={MatchingPageScreen} />
+      <Tab.Screen name="CreateEvent" component={CreateEventScreen} />
+    </Tab.Navigator>
   );
 }
 
-export default TabsNavigation;
+export default function App() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* This is where we check if the user is authenticated */}
+      <Stack.Screen name="Main" component={TabsNavigation} />
+      <Stack.Screen name="Auth" component={AuthStack} />
+    </Stack.Navigator>
+  );
+}

@@ -126,13 +126,20 @@ const AddNewEvent = () => {
 
       console.log("Event data being sent:", eventData);
 
-      const response = await axios.post('http://192.168.103.8:3000/events/getEventWithCreator', eventData, {
+      const response = await axios.post('http://192.168.103.11:3000/events/getEventWithCreator', eventData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
       console.log("Event created response:", response.data);
+
+      // Log points for creating an event
+      await axios.post('http://192.168.103.11:3000/points/log', {
+        userId: userId,
+        activity: 'EVENT_CREATION',
+        points: 100, // Points for creating an event
+      });
 
       Alert.alert(
         'Success!',

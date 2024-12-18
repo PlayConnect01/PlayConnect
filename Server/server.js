@@ -9,7 +9,8 @@ const matchRouter = require('./routes/match');
 const chatRoutes = require('./routes/chat');
 const competetionRouter = require('./routes/competetion')
 const passwordRouter = require('./routes/handlePasswordReset .js')
-
+const pointsRoutes = require('./routes/points.js')
+const leaderboardRoutes = require('./routes/leaderboard.js')
 const app = express();
 
 const server = http.createServer(app);
@@ -31,7 +32,8 @@ app.use('/events', eventRoutes);
 app.use('/chats', chatRoutes);  
 app.use('/competetion', competetionRouter); 
 app.use('/password', passwordRouter);
-
+app.use('/points', pointsRoutes);
+app.use('/leaderboard', leaderboardRoutes); 
 
 
 // Utiliser server.listen au lieu de app.listen
