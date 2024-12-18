@@ -29,7 +29,7 @@ const App = () => {
 
   useEffect(() => {
     axios
-      .get("http://192.168.104.10:3000/sports")
+      .get("http://192.168.163.101:3000/sports")
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -40,7 +40,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.10:3000/competetion")
+      .get("http://192.168.163.101:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -49,7 +49,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.10:3000/events/getAll")
+      .get("http://192.168.163.101:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
