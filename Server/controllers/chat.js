@@ -1,133 +1,183 @@
-const prisma = require('../prisma');
-const { getIO } = require('../config/socket');
+const prisma = require("../prisma");
+const { getIO } = require("../config/socket");
 
 async function createChatWithWelcomeMessage(matchId) {
   try {
-    // Récupérer les détails du match
     const match = await prisma.match.findUnique({
       where: { match_id: matchId },
-      include: {
-        user_1: true,
-        user_2: true,
-      },
+      include: { user_1: true, user_2: true },
     });
 
-    if (!match || match.status !== 'ACCEPTED') {
+    if (!match || match.status !== "ACCEPTED") {
       throw new Error("Match not found or not accepted.");
     }
 
-    // Créer un chat et un message de bienvenue dans une seule transaction
-    const chatWithMessage = await prisma.$transaction(async (tx) => {
-      // Créer le chat
-      const chat = await tx.chat.create({
+    const chat = await prisma.$transaction(async (prisma) => {
+      const newChat = await prisma.chat.create({
         data: {
           is_group: false,
           chat_members: {
-            create: [
-              { user_id: match.user_id_1 },
-              { user_id: match.user_id_2 },
-            ],
+            createMany: {
+              data: [
+                { user_id: match.user_id_1 },
+                { user_id: match.user_id_2 }
+              ],
+            },
           },
         },
       });
 
-      // Créer le message de bienvenue lié au chat
-      const welcomeMessage = await tx.message.create({
-        data: {
-          chat_id: chat.chat_id,
-          sender_id: null,
-          content: "You can now start your discussion!",
-          message_type: 'SYSTEM',
-        },
+      await prisma.match.update({
+        where: { match_id: matchId },
+        data: { chat_id: newChat.chat_id },         // Update statuts match and taking the id chat 
+
       });
 
-      return { chat, welcomeMessage };
+      return newChat;
     });
 
-    return chatWithMessage.chat;
+    await prisma.message.create({
+      data: {
+        chat_id: chat.chat_id,
+        content: `Match ID: ${matchId}`,
+        message_type: "SYSTEM",
+      },
+    });
+
+    return chat;
   } catch (error) {
-    console.error('Error creating chat:', error);
+    console.error("Error creating chat:", error);
     throw error;
   }
 }
 
-module.exports = {
-  createChatWithWelcomeMessage,
-};
+//  message history
 
-// Get chat message history
 async function getChatMessages(chatId) {
   try {
     const messages = await prisma.message.findMany({
       where: {
-        chat_id: parseInt(chatId)
+        chat_id: parseInt(chatId),
       },
       include: {
-        sender: true 
+        sender: true,
       },
       orderBy: {
-        sent_at: 'asc'
-      }
+        sent_at: "asc",
+      },
     });
     return messages;
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    console.error("Error fetching messages:", error);
     throw error;
   }
 }
 
 // Verify if user is in chat
+
 async function verifyUserInChat(userId, chatId) {
   try {
     const chatMember = await prisma.chatMember.findFirst({
       where: {
         chat_id: parseInt(chatId),
-        user_id: parseInt(userId)
-      }
+        user_id: parseInt(userId),
+      },
     });
     return !!chatMember;
   } catch (error) {
-    console.error('Error verifying user in chat:', error);
+    console.error("Error verifying user in chat:", error);
     throw error;
   }
 }
 
 // Send a message
-async function sendMessage(chatId, senderId, content, messageType = 'TEXT') {
+async function sendMessage(chatId, senderId, content, messageType = "TEXT") {
   try {
-    // Verify if user is in chat
     const isUserInChat = await verifyUserInChat(senderId, chatId);
     if (!isUserInChat) {
-      throw new Error('User not authorized to send messages in this chat');
+      throw new Error("User not authorized to send messages in this chat");
     }
 
-    // Create the message
     const newMessage = await prisma.message.create({
       data: {
         chat_id: parseInt(chatId),
         sender_id: parseInt(senderId),
         content: content,
-        message_type: messageType
+        message_type: messageType,
+        sent_at: new Date()
       },
       include: {
-        sender: true
-      }
+        sender: {
+          select: {
+            username: true,
+            profile_picture: true
+          }
+        }
+      },
     });
 
-    // Emit message via socket
-    const io = getIO();
-    io.to(`chat_${chatId}`).emit('receive_message', newMessage);
+    const formattedMessage = {
+      ...newMessage,
+      sent_at: newMessage.sent_at.toISOString()
+    };
 
-    return newMessage;
+    const io = getIO();
+    io.to(`chat_${chatId}`).emit("receive_message", formattedMessage);
+
+    return formattedMessage;
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error("Error sending message:", error);
     throw error;
   }
 }
+///////// handle message voc /////////////
+async function handleAudioMessage(chatId, senderId, fileUrl) {
+    try {
+        console.log('Creating audio message for chat:', chatId);
+        console.log('Sender ID:', senderId);
+        console.log('File URL:', fileUrl);
+
+        // Create the audio message
+        const audioMessage = await prisma.message.create({
+            data: {
+                chat_id: parseInt(chatId),
+                sender_id: parseInt(senderId),
+                content: fileUrl,  // Store the URL in content
+                message_type: "AUDIO",
+                voice_file_url: fileUrl,
+                sent_at: new Date(),
+            },
+            include: {
+                sender: true,
+            },
+        });
+
+        // Get socket instance
+        const io = getIO();
+        
+        // Emit the message to all users in the chat
+        if (io) {
+            console.log('Broadcasting audio message to chat:', chatId);
+            io.to(`chat_${chatId}`).emit('receive_message', {
+                ...audioMessage,
+                voice_file_url: fileUrl  // Ensure voice_file_url is included
+            });
+        }
+
+        return {
+            ...audioMessage,
+            voice_file_url: fileUrl  // Include voice_file_url in the response
+        };
+    } catch (error) {
+        console.error('Error handling audio message:', error);
+        throw error;
+    }
+}
 
 module.exports = {
-  createChatWithWelcomeMessage,
-  getChatMessages,
-  verifyUserInChat,
-  sendMessage
+    createChatWithWelcomeMessage,
+    getChatMessages,
+    verifyUserInChat,
+    sendMessage,
+    handleAudioMessage,
 };

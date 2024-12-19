@@ -37,7 +37,7 @@ const SignUpScreen = () => {
 
   const handleSignUp = async () => {
     try {
-      const response = await axios.post('http://192.168.103.10:3000/users/signup', {
+      const response = await axios.post('http://192.168.103.14:3000/users/signup', {
         username,
         email,
         password,
@@ -52,7 +52,7 @@ const SignUpScreen = () => {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/sportscube.png')}
+    source={require('../../assets/images/sportscube.png')}
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>

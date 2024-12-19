@@ -59,7 +59,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('userToken', token);
         
         // Navigate to home page after successful login
-        navigation.navigate('Main', { screen: 'MarketplaceTab' });
+        navigation.navigate('MarketplaceHome');
     } catch (error) {
         console.error('Login error:', error.response ? error.response.data : error.message);
         alert('Invalid credentials. Please try again.');

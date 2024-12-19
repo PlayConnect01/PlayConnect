@@ -150,6 +150,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  icon: {
+    marginRight: 10,
+  },
 });
 
 export default OnboardingScreen;

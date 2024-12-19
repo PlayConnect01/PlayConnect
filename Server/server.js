@@ -1,41 +1,46 @@
-// Server/index.js
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
 const http = require('http');
+const path = require('path');
 const { initializeSocket } = require('./config/socket');
+const handleVideoCall = require('./controllers/videoCallController');
+const cors = require('cors');
 
-const eventRoutes = require("./routes/events");
-const sportRoutes = require("./routes/sport");
+// Import Routers
+const eventRoutes = require('./routes/events');
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
-const chatRoutes = require('./routes/chat');
-const competetionRouter = require('./routes/competetion.js');
-const passwordRouter = require('./routes/handlePasswordReset .js');
+const chatRouter = require('./routes/chat'); 
+const sportRoutes = require('./routes/sport');
+const competetionRouter = require('./routes/competetion');
+const passwordRouter = require('./routes/handlePasswordReset ');
 const passport = require('./config/passport.js');
 const  productRoutes = require('./routes/productRoutes.js')
  const cartRoutes = require ('./routes/cartRoutes.js')
  const favorites= require("./routes/favoriteRoutes.js")
 const app = express();
 
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Create HTTP server
 const server = http.createServer(app);
 
+// Initialize WebSocket server for video calls
+handleVideoCall(server);
+
+// Initialize other socket connections
 initializeSocket(server);
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use(express.json());
-
-const PORT = 3000;
-
+// Mount Routers
 app.use('/sports', sportRoutes);
 app.use('/users', userRouter);
 app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
-app.use('/chats', chatRoutes);
 app.use('/competetion', competetionRouter);
 app.use('/password', passwordRouter);
 app.use('/product',productRoutes)
@@ -44,21 +49,24 @@ app.use('/favorites',favorites)
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Mount Chat Router with /chats Prefix
+app.use('/chats', chatRouter);
+
+const PORT = process.env.PORT || 3000;
 passport.serializeUser((user, done) => {
-  done(null, user.user_id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await prismaClient.user.findUnique({
-      where: { user_id: id }
-    });
-    done(null, user);
-  } catch (error) {
-    done(error, null);
-  }
-});
-
+    done(null, user.user_id);
+  });
+  
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await prismaClient.user.findUnique({
+        where: { user_id: id }
+      });
+      done(null, user);
+    } catch (error) {
+      done(error, null);
+    }
+  });
 server.listen(PORT, () => {
-  console.log(`Server and Socket.IO running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
