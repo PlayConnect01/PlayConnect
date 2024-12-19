@@ -3,6 +3,24 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } fr
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
+
+
+const decodeToken = (token) => {
+
+
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace('-', '+').replace('_', '/');
+    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+  } catch (error) {
+    console.error('Token decoding error:', error); 
+    return null;
+  }
+};
+
+global.Buffer = Buffer;
 
 const EventDetails = () => {
   const route = useRoute();
@@ -16,7 +34,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await axios.get(`http://192.168.103.8:3000/events/getById/${eventId}`);
+        const response = await axios.get("http://192.168.103.9:3000/events/getById/${eventId}");
         setEvent(response.data);
         setLoading(false);
       } catch (err) {
@@ -28,16 +46,49 @@ const EventDetails = () => {
     fetchEvent();
   }, [eventId]);
 
+  const decodedToken = decodeToken(token);
+
+  if (!decodedToken) {
+    throw new Error('Failed to decode token');
+  }
+
+  const userId = decodedToken.id || 
+                 decodedToken.user_id || 
+                 decodedToken.userId;
+
+  if (!userId) {
+    throw new Error('Could not find user ID in token');
+  }
+
+
   const handleAddParticipant = async () => {
     try {
-      const userId = event.creator_id;
-      await axios.post('http://192.168.103.8:3000/events/addParticipant', {
+      const token = await AsyncStorage.getItem('userToken');
+  
+      if (!token) {
+        Alert.alert('Error', 'You are not logged in. Please log in to join the event.');
+        return;
+      }
+  
+      // Decode the token to extract user ID
+      const decodedToken = decodeToken(token);
+      const userId = decodedToken?.id || decodedToken?.user_id || decodedToken?.userId;
+  
+      if (!userId) {
+        Alert.alert('Error', 'Failed to retrieve user information.');
+        return;
+      }
+  
+      // Add participant using the retrieved user ID
+      await axios.post('http://192.168.103.9:3000/events/addParticipant', {
         eventId,
         userId,
       });
-
+  
       Alert.alert('Success', 'You have been added to the event!');
-      const updatedEvent = await axios.get(`http://192.168.103.8:3000/events/getById/${eventId}`);
+  
+      // Refresh the event data
+      const updatedEvent = await axios.get(`http://192.168.103.9:3000/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
     } catch (error) {
       if (error.response && error.response.status === 400 && error.response.data.error) {
@@ -47,6 +98,7 @@ const EventDetails = () => {
       }
     }
   };
+  
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -82,130 +134,108 @@ const EventDetails = () => {
         <TouchableOpacity onPress={handleGoBack}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
-        <Ionicons name="football-outline" size={24} color="black" />
-        <Ionicons name="menu" size={24} color="black" />
       </View>
 
       <ScrollView>
-        <Text style={styles.eventName}>{event.event_name}</Text>
+        {/* Event Name with Icon */}
+        <View style={styles.eventNameContainer}>
+          <Ionicons name="football" size={24} color="black" style={styles.iconSpacing} />
+          <Text style={styles.eventName}>{event.event_name}</Text>
+        </View>
+
+        {/* Description */}
         <Text style={styles.description}>{event.description}</Text>
 
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            Event Creator: {event.creator ? event.creator.username : 'Unknown Creator'}
-          </Text>
-          <Text style={styles.infoText}>Date: {new Date(event.date).toLocaleString()}</Text>
-          <Text style={styles.infoText}>Location: {event.location}</Text>
+        {/* Event Details */}
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailRow}>
+          <Ionicons name="person" size={20} color="black" style={styles.detailIcon} />
+            <Text style={styles.boldLabel}>Event Creator:</Text>
+            <Text style={styles.boldContent}>{event.creator ? event.creator.username : 'Unknown'}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+          <Ionicons name="calendar" size={20} color="black" style={styles.detailIcon} />
+            <Text style={styles.boldLabel}>Date:</Text>
+            <Text style={styles.boldContent}>{new Date(event.date).toLocaleString()}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+          <Ionicons name="location" size={20} color="black" style={styles.detailIcon} />
+            <Text style={styles.boldLabel}>Location:</Text>
+            <Text style={styles.boldContent}>{event.location}</Text>
+          </View>
+        </View>
+
+        {/* Event Image */}
+        <View style={styles.imageContainer}>
           <Image
-            source={{
-              uri: `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(
-                event.location
-              )}&zoom=15&size=600x300&key=YOUR_API_KEY`,
-            }}
-            style={styles.map}
+            source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
+            style={styles.eventImage}
           />
         </View>
 
+        {/* Participants Section */}
         <View style={styles.participantsContainer}>
           <Text style={styles.sectionTitle}>
             Participants: {event.event_participants?.length || 0} / {event.participants}
           </Text>
+          <View style={styles.participantGrid}>
+            {event.event_participants?.map((participant) => (
+              <View key={participant.user_id} style={styles.participantItem}>
+                <Ionicons name="person-circle" size={40} color="black" />
+                <Text style={styles.participantName}>{participant.user.username}</Text>
+              </View>
+            ))}
 
-          {event.event_participants?.map((participant) => (
-            <View key={participant.user_id} style={styles.participantItem}>
-              <Ionicons name="person-circle" size={24} color="black" />
-              <Text>{participant.user.username}</Text>
-            </View>
-          ))}
-
-          {event.event_participants?.length === 0 && (
-            <Text style={styles.infoText}>No participants yet. Be the first to join!</Text>
-          )}
-
-          <TouchableOpacity style={styles.addButton} onPress={handleAddParticipant}>
-            <Ionicons name="add-circle" size={24} color="purple" />
-          </TouchableOpacity>
+            {/* Add Participant Button */}
+            <TouchableOpacity style={styles.addButton} onPress={handleAddParticipant}>
+              <Ionicons name="add" size={30} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
-
-      <View style={styles.navbar}>
-        <Ionicons name="home-outline" size={24} color="black" />
-        <Ionicons name="search" size={24} color="purple" />
-        <Ionicons name="chatbubble-outline" size={24} color="black" />
-        <Ionicons name="person-outline" size={24} color="black" />
-      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  loadingText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 18,
-  },
-  errorText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: 'red',
-    fontSize: 16,
-  },
-  header: {
+  container: { flex: 1, backgroundColor: 'white' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
+  eventNameContainer: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16 },
+  iconSpacing: { marginRight: 8 },
+  eventName: { fontSize: 22, fontWeight: 'bold' },
+  description: { fontSize: 14, color: 'gray', margin: 16 },
+  detailsContainer: { marginHorizontal: 16, marginBottom: 16 },
+  detailRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
+    marginBottom: 20,
   },
-  eventName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    margin: 16,
-  },
-  description: {
-    fontSize: 14,
-    color: 'gray',
-    marginHorizontal: 16,
-  },
-  infoContainer: {
-    padding: 16,
-  },
-  infoText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  map: {
-    width: '100%',
-    height: 150,
-    marginTop: 8,
-    borderRadius: 8,
-  },
-  participantsContainer: {
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  participantItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
+  boldLabel: { fontSize: 16, fontWeight: 'bold', flex: 2 },
+  boldContent: { fontSize: 16, textAlign: 'right', flex: 3 },
+  imageContainer: { alignItems: 'center', marginVertical: 10, marginBottom: 50 },
+  eventImage: { width: 350, height: 220, borderRadius: 10 },
+  participantsContainer: { marginHorizontal: 16, marginBottom: 16 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  participantGrid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+  participantItem: { alignItems: 'center', width: '45%', margin: 8 },
+  participantName: { fontSize: 14, textAlign: 'center', marginTop: 4 },
   addButton: {
-    marginTop: 8,
+    width: 50,
+    height: 50,
+    backgroundColor: 'orange',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 25,
+    margin: 8,
+  },    
+  detailIcon: { 
+    marginRight: 10 ,  
   },
-  navbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'lightgray',
-  },
+  loadingText: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: 50 },
+  errorText: { fontSize: 16, color: 'red', textAlign: 'center', marginTop: 50 },
 });
 
 export default EventDetails;

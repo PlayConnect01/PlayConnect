@@ -29,8 +29,8 @@ const App = () => {
 
 
   useEffect(() => {
-    axiosgit
-      .get("http://192.168.103.8:3000/sports")
+    axios
+      .get("http://192.168.103.9:3000/sports")
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -40,8 +40,8 @@ const App = () => {
         setLoading(false);
       });
 
-    axiosgit
-      .get("http://192.168.103.8:3000/competetion")
+    axios
+      .get("http://192.168.103.9:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -49,8 +49,8 @@ const App = () => {
         console.error("Error fetching competitions:", error);
       });
 
-    axiosgit
-      .get("http://192.168.103.8:3000/events/getAll")
+    axios
+      .get("http://192.168.103.9:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);

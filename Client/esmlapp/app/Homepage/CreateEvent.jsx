@@ -99,7 +99,6 @@ const AddNewEvent = () => {
         throw new Error('Failed to decode token');
       }
 
-      // Try multiple ways to get user ID
       const userId = decodedToken.id || 
                      decodedToken.user_id || 
                      decodedToken.userId;
@@ -126,7 +125,7 @@ const AddNewEvent = () => {
 
       console.log("Event data being sent:", eventData);
 
-      const response = await axios.post('http://192.168.103.8:3000/events/getEventWithCreator', eventData, {
+      const response = await axios.post('http://192.168.103.9:3000/events/create', eventData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -137,7 +136,7 @@ const AddNewEvent = () => {
       Alert.alert(
         'Success!',
         'Event created successfully!', 
-        [{ text: 'Okay', onPress: () =>navigation.navigate('Homepage/EventDetails')}]
+        [{ text: 'Okay', onPress: () =>navigation.navigate('Homepage/Homep')}]
       );
 
       setEventName('');
