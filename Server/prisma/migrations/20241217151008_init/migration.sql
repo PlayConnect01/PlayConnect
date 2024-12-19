@@ -3,7 +3,9 @@ CREATE TABLE `User` (
     `user_id` INTEGER NOT NULL AUTO_INCREMENT,
     `username` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
-    `password` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NULL,
+    `auth_provider` VARCHAR(191) NULL,
+    `auth_provider_id` VARCHAR(191) NULL,
     `location` VARCHAR(191) NULL,
     `profile_picture` VARCHAR(191) NULL,
     `skill_level` VARCHAR(191) NULL,
@@ -129,8 +131,8 @@ CREATE TABLE `Chat` (
     `chat_id` INTEGER NOT NULL AUTO_INCREMENT,
     `is_group` BOOLEAN NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `call_type` ENUM('NONE', 'VOICE', 'VIDEO') NULL DEFAULT 'NONE',
-    `call_status` ENUM('INITIATED', 'IN_PROGRESS', 'ENDED', 'MISSED') NULL,
+    `call_type` ENUM('NONE', 'AUDIO', 'VIDEO') NULL DEFAULT 'NONE',
+    `call_status` ENUM('NONE', 'RINGING', 'ONGOING', 'ENDED', 'MISSED', 'REJECTED') NULL,
     `call_initiator_id` INTEGER NULL,
     `call_start_time` DATETIME(3) NULL,
     `call_end_time` DATETIME(3) NULL,
@@ -155,7 +157,7 @@ CREATE TABLE `Message` (
     `chat_id` INTEGER NOT NULL,
     `sender_id` INTEGER NULL,
     `content` VARCHAR(191) NOT NULL,
-    `message_type` ENUM('TEXT', 'VOICE', 'IMAGE', 'VIDEO', 'SYSTEM') NOT NULL,
+    `message_type` ENUM('TEXT', 'AUDIO', 'IMAGE', 'VIDEO', 'SYSTEM') NOT NULL,
     `sent_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `voice_duration` DOUBLE NULL,
     `voice_file_url` VARCHAR(191) NULL,
@@ -264,6 +266,7 @@ CREATE TABLE `Match` (
     `user_id_2` INTEGER NOT NULL,
     `sport_id` INTEGER NOT NULL,
     `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED') NOT NULL,
+    `chat_id` INTEGER NULL,
     `matched_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `accepted_at` DATETIME(3) NULL,
     `rejected_at` DATETIME(3) NULL,
@@ -271,7 +274,26 @@ CREATE TABLE `Match` (
     INDEX `Match_user_id_1_idx`(`user_id_1`),
     INDEX `Match_user_id_2_idx`(`user_id_2`),
     INDEX `Match_sport_id_idx`(`sport_id`),
+    INDEX `Match_chat_id_idx`(`chat_id`),
     PRIMARY KEY (`match_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `VideoCall` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `chat_id` INTEGER NOT NULL,
+    `channel_name` VARCHAR(191) NOT NULL,
+    `initiator_id` INTEGER NOT NULL,
+    `participant_id` INTEGER NOT NULL,
+    `status` ENUM('INITIATED', 'ONGOING', 'COMPLETED', 'MISSED') NOT NULL,
+    `started_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `ended_at` DATETIME(3) NULL,
+
+    UNIQUE INDEX `VideoCall_channel_name_key`(`channel_name`),
+    INDEX `VideoCall_chat_id_idx`(`chat_id`),
+    INDEX `VideoCall_initiator_id_idx`(`initiator_id`),
+    INDEX `VideoCall_participant_id_idx`(`participant_id`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
@@ -366,3 +388,15 @@ ALTER TABLE `Match` ADD CONSTRAINT `Match_user_id_2_fkey` FOREIGN KEY (`user_id_
 
 -- AddForeignKey
 ALTER TABLE `Match` ADD CONSTRAINT `Match_sport_id_fkey` FOREIGN KEY (`sport_id`) REFERENCES `Sport`(`sport_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Match` ADD CONSTRAINT `Match_chat_id_fkey` FOREIGN KEY (`chat_id`) REFERENCES `Chat`(`chat_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `VideoCall` ADD CONSTRAINT `VideoCall_chat_id_fkey` FOREIGN KEY (`chat_id`) REFERENCES `Chat`(`chat_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `VideoCall` ADD CONSTRAINT `VideoCall_initiator_id_fkey` FOREIGN KEY (`initiator_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `VideoCall` ADD CONSTRAINT `VideoCall_participant_id_fkey` FOREIGN KEY (`participant_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
