@@ -22,9 +22,8 @@ import products from "./marketplace/products ";
 
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+const Stack = createStackNavigator(); 
 
-// Home Stack
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -36,55 +35,33 @@ function HomeStack() {
   );
 }
 
-// Authentication Stack
-function AuthStack() {
+function MainNavigation() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      initialRouteName="Login"
+      screenOptions={{ 
+        headerShown: false,
+      }}
+    >
+      {/* Auth Screens */}
       <Stack.Screen name="Landing" component={Landing} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="SignUp" component={SignUp} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+
+      {/* Main Flow */}
+      <Stack.Screen name="Match" component={Match} />
+      <Stack.Screen name="Matchingpage" component={Matchingpage} />
+      <Stack.Screen name="MessagePage" component={MessagePage} />
+      <Stack.Screen name="ChatDetails" component={ChatDetails} />
+
+      {/* Other Screens */}
+      <Stack.Screen name="Profile" component={Profile} />
+      <Stack.Screen name="Home" component={HomeStack} />
+      <Stack.Screen name="Create Event" component={AddNewEvent} />
+      <Stack.Screen name="Event Details" component={EventDetails} />
     </Stack.Navigator>
   );
 }
 
-// Marketplace Stack
-function MarketplaceStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="MarketplaceHome" component={Home} />
-      <Stack.Screen name="products" component={products} />
-    </Stack.Navigator>
-  );
-}
-
-// Bottom Tabs Navigation
-function TabsNavigation() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-      }}
-    >
-      <Tab.Screen name="HomeTab" component={HomeStack} />
-      <Tab.Screen name="MatchTab" component={Match} />
-      <Tab.Screen name="MessagesTab" component={MessagePage} />
-      <Tab.Screen name="MarketplaceTab" component={MarketplaceStack} />
-      <Tab.Screen name="ProfileTab" component={Profile} />
-    </Tab.Navigator>
-  );
-}
-
-// Root App Navigation
-export default function App() {
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Auth" component={AuthStack} />
-        <Stack.Screen name="Main" component={TabsNavigation} />
-        <Stack.Screen name="ChatDetails" component={ChatDetails} />
-      </Stack.Navigator>
-    </GestureHandlerRootView>
-  );
-}
+export default MainNavigation;

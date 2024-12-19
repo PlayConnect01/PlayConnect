@@ -7,12 +7,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum MessageType {
+  TEXT
+  AUDIO
+  IMAGE
+  VIDEO
+  SYSTEM
+}
+
+enum CallType {
+  NONE
+  AUDIO
+  VIDEO
+}
+
+enum CallStatus {
+  NONE
+  RINGING
+  ONGOING
+  ENDED
+  MISSED
+  REJECTED
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
+
+enum VideoCallStatus {
+  INITIATED
+  ONGOING
+  COMPLETED
+  MISSED
+}
+
 model User {
   user_id         Int       @id @default(autoincrement())
   username        String
   email           String    @unique
   password          String?
-  auth_provider     String?  // 'local', 'google', 'facebook'   
+  auth_provider     String?  // 'local', 'google', 'facebook'
   auth_provider_id  String?
   location        String?   // Changed to nullable
   profile_picture String?
@@ -41,6 +78,10 @@ model User {
   matches_as_user_1   Match[]        @relation("User1Matches")
   matches_as_user_2   Match[]        @relation("User2Matches")
   initiated_chats     Chat[]         @relation("ChatInitiator")
+  
+  // New relationships for video calls
+  initiated_calls     VideoCall[]    @relation("CallInitiator")
+  received_calls      VideoCall[]    @relation("CallParticipant")
 }
 
 model Sport {
@@ -146,7 +187,6 @@ model Event {
   @@index([event_name])
 }
 
-
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())
   event_id            Int
@@ -182,12 +222,16 @@ model Chat {
   call_start_time DateTime?
   call_end_time   DateTime?
   call_duration   Float?    // Durée en secondes
+  matches         Match[]
 
   // Relation avec l'initiateur de l'appel
   call_initiator  User?     @relation("ChatInitiator", fields: [call_initiator_id], references: [user_id])
   
   messages        Message[]
   chat_members    ChatMember[]
+  
+  // New relation for video calls
+  video_calls     VideoCall[]
 }
 
 model ChatMember {
@@ -219,10 +263,6 @@ model Message {
   @@index([chat_id])
   @@index([sender_id])
 }
-
-
-
-
 
 model Achievement {
   achievement_id    Int      @id @default(autoincrement())
@@ -320,13 +360,14 @@ model Notification {
   @@index([user_id])
 }
 
-// Nouveau modèle pour les matchs
 model Match {
   match_id         Int       @id @default(autoincrement())
   user_id_1        Int
   user_id_2        Int
   sport_id         Int
   status           MatchStatus
+  chat_id          Int?
+
   matched_at       DateTime  @default(now())
   accepted_at      DateTime?
   rejected_at      DateTime?
@@ -334,37 +375,29 @@ model Match {
   user_1           User     @relation("User1Matches", fields: [user_id_1], references: [user_id])
   user_2           User     @relation("User2Matches", fields: [user_id_2], references: [user_id])
   sport            Sport    @relation(fields: [sport_id], references: [sport_id])
+  chat             Chat?    @relation(fields: [chat_id], references: [chat_id])
 
   @@index([user_id_1])
   @@index([user_id_2])
   @@index([sport_id])
+  @@index([chat_id])
 }
 
-// Enums
-enum MatchStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  COMPLETED
-}
+model VideoCall {
+  id              Int       @id @default(autoincrement())
+  chat_id         Int
+  channel_name    String    @unique
+  initiator_id    Int
+  participant_id  Int
+  status          VideoCallStatus
+  started_at      DateTime  @default(now())
+  ended_at        DateTime?
 
-enum CallType {
-  NONE
-  VOICE
-  VIDEO
-}
+  chat            Chat      @relation(fields: [chat_id], references: [chat_id])
+  initiator       User      @relation("CallInitiator", fields: [initiator_id], references: [user_id])
+  participant     User      @relation("CallParticipant", fields: [participant_id], references: [user_id])
 
-enum CallStatus {
-  INITIATED
-  IN_PROGRESS
-  ENDED
-  MISSED
-}
-
-enum MessageType {
-  TEXT
-  VOICE
-  IMAGE
-  VIDEO
-  SYSTEM
+  @@index([chat_id])
+  @@index([initiator_id])
+  @@index([participant_id])
 }
