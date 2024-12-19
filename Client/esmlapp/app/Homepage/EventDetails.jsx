@@ -16,7 +16,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await axios.get(`http://192.168.100.120:3000/events/getById/${eventId}`);
+        const response = await axios.get(`http://192.168.103.8:3000/events/getById/${eventId}`);
         setEvent(response.data);
         setLoading(false);
       } catch (err) {
@@ -31,13 +31,13 @@ const EventDetails = () => {
   const handleAddParticipant = async () => {
     try {
       const userId = event.creator_id;
-      await axios.post('http://192.168.100.120:3000/events/addParticipant', {
+      await axios.post('http://192.168.103.8:3000/events/addParticipant', {
         eventId,
         userId,
       });
 
       Alert.alert('Success', 'You have been added to the event!');
-      const updatedEvent = await axios.get(`http://192.168.100.120:3000/events/getById/${eventId}`);
+      const updatedEvent = await axios.get(`http://192.168.103.8:3000/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
     } catch (error) {
       if (error.response && error.response.status === 400 && error.response.data.error) {
@@ -91,18 +91,11 @@ const EventDetails = () => {
         <Text style={styles.description}>{event.description}</Text>
 
         <View style={styles.infoContainer}>
-          <View style={styles.infoRow}>
-            <Ionicons name="person" size={16} color="gray" />
-            <Text style={styles.infoText}>Event Creator: {event.creator ? event.creator.username : 'Unknown Creator'}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar" size={16} color="gray" />
-            <Text style={styles.infoText}>Date: {new Date(event.date).toLocaleString()}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Ionicons name="location" size={16} color="gray" />
-            <Text style={styles.infoText}>Location: {event.location}</Text>
-          </View>
+          <Text style={styles.infoText}>
+            Event Creator: {event.creator ? event.creator.username : 'Unknown Creator'}
+          </Text>
+          <Text style={styles.infoText}>Date: {new Date(event.date).toLocaleString()}</Text>
+          <Text style={styles.infoText}>Location: {event.location}</Text>
           <Image
             source={{
               uri: `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(
@@ -114,23 +107,23 @@ const EventDetails = () => {
         </View>
 
         <View style={styles.participantsContainer}>
-          <Text style={styles.sectionTitle}>Participants: {event.event_participants?.length || 0} / {event.participants}</Text>
+          <Text style={styles.sectionTitle}>
+            Participants: {event.event_participants?.length || 0} / {event.participants}
+          </Text>
 
-          <View style={styles.participantGrid}>
-            {event.event_participants?.map((participant) => (
-              <View key={participant.user_id} style={styles.participantItem}>
-                <Ionicons name="person-circle" size={32} color="black" />
-                <Text style={styles.participantName}>{participant.user.username}</Text>
-              </View>
-            ))}
-          </View>
+          {event.event_participants?.map((participant) => (
+            <View key={participant.user_id} style={styles.participantItem}>
+              <Ionicons name="person-circle" size={24} color="black" />
+              <Text>{participant.user.username}</Text>
+            </View>
+          ))}
 
           {event.event_participants?.length === 0 && (
             <Text style={styles.infoText}>No participants yet. Be the first to join!</Text>
           )}
 
           <TouchableOpacity style={styles.addButton} onPress={handleAddParticipant}>
-            <Ionicons name="add-circle" size={40} color="purple" />
+            <Ionicons name="add-circle" size={24} color="purple" />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -170,30 +163,19 @@ const styles = StyleSheet.create({
   eventName: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginHorizontal: 16,
-    marginVertical: 8,
+    margin: 16,
   },
   description: {
     fontSize: 14,
     color: 'gray',
     marginHorizontal: 16,
-    marginBottom: 16,
   },
   infoContainer: {
     padding: 16,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    margin: 16,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
-    marginLeft: 8,
-    color: 'gray',
+    marginBottom: 8,
   },
   map: {
     width: '100%',
@@ -209,23 +191,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  participantGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-  },
   participantItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    margin: 8,
-  },
-  participantName: {
-    fontSize: 12,
-    marginTop: 4,
-    color: 'black',
+    marginTop: 8,
   },
   addButton: {
-    alignSelf: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
   navbar: {
     flexDirection: 'row',

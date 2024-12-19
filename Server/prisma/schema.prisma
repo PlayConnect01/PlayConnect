@@ -132,8 +132,7 @@ model Event {
   participants   Int
   price          Float
   is_free        Boolean
-  image          String?
-  
+
   event_participants EventParticipant[]
   calendar_entries   Calendar[]
 

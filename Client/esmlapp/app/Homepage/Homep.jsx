@@ -50,7 +50,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.100.120:3000/events/getAll")
+      .get("http://192.168.103.8:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
