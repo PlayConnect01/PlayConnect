@@ -29,7 +29,7 @@ const App = () => {
 
 
   useEffect(() => {
-    axios
+    axiosgit
       .get("http://192.168.103.8:3000/sports")
       .then((response) => {
         setCategories(response.data);
@@ -40,7 +40,7 @@ const App = () => {
         setLoading(false);
       });
 
-    axios
+    axiosgit
       .get("http://192.168.103.8:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
@@ -49,7 +49,7 @@ const App = () => {
         console.error("Error fetching competitions:", error);
       });
 
-    axios
+    axiosgit
       .get("http://192.168.103.8:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
