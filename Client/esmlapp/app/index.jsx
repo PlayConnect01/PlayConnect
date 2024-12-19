@@ -16,10 +16,10 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import Profile from "./profile/ProfilePage";
-import Home from "./marketplace/Home";
-import products from "./marketplace/products ";
-
-
+import MarketplaceHome from "./marketplace/Home";
+import products from "./marketplace/products";
+import ProductDetail from './marketplace/ProductDetail'
+import CartScreen from './marketplace/cart'
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -51,9 +51,12 @@ function AuthStack() {
 // Marketplace Stack
 function MarketplaceStack() {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="MarketplaceHome" component={Home} />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MarketplaceHome" component={MarketplaceHome} />
       <Stack.Screen name="products" component={products} />
+      <Stack.Screen name="ProductDetail" component={ProductDetail} />
+      <Stack.Screen name="CartScreen" component={CartScreen} />
+     
     </Stack.Navigator>
   );
 }

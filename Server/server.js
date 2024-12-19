@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const http = require('http');
 const { initializeSocket } = require('./config/socket');
+
 const eventRoutes = require("./routes/events");
 const sportRoutes = require("./routes/sport");
 const userRouter = require('./routes/user');
@@ -11,6 +12,9 @@ const chatRoutes = require('./routes/chat');
 const competetionRouter = require('./routes/competetion.js');
 const passwordRouter = require('./routes/handlePasswordReset .js');
 const passport = require('./config/passport.js');
+const  productRoutes = require('./routes/productRoutes.js')
+ const cartRoutes = require ('./routes/cartRoutes.js')
+ const favorites= require("./routes/favoriteRoutes.js")
 const app = express();
 
 const server = http.createServer(app);
@@ -34,6 +38,9 @@ app.use('/events', eventRoutes);
 app.use('/chats', chatRoutes);
 app.use('/competetion', competetionRouter);
 app.use('/password', passwordRouter);
+app.use('/product',productRoutes)
+app.use('/cart',cartRoutes)
+app.use('/favorites',favorites)
 app.use(passport.initialize());
 app.use(passport.session());
 
