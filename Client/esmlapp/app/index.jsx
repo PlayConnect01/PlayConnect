@@ -1,10 +1,12 @@
 import * as React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+// Screens
 import EventDetails from "./Homepage/EventDetails";
 import AddNewEvent from "./Homepage/CreateEvent";
-import Homep from './Homepage/Homep';
-import Matchingpage from "./Match/Matchingpage"
+import Homep from "./Homepage/Homep";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -12,8 +14,12 @@ import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
-import CalendarPage from "./Homepage/CalendarPage"
-import Profile from "./profile/ProfilePage"
+import CalendarPage from "./Homepage/CalendarPage";
+import Profile from "./profile/ProfilePage";
+import Home from "./marketplace/Home";
+import products from "./marketplace/products ";
+
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); 
@@ -23,6 +29,8 @@ function HomeStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Homep" component={Homep} />
       <Stack.Screen name="CalendarPage" component={CalendarPage} />
+      <Stack.Screen name="EventDetails" component={EventDetails} />
+      <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
     </Stack.Navigator>
   );
 }

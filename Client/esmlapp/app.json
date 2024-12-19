@@ -12,11 +12,16 @@
       "bundleIdentifier": "com.esmlapp"
     },
     "android": {
+      "package": "com.eyasahbeni.esmlapp",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       },
       "package": "com.esmlapp"
     },
+    "ios": {
+      "bundleIdentifier": "com.eyasahbeni.esmlapp"
+    },
+    "userInterfaceStyle": "automatic",
     "web": {
       "bundler": "metro",
       "output": "static"

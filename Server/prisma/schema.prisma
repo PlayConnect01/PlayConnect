@@ -88,12 +88,13 @@ model Sport {
   sport_id    Int      @id @default(autoincrement())
   name        String
   description String?
-  icon        String?  // New icon field, nullable
+  icon        String?  
 
   users       UserSport[]
   teams       Team[]
   tournaments Tournament[]
   matches     Match[]
+  products    MarketplaceProduct[] // New relation to products
 }
 
 model UserSport {
@@ -274,18 +275,22 @@ model Achievement {
 
   @@index([user_id])
 }
-
 model MarketplaceProduct {
   product_id   Int      @id @default(autoincrement())
   name         String
   description  String?
   price        Float
+  discount     Float    @default(0) // New required discount field with default value of 0
   image_url    String
   point_reward Int
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+  sport_id     Int      // Link to sport
 
+  sport        Sport    @relation(fields: [sport_id], references: [sport_id])
   cart_items   CartItem[]
+
+  @@index([sport_id])
 }
 
 model Cart {

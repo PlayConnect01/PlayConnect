@@ -13,6 +13,8 @@ const chatRouter = require('./routes/chat');
 const sportRoutes = require('./routes/sport');
 const competetionRouter = require('./routes/competetion');
 const passwordRouter = require('./routes/handlePasswordReset ');
+const passport = require('./config/passport.js');
+
 
 const app = express();
 
@@ -40,12 +42,27 @@ app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
 app.use('/competetion', competetionRouter);
 app.use('/password', passwordRouter);
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Mount Chat Router with /chats Prefix
 app.use('/chats', chatRouter);
 
 const PORT = process.env.PORT || 3000;
-
+passport.serializeUser((user, done) => {
+    done(null, user.user_id);
+  });
+  
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await prismaClient.user.findUnique({
+        where: { user_id: id }
+      });
+      done(null, user);
+    } catch (error) {
+      done(error, null);
+    }
+  });
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

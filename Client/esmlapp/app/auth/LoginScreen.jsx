@@ -1,41 +1,132 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, Animated, Easing } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesome } from '@expo/vector-icons'; // For social icons
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { useAuth } from '../../context/AuthContext';
+
+WebBrowser.maybeCompleteAuthSession();
+
+// const API_URL = "https://localhost:3000"; // Update accordingly
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
+  const { setUser } = useAuth();
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: '730813875128-11hvkldvgco1nrb3ueig2kbsok77le3t.apps.googleusercontent.com', // Replace with your Google OAuth Client ID
+  });
 
+  // Animation references
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000,
+        easing: Easing.bounce,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
+  // Handle regular login with email and password
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://192.168.103.14:3000/users/login', {
-        email,
-        password,
-      });
+        const response = await axios.post('http://192.168.103.10:3000/users/login', {
+            email,
+            password,
+        });
 
-      if (response.data.token) {
-        await AsyncStorage.setItem('userToken', response.data.token);
-        navigation.replace('Match'); // Navigate to Match screen after successful login
+        console.log('Login successful:', response.data);
+        const { token } = response.data;
+
+        // Store the token in AsyncStorage
+        await AsyncStorage.setItem('userToken', token);
+        
+        // Navigate to home page after successful login
+        navigation.navigate('Main', { screen: 'MarketplaceTab' });
+    } catch (error) {
+        console.error('Login error:', error.response ? error.response.data : error.message);
+        alert('Invalid credentials. Please try again.');
+    }
+};
+
+  // Handle Google login
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await promptAsync();
+      if (result.type === 'success') {
+        const { id_token } = result.params;
+
+        const response = await axios.post('http://localhost:3000/users/auth/google-token', {
+          idToken: id_token,
+        });
+        const { user, token } = response.data;
+        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userData', JSON.stringify(user));
+        setUser(user);
+        navigation.navigate('Homep');
+      } else {
+        Alert.alert('Error', 'Google login failed');
       }
     } catch (error) {
-      console.error('Login error:', error.response?.data || error.message);
-      alert('Invalid credentials. Please try again.');
+      Alert.alert('Error', 'Google login failed');
     }
   };
 
+  // Handle Facebook login
+  const handleFacebookLogin = async () => {
+    try {
+      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+      if (result.isCancelled) {
+        throw new Error('User cancelled login');
+      }
+
+      const data = await AccessToken.getCurrentAccessToken();
+      const response = await axios.post('http://localhost:3000/users/auth/facebook-token', {
+        accessToken: data.accessToken,
+      });
+      const { user, token } = response.data;
+      await AsyncStorage.setItem('userToken', token);
+      await AsyncStorage.setItem('userData', JSON.stringify(user));
+      setUser(user);
+      navigation.navigate('Homep');
+    } catch (error) {
+      Alert.alert('Error', 'Facebook login failed');
+    }
+  };
+
+  // Clear input fields when navigating away from this screen
+  useEffect(() => {
+    return () => {
+      setEmail('');
+      setPassword('');
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
-      <Image
-        source={require('../../assets/images/sportscube.png')} // Replace with your image URL
-        style={styles.image}
+      <Animated.Image
+        source={require('../../assets/images/sportscube.png')}
+        style={[styles.image, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
       />
-      <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to access your account</Text>
+      <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>Welcome Back</Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>Sign in to access your account</Animated.Text>
 
       <View style={styles.inputContainer}>
         <FontAwesome name="envelope" size={20} color="#999" />
@@ -76,9 +167,12 @@ export default function LoginScreen() {
 
       <Text style={styles.socialText}>Sign in With</Text>
       <View style={styles.socialContainer}>
-        <FontAwesome name="facebook" size={30} color="#fff" style={styles.socialIcon} />
-        <FontAwesome name="google" size={30} color="#fff" style={styles.socialIcon} />
-        <FontAwesome name="envelope" size={30} color="#fff" style={styles.socialIcon} />
+        <TouchableOpacity onPress={handleFacebookLogin}>
+          <FontAwesome name="facebook" size={30} color="#fff" style={styles.socialIcon} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleGoogleLogin}>
+          <FontAwesome name="google" size={30} color="#fff" style={styles.socialIcon} />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

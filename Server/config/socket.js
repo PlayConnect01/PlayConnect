@@ -1,5 +1,5 @@
 const { Server } = require('socket.io');
-const prisma = require('../prisma');
+const prisma = require("../prisma");
 
 let io;
 
