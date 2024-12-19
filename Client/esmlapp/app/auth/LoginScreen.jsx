@@ -59,7 +59,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('userToken', token);
         
         // Navigate to home page after successful login
-        navigation.navigate('Main', { screen: 'MarketplaceTab' });
+        navigation.navigate('MarketplaceHome');
     } catch (error) {
         console.error('Login error:', error.response ? error.response.data : error.message);
         alert('Invalid credentials. Please try again.');
@@ -72,20 +72,23 @@ export default function LoginScreen() {
       const result = await promptAsync();
       if (result.type === 'success') {
         const { id_token } = result.params;
+console.log("idtoken",id_token);
 
         const response = await axios.post('http://localhost:3000/users/auth/google-token', {
           idToken: id_token,
         });
+        console.log('respone',response);
+        
         const { user, token } = response.data;
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userData', JSON.stringify(user));
         setUser(user);
         navigation.navigate('Homep');
       } else {
-        Alert.alert('Error', 'Google login failed');
+        Alert.alert("response");
       }
     } catch (error) {
-      Alert.alert('Error', 'Google login failed');
+      Alert.alert(error);
     }
   };
 

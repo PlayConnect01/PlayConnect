@@ -14,8 +14,9 @@ const sportRoutes = require('./routes/sport');
 const competetionRouter = require('./routes/competetion');
 const passwordRouter = require('./routes/handlePasswordReset ');
 const passport = require('./config/passport.js');
-
-
+const  productRoutes = require('./routes/productRoutes.js')
+ const cartRoutes = require ('./routes/cartRoutes.js')
+ const favorites= require("./routes/favoriteRoutes.js")
 const app = express();
 
 // Middleware
@@ -42,6 +43,9 @@ app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
 app.use('/competetion', competetionRouter);
 app.use('/password', passwordRouter);
+app.use('/product',productRoutes)
+app.use('/cart',cartRoutes)
+app.use('/favorites',favorites)
 app.use(passport.initialize());
 app.use(passport.session());
 

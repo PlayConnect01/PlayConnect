@@ -49,15 +49,14 @@ model User {
   username        String
   email           String    @unique
   password          String?
-  auth_provider     String?  // 'local', 'google', 'facebook'
+  auth_provider     String?  
   auth_provider_id  String?
-  location        String?   // Changed to nullable
+  location        String?   
   profile_picture String?
   skill_level     String?
   rating          Float?
   points          Int       @default(0)
 
-  // User relationships
   created_teams      Team[]          @relation("TeamCreator")
   team_memberships   TeamMember[]    
   created_tournaments Tournament[]    @relation("TournamentCreator")
@@ -69,12 +68,11 @@ model User {
   sent_messages     Message[]        @relation("MessageSender")
   achievements      Achievement[]    
   cart              Cart?    
+  favorites         Favorite[]       // Add this new relation
   reports_received  Report[]         @relation("ReportsReceived")
   reports_sent      Report[]         @relation("ReportsSent")
   points_logs       PointsLog[]    
   notifications     Notification[]   @relation("UserNotifications")
-
-  // New relationships for matching and communication
   matches_as_user_1   Match[]        @relation("User1Matches")
   matches_as_user_2   Match[]        @relation("User2Matches")
   initiated_chats     Chat[]         @relation("ChatInitiator")
@@ -280,18 +278,20 @@ model MarketplaceProduct {
   name         String
   description  String?
   price        Float
-  discount     Float    @default(0) // New required discount field with default value of 0
+  discount     Float    @default(0)
   image_url    String
-  point_reward Int
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
-  sport_id     Int      // Link to sport
+  sport_id     Int     
+  rating       Int      @default(5)
 
   sport        Sport    @relation(fields: [sport_id], references: [sport_id])
   cart_items   CartItem[]
+  favorites    Favorite[] // Add this new relation
 
   @@index([sport_id])
 }
+
 
 model Cart {
   cart_id     Int        @id @default(autoincrement())
@@ -302,6 +302,20 @@ model Cart {
   user        User       @relation(fields: [user_id], references: [user_id])
   items       CartItem[]
 }
+model Favorite {
+  favorite_id Int      @id @default(autoincrement())
+  user_id     Int
+  product_id  Int
+  created_at  DateTime @default(now())
+
+  user        User               @relation(fields: [user_id], references: [user_id])
+  product     MarketplaceProduct @relation(fields: [product_id], references: [product_id])
+
+  @@unique([user_id, product_id]) // Prevent duplicate favorites
+  @@index([user_id])
+  @@index([product_id])
+}
+
 
 model CartItem {
   cart_item_id Int    @id @default(autoincrement())

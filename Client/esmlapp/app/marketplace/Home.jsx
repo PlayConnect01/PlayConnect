@@ -4,11 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 const Home = () => {
     const navigate= useNavigation()
 
-    const handleTabPress = (tab) => {
-      // Navigate to the corresponding page based on the tab pressed
-      navigate.navigate(tab); // Ensure you have the correct route names set up in your navigation
-  };
-
+   
   return (
     <View style={styles.container}>
       {/* Main Scrollable Container */}
@@ -22,7 +18,8 @@ const Home = () => {
           <Text style={styles.headerTitle}>Home</Text>
           <View style={styles.iconContainer}>
             <TouchableOpacity>
-              <Text style={styles.icon}>🛒</Text>
+              <Text style={styles.icon}
+              >🛒</Text>
             </TouchableOpacity>
             <TouchableOpacity>
               <Text style={styles.icon}>❤️</Text>
@@ -48,22 +45,22 @@ const Home = () => {
                 showsHorizontalScrollIndicator={false}
                 style={styles.tabContainer}
             >
-                <TouchableOpacity onPress={() => handleTabPress('products')}>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
                     <Text style={styles.activeTab}>All</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleTabPress('products')}>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
                     <Text style={styles.inactiveTab}>Football</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleTabPress('products')}>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
                     <Text style={styles.inactiveTab}>Basketball</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleTabPress('products')}>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
                     <Text style={styles.inactiveTab}>Esports</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleTabPress('products')}>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
                     <Text style={styles.inactiveTab}>Tennis</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleTabPress('products')}>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
                     <Text style={styles.inactiveTab}>gaming</Text>
                 </TouchableOpacity>
                 
@@ -100,7 +97,7 @@ const Home = () => {
               </Text>
             </View>
             <TouchableOpacity style={styles.cartButton}>
-              <Text style={styles.cartIcon}>🛒</Text>
+              <Text style={styles.cartIcon}onPress={()=>navigate.navigate('CartScreen')}>🛒</Text>
             </TouchableOpacity>
           </View>
         ))}
