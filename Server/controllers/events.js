@@ -100,7 +100,8 @@ const createEvent = async (req, res) => {
       participants,
       price,
       isFree,
-      creator_id
+      creator_id,
+      image
     } = req.body;
 
     if (!creator_id) {
@@ -119,6 +120,7 @@ const createEvent = async (req, res) => {
         participants: parseInt(participants),
         price: parseFloat(price),
         is_free: isFree,
+        image , 
         creator: {
           connect: {
             user_id: creator_id,

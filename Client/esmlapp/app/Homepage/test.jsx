@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal, Image, ScrollView } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal, Image } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from 'axios';
@@ -39,7 +39,7 @@ const AddNewEvent = () => {
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
-  const [mapLocation, setMapLocation] = useState({ latitude: 36.85749, longitude: 10.16440 });
+  const [mapLocation, setMapLocation] = useState({ latitude: 37.78825, longitude: -122.4324 });
   const [sports, setSports] = useState([]);
   const [image, setImage] = useState(null);
 
@@ -51,7 +51,7 @@ const AddNewEvent = () => {
       }
     })();
 
-    axios.get("http://192.168.103.9:3000/sports")
+    axios.get("http://192.168.100.120:3000/sports")
       .then((response) => {
         setSports(response.data);
       })
@@ -86,7 +86,7 @@ const AddNewEvent = () => {
       type: 'image/jpeg',
       name: 'event-image.jpg',
     });
-    formData.append('upload_preset', 'PlayConnect'); 
+    formData.append('upload_preset', 'PlayConnect'); // Replace with your Cloudinary upload preset
 
     try {
       const response = await axios.post(
@@ -161,7 +161,6 @@ const AddNewEvent = () => {
       let imageUrl = null;
       if (image) {
         imageUrl = await uploadImageToCloudinary(image.uri);
-        console.log(imageUrl);
       }
 
       const eventData = {
@@ -176,13 +175,13 @@ const AddNewEvent = () => {
         price: parseFloat(price),
         isFree,
         creator_id: userId,
-        image: imageUrl, // Add the Cloudinary URL here
+        imageUrl, // Add the Cloudinary URL
       };
 
-      const response = await axios.post('http://192.168.103.9:3000/events/create', eventData, {
+      const response = await axios.post('http://192.168.100.120:3000/events/create', eventData, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       Alert.alert(
@@ -191,6 +190,7 @@ const AddNewEvent = () => {
         [{ text: 'Okay', onPress: () => navigation.navigate('Homepage/Homep') }]
       );
 
+      // Reset form
       setEventName('');
       setNote('');
       setDate(null);
@@ -214,145 +214,127 @@ const AddNewEvent = () => {
   };
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <Text style={styles.header}>Add New Event</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Event name*"
-          value={eventName}
-          onChangeText={setEventName}
-        />
-        <TextInput
-          style={styles.note}
-          placeholder="Type the note here..."
-          value={note}
-          onChangeText={setNote}
-        />
-        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.inputWithIcon}>
-          <Text style={styles.placeholder}>{date ? date.toDateString() : "Date"}</Text>
-          <Icon name="calendar-outline" size={24} color="#8D8D8D" />
+    <View style={styles.container}>
+      <Text style={styles.header}>Add New Event</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Event name*"
+        value={eventName}
+        onChangeText={setEventName}
+      />
+      <TextInput
+        style={styles.note}
+        placeholder="Type the note here..."
+        value={note}
+        onChangeText={setNote}
+      />
+      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+        <Text>{date ? date.toDateString() : "Date"}</Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
+      )}
+      <View style={styles.timeContainer}>
+        <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{startTime ? startTime.toLocaleTimeString() : "Start time"}</Text>
+          
         </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
+        {showStartTimePicker && (
+          <DateTimePicker
+            value={startTime || new Date()}
+            onChange={onStartTimeChange}
+            mode="time"
+          />
         )}
-        <View style={styles.timeContainer}>
-          <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.inputWithIcon, styles.timeInput]}>
-            <Text style={styles.placeholder}>{startTime ? startTime.toLocaleTimeString() : "Start time"}</Text>
-            <Icon name="time-outline" size={24} color="#8D8D8D" />
-          </TouchableOpacity>
-          {showStartTimePicker && (
-            <DateTimePicker
-              value={startTime || new Date()}
-              onChange={onStartTimeChange}
-              mode="time"
-            />
-          )}
-          <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.inputWithIcon, styles.timeInput]}>
-            <Text style={styles.placeholder}>{endTime ? endTime.toLocaleTimeString() : "End time"}</Text>
-            <Icon name="time-outline" size={24} color="#8D8D8D" />
-          </TouchableOpacity>
-          {showEndTimePicker && (
-            <DateTimePicker
-              value={endTime || new Date()}
-              onChange={onEndTimeChange}
-              mode="time"
-            />
-          )}
-        </View>
-
-        <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.inputWithIcon}>
-          <Text style={styles.placeholder}>{location || "Select Location"}</Text>
-          <Icon name="location-outline" size={24} color="#8D8D8D" />
+        <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.input, styles.timeInput]}>
+          <Text>{endTime ? endTime.toLocaleTimeString() : "End time"}</Text>
         </TouchableOpacity>
+        {showEndTimePicker && (
+          <DateTimePicker
+            value={endTime || new Date()}
+            onChange={onEndTimeChange}
+            mode="time"
+          />
+        )}
+      </View>
 
-        <Modal
-          visible={showMapModal}
-          animationType="slide"
-          onRequestClose={() => setShowMapModal(false)}
-          transparent={false}
-        >
-          <View style={styles.modalContainer}>
-            <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeArrow}>
-              <Icon name="arrow-back" size={30} color="#fff" />
-            </TouchableOpacity>
-            <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
-          </View>
-        </Modal>
+      <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.input}>
+        <Text>{location || "Select Location"}</Text>
+      </TouchableOpacity>
 
-        <Picker
-          selectedValue={category}
-          style={[styles.select, { borderWidth: 1, borderColor: '#ddd', borderRadius: 5 }]}
-          onValueChange={(itemValue) => setCategory(itemValue)}
-        >
-          <Picker.Item label="Sports" value="Sports" enabled={false} />
-          {sports.map((sport, index) => (
-            <Picker.Item key={index} label={sport.name} value={sport.name} />
-          ))}
-        </Picker>
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)}
+        transparent={false}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeArrow}>
+            <Icon name="arrow-back" size={30} color="#fff" />
+          </TouchableOpacity>
+          <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
+        </View>
+      </Modal>
 
-        <View style={styles.row}>
-          <Text style={styles.label}>Participants:</Text>
+      <Picker
+        selectedValue={category}
+        style={styles.select}
+        onValueChange={(itemValue) => setCategory(itemValue)}
+      >
+        <Picker.Item label="Sports" value="Sports" enabled={false} />
+        {sports.map((sport, index) => (
+          <Picker.Item key={index} label={sport.name} value={sport.name} />
+        ))}
+      </Picker>
+
+      <View style={styles.row}>
+        <View style={styles.column}>
+          <Text>Participants:</Text>
           <TextInput
-            style={[styles.input, { flex: 1 }]}
+            style={styles.input}
             keyboardType="numeric"
             value={participants}
             onChangeText={setParticipants}
           />
         </View>
-
-        <View style={styles.row}>
-          <Text style={styles.label}>Price:</Text>
+        <View style={styles.column}>
+          <Text>Price:</Text>
           <TextInput
-            style={[styles.input, { flex: 1 }]}
+            style={styles.input}
             keyboardType="numeric"
             value={price}
             onChangeText={setPrice}
             editable={!isFree}
           />
         </View>
-
-        <View style={styles.row}>
-          <Text>Free</Text>
-          <Switch value={isFree} onValueChange={toggleFree} />
-        </View>
-
-        <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-          <View style={styles.uploadContent}>
-            <Icon name="cloud-upload-outline" size={24} color="#6200ee" />
-            <Text style={styles.uploadText}>Upload Your Image Here</Text>
-          </View>
-        </TouchableOpacity>
-
-        {image && (
-          <Image source={{ uri: image.uri }} style={styles.previewImage} />
-        )}
-
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={createEvent}
-        >
-          <Text style={styles.createButtonText}>Create Event</Text>
-        </TouchableOpacity>
       </View>
-    </ScrollView>
+      <View style={styles.row}>
+        <Text>Free</Text>
+        <Switch value={isFree} onValueChange={toggleFree} />
+      </View>
+
+      <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+        <View style={styles.uploadContent}>
+          <Icon name="cloud-upload-outline" size={24} color="#6200ee" />
+          <Text style={styles.uploadText}>Upload Your Image Here</Text>
+        </View>
+      </TouchableOpacity>
+
+      {image && (
+        <Image source={{ uri: image.uri }} style={styles.previewImage} />
+      )}
+
+      <TouchableOpacity
+        style={styles.createButton}
+        onPress={createEvent}
+      >
+        <Text style={styles.createButtonText}>Create Event</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  inputWithIcon: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  placeholder: {
-    color: '#8D8D8D',
-  },
   container: {
     flex: 1,
     padding: 20,
@@ -395,10 +377,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
-  },
-  label: {
-    fontWeight: 'bold',
-    marginRight: 10,
   },
   column: {
     flex: 0.48,
