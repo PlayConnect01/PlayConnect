@@ -1,7 +1,32 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
-const App = () => {
+const HomeScreen = () => {
+  const navigation = useNavigation(); // Initialize navigation
+
+  // Sample product data (you can replace this with your actual data)
+  const products = [
+    {
+      id: '1',
+      title: 'Halfmoon',
+      image: 'https://placekitten.com/200/200',
+      badge: '6 Month',
+      author: 'Kaiya Franci',
+      price: '$169',
+      rating: '★★★★★',
+    },
+    {
+      id: '2',
+      title: 'Crown Tail',
+      image: 'https://placekitten.com/200/201',
+      badge: '3 Month',
+      author: 'Aspen Stanton',
+      price: '$202',
+      rating: '★★★★★',
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <ScrollView>
@@ -16,7 +41,7 @@ const App = () => {
               <Text style={styles.icon}>🛒</Text>
             </TouchableOpacity>
             <TouchableOpacity>
-             <Text style={styles.icon}>❤️</Text>
+              <Text style={styles.icon}>❤️</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -29,33 +54,25 @@ const App = () => {
 
         {/* Card Section */}
         <View style={styles.cardContainer}>
-          <View style={styles.card}>
-            <Image
-              source={{ uri: 'https://placekitten.com/200/200' }} // Replace with fish image URL
-              style={styles.image}
-            />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>6 Month</Text>
-            </View>
-            <Text style={styles.cardTitle}>Halfmoon</Text>
-            <Text style={styles.rating}>★★★★★</Text>
-            <Text style={styles.author}>Kaiya Franci</Text>
-            <Text style={styles.price}>$169</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Image
-              source={{ uri: 'https://placekitten.com/200/201' }} // Replace with fish image URL
-              style={styles.image}
-            />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3 Month</Text>
-            </View>
-            <Text style={styles.cardTitle}>Crown Tail</Text>
-            <Text style={styles.rating}>★★★★★</Text>
-            <Text style={styles.author}>Aspen Stanton</Text>
-            <Text style={styles.price}>$202</Text>
-          </View>
+          {products.map((product) => (
+            <TouchableOpacity
+              key={product.id}
+              style={styles.card}
+              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })} // Navigate to ProductDetail
+            >
+              <Image
+                source={{ uri: product.image }} // Use product image URL
+                style={styles.image}
+              />
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{product.badge}</Text>
+              </View>
+              <Text style={styles.cardTitle}>{product.title}</Text>
+              <Text style={styles.rating}>{product.rating}</Text>
+              <Text style={styles.author}>{product.author}</Text>
+              <Text style={styles.price}>{product.price}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Section Title */}
@@ -116,6 +133,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
+    flexWrap: 'wrap', // Allow wrapping of cards
   },
   card: {
     width: '48%',
@@ -127,6 +145,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+    marginBottom: 10, // Add margin for spacing
   },
   image: {
     width: '100%',
@@ -169,4 +188,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default HomeScreen;

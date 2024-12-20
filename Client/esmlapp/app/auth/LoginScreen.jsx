@@ -13,9 +13,62 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://192.168.103.9:3000/users/login', {
-        email,
-        password,
+        const response = await axios.post('http://192.168.103.9:3000/users/login', {
+            email,
+            password,
+        });
+
+        console.log('Login successful:', response.data);
+        const { token } = response.data;
+
+        // Store the token in AsyncStorage
+        await AsyncStorage.setItem('userToken', token);
+        
+        // Navigate to home page after successful login
+        navigate.navigate('Homepage/CreateEvent');
+    } catch (error) {
+        console.error('Login error:', error.response ? error.response.data : error.message);
+        alert('Invalid credentials. Please try again.');
+    }
+};
+
+  // Handle Google login
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await promptAsync();
+      if (result.type === 'success') {
+        const { id_token } = result.params;
+console.log("idtoken",id_token);
+
+        const response = await axios.post('http://localhost:3000/users/auth/google-token', {
+          idToken: id_token,
+        });
+        console.log('respone',response);
+        
+        const { user, token } = response.data;
+        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userData', JSON.stringify(user));
+        setUser(user);
+        navigation.navigate('Homep');
+      } else {
+        Alert.alert("response");
+      }
+    } catch (error) {
+      Alert.alert(error);
+    }
+  };
+
+  // Handle Facebook login
+  const handleFacebookLogin = async () => {
+    try {
+      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+      if (result.isCancelled) {
+        throw new Error('User cancelled login');
+      }
+
+      const data = await AccessToken.getCurrentAccessToken();
+      const response = await axios.post('http://localhost:3000/users/auth/facebook-token', {
+        accessToken: data.accessToken,
       });
 
       console.log('Login successful:', response.data);

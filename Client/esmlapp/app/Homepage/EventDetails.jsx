@@ -8,14 +8,12 @@ import { Buffer } from 'buffer';
 
 
 const decodeToken = (token) => {
-
-
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace('-', '+').replace('_', '/');
     return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
   } catch (error) {
-    console.error('Token decoding error:', error); 
+    console.error('Token decoding error:', error);
     return null;
   }
 };
@@ -28,14 +26,21 @@ const EventDetails = () => {
   const { eventId } = route.params;
 
   const [event, setEvent] = useState(null);
+  const [userJoined, setUserJoined] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await axios.get("http://192.168.103.9:3000/events/getById/${eventId}");
+        const response = await axios.get(`http://192.168.103.9:3000/events/getById/${eventId}`);
         setEvent(response.data);
+        
+        const token = await AsyncStorage.getItem('userToken');
+        if (token) {
+          const decodedToken = decodeToken(token);
+          setUserJoined(response.data.event_participants.some(participant => participant.user_id === decodedToken.id));
+        }
         setLoading(false);
       } catch (err) {
         setError(err.response ? err.response.data : err.message);
@@ -46,50 +51,41 @@ const EventDetails = () => {
     fetchEvent();
   }, [eventId]);
 
-  const decodedToken = decodeToken(token);
-
-  if (!decodedToken) {
-    throw new Error('Failed to decode token');
-  }
-
-  const userId = decodedToken.id || 
-                 decodedToken.user_id || 
-                 decodedToken.userId;
-
-  if (!userId) {
-    throw new Error('Could not find user ID in token');
-  }
-
-
   const handleAddParticipant = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-  
       if (!token) {
+        console.error("Token not found in AsyncStorage");
         Alert.alert('Error', 'You are not logged in. Please log in to join the event.');
         return;
       }
-  
-      // Decode the token to extract user ID
+
       const decodedToken = decodeToken(token);
-      const userId = decodedToken?.id || decodedToken?.user_id || decodedToken?.userId;
-  
+      if (!decodedToken) {
+        Alert.alert('Error', 'Invalid token. Please log in again.');
+        return;
+      }
+
+      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
       if (!userId) {
         Alert.alert('Error', 'Failed to retrieve user information.');
         return;
       }
-  
-      // Add participant using the retrieved user ID
-      await axios.post('http://192.168.103.9:3000/events/addParticipant', {
-        eventId,
-        userId,
-      });
-  
+
+      await axios.post(
+        'http://192.168.103.9:3000/events/addParticipant',
+        { eventId, userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       Alert.alert('Success', 'You have been added to the event!');
-  
-      // Refresh the event data
       const updatedEvent = await axios.get(`http://192.168.103.9:3000/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
+      setUserJoined(true);
     } catch (error) {
       if (error.response && error.response.status === 400 && error.response.data.error) {
         Alert.alert('Notice', error.response.data.error);
@@ -98,7 +94,46 @@ const EventDetails = () => {
       }
     }
   };
-  
+
+  const handleRemoveParticipant = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.error("Token not found in AsyncStorage");
+        Alert.alert('Error', 'You are not logged in. Please log in to leave the event.');
+        return;
+      }
+
+      const decodedToken = decodeToken(token);
+      if (!decodedToken) {
+        Alert.alert('Error', 'Invalid token. Please log in again.');
+        return;
+      }
+
+      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+      if (!userId) {
+        Alert.alert('Error', 'Failed to retrieve user information.');
+        return;
+      }
+
+      await axios.post(
+        'http://192.168.103.9:3000/events/removeParticipant',
+        { eventId, userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      Alert.alert('Success', 'You have successfully left the event!');
+      const updatedEvent = await axios.get(`http://192.168.103.9:3000/events/getById/${eventId}`);
+      setEvent(updatedEvent.data);
+      setUserJoined(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to leave the event. Please try again.');
+    }
+  };
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -137,37 +172,33 @@ const EventDetails = () => {
       </View>
 
       <ScrollView>
-        {/* Event Name with Icon */}
         <View style={styles.eventNameContainer}>
           <Ionicons name="football" size={24} color="black" style={styles.iconSpacing} />
           <Text style={styles.eventName}>{event.event_name}</Text>
         </View>
 
-        {/* Description */}
         <Text style={styles.description}>{event.description}</Text>
 
-        {/* Event Details */}
         <View style={styles.detailsContainer}>
           <View style={styles.detailRow}>
-          <Ionicons name="person" size={20} color="black" style={styles.detailIcon} />
+            <Ionicons name="person" size={20} color="black" style={styles.detailIcon} />
             <Text style={styles.boldLabel}>Event Creator:</Text>
             <Text style={styles.boldContent}>{event.creator ? event.creator.username : 'Unknown'}</Text>
           </View>
 
           <View style={styles.detailRow}>
-          <Ionicons name="calendar" size={20} color="black" style={styles.detailIcon} />
+            <Ionicons name="calendar" size={20} color="black" style={styles.detailIcon} />
             <Text style={styles.boldLabel}>Date:</Text>
             <Text style={styles.boldContent}>{new Date(event.date).toLocaleString()}</Text>
           </View>
 
           <View style={styles.detailRow}>
-          <Ionicons name="location" size={20} color="black" style={styles.detailIcon} />
+            <Ionicons name="location" size={20} color="black" style={styles.detailIcon} />
             <Text style={styles.boldLabel}>Location:</Text>
             <Text style={styles.boldContent}>{event.location}</Text>
           </View>
         </View>
 
-        {/* Event Image */}
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
@@ -175,7 +206,6 @@ const EventDetails = () => {
           />
         </View>
 
-        {/* Participants Section */}
         <View style={styles.participantsContainer}>
           <Text style={styles.sectionTitle}>
             Participants: {event.event_participants?.length || 0} / {event.participants}
@@ -188,12 +218,37 @@ const EventDetails = () => {
               </View>
             ))}
 
-            {/* Add Participant Button */}
-            <TouchableOpacity style={styles.addButton} onPress={handleAddParticipant}>
-              <Ionicons name="add" size={30} color="white" />
-            </TouchableOpacity>
+            {event.event_participants?.length < event.participants && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => {
+                  if (userJoined) {
+                    Alert.alert(
+                      'Confirmation',
+                      'Are you sure you want to quit this event?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Yes', onPress: handleRemoveParticipant },
+                      ]
+                    );
+                  } else {
+                    Alert.alert(
+                      'Confirmation',
+                      'Are you sure you want to join this event?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Yes', onPress: handleAddParticipant },
+                      ]
+                    );
+                  }
+                }}
+              >
+                <Ionicons name={userJoined ? 'remove' : 'add'} size={30} color="white" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
+
       </ScrollView>
     </View>
   );
@@ -230,9 +285,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 25,
     margin: 8,
-  },    
-  detailIcon: { 
-    marginRight: 10 ,  
+    marginLeft:60
+  },
+  detailIcon: {
+    marginRight: 10,
   },
   loadingText: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: 50 },
   errorText: { fontSize: 16, color: 'red', textAlign: 'center', marginTop: 50 },
