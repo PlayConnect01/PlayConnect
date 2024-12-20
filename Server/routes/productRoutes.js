@@ -6,7 +6,8 @@ const {     getProductsBySportId, getLimitedProductsBySport,
     getTopTwoRatedProductsBySport,   
     getAllDiscountedProducts,
     getTopThreeDiscountedProducts,
-    getProductsByDiscount,} = require('../controllers/MarketplaceProduct');
+    getProductsByDiscount,
+    getProductById} = require('../controllers/MarketplaceProduct');
 
 const router = express.Router();
 
@@ -32,7 +33,7 @@ router.get('/discounted/top-three', getTopThreeDiscountedProducts);
 
 // Route to get products by a specific discount
 router.get('/discounted/:discount', getProductsByDiscount);
-
+router.get('/products/:id',getProductById);
 
 
 module.exports = router;

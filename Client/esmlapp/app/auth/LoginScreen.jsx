@@ -45,7 +45,7 @@ export default function LoginScreen() {
   }, [fadeAnim, slideAnim]);
 
   // Handle regular login with email and password
-  const handleLogin = async () => {
+const handleLogin = async () => {
     try {
         const response = await axios.post('http://192.168.103.10:3000/users/login', {
             email,
@@ -53,10 +53,13 @@ export default function LoginScreen() {
         });
 
         console.log('Login successful:', response.data);
-        const { token } = response.data;
+        const { token  , user} = response.data;
+console.log(user , "userrrrrr");
 
         // Store the token in AsyncStorage
         await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userId', JSON.stringify(user.user_id));
+     
         
         // Navigate to home page after successful login
         navigation.navigate('MarketplaceHome');

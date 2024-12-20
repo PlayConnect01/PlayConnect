@@ -1,25 +1,71 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CartScreen = () => {
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: 'Halfmoon', description: 'Solid Male', price: 169, quantity: 2, image: 'https://via.placeholder.com/100' },
-    { id: 2, name: 'Crown Tail', description: 'Jantan Beta', price: 202, quantity: 1, image: 'https://via.placeholder.com/100' },
-    { id: 3, name: 'Veil tail', description: 'Solid Male', price: 120, quantity: 1, image: 'https://via.placeholder.com/100' },
-  ]);
+  const [cartItems, setCartItems] = useState([]);
 
-  const incrementQuantity = (id) => {
+  // Function to fetch cart items
+  const fetchCartItems = async () => {
+    try {
+      const userId = 1; // Replace with the actual user ID or retrieve it from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken'); // Assuming you store the token in AsyncStorage
+
+      const response = await axios.get(`http://192.168.103.10:3000/cart/cart/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Send the token in the header
+        },
+      });
+
+      // Check if response data is an array
+      if (Array.isArray(response.data)) {
+        setCartItems(response.data); // Set the cart items from the response
+      } else {
+        console.error("Unexpected response format:", response.data);
+        Alert.alert("Error", "Failed to fetch cart items.");
+      }
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      Alert.alert("Error", "Failed to fetch cart items.");
+    }
+  };
+
+  // Fetch cart items when the component mounts
+  useEffect(() => {
+    fetchCartItems();
+  }, []);
+
+  const incrementQuantity = (cartItemId) => {
     const updatedCart = cartItems.map(item =>
-      item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+      item.cart_item_id === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
     );
     setCartItems(updatedCart);
   };
 
-  const decrementQuantity = (id) => {
+  const decrementQuantity = (cartItemId) => {
     const updatedCart = cartItems.map(item =>
-      item.id === id && item.quantity > 1 ? { ...item, quantity: item.quantity - 1 } : item
+      item.cart_item_id === cartItemId && item.quantity > 1 ? { ...item, quantity: item.quantity - 1 } : item
     );
     setCartItems(updatedCart);
+  };
+
+  const deleteCartItem = async (cartItemId) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // Assuming you store the token in AsyncStorage
+      await axios.delete(`http://192.168.103.10:3000/cart/cart/item/${cartItemId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Send the token in the header
+        },
+      });
+
+      // Refetch cart items after deletion
+      fetchCartItems();
+      Alert.alert("Success", "Item removed from cart.");
+    } catch (error) {
+      console.error("Error deleting cart item:", error);
+      Alert.alert("Error", "Failed to delete item from cart.");
+    }
   };
 
   const calculateTotal = () => {
@@ -35,32 +81,35 @@ const CartScreen = () => {
       <Text style={styles.header}>Cart</Text>
       <ScrollView>
         {cartItems.map((item) => (
-          <View key={item.id} style={styles.cartItem}>
+          <View key={item.cart_item_id} style={styles.cartItem}> {/* Use cart_item_id as the key */}
             <Image source={{ uri: item.image }} style={styles.image} />
             <View style={styles.details}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.description}>{item.description}</Text>
-              <Text style={styles.price}>${item.price}</Text>
+              <Text style={styles.price}>${item.price.toFixed(2)}</Text>
             </View>
             <View style={styles.quantityControls}>
-              <TouchableOpacity onPress={() => decrementQuantity(item.id)} style={styles.button}>
+              <TouchableOpacity onPress={() => decrementQuantity(item.cart_item_id)} style={styles.button}>
                 <Text style={styles.buttonText}>-</Text>
               </TouchableOpacity>
               <Text style={styles.quantity}>{item.quantity}</Text>
-              <TouchableOpacity onPress={() => incrementQuantity(item.id)} style={styles.button}>
+              <TouchableOpacity onPress={() => incrementQuantity(item.cart_item_id)} style={styles.button}>
                 <Text style={styles.buttonText}>+</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity onPress={() => deleteCartItem(item.cart_item_id)} style={styles.deleteButton}>
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
           </View>
         ))}
         <View style={styles.paymentDetails}>
           {cartItems.map((item) => (
-            <Text key={item.id} style={styles.paymentDetailText}>
-              {item.name} ${item.price}
+            <Text key={item.cart_item_id} style={styles.paymentDetailText}>
+              {item.name} ${item.price.toFixed(2)}
             </Text>
           ))}
           <Text style={styles.totalText}>
-            Total ({calculateTotalItems()} tails) ${calculateTotal()}
+            Total ({calculateTotalItems()} items) ${calculateTotal().toFixed(2)}
           </Text>
         </View>
         <TouchableOpacity style={styles.deliveryButton}>
@@ -129,6 +178,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginHorizontal: 10,
+  },
+  deleteButton: {
+    backgroundColor: '#ff3b8f',
+    borderRadius: 5,
+    padding: 5,
+    marginLeft: 10,
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   paymentDetails: {
     marginTop: 20,
