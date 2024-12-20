@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform, Animated, Easing } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -14,30 +14,9 @@ const SignUpScreen = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigation = useNavigation();
 
-  // Animation references
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(-100)).current;
-
-  useEffect(() => {
-    // Start animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 1000,
-        easing: Easing.bounce,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
-
   const handleSignUp = async () => {
     try {
-      const response = await axios.post('http://192.168.103.14:3000/users/signup', {
+      const response = await axios.post('http://192.168.103.9:3000/users/signup', {
         username,
         email,
         password,
@@ -52,7 +31,7 @@ const SignUpScreen = () => {
 
   return (
     <ImageBackground
-    source={require('../../assets/images/sportscube.png')}
+    source={require('../../assets/images/sportscube.png')} // Replace with your actual background image URL
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>
@@ -60,13 +39,12 @@ const SignUpScreen = () => {
           style={styles.content}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <Animated.Text style={[styles.title, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            Welcome
-          </Animated.Text>
-          <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>
-            Join the Team Today!
-          </Animated.Text>
+          
+          
+          <Text style={styles.title}>Welcome</Text>
+          <Text style={styles.subtitle}>Join the Team Today!</Text>
 
+          {/* Username Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="user" size={20} color="#999" />
             <TextInput
@@ -78,6 +56,7 @@ const SignUpScreen = () => {
             />
           </View>
 
+          {/* Email Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="envelope" size={20} color="#999" />
             <TextInput
@@ -90,6 +69,7 @@ const SignUpScreen = () => {
             />
           </View>
 
+          {/* Password Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="lock" size={20} color="#999" />
             <TextInput
@@ -105,6 +85,7 @@ const SignUpScreen = () => {
             </TouchableOpacity>
           </View>
 
+          {/* Confirm Password Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="lock" size={20} color="#999" />
             <TextInput
@@ -141,13 +122,18 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Overlay background color for readability
     padding: 20,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  image: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,

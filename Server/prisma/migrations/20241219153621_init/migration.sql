@@ -185,11 +185,14 @@ CREATE TABLE `MarketplaceProduct` (
     `name` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NULL,
     `price` DOUBLE NOT NULL,
+    `discount` DOUBLE NOT NULL DEFAULT 0,
     `image_url` VARCHAR(191) NOT NULL,
-    `point_reward` INTEGER NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
+    `sport_id` INTEGER NOT NULL,
+    `rating` INTEGER NOT NULL DEFAULT 5,
 
+    INDEX `MarketplaceProduct_sport_id_idx`(`sport_id`),
     PRIMARY KEY (`product_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -202,6 +205,19 @@ CREATE TABLE `Cart` (
 
     UNIQUE INDEX `Cart_user_id_key`(`user_id`),
     PRIMARY KEY (`cart_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Favorite` (
+    `favorite_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `product_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `Favorite_user_id_idx`(`user_id`),
+    INDEX `Favorite_product_id_idx`(`product_id`),
+    UNIQUE INDEX `Favorite_user_id_product_id_key`(`user_id`, `product_id`),
+    PRIMARY KEY (`favorite_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -360,7 +376,16 @@ ALTER TABLE `Message` ADD CONSTRAINT `Message_sender_id_fkey` FOREIGN KEY (`send
 ALTER TABLE `Achievement` ADD CONSTRAINT `Achievement_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `MarketplaceProduct` ADD CONSTRAINT `MarketplaceProduct_sport_id_fkey` FOREIGN KEY (`sport_id`) REFERENCES `Sport`(`sport_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Cart` ADD CONSTRAINT `Cart_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Favorite` ADD CONSTRAINT `Favorite_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Favorite` ADD CONSTRAINT `Favorite_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `MarketplaceProduct`(`product_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `CartItem` ADD CONSTRAINT `CartItem_cart_id_fkey` FOREIGN KEY (`cart_id`) REFERENCES `Cart`(`cart_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
