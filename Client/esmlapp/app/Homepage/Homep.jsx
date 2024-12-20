@@ -190,7 +190,7 @@ const App = () => {
         <ScrollView contentContainerStyle={styles.eventsGrid}>
           {filteredEvents.map((event) => (
             <TouchableOpacity
-              key={event.id}
+              key={event.event_id}
               style={styles.eventItem}
               onPress={() =>
                 navigation.navigate("Homepage/EventDetails", {

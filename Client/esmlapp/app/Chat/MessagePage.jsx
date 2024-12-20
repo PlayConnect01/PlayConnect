@@ -74,7 +74,7 @@ const MessagePage = ({ navigation }) => {
 
       {/* Messages List */}
       <ScrollView style={styles.messagesList}>
-        {matches.map((match, index) => (
+        {matches.map((match, index) => (  
           <TouchableOpacity
             key={index}
             style={styles.messageItem}

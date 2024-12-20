@@ -1,105 +1,81 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ScrollView } from 'react-native-gesture-handler';
+import * as Animatable from 'react-native-animatable';
 
-const AuthOptionsScreen = () => {
+const { width } = Dimensions.get('window');
+
+const OnboardingScreen = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const navigate = useNavigation();
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const titleAnim = useRef(new Animated.Value(0)).current;
 
-  const handlePageChange = (nextPage) => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 300,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 0.8,
-        duration: 300,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentPage(nextPage);
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(titleAnim, {
-          toValue: 1,
-          duration: 500,
-          easing: Easing.bounce,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
+  const pages = [
+    {
+      title: "Welcome to SportsMate",
+      description: "Find your perfect esports team and compete!",
+      image: require('../../assets/images/landing.jpeg'),
+    },
+    {
+      title: "Join Competitive Teams",
+      description: "Connect with gamers who share your passion.",
+      image: require('../../assets/images/landing.jpeg'),
+    },
+    {
+      title: "Track Your Stats",
+      description: "Monitor your gaming achievements and rankings.",
+      image: require('../../assets/images/landing.jpeg'),
+    },
+    {
+      title: "Get Started",
+      description: "Sign up or log in to join the competition.",
+      image: require('../../assets/images/landing.jpeg'),
+    },
+  ];
+
+  const handleScroll = (event) => {
+    const pageIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    setCurrentPage(pageIndex);
   };
 
-  const renderContent = () => {
-    const titleStyle = {
-      opacity: titleAnim,
-      transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-30, 0] }) }],
-    };
-
-    switch (currentPage) {
-      case 0:
-        return (
-          <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-            <Animated.Text style={[styles.title, titleStyle]}>Welcome to SportsMate</Animated.Text>
-            <Animated.Text style={[styles.subtitle, titleStyle]}>Your journey in sports starts here!</Animated.Text>
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={() => handlePageChange(1)}
-            >
-              <Text style={styles.buttonText}>Get Started</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        );
-      case 1:
-        return (
-          <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-            <Animated.Text style={[styles.title, titleStyle]}>Get Started</Animated.Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => navigate.navigate('Login')}
-            >
-              <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => navigate.navigate('SignUp')}
-            >
-              <Text style={styles.buttonText}>Sign Up</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        );
-      default:
-        return null;
-    }
+  const renderPages = () => {
+    return pages.map((page, index) => (
+      <View key={index} style={styles.page}>
+        <Animatable.Image
+          animation="bounceIn"
+          duration={1500}
+          source={page.image}
+          style={styles.image}
+        />
+        <Text style={styles.title}>{page.title}</Text>
+        <Text style={styles.description}>{page.description}</Text>
+      </View>
+    ));
   };
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#1c1c1c", "#333"]} style={styles.gradientBackground} />
-      <View style={styles.dynamicShapes}>
-        <View style={styles.shape1} />
-        <View style={styles.shape2} />
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {renderPages()}
+      </ScrollView>
+      <View style={styles.indicatorContainer}>
+        {pages.map((_, index) => (
+          <View key={index} style={[styles.indicator, currentPage === index && styles.activeIndicator]} />
+        ))}
       </View>
-      {renderContent()}
+      {currentPage === pages.length - 1 && (
+        <TouchableOpacity style={styles.button} onPress={() => navigate.navigate('Login')}>
+          <Text style={styles.buttonText}>Get Started</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -109,7 +85,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
+    backgroundColor: '#000',
   },
   gradientBackground: {
     position: 'absolute',
@@ -118,70 +94,62 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  dynamicShapes: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  page: {
+    width,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 0,
+    padding: 20,
   },
-  shape1: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 150,
-    top: -100,
-    left: -100,
-    transform: [{ rotate: '30deg' }],
-  },
-  shape2: {
-    position: 'absolute',
-    width: 400,
-    height: 400,
-    backgroundColor: 'rgba(255, 0, 150, 0.1)',
-    borderRadius: 200,
-    bottom: -150,
-    right: -150,
-    transform: [{ rotate: '-30deg' }],
-  },
-  content: {
-    width: '80%',
-    alignItems: 'center',
-    zIndex: 1,
+  image: {
+    width: 250,
+    height: 250,
+    marginBottom: 20,
+    borderRadius: 20,
   },
   title: {
-    fontSize: 32,
-    color: '#fff',
+    fontSize: 28,
+    color: '#ffcc00', // Change color for esports theme
     marginBottom: 10,
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
+    textAlign: 'center',
+    fontFamily: 'Roboto-Bold', // Use a bold font
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#fff',
+  description: {
+    fontSize: 16,
+    color: '#fff', // Change description color
+    textAlign: 'center',
     marginBottom: 30,
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
+  },
+  indicatorContainer: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 100,
+  },
+  indicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#888',
+    margin: 5,
+  },
+  activeIndicator: {
+    backgroundColor: '#ffcc00', // Active indicator color
   },
   button: {
     backgroundColor: '#ff4081',
-    padding: 12,
-    marginTop: 20,
-    borderRadius: 5,
-    width: '100%',
+    padding: 15,
+    borderRadius: 25,
+    position: 'absolute',
+    bottom: 40,
+    width: '80%',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ffcc00', // Border for button
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
 
-export default AuthOptionsScreen;
+export default OnboardingScreen;

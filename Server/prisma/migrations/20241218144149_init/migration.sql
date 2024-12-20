@@ -3,7 +3,9 @@ CREATE TABLE `User` (
     `user_id` INTEGER NOT NULL AUTO_INCREMENT,
     `username` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
-    `password` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NULL,
+    `auth_provider` VARCHAR(191) NULL,
+    `auth_provider_id` VARCHAR(191) NULL,
     `location` VARCHAR(191) NULL,
     `profile_picture` VARCHAR(191) NULL,
     `skill_level` VARCHAR(191) NULL,
@@ -183,11 +185,14 @@ CREATE TABLE `MarketplaceProduct` (
     `name` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NULL,
     `price` DOUBLE NOT NULL,
+    `discount` DOUBLE NOT NULL DEFAULT 0,
     `image_url` VARCHAR(191) NOT NULL,
     `point_reward` INTEGER NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
+    `sport_id` INTEGER NOT NULL,
 
+    INDEX `MarketplaceProduct_sport_id_idx`(`sport_id`),
     PRIMARY KEY (`product_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -336,6 +341,9 @@ ALTER TABLE `Message` ADD CONSTRAINT `Message_sender_id_fkey` FOREIGN KEY (`send
 
 -- AddForeignKey
 ALTER TABLE `Achievement` ADD CONSTRAINT `Achievement_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `MarketplaceProduct` ADD CONSTRAINT `MarketplaceProduct_sport_id_fkey` FOREIGN KEY (`sport_id`) REFERENCES `Sport`(`sport_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Cart` ADD CONSTRAINT `Cart_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

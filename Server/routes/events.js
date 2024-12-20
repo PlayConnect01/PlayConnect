@@ -1,5 +1,5 @@
 const express = require("express");
-const {getAllEvents,getEventById,createEvent,updateEvent, deleteEvent, getEventsByDate , EventWithCreator , addParticipant} = require("../controllers/events");
+const {getAllEvents,getEventById,createEvent,updateEvent, deleteEvent, getEventsByDate , EventWithCreator , addParticipant, getParticipatedEvents} = require("../controllers/events");
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ router.delete("/delete/:id", deleteEvent);
 router.get("/getByDate/:date", getEventsByDate);
 router.get("/getEventWithCreator" , EventWithCreator )
 router.post('/addParticipant', addParticipant);
+router.get("/getParticipated/:userId", getParticipatedEvents);
 
 
 module.exports = router;

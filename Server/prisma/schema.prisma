@@ -11,12 +11,16 @@ model User {
   user_id         Int       @id @default(autoincrement())
   username        String
   email           String    @unique
-  password        String
-  location        String?   // Changed to nullable
+  password        String?
+  auth_provider   String?   
+  auth_provider_id String?
+  location        String?
   profile_picture String?
   skill_level     String?
   rating          Float?
   points          Int       @default(0)
+  birthdate       DateTime? 
+  phone_number    String? 
 
   // User relationships
   created_teams      Team[]          @relation("TeamCreator")
@@ -45,12 +49,13 @@ model Sport {
   sport_id    Int      @id @default(autoincrement())
   name        String
   description String?
-  icon        String?  // New icon field, nullable
+  icon        String?  
 
   users       UserSport[]
   teams       Team[]
   tournaments Tournament[]
   matches     Match[]
+  products    MarketplaceProduct[] // New relation to products
 }
 
 model UserSport {
@@ -232,18 +237,22 @@ model Achievement {
 
   @@index([user_id])
 }
-
 model MarketplaceProduct {
   product_id   Int      @id @default(autoincrement())
   name         String
   description  String?
   price        Float
+  discount     Float    @default(0) // New required discount field with default value of 0
   image_url    String
   point_reward Int
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+  sport_id     Int      // Link to sport
 
+  sport        Sport    @relation(fields: [sport_id], references: [sport_id])
   cart_items   CartItem[]
+
+  @@index([sport_id])
 }
 
 model Cart {

@@ -1,3 +1,4 @@
+// Server/index.js
 const express = require("express");
 const cors = require("cors");
 const http = require('http');
@@ -9,8 +10,8 @@ const matchRouter = require('./routes/match');
 const chatRoutes = require('./routes/chat');
 const competetionRouter = require('./routes/competetion')
 const passwordRouter = require('./routes/handlePasswordReset .js')
-const pointsRoutes = require('./routes/points.js')
 const leaderboardRoutes = require('./routes/leaderboard.js')
+const passport = require('./config/passport.js');
 const app = express();
 
 const server = http.createServer(app);
@@ -18,25 +19,41 @@ const server = http.createServer(app);
 initializeSocket(server);
 
 app.use(cors({
-  origin: '*', 
+  origin: process.env.FRONTEND_URL,
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));app.use(express.json());
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(express.json());
 
 const PORT = 3000;
 
-app.use('/sports', sportRoutes); 
-app.use('/users', userRouter); 
+app.use('/sports', sportRoutes);
+app.use('/users', userRouter);
 app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
-app.use('/chats', chatRoutes);  
-app.use('/competetion', competetionRouter); 
+app.use('/chats', chatRoutes);
+app.use('/competetion', competetionRouter);
 app.use('/password', passwordRouter);
-app.use('/points', pointsRoutes);
 app.use('/leaderboard', leaderboardRoutes); 
+app.use(passport.initialize());
+app.use(passport.session());
 
+passport.serializeUser((user, done) => {
+  done(null, user.user_id);
+});
 
-// Utiliser server.listen au lieu de app.listen
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await prismaClient.user.findUnique({
+      where: { user_id: id }
+    });
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
 server.listen(PORT, () => {
   console.log(`Server and Socket.IO running on port ${PORT}`);
 });

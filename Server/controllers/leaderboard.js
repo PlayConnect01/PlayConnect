@@ -12,7 +12,7 @@ const getLeaderboard = async (req, res) => {
       orderBy: {
         points: 'desc', // Order by points in descending order
       },
-      take: 10, // Limit to top 10 users
+      take: 100, // Limit to top 10 users
     });
 
     res.status(200).json(leaderboard);
