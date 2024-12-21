@@ -7,48 +7,50 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfirmationModal from './Confirmationadding'; // Import the confirmation modal
 
-
-const marketplace = () => {
+const Marketplace = () => {
   const navigation = useNavigation();
   const [products, setProducts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [itemToAdd, setItemToAdd] = useState(null); // State for the item to add
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const allProductsResponse = await axios.get(
-          "http://192.168.103.10:3000/product/discounted"
+          "http://192.168.172.101:3000/product/discounted"
         );
         setProducts(allProductsResponse.data);
-  
+
         const topDiscountedResponse = await axios.get(
-          "http://192.168.103.10:3000/product/discounted/top-three"
+          "http://192.168.172.101:3000/product/discounted/top-three"
         );
         setDiscounts(topDiscountedResponse.data);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
-  
+
     fetchProducts();
     fetchCartCount(); // Fetch the cart count when the component mounts
   }, []);
-   const fetchCartCount = async () => {
+
+  const fetchCartCount = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const userId = await AsyncStorage.getItem('userId');
       if (token && userId) {
-        const response = await axios.get(`http://192.168.103.10:3000/cart/count/${userId}`, {
+        const response = await axios.get(`http://192.168.172.101:3000/cart/count/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -60,64 +62,63 @@ const marketplace = () => {
     }
   };
 
-  const addToCart = async (product) => {
-    console.log(product , "pro");
-    
+  const addToCart = (product) => {
+    setItemToAdd(product);
+    setModalVisible(true); // Show confirmation modal
+  };
+
+  const confirmAddToCart = async () => {
     try {
-        const token = await AsyncStorage.getItem('userToken'); // Retrieve user token
-        let userId = await AsyncStorage.getItem('userId'); // Retrieve user ID
-      userId =  JSON.parse(userId)
-        
-        // Log the retrieved values for debugging
-        console.log("Retrieved from AsyncStorage:", { token, userId });
-         // Check if user is authenticated
-        if (!token || !userId) {
-            console.error("User token or ID is missing.");
-            return; // Exit if user is not authenticated
+      const token = await AsyncStorage.getItem('userToken'); // Retrieve user token
+      let userId = await AsyncStorage.getItem('userId'); // Retrieve user ID
+      userId = JSON.parse(userId);
+
+      // Check if user is authenticated
+      if (!token || !userId) {
+        console.error("User token or ID is missing.");
+        return; // Exit if user is not authenticated
+      }
+
+      // Validate product details
+      if (!itemToAdd || !itemToAdd.product_id || !itemToAdd.price) {
+        console.error("Invalid product details.");
+        return; // Exit if product details are invalid
+      }
+
+      // Optimistically update the cart count
+      setCartCount(prevCount => prevCount + 1);
+      setLoading(true); // Set loading to true
+
+      const response = await axios.post(
+        'http://192.168.172.101:3000/cart/cart/add',
+        {
+          userId: userId,
+          productId: itemToAdd.product_id,
+          quantity: 1, // Default quantity to 1
+          price: itemToAdd.price,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-         // Validate product details
-        if (!product || !product.product_id || !product.price) {
-            console.error("Invalid product details.");
-            return; // Exit if product details are invalid
-        }
-         // Optimistically update the cart count
-        setCartCount(prevCount => prevCount + 1);
-        setLoading(true); // Set loading to true
-         const response = await axios.post(
-            'http://192.168.103.10:3000/cart/cart/add', // Ensure this endpoint is correct
-            {
-                userId: userId, // Ensure userId is sent correctly
-                productId: product.product_id,
-                quantity: 1, // Default quantity to 1
-                price: product.price,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`, // Include token in headers
-                },
-            }
-        );
-         // Check response status
-        if (response.status === 201) {
-            console.log("Product added to cart:", response.data);
-            
-            // Show success alert
-            Alert.alert(
-                "Success",
-                `Added ${product.name} to cart for $${product.price}.`,
-                [{ text: "OK" }]
-            );
-        } else {
-            console.error("Failed to add product to cart:", response.data);
-            // Optionally revert the optimistic update if the request fails
-            setCartCount(prevCount => prevCount - 1);
-        }
-    } catch (error) {
-        console.error("Error adding product to cart:", error);
+      );
+
+      // Check response status
+      if (response.status === 201) {
+        console.log("Product added to cart:", response.data);
+      } else {
+        console.error("Failed to add product to cart:", response.data);
         // Optionally revert the optimistic update if the request fails
         setCartCount(prevCount => prevCount - 1);
+      }
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      // Optionally revert the optimistic update if the request fails
+      setCartCount(prevCount => prevCount - 1);
     } finally {
-        setLoading(false); // Set loading to false
+      setLoading(false); // Set loading to false
+      setModalVisible(false); // Close the modal
     }
  ;
   }  
@@ -136,31 +137,31 @@ const marketplace = () => {
 };
   return (
     <View style={styles.container}>
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Text style={styles.menuIcon}>
-            <Icon name="bars" size={24} color="#000" />
-          </Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Marketplace</Text>
-        <View style={styles.iconContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('CartScreen')}>
-            <Icon name="shopping-cart" size={24} color="#000" />
-            <Text style={styles.cartCount}>{cartCount}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <TouchableOpacity>
+            <Text style={styles.menuIcon}>
+              <Icon name="bars" size={24} color="#000" />
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.favoriteIcon}>
-            <Icon name="heart-o" size={24} color="#000" />
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Marketplace</Text>
+          <View style={styles.iconContainer}>
+            <TouchableOpacity onPress={() => navigation.navigate('CartScreen')}>
+              <Icon name="shopping-cart" size={24} color="#000" />
+              <Text style={styles.cartCount}>{cartCount}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.favoriteIcon}>
+              <Icon name="heart-o" size={24} color="#000" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-       <View style={styles.searchSection}>
-        <TextInput
-          placeholder="Search..."
-          placeholderTextColor="#999"
-          style={styles.searchInput}
-        />
-      </View>
+         <View style={styles.searchSection}>
+          <TextInput
+            placeholder="Search..."
+            placeholderTextColor="#999"
+            style={styles.searchInput}
+          />
+        </View>
 
         <Text style={styles.sectionTitle}>Discover</Text>
         <ScrollView
@@ -233,79 +234,90 @@ const marketplace = () => {
           </TouchableOpacity>
         </ScrollView>
 
-        <Text style={styles.sectionTitle}>All Products</Text>
+        <Text style={styles.sectionTitle}>Check Out Some of Our Collection! 🎉🛍️</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.cardContainer}
         >
-           {products.map((product, index) => (
-           <TouchableOpacity
-             key={index}
-             style={styles.card}
-             onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
-           >
-             <Image
-               source={{ uri: product.image_url }}
-               style={styles.cardImage}
-             />
-             <Text style={styles.cardTitle}>{product.name}</Text>
-             <Text style={styles.cardPrice}>{product.price}</Text>
+          {products.map((product, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.card}
+              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+            >
+              <Image
+                source={{ uri: product.image_url }}
+                style={styles.cardImage}
+              />
+              <Text style={styles.cardTitle}>{product.name}</Text>
+              <Text style={styles.cardPrice}>{product.price}</Text>
               <View style={styles.cardActions}>
-               <TouchableOpacity
-                 style={styles.cartButton}
-                 onPress={() => {
-                   console.log("Adding product to cart:", product);
-                   addToCart(product); // Call addToCart function
-                 }}
-               >
-                 <Icon name="shopping-cart" size={20} color="#fff" />
-               </TouchableOpacity>
-               <TouchableOpacity
-                 style={styles.favoriteButton}
-                 onPress={() => {
-                   /* Toggle favorite logic */
-                 }}
-               >
-                 <Icon name="heart-o" size={20} color="#ff3b8f" />
-               </TouchableOpacity>
-             </View>
-           </TouchableOpacity>
-         ))}
-       </ScrollView>
+                <TouchableOpacity
+                  style={styles.cartButton}
+                  onPress={() => addToCart(product)} // Call addToCart function
+                >
+                  <Icon name="shopping-cart" size={20} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.favoriteButton}
+                  onPress={() => {
+                    /* Toggle favorite logic */
+                  }}
+                >
+                  <Icon name="heart-o" size={20} color="#ff3b8f" />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-
-        <Text style={styles.sectionTitle}>Discount and Promo</Text>
+        <Text style={styles.sectionTitle}>Exciting Discounts and Promotions! 🎉💰</Text>
         {discounts.map((discount, index) => {
-   const discountedPrice = calculateDiscountedPrice(discount.price, discount.discount); // Use discount.price
-   const savings = discount.price - discountedPrice; // Calculate savings based on the original price
-   return (
-       <View key={index} style={styles.discountItem}>
-           <Image
-               source={{ uri: discount.image_url }}
-               style={styles.discountImage}
-           />
-           <View>
-               <Text style={styles.discountTitle}>{discount.name}</Text>
-               <Text style={styles.discountPrice}>
-                   ${discountedPrice.toFixed(2)}{" "} {/* Display new price */}
-                   <Text style={styles.discountOldPrice}>${discount.price}</Text> {/* Display original price */}
-               </Text>
-               <Text style={styles.discountSavings}>
-                   You save: ${savings.toFixed(2)} {/* Display savings */}
-               </Text>
-           </View>
-           <TouchableOpacity
-               style={styles.cartButton}
-               onPress={() => addToCart(discount)} // Call addToCart with discount details
-           >
-               <Icon name="shopping-cart" size={20} color="#fff" />
-           </TouchableOpacity>
-       </View>
+          const discountedPrice = calculateDiscountedPrice(discount.price, discount.discount); // Use discount.price
+          const savings = discount.price - discountedPrice; // Calculate savings based on the original price
+          return (
+            <View key={index} style={styles.discountItem}>
+              <Image
+                source={{ uri: discount.image_url }}
+                style={styles.discountImage}
+              />
+              <View>
+                <Text style={styles.discountTitle}>{discount.name}</Text>
+                <Text style={styles.discountPrice}>
+                  ${discountedPrice.toFixed(2)}{" "} {/* Display new price */}
+                  <Text style={styles.discountOldPrice}>${discount.price}</Text> {/* Display original price */}
+                </Text>
+                <Text style={styles.discountSavings}>
+                  You save: ${savings.toFixed(2)} {/* Display savings */}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.cartButton}
+                onPress={() => addToCart(discount)} // Call addToCart with discount details
+              >
+                <Icon name="shopping-cart" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
           );
         })}
+
+        <TouchableOpacity
+          style={styles.viewAllButton}
+          onPress={() => navigation.navigate('AllDiscountedProducts')}
+        >
+          <Text style={styles.viewAllText}>View All Discounts! 👀</Text>
+        </TouchableOpacity>
       </ScrollView>
+
       {loading && <ActivityIndicator size="large" color="#0000ff" />}
+
+      <ConfirmationModal
+        visible={isModalVisible}
+        onConfirm={confirmAddToCart}
+        onCancel={() => setModalVisible(false)}
+        message={`Great choice! Do you want to add ${itemToAdd ? itemToAdd.name : ''} to your cart? 🛒✨`}
+      />
     </View>
   );
 };
@@ -389,7 +401,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginVertical: 20,
-},
+  },
   tabContainer: {
     flexDirection: "row",
     marginTop: 10,
@@ -552,7 +564,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginRight: 10,
   },
+  viewAllButton: {
+    backgroundColor: '#6A5AE0', // Button color
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  viewAllText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
-export default marketplace;
+export default Marketplace;
 
