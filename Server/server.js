@@ -1,22 +1,28 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const cors = require('cors');
+const session = require('express-session');
 const { initializeSocket } = require('./config/socket');
 const handleVideoCall = require('./controllers/videoCallController');
-const cors = require('cors');
+const passport = require('./config/passport.js');
+
+// Import Prisma for Passport
+const { PrismaClient } = require('@prisma/client');
+const prismaClient = new PrismaClient();
 
 // Import Routers
 const eventRoutes = require('./routes/events');
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
-const chatRouter = require('./routes/chat'); 
+const chatRouter = require('./routes/chat');
 const sportRoutes = require('./routes/sport');
 const competetionRouter = require('./routes/competetion');
-const passwordRouter = require('./routes/handlePasswordReset ');
-const passport = require('./config/passport.js');
-const  productRoutes = require('./routes/productRoutes.js')
- const cartRoutes = require ('./routes/cartRoutes.js')
- const favorites= require("./routes/favoriteRoutes.js")
+const passwordRouter = require('./routes/handlePasswordReset .js');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const favorites = require('./routes/favoriteRoutes');
+
 const app = express();
 
 // Middleware
@@ -24,13 +30,41 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Session middleware
+app.use(
+  session({
+    secret: 'your_secret_key', // Replace with a strong secret
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === 'production' },
+  })
+);
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport Serialization
+passport.serializeUser((user, done) => {
+  done(null, user.user_id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await prismaClient.user.findUnique({
+      where: { user_id: id },
+    });
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize WebSocket server for video calls
+// Initialize WebSocket server for video calls and other socket connections
 handleVideoCall(server);
-
-// Initialize other socket connections
 initializeSocket(server);
 
 // Serve static files from uploads directory
@@ -43,30 +77,15 @@ app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
 app.use('/competetion', competetionRouter);
 app.use('/password', passwordRouter);
-app.use('/product',productRoutes)
-app.use('/cart',cartRoutes)
-app.use('/favorites',favorites)
-app.use(passport.initialize());
-app.use(passport.session());
+app.use('/product', productRoutes);
+app.use('/cart', cartRoutes);
+app.use('/favorites', favorites);
 
-// Mount Chat Router with /chats Prefix
+// Mount Chat Router
 app.use('/chats', chatRouter);
 
+// Start the Server
 const PORT = process.env.PORT || 3000;
-passport.serializeUser((user, done) => {
-    done(null, user.user_id);
-  });
-  
-  passport.deserializeUser(async (id, done) => {
-    try {
-      const user = await prismaClient.user.findUnique({
-        where: { user_id: id }
-      });
-      done(null, user);
-    } catch (error) {
-      done(error, null);
-    }
-  });
 server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

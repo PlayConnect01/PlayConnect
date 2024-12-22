@@ -22,6 +22,7 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
 };
 
 const styles = StyleSheet.create({
+    
   overlay: {
     flex: 1,
     justifyContent: 'center',

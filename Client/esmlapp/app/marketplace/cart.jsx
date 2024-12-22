@@ -22,7 +22,7 @@ const CartScreen = ({ navigation }) => {
           return;
         }
 
-        const response = await axios.get(`http://192.168.172.101:3000/cart/cart/user/${userId}`);
+        const response = await axios.get(`http://192.168.1.101:3000/cart/cart/user/${userId}`);
         setCartItems(response.data);
       } catch (error) {
         console.error("Error fetching cart items:", error);
@@ -65,7 +65,7 @@ const CartScreen = ({ navigation }) => {
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return;
 
-      await axios.delete(`http://192.168.172.101:3000/cart/cart/item/${itemToDelete}`);
+      await axios.delete(`http://192.168.1.101:3000/cart/cart/item/${itemToDelete}`);
       setCartItems((prevItems) => prevItems.filter((item) => item.cart_item_id !== itemToDelete));
       setModalVisible(false);
     } catch (error) {

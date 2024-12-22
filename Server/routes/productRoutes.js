@@ -7,10 +7,12 @@ const {     getProductsBySportId, getLimitedProductsBySport,
     getAllDiscountedProducts,
     getTopThreeDiscountedProducts,
     getProductsByDiscount,
-    getProductById} = require('../controllers/MarketplaceProduct');
+    getProductById,
+    searchProductByName} = require('../controllers/MarketplaceProduct');
 
 const router = express.Router();
-
+// Route to search products
+router.get('/search', searchProductByName);
 router.get('/products/sport/:sportId', getProductsBySportId);
 
 router.get('/products/limited', getLimitedProductsBySport);

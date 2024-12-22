@@ -216,6 +216,28 @@ async function getProductById(req, res) {
         res.status(500).json({ error: 'An error occurred while fetching the product.' });
     }
 }
+async function searchProductByName(req, res) {
+const { productName } = req.query; // Extract productName from query parameters
+try {
+    const products = await prisma.marketplaceProduct.findMany({
+        where: {
+            name: {
+                contains: productName, // Search for product name
+                // Remove the mode option
+            },
+        },
+        select: {
+            product_id: true,
+            name: true,
+            image_url: true,// Include sport details if needed
+        },
+    });
+    return res.json(products); // Return the found products as JSON
+} catch (error) {
+    console.error("Error searching products:", error); // Log the error
+    return res.status(500).json({ error: "An error occurred while searching for products." });
+}}
+
 // Export the controller function
 module.exports = {
     getProductsBySportId, getLimitedProductsBySport,
@@ -226,5 +248,6 @@ module.exports = {
     getAllDiscountedProducts,
     getTopThreeDiscountedProducts,
     getProductsByDiscount,
-    getProductById, // Add this line
+    getProductById,
+    searchProductByName // Add this line
 };

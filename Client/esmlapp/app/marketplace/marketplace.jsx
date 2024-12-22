@@ -8,12 +8,16 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from './Confirmationadding'; // Import the confirmation modal
+import SearchBar from './SearchBar'; // Import the SearchBar component
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'; // Import Material Icons
+import { WebView } from 'react-native-webview';
 
 const Marketplace = () => {
   const navigation = useNavigation();
@@ -23,17 +27,18 @@ const Marketplace = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [itemToAdd, setItemToAdd] = useState(null); // State for the item to add
+  const [animation] = useState(new Animated.Value(1)); // State for animation
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const allProductsResponse = await axios.get(
-          "http://192.168.172.101:3000/product/discounted"
+          "http://192.168.1.101:3000/product/discounted"
         );
         setProducts(allProductsResponse.data);
 
         const topDiscountedResponse = await axios.get(
-          "http://192.168.172.101:3000/product/discounted/top-three"
+          "http://192.168.1.101:3000/product/discounted/top-three"
         );
         setDiscounts(topDiscountedResponse.data);
       } catch (error) {
@@ -50,7 +55,7 @@ const Marketplace = () => {
       const token = await AsyncStorage.getItem('userToken');
       const userId = await AsyncStorage.getItem('userId');
       if (token && userId) {
-        const response = await axios.get(`http://192.168.172.101:3000/cart/count/${userId}`, {
+        const response = await axios.get(`http://192.168.1.101:3000/cart/count/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -90,7 +95,7 @@ const Marketplace = () => {
       setLoading(true); // Set loading to true
 
       const response = await axios.post(
-        'http://192.168.172.101:3000/cart/cart/add',
+        'http://192.168.1.101:3000/cart/cart/add',
         {
           userId: userId,
           productId: itemToAdd.product_id,
@@ -135,8 +140,31 @@ const Marketplace = () => {
     return originalPrice - (originalPrice * (discountValue / 100));
  ;
 };
+
+  const handleSelectProduct = (product) => {
+    // Handle product selection (e.g., navigate to product detail)
+    console.log("Selected product:", product);
+    // You can navigate to a product detail screen here
+  };
+
+  const animateTab = () => {
+    Animated.sequence([
+      Animated.timing(animation, {
+        toValue: 0.9,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   return (
     <View style={styles.container}>
+     
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity>
@@ -156,11 +184,7 @@ const Marketplace = () => {
           </View>
         </View>
          <View style={styles.searchSection}>
-          <TextInput
-            placeholder="Search..."
-            placeholderTextColor="#999"
-            style={styles.searchInput}
-          />
+         <SearchBar onSelectProduct={handleSelectProduct} />
         </View>
 
         <Text style={styles.sectionTitle}>Discover</Text>
@@ -170,67 +194,109 @@ const Marketplace = () => {
           style={styles.tabContainer}
         >
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="futbol-o" size={24} color="#00A859" />
+            <WebView
+              originWhitelist={['*']}
+              source={{ html: '<i class="bi bi-soccer"></i>' }}
+              style={{ width: 24, height: 24 }}
+            />
             <Text style={styles.inactiveTab}>Football</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="circle-o" size={24} color="#FF6B00" />
+            <WebView
+              originWhitelist={['*']}
+              source={{ html: '<i class="bi bi-basketball"></i>' }}
+              style={{ width: 24, height: 24 }}
+            />
             <Text style={styles.inactiveTab}>Basketball</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="circle" size={24} color="#FFD700" />
+            <WebView
+              originWhitelist={['*']}
+              source={{ html: '<i class="bi bi-table-tennis"></i>' }}
+              style={{ width: 24, height: 24 }}
+            />
             <Text style={styles.inactiveTab}>Tennis</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="futbol-o" size={24} color="#FF1493" />
-            <Text style={styles.inactiveTab}>Soccer</Text>
+            <Animated.View style={{ transform: [{ scale: animation }] }}>
+              <MaterialIcons name="sports-soccer" size={24} color="#FF1493" />
+              <Text style={styles.inactiveTab}>Soccer</Text>
+            </Animated.View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="circle" size={24} color="#4169E1" />
-            <Text style={styles.inactiveTab}>Baseball</Text>
+            <Animated.View style={{ transform: [{ scale: animation }] }}>
+              <MaterialIcons name="sports-baseball" size={24} color="#4169E1" />
+              <Text style={styles.inactiveTab}>Baseball</Text>
+            </Animated.View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="tint" size={24} color="#00CED1" />
-            <Text style={styles.inactiveTab}>Swimming</Text>
+            <Animated.View style={{ transform: [{ scale: animation }] }}>
+              <MaterialIcons name="pool" size={24} color="#00CED1" />
+              <Text style={styles.inactiveTab}>Swimming</Text>
+            </Animated.View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="snowflake-o" size={24} color="#87CEEB" />
-            <Text style={styles.inactiveTab}>Snowboarding</Text>
+            <Animated.View style={{ transform: [{ scale: animation }] }}>
+              <MaterialIcons name="snowboarding" size={24} color="#87CEEB" />
+              <Text style={styles.inactiveTab}>Snowboarding</Text>
+            </Animated.View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("products")}
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
             style={styles.sportTab}
           >
-            <Icon name="gamepad" size={24} color="#9932CC" />
-            <Text style={styles.inactiveTab}>Gaming</Text>
+            <Animated.View style={{ transform: [{ scale: animation }] }}>
+              <MaterialIcons name="videogame-asset" size={24} color="#9932CC" />
+              <Text style={styles.inactiveTab}>Gaming</Text>
+            </Animated.View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
+            style={styles.sportTab}
+          >
+            <Animated.View style={{ transform: [{ scale: animation }] }}>
+              <MaterialIcons name="directions-bike" size={24} color="#FF4500" />
+              <Text style={styles.inactiveTab}>Cycling</Text>
+            </Animated.View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => { animateTab(); navigation.navigate("products"); }}
+            style={styles.sportTab}
+          >
+            <Animated.View style={{ transform: [{ scale: animation }] }}>
+              <MaterialIcons name="run" size={24} color="#32CD32" />
+              <Text style={styles.inactiveTab}>Running</Text>
+            </Animated.View>
           </TouchableOpacity>
         </ScrollView>
 
@@ -567,14 +633,26 @@ const styles = StyleSheet.create({
   viewAllButton: {
     backgroundColor: '#6A5AE0', // Button color
     borderRadius: 10,
-    padding: 10,
+    paddingVertical: 12, // Increased vertical padding
+    paddingHorizontal: 20, // Added horizontal padding
     alignItems: 'center',
     marginVertical: 20,
+    elevation: 5, // Shadow effect for Android
+    shadowColor: '#000', // Shadow color for iOS
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   viewAllText: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 18, // Increased font size
     fontWeight: 'bold',
+  },
+  viewAllButtonHover: {
+    backgroundColor: '#5A4AE0', // Darker shade for hover effect
   },
 });
 
