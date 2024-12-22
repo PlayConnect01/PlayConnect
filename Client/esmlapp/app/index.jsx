@@ -20,6 +20,7 @@ import MarketplaceHome from "./marketplace/Home";
 import products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
+import matchingpage from "./Match/Matchingpage"
 
 const Stack = createStackNavigator();
 
