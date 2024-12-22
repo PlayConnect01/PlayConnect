@@ -1,5 +1,4 @@
 import * as React from "react";
-import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -16,7 +15,7 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import Profile from "./profile/ProfilePage";
-import MarketplaceHome from "./marketplace/Home";
+import MarketplaceHome from "./marketplace/marketplace";
 import products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";

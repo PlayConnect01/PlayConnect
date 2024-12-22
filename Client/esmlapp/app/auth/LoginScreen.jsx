@@ -11,18 +11,43 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const navigate = useNavigation();
 
-  const handleLogin = async () => {
+  // Animation references
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000,
+        easing: Easing.bounce,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
+  // Handle regular login with email and password
+const handleLogin = async () => {
     try {
-        const response = await axios.post('http://192.168.103.9:3000/users/login', {
+        const response = await axios.post('http://192.168.1.101:3000/users/login', {
             email,
             password,
         });
 
         console.log('Login successful:', response.data);
-        const { token } = response.data;
+        const { token  , user} = response.data;
+console.log(user , "userrrrrr");
 
         // Store the token in AsyncStorage
         await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userId', JSON.stringify(user.user_id));
+     
         
         // Navigate to home page after successful login
         navigate.navigate('Homepage/CreateEvent');

@@ -1,7 +1,34 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import axios from 'axios';
 
-export default function ProductCard() {
+export default function ProductCard({ productId }) {
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProductDetail = async () => {
+      try {
+        const response = await axios.get(`http://192.168.103.10:3000/product/products/${productId}`); // Use the productId prop
+        setProduct(response.data);
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetail();
+  }, [productId]);
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#6e3de8" />; // Show loading indicator
+  }
+
+  if (!product) {
+    return <Text>Product not found.</Text>; // Handle case where product is not found
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -17,21 +44,20 @@ export default function ProductCard() {
 
       {/* Image */}
       <Image
-        source={require('../../assets/images/sportscube.png')} // Replace with your image URL
+        source={{ uri: product.image_url }} // Use the fetched product image URL
         style={styles.image}
       />
 
       {/* Product Info */}
       <View style={styles.infoContainer}>
-        <Text style={styles.tag}>Solid Male</Text>
-        <Text style={styles.productName}>Moonstar</Text>
-        <Text style={styles.price}>$491</Text>
-        <Text style={styles.rating}>⭐ ⭐ ⭐ ⭐ ⭐</Text>
-        <Text style={styles.duration}>3 Month</Text>
+        <Text style={styles.tag}>{product.tag || 'Solid Male'}</Text>
+        <Text style={styles.productName}>{product.name || 'Moonstar'}</Text>
+        <Text style={styles.price}>${product.price || '491'}</Text>
+        <Text style={styles.rating}>⭐ {product.rating || '5'}</Text>
+        <Text style={styles.duration}>{product.duration || '3 Month'}</Text>
         <Text style={styles.descriptionTitle}>Description</Text>
         <Text style={styles.description}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nisi quam
-          vulputate enim ultrices morbi...
+          {product.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nisi quam vulputate enim ultrices morbi...'}
           <Text style={styles.readMore}> Read More</Text>
         </Text>
       </View>
@@ -43,6 +69,8 @@ export default function ProductCard() {
     </View>
   );
 }
+
+// Styles...
 
 const styles = StyleSheet.create({
   container: {
