@@ -14,9 +14,8 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import VoiceMessageHandler from './components/VoiceMessageHandler';
 import AudioMessage from './components/AudioMessage';
-import VideoCall from './components/VideoCall';
 
-const API_URL = 'http://192.168.103.14:3000';
+const API_URL = 'http://192.168.0.201:3000';
 
 const axiosInstance = axios.create({
     baseURL: API_URL,
@@ -42,7 +41,6 @@ const ChatDetails = ({ route, navigation }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
-    const [isInVideoCall, setIsInVideoCall] = useState(false);
     const scrollViewRef = useRef(null);
     const socketRef = useRef(null);
     const sentMessagesRef = useRef(new Set());
@@ -274,9 +272,9 @@ const ChatDetails = ({ route, navigation }) => {
                             />
                             <Text style={styles.username}>{user.username}</Text>
                         </View>
-                        <TouchableOpacity onPress={() => setIsInVideoCall(true)}>
-                            <Ionicons name="videocam" size={24} color="#4F3DDC" />
-                        </TouchableOpacity>
+                        <VideoCallButton 
+                            style={styles.videoCallButton}
+                        />
                     </View>
                     <ScrollView 
                         ref={scrollViewRef}
@@ -356,57 +354,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
     },
-    backButton: {
-        padding: 8,
-        marginRight: 8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(98, 0, 238, 0.05)',
-    },
-    userInfo: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 4,
-    },
-    userNameContainer: {
-        flex: 1,
-    },
-    userStatusContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    userName: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: '#000000',
-        letterSpacing: 0.3,
-        marginRight: 8,
-    },
-    dotSeparator: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: '#666',
-        marginRight: 8,
-    },
-    userUsername: {
-        fontSize: 13,
-        color: '#666',
-        fontWeight: '500',
-    },
-    headerIcons: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    iconButton: {
-        padding: 8,
-        borderRadius: 20,
-        backgroundColor: 'rgba(98, 0, 238, 0.05)',
-    },
-    messagesContainer: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: '#FAFAFA',
+    videoCallButton: {
+        backgroundColor: '#4F46E5',
     },
     messageContainer: {
         marginBottom: 4,

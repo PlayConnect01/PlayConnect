@@ -23,7 +23,7 @@ const decodeJWT = (token) => {
   return JSON.parse(payload);
 };
 
-const Match = () => {
+const Matchingpage = () => {
   const [users, setUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -59,7 +59,7 @@ const Match = () => {
       const fetchPotentialMatches = async () => {
         try {
           const response = await axios.get(
-            `http://192.168.103.14:3000/matches/common-sports/${currentUserId}`
+            `http://192.168.0.201:3000/matches/common-sports/${currentUserId}`
           );
 
           if (response.data.length > 0) {
@@ -93,7 +93,7 @@ const Match = () => {
     try {
       const currentUser = users[currentUserIndex];
       await axios.post(
-        `http://192.168.103.14:3000/matches/create`,
+        `http://192.168.0.201:3000/matches/create`,
         {
           userId1: currentUserId,
           userId2: currentUser.user_id,
@@ -144,21 +144,70 @@ const Match = () => {
     },
   });
 
+  const renderCard = () => {
+    const user = users[currentUserIndex];
+    if (!user) {
+      return null;
+    }
+
+    return (
+      <Animated.View
+        style={[
+          styles.card,
+          {
+            transform: [
+              {
+                translateX: position.x,
+              },
+              {
+                translateY: position.y,
+              },
+              {
+                rotate: position.x.interpolate({
+                  inputRange: [-200, 0, 200],
+                  outputRange: ['-10deg', '0deg', '10deg'],
+                }),
+              },
+            ],
+          },
+        ]}
+        {...panResponder.panHandlers}
+      >
+        <Image source={{ uri: user.profile_picture }} style={styles.image} />
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>
+            {user.username || 'Unknown User'} 
+          </Text>
+          <Text style={styles.location}>
+            {user.location || 'Location not available'}
+          </Text>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>Online</Text>
+          </View>
+        </View>
+        <View style={styles.actions}>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.dislikeButton]}
+            onPress={handleDislike}
+          >
+            <Ionicons name="close" size={30} color="#FF3B30" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.likeButton]}
+            onPress={handleLike}
+          >
+            <Ionicons name="checkmark" size={30} color="#34C759" />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
   if (!currentUserId) {
     return (
       <View style={styles.container}>
         <Text>Loading user data...</Text>
-      </View>
-    );
-  }
-
-  const currentUser = users[currentUserIndex];
-
-  if (!currentUser) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading users...</Text>
-        <Text>Utilisez la photo de profil</Text>
       </View>
     );
   }
@@ -175,56 +224,10 @@ const Match = () => {
       </View>
 
       <View style={styles.cardContainer}>
-        <Animated.View
-          {...panResponder.panHandlers}
-          style={[
-            styles.card,
-            {
-              transform: [
-                { translateX: position.x },
-                { translateY: position.y },
-                {
-                  rotate: position.x.interpolate({
-                    inputRange: [-200, 0, 200],
-                    outputRange: ['-10deg', '0deg', '10deg'],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <Image
-            source={{ uri: currentUser.profile_picture }} // 
-            style={styles.image}
-            resizeMode="cover"
-          />
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>
-              {currentUser.username || 'Unknown User'} 
-            </Text>
-            <Text style={styles.location}>
-              {currentUser.location || 'Location not available'}
-            </Text>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>Online</Text>
-            </View>
-          </View>
-        </Animated.View>
+        {renderCard()}
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.dislikeButton]}
-          onPress={handleDislike}
-        >
-          <Ionicons name="close" size={30} color="#FF3B30" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.likeButton]}
-          onPress={handleLike}
-        >
-          <Ionicons name="checkmark" size={30} color="#34C759" />
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -288,6 +291,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 12,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+
   actionButtons: {
     position: 'absolute',
     bottom: 20,
@@ -314,4 +329,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Match;
+export default Matchingpage;

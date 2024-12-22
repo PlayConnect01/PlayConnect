@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const { initializeSocket } = require('./config/socket');
-const handleVideoCall = require('./controllers/videoCallController');
 const cors = require('cors');
 
 // Import Routers
@@ -26,8 +25,6 @@ app.use(express.urlencoded({ extended: true }));
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize WebSocket server for video calls
-handleVideoCall(server);
 
 // Initialize other socket connections
 initializeSocket(server);
@@ -45,7 +42,6 @@ app.use('/password', passwordRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Mount Chat Router with /chats Prefix
 app.use('/chats', chatRouter);
 
 const PORT = process.env.PORT || 3000;
