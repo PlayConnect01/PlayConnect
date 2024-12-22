@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -8,11 +8,9 @@ import MapPicker from '../Homepage/Mappicker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-
+import { launchImageLibrary } from 'react-native-image-picker'; // Import the correct method
 
 const decodeToken = (token) => {
-
-
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace('-', '+').replace('_', '/');
@@ -26,7 +24,6 @@ const decodeToken = (token) => {
 global.Buffer = Buffer;
 
 const AddNewEvent = () => { 
-
   const navigation = useNavigation();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
@@ -43,6 +40,20 @@ const AddNewEvent = () => {
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false); 
   const [mapLocation, setMapLocation] = useState({ latitude: 37.78825, longitude: -122.4324 });
+  const [sports, setSports] = useState([]);
+  const [imageUri, setImageUri] = useState(null);  // Add state to store the image URI
+  const [show, setshow] = useState(false);
+
+  useEffect(() => {
+    axios.get("http://192.168.100.120:3000/sports")
+      .then((response) => {
+        setSports(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching sports:", error);
+        Alert.alert('Error', 'Failed to load sports categories.');
+      });
+  }, []);
 
   const toggleFree = () => {
     setIsFree(!isFree);
@@ -70,6 +81,39 @@ const AddNewEvent = () => {
     setShowMapModal(false);
   };
 
+  const handleImageUpload = () => {
+    launchImageLibrary({ noData: true, mediaType: 'photo' }, (response) => {  // Use launchImageLibrary instead
+      if (response.didCancel) {
+        console.log('User canceled image picker');
+      } else if (response.errorCode) {
+        console.error('ImagePicker Error: ', response.errorMessage);
+      } else {
+        setImageUri(response.assets[0].uri);  // Extract URI from response
+        uploadImageToCloudinary(response.assets[0].uri);  // Upload image using URI
+      }
+    });
+  };
+
+  const uploadImageToCloudinary = (uri) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: uri,
+      type: 'image/jpeg',
+      name: 'event-image.jpg',
+    });
+    formData.append('upload_preset', 'your_upload_preset');  // Replace with your Cloudinary upload preset
+
+    axios.post('https://api.cloudinary.com/v1_1/your_cloud_name/image/upload', formData)
+      .then((response) => {
+        console.log('Image uploaded successfully', response.data);
+        Alert.alert('Success', 'Image uploaded successfully');
+      })
+      .catch((error) => {
+        console.error('Error uploading image:', error);
+        Alert.alert('Error', 'Failed to upload image');
+      });
+  };
+
   const createEvent = async () => {
     if (!eventName || !note || !date || !startTime || !endTime || !location || !participants || !price) {
       Alert.alert(
@@ -82,7 +126,6 @@ const AddNewEvent = () => {
 
     try {
       const token = await AsyncStorage.getItem('userToken');
-
       if (!token) {
         Alert.alert(
           'Error!',
@@ -92,23 +135,15 @@ const AddNewEvent = () => {
         return;
       }
 
-      // Manual token decoding
       const decodedToken = decodeToken(token);
-
       if (!decodedToken) {
         throw new Error('Failed to decode token');
       }
 
-      // Try multiple ways to get user ID
-      const userId = decodedToken.id || 
-                     decodedToken.user_id || 
-                     decodedToken.userId;
-
+      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
       if (!userId) {
         throw new Error('Could not find user ID in token');
       }
-
-      console.log("Decoded user ID:", userId);
 
       const eventData = {
         eventName,
@@ -121,30 +156,20 @@ const AddNewEvent = () => {
         participants: parseInt(participants, 10),
         price: parseFloat(price),
         isFree,
-        creator_id: userId
+        creator_id: userId,
+        imageUri,  // Add imageUri to event data
       };
 
-      console.log("Event data being sent:", eventData);
-
-      const response = await axios.post('http://192.168.103.11:3000/events/getEventWithCreator', eventData, {
+      const response = await axios.post('http://192.168.100.120:3000/events/create', eventData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      console.log("Event created response:", response.data);
-
-      // Log points for creating an event
-      await axios.post('http://192.168.103.11:3000/points/log', {
-        userId: userId,
-        activity: 'EVENT_CREATION',
-        points: 100, // Points for creating an event
-      });
-
       Alert.alert(
         'Success!',
         'Event created successfully!', 
-        [{ text: 'Okay', onPress: () =>navigation.navigate('Homepage/EventDetails')}]
+        [{ text: 'Okay', onPress: () => navigation.navigate('Homepage/Homep') }]
       );
 
       setEventName('');
@@ -160,7 +185,6 @@ const AddNewEvent = () => {
 
     } catch (error) {
       console.error('Full error details:', error);
-      console.error('Event creation error:', error.response ? error.response.data : error.message);
       Alert.alert(
         'Error!',
         'There was an issue creating the event. Please check the console for details.',
@@ -234,12 +258,14 @@ const AddNewEvent = () => {
       <Picker
         selectedValue={category}
         style={styles.select}
-        onValueChange={(itemValue) => setCategory(itemValue)}
+        onValueChange={(itemValue) => setCategory(itemValue)} 
       >
-        <Picker.Item label="Sports" value="Sports" />
-        <Picker.Item label="Music" value="Music" />
-        <Picker.Item label="Education" value="Education" />
+        <Picker.Item label="Sports" value="Sports" enabled={false} />
+        {sports.map((sport, index) => (
+          <Picker.Item key={index} label={sport.name} value={sport.name} />
+        ))}
       </Picker>
+
       <View style={styles.row}>
         <View style={styles.column}>
           <Text>Participants:</Text>
@@ -261,10 +287,19 @@ const AddNewEvent = () => {
           />
         </View>
       </View>
+
       <View style={styles.row}>
         <Text>Free</Text>
         <Switch value={isFree} onValueChange={toggleFree} />
       </View>
+
+      <TouchableOpacity onPress={handleImageUpload} style={styles.uploadButton}>
+        <View style={styles.uploadContent}>
+          <Icon name="cloud-upload-outline" size={24} color="#6200ee" />
+          <Text style={styles.uploadText}>Upload Your Image Here</Text>
+        </View>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.createButton}
         onPress={createEvent}
@@ -345,13 +380,31 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#000', 
+    backgroundColor: '#000',
   },
   closeArrow: {
     position: 'absolute',
     top: 40,
     left: 20,
-    zIndex: 1, 
+    zIndex: 1,
+  },
+  uploadButton: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 15,
+    alignItems: "center",
+    backgroundColor: "#f9f9f9",
+    marginBottom: 10,
+  },
+  uploadContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  uploadText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#6200ee",
   },
 });
 

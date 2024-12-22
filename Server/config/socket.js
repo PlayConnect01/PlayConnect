@@ -1,69 +1,133 @@
 const { Server } = require('socket.io');
-const prisma = require("../prisma");
+const prisma = require('../prisma');
 
 let io;
 
 const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "*", // Ajustez selon vos besoins en production
-      methods: ["GET", "POST"]
-    }
+      origin: '*', 
+      methods: ['GET', 'POST'],
+    },
   });
 
   io.on('connection', (socket) => {
-    console.log('Nouvelle connexion socket:', socket.id);
+    console.log(`New socket connection: ${socket.id}`);
 
-    // Rejoindre un chat spécifique
-    socket.on('join_chat', async ({ chatId, userId }) => {
+    socket.on('join_chat', async (data) => {
+      if (!data || !data.chatId || !data.userId) {
+        console.error('Invalid data for join_chat:', data);
+        return;
+      }
+
+      const { chatId, userId } = data;
+
       try {
-        // Vérifier si l'utilisateur fait partie du match
-        const chatMember = await prisma.chat_members.findFirst({
+        const chatMember = await prisma.chatMember.findFirst({
           where: {
-            chat_id: chatId,
-            user_id: userId
-          }
+            chat_id: parseInt(chatId),
+            user_id: parseInt(userId),
+          },
         });
 
-        if (chatMember) {
-          socket.join(chatId);
-          console.log(`User ${userId} a rejoint le chat ${chatId}`);
+        if (!chatMember) {
+          console.error('User is not a member of the chat');
+          return;
         }
+
+        socket.join(`chat_${chatId}`);
+        console.log(`User ${userId} joined chat ${chatId}`);
       } catch (error) {
-        console.error('Erreur lors de la connexion au chat:', error);
+        console.error('Error verifying chat membership:', error);
       }
     });
 
-    // Gestion des messages
-    socket.on('send_message', async ({ chatId, senderId, content }) => {
+    socket.on('send_message', async (data) => {
+      if (!data || !data.chatId || !data.senderId || !data.message) {
+          console.error('Invalid data for send_message:', data);
+          return;
+      }
+  
+      const { chatId, senderId, message } = data;
+  
       try {
-        // Créer le message dans la base de données
-        const newMessage = await prisma.message.create({
-          data: {
-            chat_id: chatId,
-            sender_id: senderId,
-            content: content,
-            message_type: 'text'
-          }
-        });
+          const existingMessage = await prisma.message.findFirst({
+              where: {
+                  chat_id: parseInt(chatId),
+                  sender_id: parseInt(senderId),
+                  content: message.content,
+                  sent_at: {
+                      gte: new Date(Date.now() - 5000) 
+                  }
+              }
+          });
 
-        // Envoyer le message à tous les membres du chat
-        io.to(chatId).emit('receive_message', newMessage);
+          if (existingMessage) {
+              console.log('Duplicate message detected, skipping:', existingMessage);
+              return;
+          }
+
+          const newMessage = await prisma.message.create({
+              data: {
+                  chat_id: parseInt(chatId),
+                  sender_id: parseInt(senderId),
+                  content: message.content,
+                  message_type: message.type || "TEXT", 
+              },
+          });
+  
+          console.log('Broadcasting message:', newMessage);
+          io.to(`chat_${chatId}`).emit('receive_message', newMessage);
       } catch (error) {
-        console.error('Erreur lors de l\'envoi du message:', error);
+          console.error('Error handling send_message:', error);
       }
+  });
+
+    socket.on('send_audio', async (data) => {
+      if (!data || !data.chatId || !data.senderId || !data.audioUrl) {
+          console.error('Invalid data for send_audio:', data);
+          return;
+      }
+  
+      const { chatId, senderId, audioUrl, message } = data;
+  
+      try {
+          const newMessage = await prisma.message.create({
+              data: {
+                  chat_id: parseInt(chatId),
+                  sender_id: parseInt(senderId),
+                  content: audioUrl,
+                  message_type: "AUDIO",
+                  voice_file_url: audioUrl
+              },
+              include: {
+                  sender: true
+              }
+          });
+  
+          console.log('Broadcasting audio message:', newMessage);
+          io.to(`chat_${chatId}`).emit('receive_message', {
+              ...newMessage,
+              voice_file_url: audioUrl
+          });
+      } catch (error) {
+          console.error('Error handling send_audio:', error);
+      }
+  });
+
+    socket.on('leave_chat', (chatId) => {
+      socket.leave(`chat_${chatId}`);
+      console.log(`Socket ${socket.id} left chat ${chatId}`);
     });
 
-    // Déconnexion
     socket.on('disconnect', () => {
-      console.log('Socket déconnecté:', socket.id);
+      console.log(`Socket disconnected: ${socket.id}`);
     });
   });
 
   return io;
 };
 
-// Fonction pour obtenir l'instance io
 const getIO = () => {
   if (!io) {
     throw new Error('Socket.io not initialized');
@@ -73,5 +137,5 @@ const getIO = () => {
 
 module.exports = {
   initializeSocket,
-  getIO
-}; 
+  getIO,
+};

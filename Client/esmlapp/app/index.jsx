@@ -1,5 +1,5 @@
 import * as React from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import EventDetails from "./Homepage/EventDetails";
 import AddNewEvent from "./Homepage/CreateEvent";
 import Homep from "./Homepage/Homep";
+import CategoryEvents from "./Homepage/CategoryEvents";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -16,87 +17,52 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import Profile from "./profile/ProfilePage";
-import Home from "./marketplace/Home";
-import products from "./marketplace/products ";
-import ProfilePage from "./profile/ProfilePage";
-import EditProfile from "./profile/EditProfile";
-import CategoryEvents from "./Homepage/CategoryEvents"
+import MarketplaceHome from "./marketplace/Home";
+import products from "./marketplace/products";
+import ProductDetail from "./marketplace/ProductDetail";
+import CartScreen from "./marketplace/cart";
+import EditProfile from "./profile/EditProfile"
 
-
-const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-// Home Stack
-function HomeStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Homep" component={Homep} />
-      <Stack.Screen name="CalendarPage" component={CalendarPage} />
-      <Stack.Screen name="EventDetails" component={EventDetails} />
-      <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
-      <Stack.Screen name="CategoryEvents" component={CategoryEvents} />
-    </Stack.Navigator>
-  );
-}
-
-// Authentication Stack
-function AuthStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Landing" component={Landing} />
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="SignUp" component={SignUp} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-    </Stack.Navigator>
-  );
-}
-
-// Marketplace Stack
-function MarketplaceStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="MarketplaceHome" component={Home} />
-      <Stack.Screen name="products" component={products} />
-    </Stack.Navigator>
-  );
-}
-
-function ProfileStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="Profile" component={ProfilePage} />
-      <Stack.Screen name="EditProfile" component={EditProfile} />
-    </Stack.Navigator>
-  );
-}
-
-// Bottom Tabs Navigation
-function TabsNavigation() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-      }}
-    >
-      <Tab.Screen name="HomeTab" component={HomeStack} />
-      <Tab.Screen name="MatchTab" component={Match} />
-      <Tab.Screen name="MessagesTab" component={MessagePage} />
-      <Tab.Screen name="MarketplaceTab" component={MarketplaceStack} />
-      <Tab.Screen name="ProfileTab" component={ProfileStack} />
-    </Tab.Navigator>
-  );
-}
-
-// Root App Navigation
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Main" component={TabsNavigation} />
-        <Stack.Screen name="Auth" component={AuthStack} />
-        <Stack.Screen name="ChatDetails" component={ChatDetails} />
-      </Stack.Navigator>
+      
+        <Stack.Navigator
+          initialRouteName="Profile"
+          screenOptions={{ headerShown: false }}
+        >
+          {/* Auth Screens */}
+          <Stack.Screen name="Landing" component={Landing} />
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="SignUp" component={SignUp} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+
+          {/* Main Flow */}
+          <Stack.Screen name="Homep" component={Homep} />
+          <Stack.Screen name="CategoryEvents" component={CategoryEvents} /> 
+          <Stack.Screen name="CalendarPage" component={CalendarPage} />
+          <Stack.Screen name="EventDetails" component={EventDetails} />
+          <Stack.Screen name="AddNewEvent" component={AddNewEvent} /> 
+
+          {/* Match */}
+          <Stack.Screen name="Match" component={Match} />
+          <Stack.Screen name="MessagePage" component={MessagePage} />
+          <Stack.Screen name="ChatDetails" component={ChatDetails} />
+
+          {/* Profile */}
+          <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen name="EditProfile" component={EditProfile} />
+
+
+          {/* Marketplace */}
+          <Stack.Screen name="MarketplaceHome" component={MarketplaceHome} />
+          <Stack.Screen name="products" component={products} />
+          <Stack.Screen name="ProductDetail" component={ProductDetail} />
+          <Stack.Screen name="CartScreen" component={CartScreen} />
+        </Stack.Navigator>
+   
     </GestureHandlerRootView>
   );
 }

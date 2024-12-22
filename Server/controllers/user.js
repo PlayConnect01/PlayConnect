@@ -1,44 +1,22 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const dotenv = require("dotenv");
-const { PrismaClient } = require("@prisma/client");
-const nodemailer = require('nodemailer');
+const { PrismaClient } = require('@prisma/client'); 
+
+
 dotenv.config();
 
 const prismaClient = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Email transporter setup
-const transporter = nodemailer.createTransport({
-  host: 'smtp.zoho.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: 'ahmedboukottaya@zohomail.com',
-    pass: '53nDUtDC4CKF',
-  },
-});
-
-// Enhanced email validation
 const isValidEmail = (email) => {
-  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
 
-// Enhanced password validation
 const isValidPassword = (password) => {
-  const minLength = 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  return (
-    password.length >= minLength &&
-    hasUpperCase &&
-    hasLowerCase &&
-    hasNumber &&
-    hasSpecialChar
-  );
+  const minLength = 6;
+  return password.length >= minLength;
 };
 
 module.exports = { isValidEmail, isValidPassword };
@@ -47,27 +25,26 @@ const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
   if (!isValidEmail(email)) {
-    return res.status(400).json({ error: "Invalid email format" });
+    return res.status(400).json({ error: 'Invalid email format' });
   }
 
   if (!isValidPassword(password)) {
-    return res.status(400).json({
-      error:
-        "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character",
-    });
+    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
   }
 
   try {
+    // Check if the user already exists
     const existingUser = await prismaClient.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: "Email is already registered" });
+      return res.status(400).json({ error: 'Email is already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create the user in Prisma DB
     const user = await prismaClient.user.create({
       data: {
         email,
@@ -79,35 +56,8 @@ const signup = async (req, res) => {
     const token = jwt.sign(
       { id: user.user_id, email: user.email, username: user.username },
       JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn: '24h' }
     );
-
-    // Send welcome email
-    const mailOptions = {
-      from: 'ahmedboukottaya@zohomail.com',
-      to: email,
-      subject: '🎉 Welcome to Our App!',
-      html: `
-       <h1>🎉 Welcome, ${username}! 🎉</h1>
-<p>Thank you for signing up for our app. We're thrilled to have you on board. 😊</p>
-<p>Here are some things you can do next:</p>
-<ul>
-  <li>🔍 Explore our features</li>
-  <li>🤝 Connect with other users</li>
-  <li>🎈 Enjoy your experience!</li>
-</ul>
-<p>If you have any questions, feel free to reach out to our support team. 📧</p>
-<p>Best regards,<br>🌟 The Support Team 🌟</p>
-      `,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending welcome email:', error);
-      } else {
-        console.log('Welcome email sent:', info.response);
-      }
-    });
 
     res.status(200).json({
       user: {
@@ -115,40 +65,66 @@ const signup = async (req, res) => {
         email: user.email,
         username: user.username,
       },
-      token,
+      token, 
     });
   } catch (error) {
-    console.error("Signup error:", error);
-    res.status(500).json({ error: "Error creating user" });
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Error creating user' });
   }
 };
 
-// Regular login
+// Handle user login
 const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
   try {
-    const { email, password } = req.body;
-    const user = await prismaClient.user.findUnique({ where: { email } });
-
-    if (!user || !user.password) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, {
-      expiresIn: "24h",
+    // Find the user by email
+    const user = await prismaClient.user.findUnique({
+      where: { email },
     });
 
-    res.json({ user, token });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Compare the password with the hashed password in the database
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.user_id, email: user.email, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Send response with user and token
+    res.status(200).json({
+      user: {
+        user_id: user.user_id,
+        email: user.email,
+        username: user.username,
+        location: user.location,
+      },
+      token, // JWT token
+    });
   } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Error logging in' });
   }
 };
 
-// Social auth handler
 const handleSocialAuth = async (req, res) => {
   try {
     const user = req.user;
@@ -165,12 +141,13 @@ const handleSocialAuth = async (req, res) => {
 // Handle user logout
 const logout = (req, res) => {
   try {
-    res.clearCookie("token");
-    res.status(200).json({ message: "Logged out successfully" });
-  } catch (error) {
-    console.error("Logout error:", error);
-    res.status(500).json({ error: "Error logging out" });
-  }
+    // If you're using cookies for JWT, clear the token cookie
+    res.clearCookie('token'); // Clears token cookie if you're using cookies for JWT
+   res.status(200).json({ message: 'Logged out successfully' });
+   } catch (error) {
+     console.error('Logout error:', error);
+     res.status(500).json({ error: 'Error logging out' });
+   }
 };
 
 // Fetch a single user by user ID

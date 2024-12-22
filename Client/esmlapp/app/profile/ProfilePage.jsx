@@ -60,7 +60,7 @@ const ProfilePage = () => {
   }, {});
 
   const handleEventPress = (event) => {
-    navigation.navigate('EventDetails', { eventId: event.event_id }); // Navigate to EventDetailsPage
+    navigation.navigate('EventDetails', { eventId: event.event_id }); 
   };
 
   if (loading) {

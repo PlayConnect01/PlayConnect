@@ -1,13 +1,6 @@
-const express = require("express");
-const {
-  signup,
-  login,
-  logout,
-  handleSocialAuth,
-  getOneUser,
-  updateUserProfile,
-} = require("../controllers/user.js");
 const passport = require("passport");
+const  express  = require('express');
+const {signup,login,logout, getOneUser, updateUserProfile,handleSocialAuth} = require('../controllers/user.js') ;
 
 const router = express.Router();
 
@@ -41,4 +34,7 @@ router.get(
 
 router.put('/:id', updateUserProfile);
 
-module.exports = router; // Ensure you are exporting the router here
+
+
+
+module.exports =  router;  // Ensure you are exporting the router here

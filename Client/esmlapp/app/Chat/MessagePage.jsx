@@ -14,16 +14,16 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 
-// Extracted decodeJWT function from Matchingpage.jsx
-const decodeJWT = (token) => {
-  const base64Payload = token.split('.')[1];
-  const payload = Buffer.from(base64Payload, 'base64').toString('utf-8');
-  return JSON.parse(payload);
-};
-
 const MessagePage = ({ navigation }) => {
   const [matches, setMatches] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Function to decode JWT token
+  const decodeJWT = (token) => {
+    const base64Payload = token.split('.')[1];
+    const payload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+    return JSON.parse(payload);
+  };
 
   useEffect(() => {
     const loadToken = async () => {
@@ -33,18 +33,17 @@ const MessagePage = ({ navigation }) => {
           throw new Error('Token not found');
         }
 
-        const decodedToken = decodeJWT(token);
+        const decodedToken = decodeJWT(token); // Use the decode function directly
         if (decodedToken?.id) {
           setCurrentUserId(decodedToken.id);
           console.log('User ID:', decodedToken.id);
-          fetchAcceptedMatches(decodedToken.id);
+          fetchAcceptedMatches(decodedToken.id); // Fetch accepted matches
         } else {
           throw new Error('User ID not found in token');
         }
       } catch (error) {
         console.error('Error loading token:', error);
         Alert.alert('Error', 'Failed to load user data. Please log in again.');
-        navigation.navigate('Login'); // Optional: redirect to login if token is invalid
       }
     };
 
@@ -53,8 +52,10 @@ const MessagePage = ({ navigation }) => {
 
   const fetchAcceptedMatches = async (userId) => {
     try {
-      const response = await axios.get(`http://192.168.104.10:3000/matches/accepted/${userId}`);
+      const response = await axios.get(`http://192.168.103.14:3000/matches/accepted/${userId}`);
+      console.log("ahmed"  , userId)
       setMatches(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error('Error fetching accepted matches:', error);
       Alert.alert('Error', 'Failed to load accepted matches.');
@@ -78,7 +79,14 @@ const MessagePage = ({ navigation }) => {
           <TouchableOpacity
             key={index}
             style={styles.messageItem}
-            onPress={() => navigation.navigate('ChatDetails', { user: match.user_1.user_id === currentUserId ? match.user_2 : match.user_1 })}
+            onPress={() => {
+              console.log('Chat ID:', match.chat_id);
+              navigation.navigate('ChatDetails', {
+                user: match.user_1.user_id === currentUserId ? match.user_2 : match.user_1,
+                chatId: match.chat_id,
+                currentUserId: currentUserId
+              });
+            }}
           >
             <Image source={{ uri: match.user_1.profile_picture || match.user_2.profile_picture }} style={styles.userImage} />
             <View style={styles.messageContent}>

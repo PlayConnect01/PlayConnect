@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-
+import { useNavigation } from '@react-navigation/native'; 
 const Home = () => {
+    const navigate= useNavigation()
+
+   
   return (
     <View style={styles.container}>
       {/* Main Scrollable Container */}
@@ -15,7 +18,8 @@ const Home = () => {
           <Text style={styles.headerTitle}>Home</Text>
           <View style={styles.iconContainer}>
             <TouchableOpacity>
-              <Text style={styles.icon}>🛒</Text>
+              <Text style={styles.icon}
+              >🛒</Text>
             </TouchableOpacity>
             <TouchableOpacity>
               <Text style={styles.icon}>❤️</Text>
@@ -32,20 +36,39 @@ const Home = () => {
           />
         </View>
 
+
         {/* Discover Section */}
-        <Text style={styles.sectionTitle}>Discover</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabContainer}
-        >
-          <Text style={styles.activeTab}>All</Text>
-          <Text style={styles.inactiveTab}>Football</Text>
-          <Text style={styles.inactiveTab}>Basketball</Text>
-          <Text style={styles.inactiveTab}>Esports</Text>
-          <Text style={styles.inactiveTab}>Tennis</Text>
-          <Text style={styles.inactiveTab}>Racing</Text>
-        </ScrollView>
+       
+  <Text style={styles.sectionTitle}>Discover</Text>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.tabContainer}
+            >
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
+                    <Text style={styles.activeTab}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
+                    <Text style={styles.inactiveTab}>Football</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
+                    <Text style={styles.inactiveTab}>Basketball</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
+                    <Text style={styles.inactiveTab}>Esports</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
+                    <Text style={styles.inactiveTab}>Tennis</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigate.navigate('products')}>
+                    <Text style={styles.inactiveTab}>gaming</Text>
+                </TouchableOpacity>
+                
+             
+            </ScrollView>
+
+
+        
 
         {/* Image Cards */}
         <ScrollView
@@ -74,7 +97,7 @@ const Home = () => {
               </Text>
             </View>
             <TouchableOpacity style={styles.cartButton}>
-              <Text style={styles.cartIcon}>🛒</Text>
+              <Text style={styles.cartIcon}onPress={()=>navigate.navigate('CartScreen')}>🛒</Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -119,7 +142,7 @@ const discounts = [
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#ffffff', // Changed to white
   },
   scrollContent: {
     paddingHorizontal: 10,
@@ -132,12 +155,12 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     fontSize: 22,
-    color: '#fff',
+    color: '#000', // Changed to black for better contrast
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000', // Changed to black for better contrast
   },
   iconContainer: {
     flexDirection: 'row',
@@ -145,24 +168,24 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 20,
     marginLeft: 10,
-    color: '#fff',
+    color: '#000', // Changed to black for better contrast
   },
   searchSection: {
     marginTop: 20,
   },
   searchInput: {
-    backgroundColor: '#333',
+    backgroundColor: '#f0f0f0', // Light grey for input background
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 16,
-    color: '#fff',
+    color: '#000', // Changed to black for better contrast
   },
   sectionTitle: {
     marginTop: 20,
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000', // Changed to black for better contrast
   },
   tabContainer: {
     flexDirection: 'row',
@@ -188,7 +211,7 @@ const styles = StyleSheet.create({
   card: {
     width: 120,
     marginRight: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#f9f9f9', // Light grey for card background
     borderRadius: 10,
     padding: 10,
     alignItems: 'center',
@@ -202,7 +225,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     marginTop: 5,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000', // Changed to black for better contrast
   },
   cardPrice: {
     color: '#ff3b8f',
@@ -211,7 +234,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#f9f9f9', // Light grey for discount item background
     borderRadius: 10,
     padding: 10,
     elevation: 3,
@@ -224,7 +247,7 @@ const styles = StyleSheet.create({
   },
   discountTitle: {
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000', // Changed to black for better contrast
   },
   discountPrice: {
     color: '#ff3b8f',
@@ -247,8 +270,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#333',
-    backgroundColor: '#2a2a2a',
+    borderTopColor: '#ddd', // Light grey for border
+    backgroundColor: '#ffffff', // White for bottom nav background
   },
   navIcon: {
     fontSize: 24,
@@ -258,3 +281,4 @@ const styles = StyleSheet.create({
 
 export default Home;
 
+    

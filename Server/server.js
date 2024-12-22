@@ -1,41 +1,61 @@
-// Server/index.js
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
 const http = require('http');
+const path = require('path');
 const { initializeSocket } = require('./config/socket');
-const eventRoutes = require("./routes/events");
-const sportRoutes = require("./routes/sport");
+// const handleVideoCall = require('./controllers/videoCallController');
+const cors = require('cors');
+
+// Import Routers
+const eventRoutes = require('./routes/events');
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
 const chatRoutes = require('./routes/chat');
 const competetionRouter = require('./routes/competetion')
 const passwordRouter = require('./routes/handlePasswordReset .js')
 const leaderboardRoutes = require('./routes/leaderboard.js')
+const sportRoutes = require('./routes/sport');
 const passport = require('./config/passport.js');
+const  productRoutes = require('./routes/productRoutes.js')
+ const cartRoutes = require ('./routes/cartRoutes.js')
+ const favorites= require("./routes/favoriteRoutes.js")
 const app = express();
-
 const server = http.createServer(app);
 
 initializeSocket(server);
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
 
-const PORT = 3000;
+// app.use(
+//   session({
+//     secret: "your-secret-key",
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: {
+//       secure: process.env.NODE_ENV === "production",
+//       httpOnly: true,
+//     },
+//   })
+// );
 
+// Mount Routers
 app.use('/sports', sportRoutes);
 app.use('/users', userRouter);
 app.use('/matches', matchRouter);
 app.use('/events', eventRoutes);
-app.use('/chats', chatRoutes);
 app.use('/competetion', competetionRouter);
 app.use('/password', passwordRouter);
 app.use('/leaderboard', leaderboardRoutes); 
+app.use('/product',productRoutes)
+app.use('/cart',cartRoutes)
+app.use('/favorites',favorites)
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -46,7 +66,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await prismaClient.user.findUnique({
-      where: { user_id: id }
+      where: { user_id: id },
     });
     done(null, user);
   } catch (error) {
@@ -54,6 +74,15 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+app.use("/sports", sportRoutes);
+app.use("/users", userRouter);
+app.use("/matches", matchRouter);
+app.use("/events", eventRoutes);
+// app.use("/chats", chatRoutes);
+app.use("/competetion", competetionRouter);
+app.use("/password", passwordRouter);
+
+const PORT = 3000;
 server.listen(PORT, () => {
   console.log(`Server and Socket.IO running on port ${PORT}`);
 });

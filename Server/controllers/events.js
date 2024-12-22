@@ -60,6 +60,32 @@ const addParticipant = async (req, res) => {
     res.status(500).json({ error: "Error adding participant", details: error.message });
   }
 };
+const removeParticipant = async (req, res) => {
+  const { eventId, userId } = req.body;
+
+  try {
+    // Check if the user is a participant of the event
+    const existingParticipation = await prisma.eventParticipant.findFirst({
+      where: { event_id: parseInt(eventId), user_id: parseInt(userId) },
+    });
+
+    if (!existingParticipation) {
+      return res.status(404).json({ error: "User is not a participant of this event" });
+    }
+
+    // Remove the participant from the event
+    await prisma.eventParticipant.delete({
+      where: {
+        event_participant_id: existingParticipation.event_participant_id,
+      },
+    });
+
+    res.status(200).json({ message: "Participant removed successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error removing participant", details: error.message });
+  }
+};
+
 
 const createEvent = async (req, res) => {
   try {
@@ -218,4 +244,4 @@ const getParticipatedEvents = async (req, res) => {
   }
 };
 
-module.exports = { EventWithCreator, getAllEvents, getEventById, createEvent, updateEvent, deleteEvent, getEventsByDate, addParticipant, getParticipatedEvents };
+module.exports = { EventWithCreator, getAllEvents, getEventById, createEvent, updateEvent, deleteEvent, getEventsByDate, addParticipant, getParticipatedEvents, removeParticipant };

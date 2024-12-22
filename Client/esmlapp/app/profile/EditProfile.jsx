@@ -1,130 +1,216 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
+// Country codes data with names
+const COUNTRY_CODES = [
+  { code: '+1', name: 'United States' },
+  { code: '+1', name: 'Canada' },
+  { code: '+44', name: 'United Kingdom' },
+  { code: '+33', name: 'France' },
+  { code: '+49', name: 'Germany' },
+  { code: '+34', name: 'Spain' },
+  { code: '+39', name: 'Italy' },
+  { code: '+81', name: 'Japan' },
+  { code: '+86', name: 'China' },
+  { code: '+91', name: 'India' },
+  { code: '+61', name: 'Australia' },
+  { code: '+64', name: 'New Zealand' },
+  { code: '+216', name: 'Tunisia' },
+  { code: '+971', name: 'UAE' },
+  { code: '+966', name: 'Saudi Arabia' },
+  { code: '+20', name: 'Egypt' },
+  { code: '+27', name: 'South Africa' },
+  { code: '+55', name: 'Brazil' },
+  { code: '+52', name: 'Mexico' },
+  { code: '+65', name: 'Singapore' },
+].sort((a, b) => a.name.localeCompare(b.name));
+
 const EditProfile = ({ route, navigation }) => {
   const { userData } = route.params;
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
 
   const [formData, setFormData] = useState({
-    username: userData.username,
-    email: userData.email,
-    location: userData.location,
-    profile_picture: userData.profile_picture,
+    username: userData.username || '',
+    email: userData.email || '',
+    location: userData.location || '',
+    profile_picture: userData.profile_picture || '',
     phone_number: userData.phone_number || '',
-    birthdate_day: userData.birthdate ? new Date(userData.birthdate).getDate() : '',
-    birthdate_month: userData.birthdate ? new Date(userData.birthdate).getMonth() + 1 : '',
-    birthdate_year: userData.birthdate ? new Date(userData.birthdate).getFullYear() : '',
-    phone_country_code: userData.phone_country_code || '+216',  // Default to Tunisia
+    birthdate_day: userData.birthdate ? new Date(userData.birthdate).getDate().toString() : '',
+    birthdate_month: userData.birthdate ? (new Date(userData.birthdate).getMonth() + 1).toString() : '',
+    birthdate_year: userData.birthdate ? new Date(userData.birthdate).getFullYear().toString() : '',
+    phone_country_code: userData.phone_country_code || '+1',
   });
 
+  const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.username?.trim()) {
+      newErrors.username = 'Username is required';
+    }
+    
+    if (!formData.email?.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    
+    if (!formData.phone_number?.trim()) {
+      newErrors.phone_number = 'Phone number is required';
+    }
+    
+    // Validate birthdate if all fields are filled
+    if (formData.birthdate_day && formData.birthdate_month && formData.birthdate_year) {
+      const date = new Date(
+        parseInt(formData.birthdate_year),
+        parseInt(formData.birthdate_month) - 1,
+        parseInt(formData.birthdate_day)
+      );
+      
+      if (isNaN(date.getTime()) || date > new Date()) {
+        newErrors.birthdate = 'Invalid birthdate';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const handleImagePick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera roll permissions to change your profile picture.');
+        return;
+      }
 
-    if (!result.canceled) {
-      setFormData({ ...formData, profile_picture: result.uri });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets[0].uri) {
+        setFormData(prev => ({ ...prev, profile_picture: result.assets[0].uri }));
+      }
+    } catch (error) {
+      alert('Error selecting image. Please try again.');
     }
   };
 
   const handleSubmit = async () => {
-    const { phone_number, birthdate_day, birthdate_month, birthdate_year } = formData;
-
-    if (!formData.username || !formData.location || !phone_number || !birthdate_day || !birthdate_month || !birthdate_year) {
-      return alert('Please fill out all fields.');
+    if (!validateForm()) {
+      return;
     }
 
-    const birthdate = `${birthdate_year}-${birthdate_month}-${birthdate_day}`;
+    const birthdate = formData.birthdate_year && formData.birthdate_month && formData.birthdate_day
+      ? `${formData.birthdate_year}-${String(formData.birthdate_month).padStart(2, '0')}-${String(formData.birthdate_day).padStart(2, '0')}`
+      : null;
 
     setIsSubmitting(true);
     try {
-      const response = await axios.put(
-        `http://192.168.103.11:3000/users/${userData.user_id}`,
-        { ...formData, birthdate }
+      await axios.put(
+        `http://192.168.31.42:3000/users/${userData.user_id}`,
+        {
+          username: formData.username.trim(),
+          email: formData.email.trim(),
+          location: formData.location.trim(),
+          profile_picture: formData.profile_picture,
+          phone_number: formData.phone_number.trim(),
+          phone_country_code: formData.phone_country_code,
+          birthdate,
+        }
       );
       alert('Profile updated successfully!');
       navigation.navigate('Profile');
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      const errorMessage = error.response?.data?.message || 'Failed to update profile. Please try again.';
+      console.error('Error updating profile:', errorMessage);
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const renderInput = (field, placeholder, icon, keyboardType = 'default', customStyle = {}) => (
+    <View style={styles.inputContainer}>
+      <Ionicons name={icon} size={20} color="#666" style={styles.inputIcon} />
+      <TextInput
+        style={[ 
+          styles.input, 
+          { paddingLeft: 40 },
+          errors[field] && styles.inputError,
+          customStyle
+        ]}
+        placeholder={placeholder}
+        value={formData[field]}
+        onChangeText={(value) => handleInputChange(field, value)}
+        keyboardType={keyboardType}
+      />
+      {errors[field] && (
+        <Text style={styles.errorText}>{errors[field]}</Text>
+      )}
+    </View>
+  );
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <TouchableWithoutFeedback onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={24} color="#000" style={styles.backIcon} />
+      </TouchableWithoutFeedback>
+
       <TouchableOpacity onPress={handleImagePick} style={styles.imagePickerContainer}>
         <Image 
-          source={{ uri: formData.profile_picture || 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541' }} 
-          style={styles.profileImage} />
-        <Text style={styles.changePhotoText}>Change Photo</Text>
+          source={{ 
+            uri: formData.profile_picture || 
+            'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541' 
+          }} 
+          style={styles.profileImage} 
+        />
+        <View style={styles.changePhotoButton}>
+          <Ionicons name="camera" size={20} color="#6F61E8" />
+          <Text style={styles.changePhotoText}>Change Photo</Text>
+        </View>
       </TouchableOpacity>
 
-      <View style={styles.inputContainer}>
-        <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
-        <TextInput
-          style={[styles.input, { paddingLeft: 40 }]}
-          placeholder="Username"
-          value={formData.username}
-          onChangeText={(value) => handleInputChange('username', value)}
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-        <TextInput
-          style={[styles.input, { paddingLeft: 40 }]}
-          placeholder="Email"
-          value={formData.email}
-          onChangeText={(value) => handleInputChange('email', value)}
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Ionicons name="location-outline" size={20} color="#666" style={styles.inputIcon} />
-        <TextInput
-          style={[styles.input, { paddingLeft: 40 }]}
-          placeholder="Location"
-          value={formData.location}
-          onChangeText={(value) => handleInputChange('location', value)}
-        />
-      </View>
+      {renderInput('username', 'Username', 'person-outline')}
+      {renderInput('email', 'Email', 'mail-outline', 'email-address')}
+      {renderInput('location', 'Location', 'location-outline')}
 
       <View style={styles.phoneContainer}>
         <Ionicons name="call-outline" size={20} color="#666" style={styles.phoneIcon} />
-        <Picker
-          selectedValue={formData.phone_country_code}
-          style={[styles.picker, { marginLeft: 30 }]}
-          onValueChange={(itemValue) => handleInputChange('phone_country_code', itemValue)}
+        <TouchableOpacity 
+          style={styles.countryCodeButton}
+          onPress={() => setShowCountryPicker(!showCountryPicker)}
         >
-          <Picker.Item label="+1 (USA)" value="+1" />
-          <Picker.Item label="+44 (UK)" value="+44" />
-          <Picker.Item label="+33 (FR)" value="+33" />
-          <Picker.Item label="+216 (Tunisia)" value="+216" />
-          <Picker.Item label="+49 (Germany)" value="+49" />
-          <Picker.Item label="+39 (Italy)" value="+39" />
-          <Picker.Item label="+34 (Spain)" value="+34" />
-          <Picker.Item label="+61 (Australia)" value="+61" />
-          <Picker.Item label="+55 (Brazil)" value="+55" />
-          <Picker.Item label="+91 (India)" value="+91" />
-          <Picker.Item label="+971 (UAE)" value="+971" />
-          <Picker.Item label="+52 (Mexico)" value="+52" />
-        </Picker>
+          <Text>{formData.phone_country_code}</Text>
+          <Ionicons name="chevron-down" size={16} color="#666" />
+        </TouchableOpacity>
+
         <TextInput
-          style={[styles.input, { flex: 1 }]}
+          style={[ 
+            styles.input, 
+            { flex: 1, marginLeft: 10 },
+            errors.phone_number && styles.inputError 
+          ]}
           placeholder="Phone Number"
           value={formData.phone_number}
           onChangeText={(value) => handleInputChange('phone_number', value)}
@@ -132,11 +218,32 @@ const EditProfile = ({ route, navigation }) => {
         />
       </View>
 
+      {showCountryPicker && (
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={formData.phone_country_code}
+            style={styles.picker}
+            onValueChange={(itemValue) => {
+              handleInputChange('phone_country_code', itemValue);
+              setShowCountryPicker(false);
+            }}
+          >
+            {COUNTRY_CODES.map((country) => (
+              <Picker.Item 
+                key={`${country.code}-${country.name}`}
+                label={`${country.name} (${country.code})`}
+                value={country.code}
+              />
+            ))}
+          </Picker>
+        </View>
+      )}
+
       <View style={styles.birthdateContainer}>
         <Ionicons name="calendar-outline" size={20} color="#666" style={styles.calendarIcon} />
         <View style={styles.dateContainer}>
           <TextInput
-            style={styles.dateInput}
+            style={[styles.dateInput, errors.birthdate && styles.inputError]}
             placeholder="DD"
             keyboardType="numeric"
             value={formData.birthdate_day}
@@ -144,7 +251,7 @@ const EditProfile = ({ route, navigation }) => {
             maxLength={2}
           />
           <TextInput
-            style={styles.dateInput}
+            style={[styles.dateInput, errors.birthdate && styles.inputError]}
             placeholder="MM"
             keyboardType="numeric"
             value={formData.birthdate_month}
@@ -152,7 +259,7 @@ const EditProfile = ({ route, navigation }) => {
             maxLength={2}
           />
           <TextInput
-            style={styles.dateInput}
+            style={[styles.dateInput, errors.birthdate && styles.inputError]}
             placeholder="YYYY"
             keyboardType="numeric"
             value={formData.birthdate_year}
@@ -160,20 +267,25 @@ const EditProfile = ({ route, navigation }) => {
             maxLength={4}
           />
         </View>
+        {errors.birthdate && (
+          <Text style={[styles.errorText, { marginTop: 5 }]}>{errors.birthdate}</Text>
+        )}
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={isSubmitting}>
+      <TouchableOpacity 
+        style={[styles.button, isSubmitting && styles.buttonDisabled]} 
+        onPress={handleSubmit} 
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <>
-            <Text style={styles.buttonText}>Save Changes</Text>
-          </>
+          <Text style={styles.buttonText}>Save Changes</Text>
         )}
       </TouchableOpacity>
       
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#ccc', marginTop: 10 }]}
+        style={[styles.button, styles.cancelButton]}
         onPress={() => navigation.goBack()}
       >
         <Text style={styles.buttonText}>Cancel</Text>
@@ -191,7 +303,7 @@ const styles = StyleSheet.create({
   },
   imagePickerContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginVertical: 20,
   },
   profileImage: {
     width: 120,
@@ -199,91 +311,124 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     marginBottom: 10,
   },
+  changePhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0EEFF',
+    padding: 8,
+    borderRadius: 20,
+  },
   changePhotoText: {
     color: '#6F61E8',
     fontSize: 14,
-    marginTop: 10,
+    marginLeft: 5,
   },
   inputContainer: {
     width: '90%',
-    position: 'relative',
     marginVertical: 10,
+    position: 'relative',
   },
   input: {
     width: '100%',
-    padding: 12,
+    height: 40,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    paddingLeft: 10,
+    borderRadius: 5,
     fontSize: 16,
   },
   inputIcon: {
     position: 'absolute',
+    top: 9,
     left: 10,
-    top: 12,
-    zIndex: 1,
+  },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
   },
   phoneContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     width: '90%',
     marginVertical: 10,
-    alignItems: 'center',
-    position: 'relative',
   },
   phoneIcon: {
     position: 'absolute',
-    left: 0,
-    zIndex: 1,
+    top: 9,
+    left: 10,
+  },
+  countryCodeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    backgroundColor: '#F1F1F1',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  pickerContainer: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginTop: 10,
+    padding: 10,
   },
   picker: {
-    height: 40,
-    width: 100,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    width: '100%',
+    height: 150,
   },
   birthdateContainer: {
     width: '90%',
+    marginVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
   },
   calendarIcon: {
-    marginRight: 10,
+    position: 'absolute',
+    top: 9,
+    left: 10,
   },
   dateContainer: {
-    flex: 1,
     flexDirection: 'row',
+    width: '80%',
     justifyContent: 'space-between',
   },
   dateInput: {
     width: '30%',
-    padding: 12,
+    height: 40,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    paddingLeft: 10,
     fontSize: 16,
-    textAlign: 'center',
+    borderRadius: 5,
   },
   button: {
     backgroundColor: '#6F61E8',
-    padding: 14,
-    borderRadius: 8,
-    width: '90%',
-    alignItems: 'center',
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  buttonIcon: {
-    marginRight: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 5,
+    marginVertical: 10,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+  },
+  buttonDisabled: {
+    backgroundColor: '#bbb',
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+  },
+  backIcon: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
   },
 });
 

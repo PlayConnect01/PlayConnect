@@ -1,211 +1,197 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { Calendar } from 'react-native-calendars';
+import { useNavigation } from '@react-navigation/native';
+import { Buffer } from 'buffer';
 
-const EventDetails = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { eventId } = route.params;
+const decodeToken = (token) => {
+  try {
+    const base64Payload = token.split('.')[1]; // Get the payload part of the JWT
+    const payload = Buffer.from(base64Payload, 'base64').toString('utf8');
+    return JSON.parse(payload);
+  } catch (error) {
+    console.error('Failed to decode token:', error);
+    return null;
+  }
+};
 
-  const [event, setEvent] = useState(null);
+const ProfilePage = ({ token }) => {
+  const [userData, setUserData] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [rank, setRank] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('achievement');
+  const [participatedEvents, setParticipatedEvents] = useState([]);
+
+  const navigation = useNavigation();
+
+  // Decode userId from token
+  const decodedToken = decodeToken(token);
+  if (!decodedToken) {
+    Alert.alert('Error', 'Invalid token. Please log in again.');
+    return null;
+  }
+
+  const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+  if (!userId) {
+    Alert.alert('Error', 'Failed to retrieve user information.');
+    return null;
+  }
 
   useEffect(() => {
-    const fetchEvent = async () => {
+    const fetchUserData = async () => {
       try {
-        const response = await axios.get(`http://192.168.103.11:3000/events/getById/${eventId}`);
-        setEvent(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.response ? err.response.data : err.message);
+        const userResponse = await axios.get(`http://192.168.103.11:3000/users/${userId}`);
+        setUserData(userResponse.data.user);
+
+        const leaderboardResponse = await axios.get(`http://192.168.103.11:3000/leaderboard`);
+        const leaderboard = leaderboardResponse.data;
+
+        const userRank = leaderboard.findIndex(user => user.id === userId) + 1;
+        setRank(userRank);
+
+        const eventsResponse = await axios.get('http://192.168.103.11:3000/events/getAll');
+        const userEvents = eventsResponse.data.filter(event => event.creator_id === userId);
+        setEvents(userEvents);
+
+        const participatedEventsResponse = await axios.get(`http://192.168.103.11:3000/events/getParticipated/${userId}`);
+        setParticipatedEvents(participatedEventsResponse.data);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchEvent();
-  }, [eventId]);
+    fetchUserData();
+  }, [userId]);
 
-  const handleAddParticipant = async () => {
-    try {
-      const userId = event.creator_id;
-      await axios.post('http://192.168.103.11:3000/events/addParticipant', {
-        eventId,
-        userId,
-      });
-
-      Alert.alert('Success', 'You have been added to the event!');
-      const updatedEvent = await axios.get(`http://192.168.103.11:3000/events/getById/${eventId}`);
-      setEvent(updatedEvent.data);
-    } catch (error) {
-      if (error.response && error.response.status === 400 && error.response.data.error) {
-        Alert.alert('Notice', error.response.data.error);
-      } else {
-        Alert.alert('Error', 'Failed to join the event. Please try again.');
-      }
-    }
+  const calculateLevel = (points) => {
+    if (points < 1000) return 1;
+    if (points < 2000) return 2;
+    if (points < 3000) return 3;
+    if (points < 5000) return 4;
+    return 5;
   };
 
-  const handleGoBack = () => {
-    navigation.goBack();
+  const markedDates = participatedEvents.reduce((acc, event) => {
+    const date = new Date(event.date).toISOString().split('T')[0];
+    acc[date] = { marked: true, dotColor: '#6F61E8', onPress: () => handleEventPress(event) };
+    return acc;
+  }, {});
+
+  const handleEventPress = (event) => {
+    navigation.navigate('EventDetails', { eventId: event.event_id });
   };
 
   if (loading) {
+    return <ActivityIndicator size="large" color="#6F61E8" style={styles.loader} />;
+  }
+
+  if (!userData) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load user data.</Text>
       </View>
     );
   }
 
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Error: {JSON.stringify(error)}</Text>
-      </View>
-    );
-  }
-
-  if (!event) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>No event found.</Text>
-      </View>
-    );
-  }
+  const userLevel = calculateLevel(userData.points);
+  const pointsToNextLevel = 1000 * userLevel - userData.points;
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+        <Image source={{ uri: userData.profilePicture }} style={styles.profilePicture} />
+        <Text style={styles.username}>{userData.name}</Text>
+        <Text style={styles.level}>Level {userLevel} - {pointsToNextLevel} points to next level</Text>
+      </View>
+      <View style={styles.tabs}>
+        <TouchableOpacity onPress={() => setActiveTab('achievement')} style={[styles.tab, activeTab === 'achievement' && styles.activeTab]}>
+          <Text style={styles.tabText}>Achievements</Text>
         </TouchableOpacity>
-        <Ionicons name="football-outline" size={24} color="black" />
-        <Ionicons name="menu" size={24} color="black" />
+        <TouchableOpacity onPress={() => setActiveTab('calendar')} style={[styles.tab, activeTab === 'calendar' && styles.activeTab]}>
+          <Text style={styles.tabText}>Calendar</Text>
+        </TouchableOpacity>
       </View>
-
-      <ScrollView>
-        <Text style={styles.eventName}>{event.event_name}</Text>
-        <Text style={styles.description}>{event.description}</Text>
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            Event Creator: {event.creator ? event.creator.username : 'Unknown Creator'}
-          </Text>
-          <Text style={styles.infoText}>Date: {new Date(event.date).toLocaleString()}</Text>
-          <Text style={styles.infoText}>Location: {event.location}</Text>
-          <Image
-            source={{
-              uri: `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(
-                event.location
-              )}&zoom=15&size=600x300&key=YOUR_API_KEY`,
-            }}
-            style={styles.map}
-          />
+      {activeTab === 'achievement' && (
+        <View style={styles.achievements}>
+          <Text>Achievements content here</Text>
         </View>
-
-        <View style={styles.participantsContainer}>
-          <Text style={styles.sectionTitle}>
-            Participants: {event.event_participants?.length || 0} / {event.participants}
-          </Text>
-
-          {event.event_participants?.map((participant) => (
-            <View key={participant.user_id} style={styles.participantItem}>
-              <Ionicons name="person-circle" size={24} color="black" />
-              <Text>{participant.user.username}</Text>
-            </View>
-          ))}
-
-          {event.event_participants?.length === 0 && (
-            <Text style={styles.infoText}>No participants yet. Be the first to join!</Text>
-          )}
-
-          <TouchableOpacity style={styles.addButton} onPress={handleAddParticipant}>
-            <Ionicons name="add-circle" size={24} color="purple" />
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      <View style={styles.navbar}>
-        <Ionicons name="home-outline" size={24} color="black" />
-        <Ionicons name="search" size={24} color="purple" />
-        <Ionicons name="chatbubble-outline" size={24} color="black" />
-        <Ionicons name="person-outline" size={24} color="black" />
-      </View>
-    </View>
+      )}
+      {activeTab === 'calendar' && (
+        <Calendar
+          markedDates={markedDates}
+          onDayPress={(day) => {
+            if (markedDates[day.dateString]?.onPress) {
+              markedDates[day.dateString].onPress();
+            }
+          }}
+        />
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  loadingText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 18,
-  },
-  errorText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: 'red',
-    fontSize: 16,
+    flexGrow: 1,
+    padding: 20,
+    backgroundColor: '#f9f9f9',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    marginBottom: 20,
   },
-  eventName: {
-    fontSize: 24,
+  profilePicture: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  username: {
+    fontSize: 20,
     fontWeight: 'bold',
-    margin: 16,
+    marginTop: 10,
   },
-  description: {
-    fontSize: 14,
-    color: 'gray',
-    marginHorizontal: 16,
+  level: {
+    fontSize: 16,
+    color: '#6F61E8',
   },
-  infoContainer: {
-    padding: 16,
-  },
-  infoText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  map: {
-    width: '100%',
-    height: 150,
-    marginTop: 8,
-    borderRadius: 8,
-  },
-  participantsContainer: {
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  participantItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  addButton: {
-    marginTop: 8,
-  },
-  navbar: {
+  tabs: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'lightgray',
+    marginBottom: 20,
+  },
+  tab: {
+    padding: 10,
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#6F61E8',
+  },
+  tabText: {
+    fontSize: 16,
+  },
+  achievements: {
+    padding: 10,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
   },
 });
 
-export default EventDetails;
+export default ProfilePage;
