@@ -27,7 +27,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       
         <Stack.Navigator
-          initialRouteName="AddNewEvent"
+          initialRouteName="Login"
           screenOptions={{ headerShown: false }}
         >
           {/* Auth Screens */}
