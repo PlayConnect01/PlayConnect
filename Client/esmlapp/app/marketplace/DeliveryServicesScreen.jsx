@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Animated, Easing } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Animated,
+  Easing,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 const DeliveryServicesScreen = () => {
   const navigation = useNavigation();
   const [selectedService, setSelectedService] = useState(null);
-  const [scale] = useState(new Animated.Value(1));
+  const scale = useRef(new Animated.Value(1)).current;
+
+  // Mocked data
+  const cartTotal = 50.0; // Example cart total
+  const cartItems = [
+    { id: 1, name: 'Item 1', quantity: 2 },
+    { id: 2, name: 'Item 2', quantity: 1 },
+  ];
 
   const deliveryServices = [
     {
@@ -37,19 +52,20 @@ const DeliveryServicesScreen = () => {
 
   const handleCardPress = (serviceId) => {
     setSelectedService(serviceId);
-    Animated.timing(scale, {
-      toValue: 1.05,
-      duration: 150,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 1.05,
+        duration: 150,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
       Animated.timing(scale, {
         toValue: 1,
         duration: 150,
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
-      }).start();
-    });
+      }),
+    ]).start();
   };
 
   const handleContinue = () => {
@@ -57,13 +73,17 @@ const DeliveryServicesScreen = () => {
       Alert.alert('Selection Required', 'Please select a delivery service.');
       return;
     }
-
+  
     const selectedDelivery = deliveryServices.find(
       (service) => service.id === selectedService
     );
-
+  
+    const deliveryFee = selectedDelivery.price; // Delivery fee from selected service
+  
     navigation.navigate('Payment', {
-      deliveryFee: selectedDelivery.price,
+      cartTotal, // Use the mocked cartTotal
+      deliveryFee, // Selected delivery fee
+      cartItems, // Use the mocked cartItems
     });
   };
 
@@ -91,7 +111,9 @@ const DeliveryServicesScreen = () => {
             <Text style={styles.serviceName}>{service.name}</Text>
             <Text style={styles.serviceTime}>{service.time}</Text>
           </View>
-          <Text style={styles.servicePrice}>${service.price.toFixed(2)}</Text>
+          <Text style={styles.servicePrice}>
+            ${service.price.toFixed(2)}
+          </Text>
         </TouchableOpacity>
       ))}
 

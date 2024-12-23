@@ -71,7 +71,7 @@ const PaymentScreen = ({ route, navigation }) => {
       // Simulate payment processing
       const paymentResponse = await axios.post('http://192.168.11.115:3000/payments/process', {
         userId,
-        amount: cartTotal + deliveryFee,
+        amount: cartTotal + deliveryFee, // Ensure this calculation
         paymentMethod: selectedMethod,
         items: route.params.cartItems,
       });

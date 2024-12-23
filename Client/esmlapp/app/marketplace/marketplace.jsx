@@ -19,10 +19,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from './Confirmationadding';
 import SearchBar from './SearchBar';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { WebView } from 'react-native-webview';
 import Navbar from "../navbar/Navbar";
-import { Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; 
+
 
 const Marketplace = () => {
   const navigation = useNavigation();
@@ -34,7 +32,7 @@ const Marketplace = () => {
   const [itemToAdd, setItemToAdd] = useState(null);
   const [animation] = useState(new Animated.Value(1));
   const [refreshing, setRefreshing] = useState(false);
-  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [isHovered, setIsHovered] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -200,125 +198,144 @@ const Marketplace = () => {
               <SearchBar onSelectProduct={handleSelectProduct} />
             </View>
 
+          
             <Text style={styles.sectionTitle}>Discover</Text>
             <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.tabContainer}
-            >
-          
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabContainer}
-        >
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <WebView
-              originWhitelist={['*']}
-              source={{ html: '<i class="bi bi-soccer"></i>' }}
-              style={{ width: 24, height: 24 }}
-            />
-            <Text style={styles.inactiveTab}>Football</Text>
-          </TouchableOpacity>
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  style={styles.tabContainer}
+>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="fitness-center" size={24} color="#FF1493" />
+      <Text style={styles.inactiveTab}>Gym</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <WebView
-              originWhitelist={['*']}
-              source={{ html: '<i class="bi bi-basketball"></i>' }}
-              style={{ width: 24, height: 24 }}
-            />
-            <Text style={styles.inactiveTab}>Basketball</Text>
-          </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-cricket" size={24} color="#4169E1" />
+      <Text style={styles.inactiveTab}>Cricket</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <WebView
-              originWhitelist={['*']}
-              source={{ html: '<i class="bi bi-table-tennis"></i>' }}
-              style={{ width: 24, height: 24 }}
-            />
-            <Text style={styles.inactiveTab}>Tennis</Text>
-          </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="rowing" size={24} color="#00CED1" />
+      <Text style={styles.inactiveTab}>Rowing</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="sports-soccer" size={24} color="#FF1493" />
-              <Text style={styles.inactiveTab}>Soccer</Text>
-            </Animated.View>
-          </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="skateboarding" size={24} color="#87CEEB" />
+      <Text style={styles.inactiveTab}>Skating</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="sports-baseball" size={24} color="#4169E1" />
-              <Text style={styles.inactiveTab}>Baseball</Text>
-            </Animated.View>
-          </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-esports" size={24} color="#9932CC" />
+      <Text style={styles.inactiveTab}>E-Sports</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="pool" size={24} color="#00CED1" />
-              <Text style={styles.inactiveTab}>Swimming</Text>
-            </Animated.View>
-          </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="emoji-events" size={24} color="#FF4500" />
+      <Text style={styles.inactiveTab}>Trophies</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="snowboarding" size={24} color="#87CEEB" />
-              <Text style={styles.inactiveTab}>Snowboarding</Text>
-            </Animated.View>
-          </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="directions-walk" size={24} color="#32CD32" />
+      <Text style={styles.inactiveTab}>Walking</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="videogame-asset" size={24} color="#9932CC" />
-              <Text style={styles.inactiveTab}>Gaming</Text>
-            </Animated.View>
-          </TouchableOpacity>
+  {/* Additional Sports */}
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-football" size={24} color="#FFA500" />
+      <Text style={styles.inactiveTab}>Football</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="directions-bike" size={24} color="#FF4500" />
-              <Text style={styles.inactiveTab}>Cycling</Text>
-            </Animated.View>
-          </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-basketball" size={24} color="#FF4500" />
+      <Text style={styles.inactiveTab}>Basketball</Text>
+    </Animated.View>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="run" size={24} color="#32CD32" />
-              <Text style={styles.inactiveTab}>Running</Text>
-            </Animated.View>
-          </TouchableOpacity>
-        </ScrollView>
-            </ScrollView>
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-baseball" size={24} color="#00BFFF" />
+      <Text style={styles.inactiveTab}>Baseball</Text>
+    </Animated.View>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-hockey" size={24} color="#FF6347" />
+      <Text style={styles.inactiveTab}>Hockey</Text>
+    </Animated.View>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-mma" size={24} color="#800080" />
+      <Text style={styles.inactiveTab}>MMA</Text>
+    </Animated.View>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    onPress={() => { animateTab(); navigation.navigate("products"); }}
+    style={styles.sportTab}
+  >
+    <Animated.View style={{ transform: [{ scale: animation }] }}>
+      <MaterialIcons name="sports-tennis" size={24} color="#ADFF2F" />
+      <Text style={styles.inactiveTab}>Tennis</Text>
+    </Animated.View>
+  </TouchableOpacity>
+</ScrollView>
 
            
 
@@ -329,6 +346,7 @@ const Marketplace = () => {
               style={styles.cardContainer}
             >
               {products.map((product, index) => (
+                
                 <TouchableOpacity
                   key={index}
                   style={styles.card}
@@ -341,6 +359,8 @@ const Marketplace = () => {
                   <Text style={styles.cardTitle}>{product.name}</Text>
                   <Text style={styles.cardPrice}>${product.price}</Text>
                   <View style={styles.cardActions}>
+
+                    
                     <TouchableOpacity
                       style={styles.cartButton}
                       onPress={() => addToCart(product)}
@@ -357,7 +377,9 @@ const Marketplace = () => {
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
+                
               ))}
+              
             </ScrollView>
 
             <Text style={styles.sectionTitle}>Hot Deals! 🔥💰</Text>
@@ -424,6 +446,88 @@ const Marketplace = () => {
 };
 
 const styles = StyleSheet.create({
+
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginVertical: 15,
+    color: '#333',
+    textAlign: 'left',
+  },
+  cardContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    paddingVertical: 10,
+  },
+  card: {
+    width: 180,
+    marginRight: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 15,
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#6e3de8',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    transition: '0.3s ease-in-out',
+  },
+  cardHovered: {
+    transform: [{ scale: 1.05 }],
+    shadowOpacity: 0.5,
+  },
+  cardImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2d3436',
+    marginVertical: 6,
+    textAlign: 'center',
+  },
+  cardPrice: {
+    color: '#6e3de8',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+  },
+  cartButton: {
+    backgroundColor: '#6e3de8',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+    elevation: 2,
+    transition: '0.2s ease-in-out',
+  },
+  favoriteButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderColor: '#ff3b8f',
+    borderWidth: 1,
+    elevation: 2,
+    transition: '0.2s ease-in-out',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
