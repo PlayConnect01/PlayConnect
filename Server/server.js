@@ -15,7 +15,10 @@ const prismaClient = new PrismaClient();
 const eventRoutes = require('./routes/events');
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
-const chatRouter = require('./routes/chat');
+const chatRoutes = require('./routes/chat');
+const competetionRouter = require('./routes/competetion')
+const passwordRouter = require('./routes/handlePasswordReset .js')
+const leaderboardRoutes = require('./routes/leaderboard.js')
 const sportRoutes = require('./routes/sport');
 const competetionRouter = require('./routes/competetion');
 const passwordRouter = require('./routes/handlePasswordReset .js');
@@ -29,8 +32,8 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({limit: '50mb', extended: true}));
+app.use(express.urlencoded({limit: '50mb', extended: true}));
 
 // Session middleware
 app.use(
@@ -42,7 +45,6 @@ app.use(
   })
 );
 
-// Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -83,8 +85,12 @@ app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
 // Mount Chat Router
-app.use('/chats', chatRouter);
 app.use('/payments',paymentRoutes);
+app.use('/leaderboard', leaderboardRoutes);
+
+
+// Mount Chat Router
+app.use('/chats', chatRoutes);
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

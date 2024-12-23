@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import EventDetails from "./Homepage/EventDetails";
 import AddNewEvent from "./Homepage/CreateEvent";
 import Homep from "./Homepage/Homep";
+import CategoryEvents from "./Homepage/CategoryEvents";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -23,7 +24,7 @@ import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen'
 const Stack = createStackNavigator();
-
+import EditProfile from "./profile/EditProfile"
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -40,15 +41,20 @@ export default function App() {
 
           {/* Main Flow */}
           <Stack.Screen name="Homep" component={Homep} />
+          <Stack.Screen name="CategoryEvents" component={CategoryEvents} /> 
           <Stack.Screen name="CalendarPage" component={CalendarPage} />
           <Stack.Screen name="EventDetails" component={EventDetails} />
-          <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
+          <Stack.Screen name="AddNewEvent" component={AddNewEvent} /> 
 
           {/* Match */}
           <Stack.Screen name="Match" component={Match} />
           <Stack.Screen name="MessagePage" component={MessagePage} />
           <Stack.Screen name="ChatDetails" component={ChatDetails} />
+
+          {/* Profile */}
           <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen name="EditProfile" component={EditProfile} />
+
 
           {/* Marketplace */}
           <Stack.Screen name="MarketplaceHome" component={MarketplaceHome} />

@@ -17,7 +17,7 @@ const Navbar = () => {
 
       <TouchableOpacity
         style={styles.navItem}
-        onPress={() => navigation.navigate("Message")}
+        onPress={() => navigation.navigate("Chat/MessagePage")}
       >
         <Icon name="chatbubble-outline" size={24} color="gray" />
         <Text style={styles.navTextInactive}>Message</Text>
@@ -25,14 +25,14 @@ const Navbar = () => {
 
       <TouchableOpacity
         style={[styles.navItem, styles.activeItem]}
-        onPress={() => navigation.navigate("Hot")}
+        onPress={() => navigation.navigate("Match")}
       >
         <Icon name="flame-outline" size={24} color="white" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.navItem}
-        onPress={() => navigation.navigate("MarketplaceHome")}
+        onPress={() => navigation.navigate("marketplace/Home")}
       >
         <Icon name="cart-outline" size={24} color="gray" />
         <Text style={styles.navTextInactive}>Market</Text>
@@ -40,7 +40,7 @@ const Navbar = () => {
 
       <TouchableOpacity
         style={styles.navItem}
-        onPress={() => navigation.navigate("Profile")}
+        onPress={() => navigation.navigate("profile/ProfilePage")}
       >
         <Icon name="person-outline" size={24} color="gray" />
         <Text style={styles.navTextInactive}>Profile</Text>

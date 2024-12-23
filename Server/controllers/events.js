@@ -100,7 +100,8 @@ const createEvent = async (req, res) => {
       participants,
       price,
       isFree,
-      creator_id
+      creator_id,
+      image
     } = req.body;
 
     if (!creator_id) {
@@ -119,6 +120,7 @@ const createEvent = async (req, res) => {
         participants: parseInt(participants),
         price: parseFloat(price),
         is_free: isFree,
+        image , 
         creator: {
           connect: {
             user_id: creator_id,
@@ -229,4 +231,19 @@ const getEventsByDate = async (req, res) => {
   }
 };
 
-module.exports = { EventWithCreator, getAllEvents, getEventById, createEvent, updateEvent, deleteEvent, getEventsByDate, addParticipant , removeParticipant };
+const getParticipatedEvents = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const events = await prisma.eventParticipant.findMany({
+      where: { user_id: parseInt(userId) },
+      include: { event: true }, // Include event details
+    });
+
+    res.json(events.map(ep => ep.event)); // Return only event details
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching participated events", details: error.message });
+  }
+};
+
+module.exports = { EventWithCreator, getAllEvents, getEventById, createEvent, updateEvent, deleteEvent, getEventsByDate, addParticipant, getParticipatedEvents, removeParticipant };

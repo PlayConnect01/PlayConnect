@@ -11,6 +11,9 @@ CREATE TABLE `User` (
     `skill_level` VARCHAR(191) NULL,
     `rating` DOUBLE NULL,
     `points` INTEGER NOT NULL DEFAULT 0,
+    `birthdate` DATETIME(3) NULL,
+    `phone_number` VARCHAR(191) NULL,
+    `phone_country_code` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`user_id`)

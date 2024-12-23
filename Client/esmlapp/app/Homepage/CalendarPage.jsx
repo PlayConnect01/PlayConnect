@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Navbar from '../navbar/Navbar';
 
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -16,7 +17,7 @@ const CalendarPage = () => {
     setLoading(true);
     const formattedDate = new Date(date).toISOString().split("T")[0];
     axios
-      .get(`http://192.168.104.4:3000/events/getByDate/${formattedDate}`)
+      .get(`http://192.168.103.11:3000/events/getByDate/${formattedDate}`)
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
@@ -47,59 +48,62 @@ const CalendarPage = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Calendar</Text>
-        <TouchableOpacity>
-          <MaterialCommunityIcons name="calendar-outline" size={24} color="#555" />
-        </TouchableOpacity>
-      </View>
+    <View style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Calendar</Text>
+          <TouchableOpacity>
+            <MaterialCommunityIcons name="calendar-outline" size={24} color="#555" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Date Picker */}
-      <View style={styles.datePickerContainer}>
-        <TouchableOpacity onPress={() => setShowPicker(true)}>
-          <Text>Select a date</Text>
-        </TouchableOpacity>
-        {showPicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
-        )}
-      </View>
+        {/* Date Picker */}
+        <View style={styles.datePickerContainer}>
+          <TouchableOpacity onPress={() => setShowPicker(true)}>
+            <Text>Select a date</Text>
+          </TouchableOpacity>
+          {showPicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+            />
+          )}
+        </View>
 
-      {/* Event List */}
-      <View style={styles.eventsContainer}>
-        {loading ? (
-          <Text style={styles.loadingText}>Loading...</Text>
-        ) : events.length > 0 ? (
-          <FlatList
-            data={events}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.eventItem}>
-                <View style={styles.eventTimeContainer}>
-                  <Text style={styles.eventTime}>{item.time}</Text>
-                  <MaterialCommunityIcons name="map-marker-outline" size={16} color="#555" />
-                  <Text style={styles.eventLocation}>{item.location}</Text>
+        {/* Event List */}
+        <View style={styles.eventsContainer}>
+          {loading ? (
+            <Text style={styles.loadingText}>Loading...</Text>
+          ) : events.length > 0 ? (
+            <FlatList
+              data={events}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.eventItem}>
+                  <View style={styles.eventTimeContainer}>
+                    <Text style={styles.eventTime}>{item.time}</Text>
+                    <MaterialCommunityIcons name="map-marker-outline" size={16} color="#555" />
+                    <Text style={styles.eventLocation}>{item.location}</Text>
+                  </View>
+                  <Text style={styles.eventTitle}>{item.title}</Text>
+                  <Text style={styles.eventParticipants}>
+                    <MaterialCommunityIcons name="account-multiple" size={16} color="#555" />
+                    {` Participants: ${item.participants}`}
+                  </Text>
                 </View>
-                <Text style={styles.eventTitle}>{item.title}</Text>
-                <Text style={styles.eventParticipants}>
-                  <MaterialCommunityIcons name="account-multiple" size={16} color="#555" />
-                  {` Participants: ${item.participants}`}
-                </Text>
-              </View>
-            )}
-          />
-        ) : (
-          <Text style={styles.noEventsText}>No events for this day.</Text>
-        )}
+              )}
+            />
+          ) : (
+            <Text style={styles.noEventsText}>No events for this day.</Text>
+          )}
+        </View>
       </View>
+      <Navbar />
     </View>
   );
 };
