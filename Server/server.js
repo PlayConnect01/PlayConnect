@@ -22,6 +22,8 @@ const passwordRouter = require('./routes/handlePasswordReset .js');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
+const paymentRoutes = require('./routes/Paymentrouter.js');
+
 
 const app = express();
 
@@ -80,9 +82,9 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
-
 // Mount Chat Router
 app.use('/chats', chatRouter);
+app.use('/payments',paymentRoutes);
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

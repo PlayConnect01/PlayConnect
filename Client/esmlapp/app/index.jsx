@@ -19,7 +19,9 @@ import MarketplaceHome from "./marketplace/marketplace";
 import products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
-
+import PaymentScreen from './marketplace/PaymentScreen';
+import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
+import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen'
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -27,7 +29,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       
         <Stack.Navigator
-          initialRouteName="Login"
+          initialRouteName="Landing"
           screenOptions={{ headerShown: false }}
         >
           {/* Auth Screens */}
@@ -53,6 +55,14 @@ export default function App() {
           <Stack.Screen name="products" component={products} />
           <Stack.Screen name="ProductDetail" component={ProductDetail} />
           <Stack.Screen name="CartScreen" component={CartScreen} />
+          <Stack.Screen name="Payment" component={PaymentScreen} />
+          <Stack.Screen name="delivery" component={DeliveryServicesScreen } />
+      <Stack.Screen 
+        name="PaymentSuccess" 
+        component={PaymentSuccessScreen}
+        options={{ headerShown: false }}
+      />
+    
         </Stack.Navigator>
    
     </GestureHandlerRootView>

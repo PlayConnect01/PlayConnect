@@ -7,7 +7,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  Image,
+  Animated,
 } from 'react-native';
 import axios from 'axios';
 
@@ -16,6 +16,18 @@ const SearchBar = ({ onSelectProduct }) => {
   const [results, setResults] = useState([]);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Animation value for search bar focus
+  const animatedValue = new Animated.Value(0);
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: isFocused ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [isFocused]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -25,7 +37,7 @@ const SearchBar = ({ onSelectProduct }) => {
         setResults([]);
         setDropdownVisible(false);
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
@@ -33,7 +45,7 @@ const SearchBar = ({ onSelectProduct }) => {
   const fetchSearchResults = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://192.168.1.101:3000/product/search`, {
+      const response = await axios.get(`http://192.168.11.115:3000/product/search`, {
         params: { productName: searchTerm },
       });
       setResults(response.data);
@@ -50,21 +62,70 @@ const SearchBar = ({ onSelectProduct }) => {
     setSearchTerm('');
     setResults([]);
     setDropdownVisible(false);
+    setIsFocused(false);
+  };
+
+  const animatedStyles = {
+    transform: [{
+      scale: animatedValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.02],
+      }),
+    }],
+    shadowOpacity: animatedValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.1, 0.25],
+    }),
   };
 
   return (
     <View style={styles.container}>
-      <TextInput
-        placeholder="Search for products..."
-        placeholderTextColor="#999"
-        style={styles.searchInput}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-      />
+      <Animated.View style={[styles.searchContainer, animatedStyles]}>
+        <TextInput
+          placeholder="Search for products..."
+          placeholderTextColor="#9CA3AF"
+          style={[
+            styles.searchInput,
+            isFocused && styles.searchInputFocused,
+          ]}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            // Delay hiding the dropdown to allow for item selection
+            setTimeout(() => {
+              if (!isDropdownVisible) {
+                setIsFocused(false);
+              }
+            }, 200);
+          }}
+        />
+        {searchTerm.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              setSearchTerm('');
+              setDropdownVisible(false);
+              setResults([]);
+            }}
+          >
+            <Text style={styles.clearButtonText}>×</Text>
+          </TouchableOpacity>
+        )}
+      </Animated.View>
+
       {isDropdownVisible && (
-        <View style={styles.dropdown}>
+        <Animated.View style={[styles.dropdown, {
+          opacity: animatedValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.9, 1],
+          }),
+        }]}>
           {isLoading ? (
-            <ActivityIndicator size="small" color="#6A5AE0" style={styles.loadingIndicator} />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#6A5AE0" />
+              <Text style={styles.loadingText}>Searching...</Text>
+            </View>
           ) : results.length > 0 ? (
             <FlatList
               data={results}
@@ -74,17 +135,21 @@ const SearchBar = ({ onSelectProduct }) => {
                   style={styles.resultItem}
                   onPress={() => handleSelectProduct(item)}
                 >
-               
                   <View style={styles.textContainer}>
                     <Text style={styles.resultText}>{item.name}</Text>
                   </View>
                 </TouchableOpacity>
               )}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              style={styles.resultsList}
             />
           ) : (
-            <Text style={styles.noResultsText}>No results found</Text>
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>No results found</Text>
+              <Text style={styles.noResultsSubText}>Try a different search term</Text>
+            </View>
           )}
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -93,108 +158,81 @@ const SearchBar = ({ onSelectProduct }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    marginBottom: 20,
     marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    backgroundColor: 'transparent',
+    marginTop: 12,
+    marginBottom: 20,
+    zIndex: 1000, // Ensure the container stays above other elements
+    elevation: 1000, // For Android
   },
-  searchInput: {
-    height: 56,
-    borderColor: '#6A5AE0',
-    borderWidth: 2,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingRight: 48,
-    fontSize: 16,
+  searchContainer: {
+    position: 'relative',
+    zIndex: 1001, // Higher than container
+    elevation: 1001, // For Android
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    color: '#1F2937',
-    fontWeight: '500',
     shadowColor: '#6A5AE0',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
-    elevation: 5,
+  },
+  searchInput: {
+    height: 60,
+    paddingHorizontal: 24,
+    paddingRight: 48,
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '500',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
     includeFontPadding: false,
     textAlignVertical: 'center',
   },
   searchInputFocused: {
-    borderColor: '#4C3ED9',
+    borderColor: '#6A5AE0',
     backgroundColor: '#FAFAFA',
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
   },
   dropdown: {
     position: 'absolute',
-    top: 64,
+    top: 70,
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    elevation: 8,
-    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 1002, // Higher than searchContainer
+    zIndex: 1002, // Higher than searchContainer
     maxHeight: 350,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    transform: [{ translateY: 0 }],
+  },
+  resultsList: {
+    maxHeight: 350,
   },
   resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
     backgroundColor: '#FFFFFF',
-    transform: [{ scale: 1 }],
-  },
-  resultItemActive: {
-    backgroundColor: '#F8FAFF',
-    borderLeftWidth: 3,
-    borderLeftColor: '#6A5AE0',
-  },
-  resultItemPressed: {
-    backgroundColor: '#F9FAFB',
-    transform: [{ scale: 0.995 }],
   },
   textContainer: {
     flex: 1,
-    paddingRight: 8,
-    justifyContent: 'center',
   },
   resultText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 4,
     letterSpacing: 0.3,
-    includeFontPadding: false,
-  },
-  resultTextHighlight: {
-    backgroundColor: '#EEF2FF',
-    color: '#6A5AE0',
-    borderRadius: 4,
-    overflow: 'hidden',
-    paddingHorizontal: 2,
   },
   loadingContainer: {
-    padding: 20,
+    padding: 24,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
-  loadingIndicator: {
-    transform: [{ scale: 1.2 }],
-  },
   loadingText: {
-    marginTop: 8,
+    marginTop: 12,
     fontSize: 14,
     color: '#6B7280',
     fontWeight: '500',
@@ -206,18 +244,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   noResultsText: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#6B7280',
-    textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
     letterSpacing: 0.3,
-    lineHeight: 20,
   },
   noResultsSubText: {
-    marginTop: 4,
-    fontSize: 13,
+    marginTop: 8,
+    fontSize: 14,
     color: '#9CA3AF',
-    textAlign: 'center',
   },
   clearButton: {
     position: 'absolute',
@@ -230,6 +265,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1003,
+    elevation: 1003,
   },
   clearButtonText: {
     color: '#4B5563',
@@ -237,41 +274,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 22,
   },
-  resultMetadata: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginTop: 4,
-    gap: 8,
-  },
-  resultBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    backgroundColor: '#F3F4F6',
-    overflow: 'hidden',
-  },
-  resultBadgeText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  resultBadgeSuccess: {
-    backgroundColor: '#ECFDF5',
-  },
-  resultBadgeSuccessText: {
-    color: '#059669',
-  },
-  resultBadgeError: {
-    backgroundColor: '#FEF2F2',
-  },
-  resultBadgeErrorText: {
-    color: '#DC2626',
-  },
   separator: {
     height: 1,
     backgroundColor: '#F3F4F6',
-    marginHorizontal: 16,
   },
 });
 

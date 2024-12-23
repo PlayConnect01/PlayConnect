@@ -32,7 +32,7 @@ const Navbar = () => {
 
       <TouchableOpacity
         style={styles.navItem}
-        onPress={() => navigation.navigate("Market")}
+        onPress={() => navigation.navigate("MarketplaceHome")}
       >
         <Icon name="cart-outline" size={24} color="gray" />
         <Text style={styles.navTextInactive}>Market</Text>
