@@ -16,7 +16,7 @@ const SignUpScreen = () => {
 
   const handleSignUp = async () => {
     try {
-      const response = await axios.post('http://192.168.103.9:3000/users/signup', {
+      const response = await axios.post('http://192.168.31.42:3000/users/signup', {
         username,
         email,
         password,
@@ -183,3 +183,4 @@ const styles = StyleSheet.create({
 });
 
 export default SignUpScreen;
+

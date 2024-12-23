@@ -1,36 +1,73 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
+
+
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, Animated, Easing } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesome } from '@expo/vector-icons'; // For social icons
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { useAuth } from '../../context/AuthContext';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const API_URL = "http://localhost:3000"; // Update accordingly
+// const API_URL = "https://localhost:3000"; // Update accordingly
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigation();
+  const navigation = useNavigation();
+  const { setUser } = useAuth();
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+   
+    clientId: '730813875128-11hvkldvgco1nrb3ueig2kbsok77le3t.apps.googleusercontent.com', // Replace with your Google OAuth Client ID
+  });
 
+  // Animation references
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+  useEffect(() => {
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000,
+        easing: Easing.bounce,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+  // Handle regular login with email and password
   const handleLogin = async () => {
     try {
-        const response = await axios.post('http://192.168.103.9:3000/users/login', {
-            email,
-            password,
-        });
 
-        console.log('Login successful:', response.data);
-        const { token } = response.data;
+      const response = await axios.post('http://192.168.31.42:3000/users/login', {
+        email,
+        password,
+      });
 
-        // Store the token in AsyncStorage
-        await AsyncStorage.setItem('userToken', token);
-        
-        // Navigate to home page after successful login
-        navigate.navigate('Homepage/CreateEvent');
+      console.log('Login successful:', response.data);
+      const { token } = response.data;
+
+      // Store the token in AsyncStorage
+      await AsyncStorage.setItem('userToken', token);
+
+      // Navigate to home page after successful login
+      navigation.navigate('Profile'); // Adjust the route accordingly
     } catch (error) {
-        console.error('Login error:', error.response ? error.response.data : error.message);
-        alert('Invalid credentials. Please try again.');
+      console.error('Login error:', error.response?.data || error.message);
+      alert('Invalid credentials. Please try again.');
     }
-};
+  };
 
   // Handle Google login
   const handleGoogleLogin = async () => {
@@ -38,23 +75,21 @@ export default function LoginScreen() {
       const result = await promptAsync();
       if (result.type === 'success') {
         const { id_token } = result.params;
-console.log("idtoken",id_token);
+
 
         const response = await axios.post('http://localhost:3000/users/auth/google-token', {
           idToken: id_token,
         });
-        console.log('respone',response);
-        
         const { user, token } = response.data;
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userData', JSON.stringify(user));
         setUser(user);
-        navigation.navigate('Homep');
+        navigation.navigate('Profile');
       } else {
-        Alert.alert("response");
+        Alert.alert('Error', 'Google login failed');
       }
     } catch (error) {
-      Alert.alert(error);
+      Alert.alert('Error', 'Google login failed');
     }
   };
 
@@ -67,36 +102,38 @@ console.log("idtoken",id_token);
       }
 
       const data = await AccessToken.getCurrentAccessToken();
+
       const response = await axios.post('http://localhost:3000/users/auth/facebook-token', {
         accessToken: data.accessToken,
       });
-
-      console.log('Login successful:', response.data);
-      const { token  , user  } = response.data;
-// console.log(user , "user");
-
-      // Store the token in AsyncStorage
+      const { user, token } = response.data;
       await AsyncStorage.setItem('userToken', token);
-      // let user1 = JSON.stringify(user)
-      console.log(token , "saaa");
-      
-      // await AsyncStorage.setItem("user", user1);
-      // Navigate to home page after successful login
-      navigate.navigate('Homepage/Homep'); // Adjust the route accordingly
+      await AsyncStorage.setItem('userData', JSON.stringify(user));
+      setUser(user);
+      navigation.navigate('Homep');
     } catch (error) {
-      console.error('Login error:', error.response?.data || error.message);
-      alert('Invalid credentials. Please try again.');
+      Alert.alert('Error', 'Facebook login failed');
     }
   };
 
+  // Clear input fields when navigating away from this screen
+  useEffect(() => {
+    return () => {
+      setEmail('');
+      setPassword('');
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
-      <Image
-        source={require('../../assets/images/sportscube.png')} // Replace with your image URL
-        style={styles.image}
+    
+      <Animated.Image
+        source={require('../../assets/images/sportscube.png')}
+        style={[styles.image, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
       />
-      <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to access your account</Text>
+
+      <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>Welcome Back</Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>Sign in to access your account</Animated.Text>
 
       <View style={styles.inputContainer}>
         <FontAwesome name="envelope" size={20} color="#999" />
@@ -123,10 +160,10 @@ console.log("idtoken",id_token);
       </View>
 
       <View style={styles.links}>
-        <TouchableOpacity onPress={() => navigate.navigate('SignUp')}>
+        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
           <Text style={styles.linkText}>Create An Account</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigate.navigate('ForgotPassword')}>
+        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
           <Text style={styles.linkText}>Forgot Password?</Text>
         </TouchableOpacity>
       </View>
@@ -137,9 +174,12 @@ console.log("idtoken",id_token);
 
       <Text style={styles.socialText}>Sign in With</Text>
       <View style={styles.socialContainer}>
-        <FontAwesome name="facebook" size={30} color="#fff" style={styles.socialIcon} />
-        <FontAwesome name="google" size={30} color="#fff" style={styles.socialIcon} />
-        <FontAwesome name="envelope" size={30} color="#fff" style={styles.socialIcon} />
+        <TouchableOpacity onPress={handleFacebookLogin}>
+          <FontAwesome name="facebook" size={30} color="#fff" style={styles.socialIcon} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleGoogleLogin}>
+          <FontAwesome name="google" size={30} color="#fff" style={styles.socialIcon} />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -221,4 +261,4 @@ const styles = StyleSheet.create({
   socialIcon: {
     marginHorizontal: 10,
   },
-});
+})

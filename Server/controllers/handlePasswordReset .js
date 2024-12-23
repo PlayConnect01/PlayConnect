@@ -44,9 +44,21 @@ const sendCode = async (req, res) => {
     const mailOptions = {
       from: 'ahmedboukottaya@zohomail.com',
       to: email,
-      subject: 'Password Recovery Code',
-  text: `Hello ${user.username},\n\nYour password recovery code is: ${code}\n\nPlease use this code to reset your password.`,
-};
+  
+      subject: '🔒 Password Recovery Code',
+      text: `Hello ${user.username},
+    
+    We have received a request to reset your password. Please use the following recovery code to proceed with resetting your password:
+    
+    **${code}**
+    
+    If you did not request a password reset, please disregard this email. Your account security is important to us.
+    
+    Thank you for your attention.
+    
+    Best regards,
+    The Support Team`,
+    };
 
 
     transporter.sendMail(mailOptions, (error, info) => {

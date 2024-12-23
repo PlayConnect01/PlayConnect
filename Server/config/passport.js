@@ -5,6 +5,8 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 require('dotenv').config();
+const LocalStrategy = require('passport-local').Strategy;
+
 
 // Google Strategy
 
@@ -91,6 +93,23 @@ passport.use(
       } catch (error) {
         console.error("Facebook Strategy Error:", error);
         return done(error, null);
+      }
+    }
+  )
+);
+
+passport.use(
+  new LocalStrategy(
+    { usernameField: 'email' }, // Adjust fields based on your schema
+    async (email, password, done) => {
+      try {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || user.password !== password) {
+          return done(null, false, { message: 'Incorrect credentials.' });
+        }
+        return done(null, user);
+      } catch (error) {
+        return done(error);
       }
     }
   )
