@@ -1,5 +1,5 @@
 {
-  "name": "esmlapp",
+  "name": "playconnect",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -39,6 +39,7 @@
     "expo-crypto": "~14.0.1",
     "expo-font": "~13.0.1",
     "expo-haptics": "~14.0.0",
+    "expo-image-manipulator": "^13.0.5",
     "expo-image-picker": "^16.0.3",
     "expo-linear-gradient": "~14.0.1",
     "expo-linking": "~7.0.3",

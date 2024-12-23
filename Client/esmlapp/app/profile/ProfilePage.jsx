@@ -1,113 +1,248 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // Expo-compatible gradient
-import { MaterialIcons } from '@expo/vector-icons'; // Icons from Expo's built-in support
+import React, { useEffect, useState } from 'react'; 
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import { Calendar } from 'react-native-calendars';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Navbar from '../navbar/Navbar';
+
+// Function to decode the token
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace('-', '+').replace('_', '/');
+    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+  } catch (error) {
+    console.error('Token decoding error:', error); 
+    return null;
+  }
+};
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [rank, setRank] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('achievement');
+  const [participatedEvents, setParticipatedEvents] = useState([]);
+
+  const navigation = useNavigation(); 
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // Simulated fetch call
-      const data = {
-        name: 'Arya Muller',
-        email: 'albertflores@gmail.com',
-        profilePic: 'https://via.placeholder.com/150', // Example image URL
-        leaderboardRank: 2,
-        events: 55,
-        level: 2,
-        currentPoints: 5200,
-        totalPoints: 6000,
-        achievement: 'Gold Medal in Football Tournament',
-        achievementDate: 'May 1, 2022',
-      };
-      setUserData(data);
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          Alert.alert('Error', 'No authentication token found. Please log in again.');
+          return;
+        }
+
+        const decodedToken = decodeToken(token);
+        if (!decodedToken) {
+          throw new Error('Failed to decode token');
+        }
+
+        const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+        if (!userId) {
+          throw new Error('Could not find user ID in token');
+        }
+
+        const userResponse = await axios.get(`http://192.168.103.9:3000/users/${userId}`);
+        setUserData(userResponse.data.user);
+
+        const leaderboardResponse = await axios.get("http://192.168.103.9:3000/leaderboard");
+        const leaderboard = leaderboardResponse.data;
+
+        const userRank = leaderboard.findIndex(user => user.id === userId) + 1; 
+        setRank(userRank);
+
+        const eventsResponse = await axios.get('http://192.168.103.9:3000/events/getAll');
+        const userEvents = eventsResponse.data.filter(event => event.creator_id === userId);
+        setEvents(userEvents);
+
+        const participatedEventsResponse = await axios.get(`http://192.168.103.9:3000/events/getParticipated/${userId}`);
+        setParticipatedEvents(participatedEventsResponse.data);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        Alert.alert('Error', 'Failed to load user data.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchUserData();
   }, []);
 
-  if (!userData) return null; // Prevent rendering until data is fetched
+  const calculateLevel = (points) => {
+    if (points < 1000) return 1;
+    if (points < 2000) return 2;
+    if (points < 3000) return 3;
+    if (points < 5000) return 4;
+    return 5;
+  };
+
+  const markedDates = participatedEvents.reduce((acc, event) => {
+    const date = new Date(event.date).toISOString().split('T')[0];
+    acc[date] = { marked: true, dotColor: '#6F61E8', onPress: () => handleEventPress(event) };
+    return acc;
+  }, {});
+
+  const handleEventPress = (event) => {
+    navigation.navigate('EventDetails', { eventId: event.event_id }); 
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.fullPage}>
+        <ActivityIndicator size="large" color="#6F61E8" style={styles.loader} />
+        <Navbar />
+      </View>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <View style={styles.fullPage}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load user data.</Text>
+        </View>
+        <Navbar />
+      </View>
+    );
+  }
+
+  const userLevel = calculateLevel(userData.points);
+  const pointsToNextLevel = 1000 * userLevel - userData.points;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Profile */}
-      <View style={styles.profileContainer}>
-        <Image source={{ uri: userData.profilePic }} style={styles.profileImage} />
-        <Text style={styles.profileName}>{userData.name}</Text>
-        <Text style={styles.email}>
-          {userData.email} <MaterialIcons name="verified" size={16} color="green" />
-        </Text>
-        <TouchableOpacity style={styles.editProfileButton}>
-          <Text style={styles.editProfileText}>Edit Profile</Text>
-          <MaterialIcons name="arrow-drop-down" size={18} color="gray" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabs}>
-        <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-          <Text style={styles.tabTextActive}>Achievement</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Events</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Reviews</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>#{userData.leaderboardRank}</Text>
-          <Text style={styles.statLabel}>Leaderboard</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{userData.events}</Text>
-          <Text style={styles.statLabel}>Events</Text>
-        </View>
-      </View>
-
-      {/* Level */}
-      <View style={styles.levelContainer}>
-        <Text style={styles.levelText}>Level {userData.level}</Text>
-        <Text style={styles.pointsText}>
-          {userData.totalPoints - userData.currentPoints} Points to next level
-        </Text>
-        <View style={styles.progressBar}>
-          <LinearGradient
-            colors={['#FFC107', '#FFD54F']}
-            style={[styles.progressFill, { width: `${(userData.currentPoints / userData.totalPoints) * 100}%` }]}
+    <View style={styles.fullPage}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.profileContainer}>
+          <Image 
+            source={{ uri: userData.profile_picture || 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541' }} 
+            style={styles.profileImage} 
           />
-        </View>
-        <View style={styles.progressTextContainer}>
-          <Text style={styles.levelIndicator}>2</Text>
-          <Text style={styles.levelPoints}>
-            {userData.currentPoints}/{userData.totalPoints}
+          <Text style={styles.profileName}>{userData.username}</Text>
+          <Text style={styles.email}>
+            {userData.email} <MaterialIcons name="verified" size={16} color="green" />
           </Text>
-          <Text style={styles.levelIndicator}>3</Text>
+          <TouchableOpacity style={styles.editProfileButton}
+          onPress={() => navigation.navigate('EditProfile', { userData })} 
+          >
+            <Text style={styles.editProfileText}>Edit Profile</Text>
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Achievement */}
-      <View style={styles.achievementContainer}>
-        <MaterialIcons name="emoji-events" size={30} color="#FFC107" />
-        <View>
-          <Text style={styles.achievementText}>
-            Earned <Text style={{ fontWeight: 'bold' }}>{userData.achievement}</Text>
-          </Text>
-          <Text style={styles.dateText}>{userData.achievementDate}</Text>
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'achievement' && styles.activeTab]}
+            onPress={() => setActiveTab('achievement')}
+          >
+            <Text style={activeTab === 'achievement' ? styles.tabTextActive : styles.tabText}>Achievement</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'events' && styles.activeTab]}
+            onPress={() => setActiveTab('events')}
+          >
+            <Text style={activeTab === 'events' ? styles.tabTextActive : styles.tabText}>Events</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'calendar' && styles.activeTab]}
+            onPress={() => setActiveTab('calendar')}
+          >
+            <Text style={activeTab === 'calendar' ? styles.tabTextActive : styles.tabText}>Calendar</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+
+        {activeTab === 'events' && (
+          <View style={styles.eventsContainer}>
+            {events.length > 0 ? (
+              events.map((event, index) => (
+                <View key={index} style={styles.eventContainer}>
+                  <Image source={{ uri: event.image }} style={styles.eventImage} />
+                  <View style={styles.eventDetails}>
+                    <Text style={styles.eventName}>{event.event_name}</Text>
+                    <Text style={styles.eventDate}>{new Date(event.start_time).toLocaleString()}</Text>
+                    <Text style={styles.eventDescription}>{event.description}</Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noEventsText}>No events created yet.</Text>
+            )}
+          </View>
+        )}
+
+        {activeTab === 'achievement' && (
+          <View style={styles.achievementContainer}>
+            <View style={styles.statsContainer}>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>#{rank || 'N/A'}</Text>
+                <Text style={styles.statLabel}>Leaderboard</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{events.length}</Text>
+                <Text style={styles.statLabel}>Events</Text>
+              </View>
+            </View>
+
+            <View style={styles.levelBox}>
+              <View style={styles.levelHeader}>
+                <View style={styles.levelNumberContainer}>
+                  <Text style={styles.levelNumber}>{userLevel}</Text>
+                </View>
+                <Text style={styles.levelTitle}>Level {userLevel}</Text>
+              </View>
+              <Text style={styles.pointsText}>{userData.points || 0} Points to next level</Text>
+              <View style={styles.progressBarContainer}>
+                <View 
+                  style={[
+                    styles.progressBar, 
+                    { 
+                      width: `${((userData.points || 0) / (1000 * userLevel)) * 100}%`,
+                      minWidth: 1, // Ensures the bar is always visible even at 0 points
+                    }
+                  ]} 
+                />
+                <View style={styles.pointsIndicator}>
+                  <Text style={styles.currentPoints}>{userData.points || 0}</Text>
+                  <Text style={styles.maxPoints}>{1000 * userLevel}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {activeTab === 'calendar' && (
+          <View style={styles.calendarContainer}>
+            <Calendar
+              markedDates={markedDates}
+            />
+          </View>
+        )}
+      </ScrollView>
+      <Navbar />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
+  fullPage: {
+    flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    padding: 16,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileContainer: {
     alignItems: 'center',
@@ -129,17 +264,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   editProfileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#f5f5f5',
     padding: 8,
     borderRadius: 8,
+    marginTop: 8,
   },
   editProfileText: {
     fontSize: 14,
     color: 'gray',
   },
-  tabs: {
+  tabsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginVertical: 10,
@@ -160,72 +294,130 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginVertical: 10,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statBox: {
+    flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 10,
   },
   statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 4,
   },
   statLabel: {
-    color: 'gray',
     fontSize: 14,
+    color: '#666',
   },
-  levelContainer: {
-    marginVertical: 10,
+  levelBox: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  levelHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
   },
-  levelText: {
+  levelNumberContainer: {
+    backgroundColor: '#6F61E8',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  levelNumber: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  levelTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+  },
+  pointsText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#6F61E8',
+    borderRadius: 4,
+  },
+  pointsIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  currentPoints: {
+    fontSize: 12,
+    color: '#666',
+  },
+  maxPoints: {
+    fontSize: 12,
+    color: '#666',
+  },
+  eventContainer: {
+    flexDirection: 'row',
+    marginVertical: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 10,
+  },
+  eventImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  eventDetails: {
+    flex: 1,
+  },
+  eventName: {
     fontSize: 18,
     fontWeight: 'bold',
   },
-  pointsText: {
+  eventDate: {
     color: 'gray',
-    marginVertical: 5,
-  },
-  progressBar: {
-    height: 10,
-    width: '90%',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-  },
-  progressTextContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    marginTop: 5,
-  },
-  levelIndicator: {
-    fontWeight: 'bold',
-    color: 'gray',
-  },
-  levelPoints: {
-    fontWeight: 'bold',
-    color: '#6F61E8',
-  },
-  achievementContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    backgroundColor: '#FFF3CD',
-    padding: 10,
-    borderRadius: 10,
-  },
-  achievementText: {
     fontSize: 14,
-    marginLeft: 10,
   },
-  dateText: {
-    fontSize: 12,
+  eventDescription: {
+    fontSize: 14,
     color: 'gray',
-    marginLeft: 10,
+  },
+  noEventsText: {
+    color: 'gray',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  calendarContainer: {
+    marginTop: 10,
   },
 });
 

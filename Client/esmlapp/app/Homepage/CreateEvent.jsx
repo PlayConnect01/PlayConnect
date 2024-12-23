@@ -179,6 +179,8 @@ const AddNewEvent = () => {
         creator_id: userId,
         image: imageUrl, 
       };
+      console.log(eventData);
+      
 
       const response = await axios.post('http://192.168.103.9:3000/events/create', eventData, {
         headers: {
@@ -269,6 +271,15 @@ const AddNewEvent = () => {
                     </Text>
                   </TouchableOpacity>
 
+                  {showStartTimePicker && (
+                    <DateTimePicker
+                      value={startTime || new Date()}
+                      mode="time"
+                      is24Hour={false}
+                      onChange={onStartTimeChange}
+                    />
+                  )}
+
                   <TouchableOpacity 
                     onPress={() => setShowEndTimePicker(true)} 
                     style={[styles.dateTimeButton, styles.timeButton]}
@@ -278,6 +289,15 @@ const AddNewEvent = () => {
                       {endTime ? endTime.toLocaleTimeString() : "End Time"}
                     </Text>
                   </TouchableOpacity>
+
+                  {showEndTimePicker && (
+                    <DateTimePicker
+                      value={endTime || new Date()}
+                      mode="time"
+                      is24Hour={false}
+                      onChange={onEndTimeChange}
+                    />
+                  )}
                 </View>
               </View>
 

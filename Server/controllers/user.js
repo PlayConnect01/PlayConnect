@@ -148,7 +148,7 @@ const login = async (req, res) => {
   }
 };
 
-// Social auth handler
+
 const handleSocialAuth = async (req, res) => {
   try {
     const user = req.user;
@@ -173,4 +173,67 @@ const logout = (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, handleSocialAuth };
+// Fetch a single user by user ID
+const getOneUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await prismaClient.user.findUnique({
+      where: { user_id: Number(id) }, // Ensure userId is a number
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Fetch user error:", error);
+    res.status(500).json({ error: "Error fetching user" });
+  }
+};
+
+const updateUserProfile = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { username, email, location, profile_picture, birthdate, phone_number, phone_country_code } = req.body;
+
+    // Validate user exists
+    const existingUser = await prismaClient.user.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updatedUser = await prismaClient.user.update({
+      where: { user_id: userId },
+      data: {
+        username: username || undefined,
+        email: email || undefined,
+        location: location || null,
+        profile_picture: profile_picture || null,
+        birthdate: birthdate ? new Date(birthdate) : null,
+        phone_number: phone_number || null,
+        phone_country_code: phone_country_code || null,
+      },
+    });
+
+    res.json({
+      success: true,
+      user: {
+        ...updatedUser,
+        password: undefined,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ 
+      error: 'Failed to update user profile',
+      details: error.message 
+    });
+  }
+};
+
+module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile};

@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import EventDetails from "./Homepage/EventDetails";
 import AddNewEvent from "./Homepage/CreateEvent";
 import Homep from "./Homepage/Homep";
+import CategoryEvents from "./Homepage/CategoryEvents";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
@@ -19,7 +20,7 @@ import MarketplaceHome from "./marketplace/marketplace";
 import products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
-import matchingpage from "./Match/Matchingpage"
+import EditProfile from "./profile/EditProfile"
 
 const Stack = createStackNavigator();
 
@@ -28,7 +29,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       
         <Stack.Navigator
-          initialRouteName="Login"
+          initialRouteName="Profile"
           screenOptions={{ headerShown: false }}
         >
           {/* Auth Screens */}
@@ -39,15 +40,20 @@ export default function App() {
 
           {/* Main Flow */}
           <Stack.Screen name="Homep" component={Homep} />
+          <Stack.Screen name="CategoryEvents" component={CategoryEvents} /> 
           <Stack.Screen name="CalendarPage" component={CalendarPage} />
           <Stack.Screen name="EventDetails" component={EventDetails} />
-          <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
+          <Stack.Screen name="AddNewEvent" component={AddNewEvent} /> 
 
           {/* Match */}
           <Stack.Screen name="Match" component={Match} />
           <Stack.Screen name="MessagePage" component={MessagePage} />
           <Stack.Screen name="ChatDetails" component={ChatDetails} />
+
+          {/* Profile */}
           <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen name="EditProfile" component={EditProfile} />
+
 
           {/* Marketplace */}
           <Stack.Screen name="MarketplaceHome" component={MarketplaceHome} />
