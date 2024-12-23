@@ -5,6 +5,7 @@ const { PrismaClient } = require("@prisma/client");
 const nodemailer = require('nodemailer');
 dotenv.config();
 
+
 const prismaClient = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -100,7 +101,6 @@ const signup = async (req, res) => {
 <p>Best regards,<br>🌟 The Support Team 🌟</p>
       `,
     };
-
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error sending welcome email:', error);
@@ -108,7 +108,6 @@ const signup = async (req, res) => {
         console.log('Welcome email sent:', info.response);
       }
     });
-
     res.status(200).json({
       user: {
         user_id: user.user_id,
@@ -138,6 +137,7 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+  
     const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, {
       expiresIn: "24h",
     });
