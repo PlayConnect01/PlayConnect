@@ -29,7 +29,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       
         <Stack.Navigator
-          initialRouteName="Login"
+          initialRouteName="Profile"
           screenOptions={{ headerShown: false }}
         >
           {/* Auth Screens */}

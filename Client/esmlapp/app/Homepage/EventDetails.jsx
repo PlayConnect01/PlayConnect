@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native';
 import { Buffer } from 'buffer';
+import Navbar from '../navbar/Navbar';
 
 const decodeToken = (token) => {
   try {
@@ -43,20 +44,20 @@ const ProfilePage = ({ token }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userResponse = await axios.get(`http://192.168.103.11:3000/users/${userId}`);
+        const userResponse = await axios.get(`http://1192.168.103.9:3000/users/${userId}`);
         setUserData(userResponse.data.user);
 
-        const leaderboardResponse = await axios.get(`http://192.168.103.11:3000/leaderboard`);
+        const leaderboardResponse = await axios.get(`http://1192.168.103.9:3000/leaderboard`);
         const leaderboard = leaderboardResponse.data;
 
         const userRank = leaderboard.findIndex(user => user.id === userId) + 1;
         setRank(userRank);
 
-        const eventsResponse = await axios.get('http://192.168.103.11:3000/events/getAll');
+        const eventsResponse = await axios.get('http://1192.168.103.9:3000/events/getAll');
         const userEvents = eventsResponse.data.filter(event => event.creator_id === userId);
         setEvents(userEvents);
 
-        const participatedEventsResponse = await axios.get(`http://192.168.103.11:3000/events/getParticipated/${userId}`);
+        const participatedEventsResponse = await axios.get(`http://1192.168.103.9:3000/events/getParticipated/${userId}`);
         setParticipatedEvents(participatedEventsResponse.data);
 
       } catch (error) {
@@ -103,36 +104,39 @@ const ProfilePage = ({ token }) => {
   const pointsToNextLevel = 1000 * userLevel - userData.points;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Image source={{ uri: userData.profilePicture }} style={styles.profilePicture} />
-        <Text style={styles.username}>{userData.name}</Text>
-        <Text style={styles.level}>Level {userLevel} - {pointsToNextLevel} points to next level</Text>
-      </View>
-      <View style={styles.tabs}>
-        <TouchableOpacity onPress={() => setActiveTab('achievement')} style={[styles.tab, activeTab === 'achievement' && styles.activeTab]}>
-          <Text style={styles.tabText}>Achievements</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('calendar')} style={[styles.tab, activeTab === 'calendar' && styles.activeTab]}>
-          <Text style={styles.tabText}>Calendar</Text>
-        </TouchableOpacity>
-      </View>
-      {activeTab === 'achievement' && (
-        <View style={styles.achievements}>
-          <Text>Achievements content here</Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Image source={{ uri: userData.profilePicture }} style={styles.profilePicture} />
+          <Text style={styles.username}>{userData.name}</Text>
+          <Text style={styles.level}>Level {userLevel} - {pointsToNextLevel} points to next level</Text>
         </View>
-      )}
-      {activeTab === 'calendar' && (
-        <Calendar
-          markedDates={markedDates}
-          onDayPress={(day) => {
-            if (markedDates[day.dateString]?.onPress) {
-              markedDates[day.dateString].onPress();
-            }
-          }}
-        />
-      )}
-    </ScrollView>
+        <View style={styles.tabs}>
+          <TouchableOpacity onPress={() => setActiveTab('achievement')} style={[styles.tab, activeTab === 'achievement' && styles.activeTab]}>
+            <Text style={styles.tabText}>Achievements</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveTab('calendar')} style={[styles.tab, activeTab === 'calendar' && styles.activeTab]}>
+            <Text style={styles.tabText}>Calendar</Text>
+          </TouchableOpacity>
+        </View>
+        {activeTab === 'achievement' && (
+          <View style={styles.achievements}>
+            <Text>Achievements content here</Text>
+          </View>
+        )}
+        {activeTab === 'calendar' && (
+          <Calendar
+            markedDates={markedDates}
+            onDayPress={(day) => {
+              if (markedDates[day.dateString]?.onPress) {
+                markedDates[day.dateString].onPress();
+              }
+            }}
+          />
+        )}
+      </ScrollView>
+      <Navbar />
+    </View>
   );
 };
 

@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
+import Navbar from '../navbar/Navbar';
 
 const CategoryEvents = () => {
   const navigation = useNavigation();
@@ -23,7 +24,7 @@ const CategoryEvents = () => {
 
   useEffect(() => {
     axios
-      .get('http://192.168.103.11:3000/events/getAll')
+      .get('http://192.168.104.6:3000/events/getAll')
       .then((response) => {
         setAllEvents(response.data);
         const events = response.data.filter((event) => event.category === categoryName);
@@ -84,48 +85,51 @@ const CategoryEvents = () => {
 
   // Events exist
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#555" />
-          </TouchableOpacity>
-          <Text style={styles.categoryName}>{categoryName}</Text>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.eventsGrid}>
-          {filteredEvents.map((event) => (
-            <TouchableOpacity
-              key={event.id}
-              style={styles.eventItem}
-              onPress={() =>
-                navigation.navigate('Homepage/EventDetails', {
-                  eventId: event.event_id,
-                })
-              }
-            >
-              <Image
-                source={{
-                  uri: event.image || 'https://via.placeholder.com/300x200',
-                }}
-                style={styles.eventImage}
-              />
-              <View style={styles.eventDetails}>
-                <Text style={styles.eventText}>{event.event_name}</Text>
-                <View style={styles.eventRow}>
-                  <Ionicons name="location-outline" size={16} color="#555" />
-                  <Text style={styles.eventDetailText}>{event.location}</Text>
-                </View>
-                <View style={styles.eventRow}>
-                  <Ionicons name="calendar-outline" size={16} color="#555" />
-                  <Text style={styles.eventDetailText}>{event.date}</Text>
-                </View>
-              </View>
+    <View style={{ flex: 1 }}>
+      <ScrollView>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="#555" />
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    </ScrollView>
+            <Text style={styles.categoryName}>{categoryName}</Text>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.eventsGrid}>
+            {filteredEvents.map((event) => (
+              <TouchableOpacity
+                key={event.id}
+                style={styles.eventItem}
+                onPress={() =>
+                  navigation.navigate('Homepage/EventDetails', {
+                    eventId: event.event_id,
+                  })
+                }
+              >
+                <Image
+                  source={{
+                    uri: event.image || 'https://via.placeholder.com/300x200',
+                  }}
+                  style={styles.eventImage}
+                />
+                <View style={styles.eventDetails}>
+                  <Text style={styles.eventText}>{event.event_name}</Text>
+                  <View style={styles.eventRow}>
+                    <Ionicons name="location-outline" size={16} color="#555" />
+                    <Text style={styles.eventDetailText}>{event.location}</Text>
+                  </View>
+                  <View style={styles.eventRow}>
+                    <Ionicons name="calendar-outline" size={16} color="#555" />
+                    <Text style={styles.eventDetailText}>{event.date}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </ScrollView>
+      <Navbar />
+    </View>
   );
 };
 

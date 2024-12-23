@@ -14,8 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const API_URL = "http://localhost:3000"; // Update accordingly
-// const API_URL = "https://localhost:3000"; // Update accordingly
+const API_URL = "http://192.168.104.10:3000"; // Update accordingly
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -50,7 +49,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     try {
 
-      const response = await axios.post('http://192.168.31.42:3000/users/login', {
+      const response = await axios.post('http://192.168.103.9:3000/users/login', {
         email,
         password,
       });
@@ -77,14 +76,14 @@ export default function LoginScreen() {
         const { id_token } = result.params;
 
 
-        const response = await axios.post('http://localhost:3000/users/auth/google-token', {
+        const response = await axios.post('http://192.168.103.9:3000/users/auth/google-token', {
           idToken: id_token,
         });
         const { user, token } = response.data;
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userData', JSON.stringify(user));
         setUser(user);
-        navigation.navigate('Profile');
+        navigation.navigate('AddNewEvent');
       } else {
         Alert.alert('Error', 'Google login failed');
       }
@@ -103,14 +102,14 @@ export default function LoginScreen() {
 
       const data = await AccessToken.getCurrentAccessToken();
 
-      const response = await axios.post('http://localhost:3000/users/auth/facebook-token', {
+      const response = await axios.post('http://192.168.103.9:3000/users/auth/facebook-token', {
         accessToken: data.accessToken,
       });
       const { user, token } = response.data;
       await AsyncStorage.setItem('userToken', token);
       await AsyncStorage.setItem('userData', JSON.stringify(user));
       setUser(user);
-      navigation.navigate('Homep');
+      navigation.navigate('Profile');
     } catch (error) {
       Alert.alert('Error', 'Facebook login failed');
     }
