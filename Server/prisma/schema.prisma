@@ -56,6 +56,8 @@ model User {
   skill_level     String?
   rating          Float?
   points          Int       @default(0)
+  birthdate       DateTime? 
+  phone_number    String? 
 
   created_teams      Team[]          @relation("TeamCreator")
   team_memberships   TeamMember[]    

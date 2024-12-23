@@ -50,7 +50,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     try {
 
-      const response = await axios.post('http://192.168.1.101:3000/users/login', {
+      const response = await axios.post('http://192.168.31.42:3000/users/login', {
         email,
         password,
       });
@@ -62,7 +62,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('userToken', token);
 
       // Navigate to home page after successful login
-      navigation.navigate('MarketplaceHome'); // Adjust the route accordingly
+      navigation.navigate('Profile'); // Adjust the route accordingly
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
       alert('Invalid credentials. Please try again.');
@@ -84,7 +84,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userData', JSON.stringify(user));
         setUser(user);
-        navigation.navigate('MarketplaceHome');
+        navigation.navigate('Profile');
       } else {
         Alert.alert('Error', 'Google login failed');
       }

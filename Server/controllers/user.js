@@ -149,11 +149,10 @@ const login = async (req, res) => {
   }
 };
 
-// Social auth handler
+
 const handleSocialAuth = async (req, res) => {
   try {
     const user = req.user;
-
     const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, {
       expiresIn: "24h",
     });
@@ -163,8 +162,6 @@ const handleSocialAuth = async (req, res) => {
     res.status(500).json({ error: "Authentication failed" });
   }
 };
-
-
 
 // Handle user logout
 const logout = (req, res) => {
@@ -178,4 +175,48 @@ const logout = (req, res) => {
    }
 };
 
-module.exports = { signup, login, logout, handleSocialAuth };
+// Fetch a single user by user ID
+const getOneUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await prismaClient.user.findUnique({
+      where: { user_id: Number(id) }, // Ensure userId is a number
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Fetch user error:", error);
+    res.status(500).json({ error: "Error fetching user" });
+  }
+};
+
+const updateUserProfile = async (req, res) => {
+  const userId = req.params.id;
+  const { username, email, location, profile_picture, birthdate, phone_number } = req.body;
+
+  try {
+    const updatedUser = await prismaClient.user.update({
+      where: { user_id: parseInt(userId) },
+      data: {
+        username,
+        email,
+        location,
+        profile_picture,
+        birthdate: birthdate ? new Date(birthdate) : null, 
+        phone_number: phone_number || null, 
+      },
+    });
+
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ error: 'Failed to update user profile' });
+  }
+};
+
+module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile};

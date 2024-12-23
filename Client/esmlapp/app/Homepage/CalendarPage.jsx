@@ -16,7 +16,7 @@ const CalendarPage = () => {
     setLoading(true);
     const formattedDate = new Date(date).toISOString().split("T")[0];
     axios
-      .get(`http://192.168.104.4:3000/events/getByDate/${formattedDate}`)
+      .get(`http://192.168.103.11:3000/events/getByDate/${formattedDate}`)
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
