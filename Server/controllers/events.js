@@ -213,16 +213,12 @@ const deleteEvent = async (req, res) => {
 const getEventsByDate = async (req, res) => {
    try {
      const { date } = req.params;
-    const events = await prisma.event.findMany({
-      where: {
-        date: new Date(date),
-      },
-    });
+     const events = await prisma.event.findMany({
+       where: {
+         date: new Date(date),
+       },
+     });
 
-     if (events.length === 0) {
-       return res.status(404).json({ error: "No events found for this date" });
-    }
- 
      res.json(events);
    } catch (error) {
      res.status(500).json({ error: "Error fetching events by date", details: error.message });

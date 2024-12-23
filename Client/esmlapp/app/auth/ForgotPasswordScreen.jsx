@@ -15,7 +15,7 @@ const PasswordRecoveryScreen = () => {
   const handleNextStep = async () => {
     if (step === 1) {
       try {
-        const response = await axios.post(`http://192.168.31.42:3000/password/request-password-reset`, { 
+        const response = await axios.post(`http://192.168.104.10:3000/password/request-password-reset`, { 
           email,
         });
         console.log('Password reset request sent:', response.data);
@@ -26,7 +26,7 @@ const PasswordRecoveryScreen = () => {
       }
     } else if (step === 2) {
       try {
-        const response = await axios.post(`http://192.168.31.42:3000/password/verify-reset-code`, { 
+        const response = await axios.post(`http://192.168.104.10:3000/password/verify-reset-code`, { 
           email, 
           code,
         });
@@ -39,7 +39,7 @@ const PasswordRecoveryScreen = () => {
     } else if (step === 3) {
       if (newPassword === repeatPassword) {
         try {
-          const response = await axios.post(`http://192.168.31.42:3000/password/update-password`, { 
+          const response = await axios.post(`http://192.168.104.10:3000/password/update-password`, { 
             email, 
             newPassword 
           });

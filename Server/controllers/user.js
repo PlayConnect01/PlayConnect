@@ -181,7 +181,7 @@ const getOneUser = async (req, res) => {
 
   try {
     const user = await prismaClient.user.findUnique({
-      where: { user_id: Number(id) }, // Ensure userId is a number
+      where: { user_id: Number(id) }, // Ensure 'id' is converted to a number
     });
 
     if (!user) {
@@ -194,6 +194,7 @@ const getOneUser = async (req, res) => {
     res.status(500).json({ error: "Error fetching user" });
   }
 };
+
 
 const updateUserProfile = async (req, res) => {
   const userId = req.params.id;

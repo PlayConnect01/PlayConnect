@@ -128,7 +128,7 @@ const EditProfile = ({ route, navigation }) => {
     setIsSubmitting(true);
     try {
       await axios.put(
-        `http://192.168.31.42:3000/users/${userData.user_id}`,
+        `http://192.168.104.10:3000/users/${userData.user_id}`,
         {
           username: formData.username.trim(),
           email: formData.email.trim(),

@@ -45,7 +45,7 @@ const AddNewEvent = () => {
   const [show, setshow] = useState(false);
 
   useEffect(() => {
-    axios.get("http://192.168.100.120:3000/sports")
+    axios.get("http://192.168.104.10:3000/sports")
       .then((response) => {
         setSports(response.data);
       })
@@ -160,7 +160,7 @@ const AddNewEvent = () => {
         imageUri,  // Add imageUri to event data
       };
 
-      const response = await axios.post('http://192.168.100.120:3000/events/create', eventData, {
+      const response = await axios.post('http://192.168.104.10:3000/events/create', eventData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -30,7 +30,7 @@ const App = () => {
 
   useEffect(() => {
     axios
-      .get("http://192.168.103.11:3000/sports")
+      .get("http://192.168.104.10:3000/sports")
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -41,7 +41,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.103.11:3000/competetion")
+      .get("http://192.168.104.10:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -50,7 +50,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.103.11:3000/events/getAll")
+      .get("http://192.168.104.10:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
@@ -82,17 +82,31 @@ const App = () => {
     }
   }, [selectedCategory, events]);
 
+  const getGreeting = () => {
+    const currentHour = new Date().getHours();
+    if (currentHour < 12) {
+      return "Good Morning";
+    } else if (currentHour < 18) {
+      return "Good Afternoon";
+    } else {
+      return "Good Evening";
+    }
+  };
+  
+
   if (loading) {
     return <Text>Loading...</Text>;
   }
 
   return (
+    <View>
+       <View>
     <ScrollView>
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.date}>Friday, 20 May</Text>
-          <Text style={styles.greeting}>Good Morning</Text>
+        <Text style={styles.date}>{new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" })}</Text>
+        <Text style={styles.greeting}>{getGreeting()}</Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity onPress={() => navigation.navigate("Homepage/CalendarPage")}>
@@ -103,119 +117,12 @@ const App = () => {
             />
           </TouchableOpacity>
           <Ionicons
-            name="settings-outline"
+            name="notifications-outline"
             size={24}
             color="#555"
             style={{ marginLeft: 15 }}
           />
         </View>
-
-        <View style={styles.eventsCard}>
-          <Text style={styles.cardText}>Today's Events</Text>
-          <Text style={styles.cardProgress}>15/20</Text>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Category</Text>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categories}
-        >
-          {categories.map((category) => (
-            <View key={category.id} style={styles.categoryItem}>
-              <MaterialCommunityIcons
-                name={category.icon || "help-circle-outline"} 
-                size={30}
-                color="#555"
-                onPress={() =>
-                  navigation.navigate("CategoryEvents", {
-                    categoryName: category.name,
-                  })}
-              />
-              <Text style={styles.categoryName}>{category.name}</Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Competition of the Week</Text>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.competitions}
-        >
-          {competitions.map((competition) => (
-            <View
-              key={competition.tournament_id}
-              style={styles.competitionItem}
-            >
-              <MaterialCommunityIcons
-                name="trophy-outline"
-                size={24}
-                color="#555"
-              />
-              <Text style={styles.competitionTitle}>
-                {competition.tournament_name}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Events</Text>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categories}
-        >
-          {eventCategories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryButton,
-                selectedCategory === category.name && styles.selectedCategory,
-              ]}
-              onPress={() => setSelectedCategory(category.name)}
-            >
-              <Text style={styles.categoryText}>{category.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <ScrollView contentContainerStyle={styles.eventsGrid}>
-          {filteredEvents.map((event) => (
-            <TouchableOpacity
-              key={event.event_id}
-              style={styles.eventItem}
-              onPress={() =>
-                navigation.navigate("Homepage/EventDetails", {
-                  eventId: event.event_id,
-                })
-              }
-            >
-              <Image
-                source={{
-                  uri: event.image || "https://via.placeholder.com/300x200",
-                }}
-                style={styles.eventImage}
-              />
-              <View style={styles.eventDetails}>
-                <Text style={styles.eventText}>{event.event_name}</Text>
-                <View style={styles.eventRow}>
-                  <Ionicons name="location-outline" size={16} color="#555" />
-                  <Text style={styles.eventDetailText}>{event.location}</Text>
-                </View>
-                <View style={styles.eventRow}>
-                  <Ionicons name="calendar-outline" size={16} color="#555" />
-                  <Text style={styles.eventDetailText}>{event.date}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
 
       <View style={styles.eventsCard}>
@@ -227,17 +134,25 @@ const App = () => {
         <Text style={styles.sectionTitle}>Category</Text>
       </View>
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categories}
-      >
-        {categories.map((category) => (
-          <View key={category.id} style={styles.categoryItem}>
-            <Text style={styles.categoryIcon}>{category.icon}</Text>
-            <Text style={styles.categoryName}>{category.name}</Text>
-          </View>
-        ))}
-      </ScrollView>
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categories}
+        >
+          {categories.map((category) => (
+            <View key={category.id} style={styles.categoryItem}>
+              <MaterialCommunityIcons
+                name={category.icon || "help-circle-outline"} 
+                size={30}
+                color="#555"
+                onPress={() =>
+                  navigation.navigate("Homepage/CategoryEvents", {
+                    categoryName: category.name,
+                  })}
+              />
+              <Text style={styles.categoryName}>{category.name}</Text>
+            </View>
+          ))}
+        </ScrollView>
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Competition of the Week</Text>
@@ -307,7 +222,16 @@ const App = () => {
 </ScrollView>
 
     </View>
+
     </ScrollView>
+ </View>
+ <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => navigation.navigate("Homepage/CreateEvent")}
+      >
+        <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+      </TouchableOpacity>
+</View>
   );
 };
 
@@ -452,4 +376,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000",
   },
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    backgroundColor: "#007BFF",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 100, 
+  },
+  scrollContent: {
+    paddingBottom: 100, 
+  },  
 });

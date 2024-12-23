@@ -17,7 +17,7 @@ const CategoryEvents = () => {
   useEffect(() => {
     // Fetch all events initially
     axios
-      .get("http://192.168.103.11:3000/events/getAll")
+      .get("http://192.168.104.10:3000/events/getAll")
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
@@ -78,7 +78,7 @@ const CategoryEvents = () => {
             key={event.event_id}
             style={styles.eventItem}
             onPress={() =>
-              navigation.navigate("EventDetails", {
+              navigation.navigate("Homepage/EventDetails", {
                 eventId: event.event_id,
               })
             }

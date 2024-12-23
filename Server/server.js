@@ -79,7 +79,7 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
-
+app.use('/leaderboard', leaderboardRoutes);
 // Mount Chat Router
 app.use('/chats', chatRoutes);
 
