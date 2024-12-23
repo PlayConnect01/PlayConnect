@@ -20,9 +20,14 @@ const competetionRouter = require('./routes/competetion')
 const passwordRouter = require('./routes/handlePasswordReset .js')
 const leaderboardRoutes = require('./routes/leaderboard.js')
 const sportRoutes = require('./routes/sport');
-const  productRoutes = require('./routes/productRoutes.js')
- const cartRoutes = require ('./routes/cartRoutes.js')
- const favorites= require("./routes/favoriteRoutes.js")
+const competetionRouter = require('./routes/competetion');
+const passwordRouter = require('./routes/handlePasswordReset .js');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const favorites = require('./routes/favoriteRoutes');
+const paymentRoutes = require('./routes/Paymentrouter.js');
+
+
 const app = express();
 
 // Middleware
@@ -79,6 +84,8 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
+// Mount Chat Router
+app.use('/payments',paymentRoutes);
 app.use('/leaderboard', leaderboardRoutes);
 
 
