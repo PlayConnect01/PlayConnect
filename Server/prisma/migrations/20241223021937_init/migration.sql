@@ -11,6 +11,9 @@ CREATE TABLE `User` (
     `skill_level` VARCHAR(191) NULL,
     `rating` DOUBLE NULL,
     `points` INTEGER NOT NULL DEFAULT 0,
+    `birthdate` DATETIME(3) NULL,
+    `phone_number` VARCHAR(191) NULL,
+    `phone_country_code` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`user_id`)
@@ -190,10 +193,7 @@ CREATE TABLE `MarketplaceProduct` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
     `sport_id` INTEGER NOT NULL,
-<<<<<<<< HEAD:Server/prisma/migrations/20241218144149_init/migration.sql
-========
     `rating` INTEGER NOT NULL DEFAULT 5,
->>>>>>>> 020c0a752b2c7c76b953c43d3fbc77654ec75f02:Server/prisma/migrations/20241219153621_init/migration.sql
 
     INDEX `MarketplaceProduct_sport_id_idx`(`sport_id`),
     PRIMARY KEY (`product_id`)

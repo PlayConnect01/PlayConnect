@@ -83,7 +83,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userData', JSON.stringify(user));
         setUser(user);
-        navigation.navigate('Profile');
+        navigation.navigate('AddNewEvent');
       } else {
         Alert.alert('Error', 'Google login failed');
       }
@@ -109,7 +109,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('userToken', token);
       await AsyncStorage.setItem('userData', JSON.stringify(user));
       setUser(user);
-      navigation.navigate('Homep');
+      navigation.navigate('Profile');
     } catch (error) {
       Alert.alert('Error', 'Facebook login failed');
     }

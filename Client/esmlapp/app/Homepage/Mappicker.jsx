@@ -7,10 +7,23 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const reverseGeocode = async (coordinate) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinate.latitude}&lon=${coordinate.longitude}`
+      );
+      const data = await response.json();
+      setSearchQuery(data.display_name || `Lat: ${coordinate.latitude.toFixed(5)}, Lon: ${coordinate.longitude.toFixed(5)}`);
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      setSearchQuery(`Lat: ${coordinate.latitude.toFixed(5)}, Lon: ${coordinate.longitude.toFixed(5)}`);
+    }
+  };
+
   const handleMapPress = (event) => {
     const { coordinate } = event.nativeEvent;
     setSelectedLocation(coordinate);
-    setSearchQuery(`Lat: ${coordinate.latitude.toFixed(5)}, Lon: ${coordinate.longitude.toFixed(5)}`); 
+    reverseGeocode(coordinate);
   };
 
   return (

@@ -1,5 +1,5 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { PrismaClient } = require("@prisma/client");
 const nodemailer = require('nodemailer');
@@ -9,6 +9,7 @@ dotenv.config();
 const prismaClient = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Email transporter setup
 const transporter = nodemailer.createTransport({
   host: 'smtp.zoho.com',
   port: 465,
@@ -19,12 +20,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Enhanced email validation
 const isValidEmail = (email) => {
-
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return regex.test(email);
 };
 
+// Enhanced password validation
 const isValidPassword = (password) => {
   const minLength = 8;
   const hasUpperCase = /[A-Z]/.test(password);
@@ -46,7 +48,7 @@ const signup = async (req, res) => {
   const { email, password, username } = req.body;
 
   if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
+    return res.status(400).json({ error: "Invalid email format" });
   }
 
   if (!isValidPassword(password)) {
@@ -57,7 +59,6 @@ const signup = async (req, res) => {
   }
 
   try {
-    // Check if the user already exists
     const existingUser = await prismaClient.user.findUnique({
       where: { email },
     });
@@ -68,7 +69,6 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user in Prisma DB
     const user = await prismaClient.user.create({
       data: {
         email,
@@ -122,8 +122,7 @@ const signup = async (req, res) => {
   }
 };
 
-
-// Handle user login
+// Regular login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -166,13 +165,12 @@ const handleSocialAuth = async (req, res) => {
 // Handle user logout
 const logout = (req, res) => {
   try {
-    // If you're using cookies for JWT, clear the token cookie
-    res.clearCookie('token'); // Clears token cookie if you're using cookies for JWT
-   res.status(200).json({ message: 'Logged out successfully' });
-   } catch (error) {
-     console.error('Logout error:', error);
-     res.status(500).json({ error: 'Error logging out' });
-   }
+    res.clearCookie("token");
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ error: "Error logging out" });
+  }
 };
 
 // Fetch a single user by user ID
@@ -197,26 +195,45 @@ const getOneUser = async (req, res) => {
 
 
 const updateUserProfile = async (req, res) => {
-  const userId = req.params.id;
-  const { username, email, location, profile_picture, birthdate, phone_number } = req.body;
-
   try {
+    const userId = parseInt(req.params.id);
+    const { username, email, location, profile_picture, birthdate, phone_number, phone_country_code } = req.body;
+
+    // Validate user exists
+    const existingUser = await prismaClient.user.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const updatedUser = await prismaClient.user.update({
-      where: { user_id: parseInt(userId) },
+      where: { user_id: userId },
       data: {
-        username,
-        email,
-        location,
-        profile_picture,
-        birthdate: birthdate ? new Date(birthdate) : null, 
-        phone_number: phone_number || null, 
+        username: username || undefined,
+        email: email || undefined,
+        location: location || null,
+        profile_picture: profile_picture || null,
+        birthdate: birthdate ? new Date(birthdate) : null,
+        phone_number: phone_number || null,
+        phone_country_code: phone_country_code || null,
       },
     });
 
-    res.json({ success: true, user: updatedUser });
+    res.json({
+      success: true,
+      user: {
+        ...updatedUser,
+        password: undefined,
+      },
+    });
   } catch (error) {
     console.error('Error updating user profile:', error);
-    res.status(500).json({ error: 'Failed to update user profile' });
+    res.status(500).json({ 
+      error: 'Failed to update user profile',
+      details: error.message 
+    });
   }
 };
 

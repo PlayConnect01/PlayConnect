@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import axios from "axios";
+import Navbar from "../navbar/Navbar";
 
 const { width } = Dimensions.get("window");
 
@@ -231,8 +232,9 @@ const App = () => {
       >
         <MaterialCommunityIcons name="plus" size={24} color="#fff" />
       </TouchableOpacity>
+      <Navbar></Navbar>
 </View>
-  );
+  )
 };
 
 export default App;

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal, Image, ScrollView, ImageBackground } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-import MapPicker from '../Homepage/Mappicker'; 
+import MapPicker from '../Homepage/Mappicker';
+import * as ImagePicker from 'expo-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
-import { launchImageLibrary } from 'react-native-image-picker'; // Import the correct method
 
 const decodeToken = (token) => {
   try {
@@ -16,14 +17,14 @@ const decodeToken = (token) => {
     const base64 = base64Url.replace('-', '+').replace('_', '/');
     return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
   } catch (error) {
-    console.error('Token decoding error:', error); 
+    console.error('Token decoding error:', error);
     return null;
   }
 };
 
 global.Buffer = Buffer;
 
-const AddNewEvent = () => { 
+const AddNewEvent = () => {
   const navigation = useNavigation();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
@@ -38,14 +39,20 @@ const AddNewEvent = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  const [showMapModal, setShowMapModal] = useState(false); 
-  const [mapLocation, setMapLocation] = useState({ latitude: 37.78825, longitude: -122.4324 });
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [mapLocation, setMapLocation] = useState({ latitude: 36.85749, longitude: 10.16440 });
   const [sports, setSports] = useState([]);
-  const [imageUri, setImageUri] = useState(null);  // Add state to store the image URI
-  const [show, setshow] = useState(false);
+  const [image, setImage] = useState(null);
 
   useEffect(() => {
-    axios.get("http://192.168.104.10:3000/sports")
+    (async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Sorry, we need camera roll permissions to make this work!');
+      }
+    })();
+
+    axios.get("http://192.168.103.9:3000/sports")
       .then((response) => {
         setSports(response.data);
       })
@@ -54,6 +61,50 @@ const AddNewEvent = () => {
         Alert.alert('Error', 'Failed to load sports categories.');
       });
   }, []);
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1, 
+      });
+
+      if (!result.canceled) {
+        setImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const uploadImageToCloudinary = async (imageUri) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'event-image.jpg',
+    });
+    formData.append('upload_preset', 'PlayConnect'); 
+
+    try {
+      const response = await axios.post(
+        'https://api.cloudinary.com/v1_1/dc9siq9ry/image/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.secure_url;
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error);
+      throw error;
+    }
+  };
 
   const toggleFree = () => {
     setIsFree(!isFree);
@@ -81,39 +132,6 @@ const AddNewEvent = () => {
     setShowMapModal(false);
   };
 
-  const handleImageUpload = () => {
-    launchImageLibrary({ noData: true, mediaType: 'photo' }, (response) => {  // Use launchImageLibrary instead
-      if (response.didCancel) {
-        console.log('User canceled image picker');
-      } else if (response.errorCode) {
-        console.error('ImagePicker Error: ', response.errorMessage);
-      } else {
-        setImageUri(response.assets[0].uri);  // Extract URI from response
-        uploadImageToCloudinary(response.assets[0].uri);  // Upload image using URI
-      }
-    });
-  };
-
-  const uploadImageToCloudinary = (uri) => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: uri,
-      type: 'image/jpeg',
-      name: 'event-image.jpg',
-    });
-    formData.append('upload_preset', 'your_upload_preset');  // Replace with your Cloudinary upload preset
-
-    axios.post('https://api.cloudinary.com/v1_1/your_cloud_name/image/upload', formData)
-      .then((response) => {
-        console.log('Image uploaded successfully', response.data);
-        Alert.alert('Success', 'Image uploaded successfully');
-      })
-      .catch((error) => {
-        console.error('Error uploading image:', error);
-        Alert.alert('Error', 'Failed to upload image');
-      });
-  };
-
   const createEvent = async () => {
     if (!eventName || !note || !date || !startTime || !endTime || !location || !participants || !price) {
       Alert.alert(
@@ -121,17 +139,13 @@ const AddNewEvent = () => {
         'Please fill in all fields before creating the event.',
         [{ text: 'Okay' }]
       );
-      return; 
+      return;
     }
 
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert(
-          'Error!',
-          'No authentication token found. Please log in again.',
-          [{ text: 'Okay' }]
-        );
+        Alert.alert('Error!', 'No authentication token found. Please log in again.');
         return;
       }
 
@@ -143,6 +157,12 @@ const AddNewEvent = () => {
       const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
       if (!userId) {
         throw new Error('Could not find user ID in token');
+      }
+
+      let imageUrl = null;
+      if (image) {
+        imageUrl = await uploadImageToCloudinary(image.uri);
+        console.log(imageUrl);
       }
 
       const eventData = {
@@ -157,18 +177,20 @@ const AddNewEvent = () => {
         price: parseFloat(price),
         isFree,
         creator_id: userId,
-        imageUri,  // Add imageUri to event data
+        image: imageUrl, 
       };
+      console.log(eventData);
+      
 
-      const response = await axios.post('http://192.168.104.10:3000/events/create', eventData, {
+      const response = await axios.post('http://192.168.103.9:3000/events/create', eventData, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       Alert.alert(
         'Success!',
-        'Event created successfully!', 
+        'Event created successfully!',
         [{ text: 'Okay', onPress: () => navigation.navigate('Homepage/Homep') }]
       );
 
@@ -182,6 +204,7 @@ const AddNewEvent = () => {
       setParticipants('10');
       setPrice('0');
       setIsFree(false);
+      setImage(null);
 
     } catch (error) {
       console.error('Full error details:', error);
@@ -195,216 +218,374 @@ const AddNewEvent = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Add New Event</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Event name*"
-        value={eventName}
-        onChangeText={setEventName}
-      />
-      <TextInput
-        style={styles.note}
-        placeholder="Type the note here..."
-        value={note}
-        onChangeText={setNote}
-      />
-      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
-        <Text>{date ? date.toDateString() : "Date"}</Text>
-      </TouchableOpacity>
-      {showDatePicker && (
-        <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
-      )}
-      <View style={styles.timeContainer}>
-        <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={[styles.input, styles.timeInput]}>
-          <Text>{startTime ? startTime.toLocaleTimeString() : "Start time"}</Text>
-        </TouchableOpacity>
-        {showStartTimePicker && (
-          <DateTimePicker
-            value={startTime || new Date()}
-            onChange={onStartTimeChange}
-            mode="time"
-          />
-        )}
-        <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={[styles.input, styles.timeInput]}>
-          <Text>{endTime ? endTime.toLocaleTimeString() : "End time"}</Text>
-        </TouchableOpacity>
-        {showEndTimePicker && (
-          <DateTimePicker
-            value={endTime || new Date()}
-            onChange={onEndTimeChange}
-            mode="time"
-          />
-        )}
-      </View>
-
-      <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.input}>
-        <Text>{location || "Select Location"}</Text>
-      </TouchableOpacity>
-
-      <Modal
-        visible={showMapModal}
-        animationType="slide"
-        onRequestClose={() => setShowMapModal(false)} 
-        transparent={false}
+      <ImageBackground
+        source={{ uri: 'https://i.pinimg.com/736x/42/b7/14/42b714cb88c1de11592dacdae7161066.jpg' }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
       >
-        <View style={styles.modalContainer}>
-          <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeArrow}>
-            <Icon name="arrow-back" size={30} color="#fff" />
-          </TouchableOpacity>
-          <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
+        <View style={styles.overlay}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.formContainer}>
+              <View style={styles.headerContainer}>
+                <Text style={styles.header}>Create New Event</Text>
+                <Text style={styles.subHeader}>Fill in the details below</Text>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Basic Information</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Event name*"
+                  value={eventName}
+                  onChangeText={setEventName}
+                  placeholderTextColor="#666"
+                />
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Type the note here..."
+                  value={note}
+                  onChangeText={setNote}
+                  multiline={true}
+                  placeholderTextColor="#666"
+                />
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Date & Time</Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateTimeButton}>
+                  <Icon name="calendar-outline" size={24} color="#6200ee" style={styles.dateTimeIcon} />
+                  <Text style={styles.dateTimeText}>{date ? date.toDateString() : "Select Date"}</Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
+                )}
+
+                <View style={styles.timeContainer}>
+                  <TouchableOpacity 
+                    onPress={() => setShowStartTimePicker(true)} 
+                    style={[styles.dateTimeButton, styles.timeButton]}
+                  >
+                    <Icon name="time-outline" size={24} color="#6200ee" style={styles.dateTimeIcon} />
+                    <Text style={styles.dateTimeText}>
+                      {startTime ? startTime.toLocaleTimeString() : "Start Time"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {showStartTimePicker && (
+                    <DateTimePicker
+                      value={startTime || new Date()}
+                      mode="time"
+                      is24Hour={false}
+                      onChange={onStartTimeChange}
+                    />
+                  )}
+
+                  <TouchableOpacity 
+                    onPress={() => setShowEndTimePicker(true)} 
+                    style={[styles.dateTimeButton, styles.timeButton]}
+                  >
+                    <Icon name="time-outline" size={24} color="#6200ee" style={styles.dateTimeIcon} />
+                    <Text style={styles.dateTimeText}>
+                      {endTime ? endTime.toLocaleTimeString() : "End Time"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {showEndTimePicker && (
+                    <DateTimePicker
+                      value={endTime || new Date()}
+                      mode="time"
+                      is24Hour={false}
+                      onChange={onEndTimeChange}
+                    />
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Location</Text>
+                <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.inputWithIcon}>
+                  <Text style={styles.placeholder}>{location || "Select Location"}</Text>
+                  <Icon name="location-outline" size={24} color="#8D8D8D" />
+                </TouchableOpacity>
+
+                <Modal
+                  visible={showMapModal}
+                  animationType="slide"
+                  onRequestClose={() => setShowMapModal(false)}
+                  transparent={false}
+                >
+                  <View style={styles.modalContainer}>
+                    <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeArrow}>
+                      <Icon name="arrow-back" size={30} color="#fff" />
+                    </TouchableOpacity>
+                    <MapPicker onLocationSelect={handleLocationSelect} initialLocation={mapLocation} />
+                  </View>
+                </Modal>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Category</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={category}
+                    style={styles.pickerStyle}
+                    onValueChange={(itemValue) => setCategory(itemValue)}
+                  >
+                    <Picker.Item label="Sports" value="Sports" enabled={false} />
+                    {sports.map((sport, index) => (
+                      <Picker.Item key={index} label={sport.name} value={sport.name} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Participants</Text>
+                <View style={styles.inputGroup}>
+                  <View style={styles.inlineInput}>
+                    <Icon name="people-outline" size={24} color="#8D8D8D" style={styles.inputIcon} />
+                    <Text style={styles.label}>Participants:</Text>
+                    <TextInput
+                      style={[styles.numberInput, styles.smallInput]}
+                      keyboardType="numeric"
+                      value={participants}
+                      onChangeText={setParticipants}
+                    />
+                  </View>
+                </View>
+              </View>
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Price</Text>
+                <View style={styles.inputGroup}>
+                  <View style={styles.inlineInput}>
+                    <Icon name="wallet-outline" size={24} color="#8D8D8D" style={styles.inputIcon} />
+                    <Text style={styles.label}>Price:</Text>
+                    <TextInput
+                      style={[styles.numberInput, styles.smallInput]}
+                      keyboardType="numeric"
+                      value={price}
+                      onChangeText={setPrice}
+                      editable={!isFree}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Free</Text>
+                <View style={styles.row}>
+                  <Text>Free</Text>
+                  <Switch value={isFree} onValueChange={toggleFree} />
+                </View>
+              </View>
+              <View style={styles.inputSection}>
+                <Text style={styles.sectionTitle}>Image</Text>
+                <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+                  <View style={styles.uploadContent}>
+                    <Icon name="cloud-upload-outline" size={24} color="#8D8D8D" />
+                    <Text style={styles.uploadText}>Upload Your Image Here</Text>
+                  </View>
+                </TouchableOpacity>
+
+                {image && (
+                  <Image source={{ uri: image.uri }} style={styles.previewImage} />
+                )}
+              </View>
+
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={createEvent}
+              >
+                <Text style={styles.createButtonText}>Create Event</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
-      </Modal>
-
-      <Picker
-        selectedValue={category}
-        style={styles.select}
-        onValueChange={(itemValue) => setCategory(itemValue)} 
-      >
-        <Picker.Item label="Sports" value="Sports" enabled={false} />
-        {sports.map((sport, index) => (
-          <Picker.Item key={index} label={sport.name} value={sport.name} />
-        ))}
-      </Picker>
-
-      <View style={styles.row}>
-        <View style={styles.column}>
-          <Text>Participants:</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={participants}
-            onChangeText={setParticipants}
-          />
-        </View>
-        <View style={styles.column}>
-          <Text>Price:</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={price}
-            onChangeText={setPrice}
-            editable={!isFree}
-          />
-        </View>
-      </View>
-
-      <View style={styles.row}>
-        <Text>Free</Text>
-        <Switch value={isFree} onValueChange={toggleFree} />
-      </View>
-
-      <TouchableOpacity onPress={handleImageUpload} style={styles.uploadButton}>
-        <View style={styles.uploadContent}>
-          <Icon name="cloud-upload-outline" size={24} color="#6200ee" />
-          <Text style={styles.uploadText}>Upload Your Image Here</Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.createButton}
-        onPress={createEvent}
-      >
-        <Text style={styles.createButtonText}>Create Event</Text>
-      </TouchableOpacity>
+      </ImageBackground>
+      <Navbar />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  inputWithIcon: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  placeholder: {
+    color: '#8D8D8D',
+  },
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#fff",
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    padding: 20,
+  },
+  formContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 25,
   },
   header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  subHeader: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 10,
+  },
+  inputSection: {
+    marginBottom: 25,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 15,
+    paddingLeft: 5,
   },
   input: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 8,
+    borderColor: '#e1e1e1',
+    padding: 15,
+    marginBottom: 15,
+    borderRadius: 10,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    color: '#333',
   },
-  note: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingBottom: 50,
-    marginVertical: 8,
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  dateTimeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0e7fe',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  dateTimeIcon: {
+    marginRight: 10,
+  },
+  dateTimeText: {
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    color: '#6200ee',
   },
   timeContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  timeInput: {
-    flex: 1,
-    marginHorizontal: 4,
+  timeButton: {
+    flex: 0.48,
   },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginVertical: 8,
-  },
-  select: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginVertical: 8,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
-  },
-  column: {
-    flex: 1,
-    marginHorizontal: 4,
+  pickerContainer: {
+    backgroundColor: '#f0e7fe',
+    borderRadius: 10,
+    marginBottom: 15,
+    overflow: 'hidden',
   },
   createButton: {
-    backgroundColor: "#6200ee",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 16,
+    backgroundColor: '#6200ee',
+    padding: 18,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#6200ee',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   createButtonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
+  },
+  inputGroup: {
+    marginBottom: 10,
+  },
+  numberInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    borderRadius: 5,
+    width: '100%',
+  },
+  pickerStyle: {
+    height: 50,
+  },
+  inlineInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  label: {
+    fontWeight: 'bold',
+    marginRight: 10,
+    width: 100,
+  },
+  smallInput: {
+    width: 100,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#000',
   },
   closeArrow: {
     position: 'absolute',
     top: 40,
     left: 20,
     zIndex: 1,
+    padding: 10,
   },
   uploadButton: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    borderColor: '#ddd',
+    borderRadius: 5,
     padding: 15,
-    alignItems: "center",
-    backgroundColor: "#f9f9f9",
-    marginBottom: 10,
+    marginBottom: 5,
   },
   uploadContent: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   uploadText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: "#6200ee",
+    marginLeft: 10,
+    color: '#8D8D8D',
+  },
+  previewImage: {
+    width: '100%',
+    height: 200,
+    marginBottom: 10,
+    borderRadius: 5,
   },
 });
 
