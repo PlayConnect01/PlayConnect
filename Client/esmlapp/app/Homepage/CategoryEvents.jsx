@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
-import Navbar from '../navbar/Navbar';
 
 const { width } = Dimensions.get("window");
 
@@ -18,7 +17,7 @@ const CategoryEvents = () => {
   useEffect(() => {
     // Fetch all events initially
     axios
-      .get("http://192.168.103.11:3000/events/getAll")
+      .get("http://192.168.104.10:3000/events/getAll")
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
@@ -45,28 +44,6 @@ const CategoryEvents = () => {
   // Handle case when no events are found for the selected category
   if (filteredEvents.length === 0) {
     return (
-      <View style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.container}>
-          {/* Back Arrow and Title */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#555" />
-            </TouchableOpacity>
-            <Text style={styles.categoryTitle}>{categoryName} Events</Text>
-          </View>
-
-          {/* No Events Found Message */}
-          <View style={styles.noEventsContainer}>
-            <Text style={styles.noEventsText}>No events found in this category.</Text>
-          </View>
-        </ScrollView>
-        <Navbar />
-      </View>
-    );
-  }
-
-  return (
-    <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Back Arrow and Title */}
         <View style={styles.header}>
@@ -76,41 +53,57 @@ const CategoryEvents = () => {
           <Text style={styles.categoryTitle}>{categoryName} Events</Text>
         </View>
 
-        {/* Display Events */}
-        <ScrollView contentContainerStyle={styles.eventsGrid}>
-          {filteredEvents.map((event) => (
-            <TouchableOpacity
-              key={event.event_id}
-              style={styles.eventItem}
-              onPress={() =>
-                navigation.navigate("EventDetails", {
-                  eventId: event.event_id,
-                })
-              }
-            >
-              <Image
-                source={{
-                  uri: event.image || "https://via.placeholder.com/300x200",
-                }}
-                style={styles.eventImage}
-              />
-              <View style={styles.eventDetails}>
-                <Text style={styles.eventText}>{event.event_name}</Text>
-                <View style={styles.eventRow}>
-                  <Ionicons name="location-outline" size={16} color="#555" />
-                  <Text style={styles.eventDetailText}>{event.location}</Text>
-                </View>
-                <View style={styles.eventRow}>
-                  <Ionicons name="calendar-outline" size={16} color="#555" />
-                  <Text style={styles.eventDetailText}>{event.date}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {/* No Events Found Message */}
+        <View style={styles.noEventsContainer}>
+          <Text style={styles.noEventsText}>No events found in this category.</Text>
+        </View>
       </ScrollView>
-      <Navbar />
-    </View>
+    );
+  }
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Back Arrow and Title */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#555" />
+        </TouchableOpacity>
+        <Text style={styles.categoryTitle}>{categoryName} Events</Text>
+      </View>
+
+      {/* Display Events */}
+      <ScrollView contentContainerStyle={styles.eventsGrid}>
+        {filteredEvents.map((event) => (
+          <TouchableOpacity
+            key={event.event_id}
+            style={styles.eventItem}
+            onPress={() =>
+              navigation.navigate("Homepage/EventDetails", {
+                eventId: event.event_id,
+              })
+            }
+          >
+            <Image
+              source={{
+                uri: event.image || "https://via.placeholder.com/300x200",
+              }}
+              style={styles.eventImage}
+            />
+            <View style={styles.eventDetails}>
+              <Text style={styles.eventText}>{event.event_name}</Text>
+              <View style={styles.eventRow}>
+                <Ionicons name="location-outline" size={16} color="#555" />
+                <Text style={styles.eventDetailText}>{event.location}</Text>
+              </View>
+              <View style={styles.eventRow}>
+                <Ionicons name="calendar-outline" size={16} color="#555" />
+                <Text style={styles.eventDetailText}>{event.date}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </ScrollView>
   );
 };
 

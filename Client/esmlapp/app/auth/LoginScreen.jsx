@@ -55,14 +55,16 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://192.168.11.115:3000/users/login', {
+      const response = await axios.post('http://192.168.104.10:3000/users/login', {
         email,
         password,
       });
 
       const { token } = response.data;
       await AsyncStorage.setItem('userToken', token);
-      navigation.navigate('MarketplaceHome');
+
+      // Navigate to home page after successful login
+      navigation.navigate('Homep'); // Adjust the route accordingly
     } catch (error) {
       Alert.alert('Error', 'Invalid login credentials!');
     } finally {

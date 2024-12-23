@@ -49,9 +49,9 @@ model User {
   username        String
   email           String    @unique
   password          String?
-  auth_provider     String?  
+  auth_provider     String?
   auth_provider_id  String?
-  location        String?   
+  location        String?
   profile_picture String?
   skill_level     String?
   rating          Float?
@@ -61,25 +61,25 @@ model User {
   phone_country_code String?
 
   created_teams      Team[]          @relation("TeamCreator")
-  team_memberships   TeamMember[]    
+  team_memberships   TeamMember[]
   created_tournaments Tournament[]    @relation("TournamentCreator")
   created_events     Event[]         @relation("EventCreator")
-  event_participations EventParticipant[]    
-  sports            UserSport[]    
-  calendar_events   Calendar[]    
-  chat_memberships  ChatMember[]    
+  event_participations EventParticipant[]
+  sports            UserSport[]
+  calendar_events   Calendar[]
+  chat_memberships  ChatMember[]
   sent_messages     Message[]        @relation("MessageSender")
-  achievements      Achievement[]    
-  cart              Cart?    
+  achievements      Achievement[]
+  cart              Cart?
   favorites         Favorite[]       // Add this new relation
   reports_received  Report[]         @relation("ReportsReceived")
   reports_sent      Report[]         @relation("ReportsSent")
-  points_logs       PointsLog[]    
+  points_logs       PointsLog[]
   notifications     Notification[]   @relation("UserNotifications")
   matches_as_user_1   Match[]        @relation("User1Matches")
   matches_as_user_2   Match[]        @relation("User2Matches")
   initiated_chats     Chat[]         @relation("ChatInitiator")
-  
+
   // New relationships for video calls
   initiated_calls     VideoCall[]    @relation("CallInitiator")
   received_calls      VideoCall[]    @relation("CallParticipant")
