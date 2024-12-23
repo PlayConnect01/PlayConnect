@@ -24,7 +24,7 @@ const CategoryEvents = () => {
 
   useEffect(() => {
     axios
-      .get('http://192.168.104.10:3000/events/getAll')
+      .get('http://192.168.11.115:3000/events/getAll')
       .then((response) => {
         setAllEvents(response.data);
         const events = response.data.filter((event) => event.category === categoryName);

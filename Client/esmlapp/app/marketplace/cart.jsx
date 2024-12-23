@@ -18,7 +18,7 @@ const CartScreen = ({ navigation }) => {
 
         if (!userId) throw new Error('User ID not found');
 
-        const response = await fetch(`http://192.168.104.10:3000/cart/cart/user/${userId}`);
+        const response = await fetch(`http://192.168.11.115:3000/cart/cart/user/${userId}`);
         console.log('Fetch cart response status:', response.status);
 
         if (!response.ok) throw new Error('Failed to fetch cart items');
@@ -44,7 +44,7 @@ const CartScreen = ({ navigation }) => {
       const updatedItem = cartItems.find((item) => item.cart_item_id === cartItemId);
       const newQuantity = Math.max(1, updatedItem.quantity + increment);
 
-      const response = await fetch(`http://192.168.104.10:3000/cart/items/${cartItemId}`, {
+      const response = await fetch(`http://192.168.11.115:3000/cart/items/${cartItemId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, quantity: newQuantity }),
@@ -78,7 +78,7 @@ const CartScreen = ({ navigation }) => {
         throw new Error('No item selected for deletion');
       }
   
-      const response = await fetch(`http://192.168.104.10:3000/cart/cart/item/${itemToDelete}`, {
+      const response = await fetch(`http://192.168.11.115:3000/cart/cart/item/${itemToDelete}`, {
         method: 'DELETE',
       });
   

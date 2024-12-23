@@ -1,49 +1,94 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 const Navbar = () => {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  const isActive = (screenName) => route.name === screenName;
+
   return (
     <View style={styles.navbar}>
       <TouchableOpacity
-        style={styles.navItem}
-        onPress={() => navigation.navigate("Homepage/Homep")}
+        style={[styles.navItem, isActive("Homep") && styles.activeItem]}
+        onPress={() => navigation.navigate("Homep")}
       >
-        <Icon name="home-outline" size={24} color="black" />
-        <Text style={styles.navText}>Home</Text>
+        <Icon
+          name="home-outline"
+          size={24}
+          color={isActive("Homep") ? "white" : "gray"}
+        />
+        <Text style={isActive("Homep") ? styles.navTextActive : styles.navText}>
+          Home
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.navItem}
-        onPress={() => navigation.navigate("Chat/MessagePage")}
+        style={[styles.navItem, isActive("MessagePage") && styles.activeItem]}
+        onPress={() => navigation.navigate("MessagePage")}
       >
-        <Icon name="chatbubble-outline" size={24} color="gray" />
-        <Text style={styles.navTextInactive}>Message</Text>
+        <Icon
+          name="chatbubble-outline"
+          size={24}
+          color={isActive("MessagePage") ? "white" : "gray"}
+        />
+        <Text
+          style={
+            isActive("MessagePage") ? styles.navTextActive : styles.navText
+          }
+        >
+          Message
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.navItem, styles.activeItem]}
+        style={[styles.navItem, isActive("Match") && styles.activeItem]}
         onPress={() => navigation.navigate("Match")}
       >
-        <Icon name="flame-outline" size={24} color="white" />
+        <Icon
+          name="flame-outline"
+          size={24}
+          color={isActive("Match") ? "white" : "gray"}
+        />
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.navItem}
-        onPress={() => navigation.navigate("marketplace/Home")}
+        style={[
+          styles.navItem,
+          isActive("MarketplaceHome") && styles.activeItem,
+        ]}
+        onPress={() => navigation.navigate("MarketplaceHome")}
       >
-        <Icon name="cart-outline" size={24} color="gray" />
-        <Text style={styles.navTextInactive}>Market</Text>
+        <Icon
+          name="cart-outline"
+          size={24}
+          color={isActive("MarketplaceHome") ? "white" : "gray"}
+        />
+        <Text
+          style={
+            isActive("MarketplaceHome") ? styles.navTextActive : styles.navText
+          }
+        >
+          Market
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.navItem}
-        onPress={() => navigation.navigate("profile/ProfilePage")}
+        style={[styles.navItem, isActive("Profile") && styles.activeItem]}
+        onPress={() => navigation.navigate("Profile")}
       >
-        <Icon name="person-outline" size={24} color="gray" />
-        <Text style={styles.navTextInactive}>Profile</Text>
+        <Icon
+          name="person-outline"
+          size={24}
+          color={isActive("Profile") ? "white" : "gray"}
+        />
+        <Text
+          style={isActive("Profile") ? styles.navTextActive : styles.navText}
+        >
+          Profile
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -66,15 +111,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#6200ee",
     borderRadius: 30,
     padding: 12,
-    alignItems: "center",
-    justifyContent: "center",
   },
   navText: {
-    color: "black",
+    color: "gray",
     marginTop: 5,
   },
-  navTextInactive: {
-    color: "gray",
+  navTextActive: {
+    color: "white",
     marginTop: 5,
   },
 });

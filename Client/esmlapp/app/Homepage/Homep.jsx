@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import axios from "axios";
-import Navbar from "../navbar/Navbar";
+
 
 const { width } = Dimensions.get("window");
 
@@ -31,7 +31,7 @@ const App = () => {
 
   useEffect(() => {
     axios
-      .get("http://192.168.104.10:3000/sports")
+      .get("http://192.168.11.115:3000/sports")
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -42,7 +42,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.10:3000/competetion")
+      .get("http://192.168.11.115:3000/competetion")
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -51,7 +51,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.10:3000/events/getAll")
+      .get("http://192.168.11.115:3000/events/getAll")
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
@@ -232,7 +232,7 @@ const App = () => {
       >
         <MaterialCommunityIcons name="plus" size={24} color="#fff" />
       </TouchableOpacity>
-      <Navbar></Navbar>
+      
 </View>
   )
 };

@@ -52,7 +52,7 @@ const AddNewEvent = () => {
       }
     })();
 
-    axios.get("http://192.168.104.10:3000/sports")
+    axios.get("http://192.168.11.115:3000/sports")
       .then((response) => {
         setSports(response.data);
       })

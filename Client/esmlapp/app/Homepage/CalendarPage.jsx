@@ -14,7 +14,7 @@ const CalendarPage = () => {
   const fetchEvents = (date) => {
     setLoading(true);
     axios
-      .get(`http://192.168.104.10:3000/events/getByDate/${date}`)
+      .get(`http://192.168.11.115:3000/events/getByDate/${date}`)
       .then((response) => {
         setEvents(response.data);
         setLoading(false);

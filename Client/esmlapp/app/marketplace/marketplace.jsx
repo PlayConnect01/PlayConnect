@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from './Confirmationadding';
 import SearchBar from './SearchBar';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Navbar from "../navbar/Navbar";
+
 
 
 const Marketplace = () => {
@@ -38,12 +38,12 @@ const Marketplace = () => {
     try {
       setLoading(true);
       const allProductsResponse = await axios.get(
-        "http://192.168.104.10:3000/product/discounted"
+        "http://192.168.11.115:3000/product/discounted"
       );
       setProducts(allProductsResponse.data);
 
       const topDiscountedResponse = await axios.get(
-        "http://192.168.104.10:3000/product/discounted/top-three"
+        "http://192.168.11.115:3000/product/discounted/top-three"
       );
       setDiscounts(topDiscountedResponse.data);
 
@@ -60,7 +60,7 @@ const Marketplace = () => {
       const token = await AsyncStorage.getItem('userToken');
       const userId = await AsyncStorage.getItem('userId');
       if (token && userId) {
-        const response = await axios.get(`http://192.168.104.10:3000/cart/count/${userId}`, {
+        const response = await axios.get(`http://192.168.11.115:3000/cart/count/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -108,7 +108,7 @@ const Marketplace = () => {
       setLoading(true);
 
       const response = await axios.post(
-        'http://192.168.104.10:3000/cart/cart/add',
+        'http://192.168.11.115:3000/cart/cart/add',
         {
           userId: userId,
           productId: itemToAdd.product_id,
@@ -437,9 +437,7 @@ const Marketplace = () => {
             message={`Great choice! Do you want to add ${itemToAdd ? itemToAdd.name : ''} to your cart? 🛒✨`}
           />
         </View>
-        <View style={styles.navbarContainer}>
-          <Navbar />
-        </View>
+        
       </View>
     </SafeAreaView>
   );
@@ -549,23 +547,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
   },
-  navbarContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
+ 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
