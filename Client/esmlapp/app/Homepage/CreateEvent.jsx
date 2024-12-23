@@ -52,7 +52,7 @@ const AddNewEvent = () => {
       }
     })();
 
-    axios.get("http://192.168.103.9:3000/sports")
+    axios.get("http://192.168.104.10:3000/sports")
       .then((response) => {
         setSports(response.data);
       })
@@ -182,7 +182,7 @@ const AddNewEvent = () => {
       console.log(eventData);
       
 
-      const response = await axios.post('http://192.168.103.9:3000/events/create', eventData, {
+      const response = await axios.post('http://192.168.104.10:3000/events/create', eventData, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

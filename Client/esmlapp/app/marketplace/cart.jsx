@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView } from 'react-native';
-import axios from 'axios';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
 
@@ -10,71 +9,102 @@ const CartScreen = ({ navigation }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
-  // Fetch cart items from the backend
+  // Fetch cart items
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        // Get the user ID from AsyncStorage
         const userId = await AsyncStorage.getItem('userId');
-        
-        if (!userId) {
-          console.error("No user ID found");
-          return;
-        }
+        console.log('Fetched User ID:', userId);
 
-        const response = await axios.get(`http://192.168.1.101:3000/cart/cart/user/${userId}`);
-        setCartItems(response.data);
+        if (!userId) throw new Error('User ID not found');
+
+        const response = await fetch(`http://192.168.104.10:3000/cart/cart/user/${userId}`);
+        console.log('Fetch cart response status:', response.status);
+
+        if (!response.ok) throw new Error('Failed to fetch cart items');
+
+        const data = await response.json();
+        setCartItems(data);
       } catch (error) {
-        console.error("Error fetching cart items:", error);
+        Alert.alert('Error', error.message || 'Failed to fetch cart items.');
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchCartItems();
   }, []);
 
-  const updateQuantity = async (id, increment) => {
+  const updateQuantity = async (cartItemId, increment) => {
     try {
       const userId = await AsyncStorage.getItem('userId');
-      if (!userId) return;
+      if (!userId) throw new Error('User ID not found');
+
+      const updatedItem = cartItems.find((item) => item.cart_item_id === cartItemId);
+      const newQuantity = Math.max(1, updatedItem.quantity + increment);
+
+      const response = await fetch(`http://192.168.104.10:3000/cart/items/${cartItemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, quantity: newQuantity }),
+      });
+
+      console.log('Update quantity response status:', response.status);
+
+      if (!response.ok) throw new Error('Failed to update item quantity');
 
       setCartItems((prevItems) =>
         prevItems.map((item) =>
-          item.id === id
-            ? { ...item, quantity: Math.max(1, item.quantity + increment) }
-            : item
+          item.cart_item_id === cartItemId ? { ...item, quantity: newQuantity } : item
         )
       );
-
-      // You might want to add an API call here to update the quantity on the backend
     } catch (error) {
-      console.error("Error updating quantity:", error);
+      Alert.alert('Error', error.message || 'Failed to update item quantity.');
+      console.error(error);
     }
   };
 
-  const deleteProduct = async (cartItemId) => {
+  const deleteProduct = (cartItemId) => {
+    console.log(`Preparing to delete item with ID: ${cartItemId}`);
     setItemToDelete(cartItemId);
     setModalVisible(true);
   };
-
+  
   const confirmDelete = async () => {
+    console.log(`Deleting item with ID: ${itemToDelete}`);
     try {
-      if (!itemToDelete) return;
-
-      const userId = await AsyncStorage.getItem('userId');
-      if (!userId) return;
-
-      await axios.delete(`http://192.168.1.101:3000/cart/cart/item/${itemToDelete}`);
+      if (!itemToDelete) {
+        throw new Error('No item selected for deletion');
+      }
+  
+      const response = await fetch(`http://192.168.104.10:3000/cart/cart/item/${itemToDelete}`, {
+        method: 'DELETE',
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to delete item. Status: ${response.status}`);
+      }
+  
       setCartItems((prevItems) => prevItems.filter((item) => item.cart_item_id !== itemToDelete));
-      setModalVisible(false);
+      console.log(`Item with ID ${itemToDelete} deleted successfully.`);
+      setItemToDelete(null); // Reset after successful deletion
     } catch (error) {
-      console.error("Error deleting cart item:", error.response?.data || error.message);
+      Alert.alert('Error', error.message || 'Failed to delete item.');
+      console.error(error);
+    } finally {
+      setModalVisible(false); // Close modal regardless of success or failure
     }
   };
+  
+  const calculateTotal = () =>
+    cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  const calculateTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const navigateToDeliveryServices = () => {
+    navigation.navigate('delivery', {
+      cartTotal: calculateTotal(),
+      cartItems,
+    });
   };
 
   if (loading) {
@@ -87,64 +117,69 @@ const CartScreen = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-    <Text style={styles.title}>Cart</Text>
+      <Text style={styles.title}>Cart</Text>
 
-    {cartItems.length === 0 ? (
-      <Text style={styles.emptyCart}>Your cart is empty</Text>
-    ) : (
-      <>
-        {cartItems.map((item) => (
-          <View key={item.cart_item_id} style={styles.cartItem}>
-            <Image source={{ uri: item.image }} style={styles.itemImage} />
-            <View style={styles.itemDetails}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemPrice}>${item.price}</Text>
-            </View>
-            <View style={styles.quantityControl}>
+      {cartItems.length === 0 ? (
+        <Text style={styles.emptyCart}>Your cart is empty</Text>
+      ) : (
+        <>
+          {cartItems.map((item) => (
+            <View key={item.cart_item_id} style={styles.cartItem}>
+              <Image
+                source={{ uri: item.image }}
+                style={styles.itemImage}
+                defaultSource={require('../../assets/images/sportscube.png')} // Add placeholder image
+              />
+              <View style={styles.itemDetails}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+              </View>
+              <View style={styles.quantityControl}>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => updateQuantity(item.cart_item_id, -1)}
+                >
+                  <Text style={styles.quantityText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.quantity}>{item.quantity}</Text>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => updateQuantity(item.cart_item_id, 1)}
+                >
+                  <Text style={styles.quantityText}>+</Text>
+                </TouchableOpacity>
+              </View>
               <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={() => updateQuantity(item.cart_item_id, -1)}
+                onPress={() => deleteProduct(item.cart_item_id)}
+                style={styles.deleteButton}
               >
-                <Text style={styles.quantityText}>-</Text>
-              </TouchableOpacity>
-              <Text style={styles.quantity}>{item.quantity}</Text>
-              <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={() => updateQuantity(item.cart_item_id, 1)}
-              >
-                <Text style={styles.quantityText}>+</Text>
+                <Text style={styles.deleteText}>Delete</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => deleteProduct(item.cart_item_id)} style={styles.deleteButton}>
-              <Text style={styles.deleteText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+          ))}
 
-        <View style={styles.paymentDetails}>
-          <View style={styles.paymentTotal}>
+          <View style={styles.paymentDetails}>
             <Text style={styles.paymentLabel}>Total ({cartItems.length} items)</Text>
-            <Text style={styles.paymentPrice}>${calculateTotal()}</Text>
+            <Text style={styles.paymentPrice}>${calculateTotal().toFixed(2)}</Text>
           </View>
-        </View>
 
-        <TouchableOpacity
-          style={styles.checkoutButton}
-          onPress={() => navigation.navigate('DeliveryServices')}
-        >
-          <Text style={styles.checkoutText}>Choose Delivery Services</Text>
-        </TouchableOpacity>
-      </>
-    )}
+          <TouchableOpacity style={styles.checkoutButton} onPress={navigateToDeliveryServices}>
+            <Text style={styles.checkoutText}>Choose Delivery Services</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
-    <ConfirmationModal
-      visible={isModalVisible}
-      onConfirm={confirmDelete}
-      onCancel={() => setModalVisible(false)}
-      message="Are you sure you want to delete this item? 🗑️🤔"
-    />
-  </ScrollView>
-);
+<ConfirmationModal 
+  visible={isModalVisible}
+  onConfirm={confirmDelete}
+  onCancel={() => {
+    setItemToDelete(null); // Reset itemToDelete if canceled
+    setModalVisible(false);
+  }}
+  message="Are you sure you want to delete this item? 🗑️🤔"
+/>
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({

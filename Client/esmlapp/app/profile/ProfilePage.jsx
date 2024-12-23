@@ -44,20 +44,20 @@ const ProfilePage = ({ token }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userResponse = await axios.get(`http://1192.168.103.9:3000/users/${userId}`);
+        const userResponse = await axios.get(`http://192.168.104.10:3000/users/${userId}`);
         setUserData(userResponse.data.user);
 
-        const leaderboardResponse = await axios.get(`http://1192.168.103.9:3000/leaderboard`);
+        const leaderboardResponse = await axios.get(`http://192.168.104.10:3000/leaderboard`);
         const leaderboard = leaderboardResponse.data;
 
         const userRank = leaderboard.findIndex(user => user.id === userId) + 1;
         setRank(userRank);
 
-        const eventsResponse = await axios.get('http://1192.168.103.9:3000/events/getAll');
+        const eventsResponse = await axios.get('http://192.168.104.10:3000/events/getAll');
         const userEvents = eventsResponse.data.filter(event => event.creator_id === userId);
         setEvents(userEvents);
 
-        const participatedEventsResponse = await axios.get(`http://1192.168.103.9:3000/events/getParticipated/${userId}`);
+        const participatedEventsResponse = await axios.get(`http://192.168.104.10:3000/events/getParticipated/${userId}`);
         setParticipatedEvents(participatedEventsResponse.data);
 
       } catch (error) {

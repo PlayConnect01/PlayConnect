@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ImageBackground, 
+  Image, 
+  KeyboardAvoidingView, 
+  Platform 
+} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -31,7 +41,7 @@ const SignUpScreen = () => {
 
   return (
     <ImageBackground
-    source={require('../../assets/images/sportscube.png')} // Replace with your actual background image URL
+      source={require('../../assets/images/sportscube.png')} 
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>
@@ -39,12 +49,13 @@ const SignUpScreen = () => {
           style={styles.content}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          
-          
+          <Image
+            source={require('../../assets/images/sportscube.png')}
+            style={styles.image}
+          />
           <Text style={styles.title}>Welcome</Text>
           <Text style={styles.subtitle}>Join the Team Today!</Text>
 
-          {/* Username Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="user" size={20} color="#999" />
             <TextInput
@@ -56,7 +67,6 @@ const SignUpScreen = () => {
             />
           </View>
 
-          {/* Email Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="envelope" size={20} color="#999" />
             <TextInput
@@ -69,7 +79,6 @@ const SignUpScreen = () => {
             />
           </View>
 
-          {/* Password Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="lock" size={20} color="#999" />
             <TextInput
@@ -85,7 +94,6 @@ const SignUpScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Confirm Password Input */}
           <View style={styles.inputContainer}>
             <FontAwesome name="lock" size={20} color="#999" />
             <TextInput
@@ -122,7 +130,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Overlay background color for readability
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: 20,
   },
   content: {
@@ -134,12 +142,18 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     marginBottom: 20,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#FFD700',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   subtitle: {
     fontSize: 16,
@@ -162,25 +176,29 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   linkText: {
-    color: '#6e3de8',
+    color: '#FFD700',
     fontSize: 14,
     marginBottom: 20,
     textDecorationLine: 'underline',
   },
   button: {
-    backgroundColor: '#6e3de8',
+    backgroundColor: '#FFD700',
     borderRadius: 8,
     width: '100%',
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   buttonText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 18,
     fontWeight: 'bold',
   },
 });
 
 export default SignUpScreen;
-

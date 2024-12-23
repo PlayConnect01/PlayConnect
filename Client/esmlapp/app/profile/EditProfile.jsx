@@ -190,7 +190,7 @@ const EditProfile = ({ route, navigation }) => {
       console.log(userId);
       
       const response = await axios.put(
-        `http://192.168.103.9:3000/users/${userId}`,
+        `http://192.168.104.10:3000/users/${userId}`,
         requestData,
         {
           headers: {
