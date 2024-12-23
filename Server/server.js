@@ -16,10 +16,10 @@ const eventRoutes = require('./routes/events');
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
 const chatRoutes = require('./routes/chat');
-const competetionRouter = require('./routes/competetion')
 const passwordRouter = require('./routes/handlePasswordReset .js')
 const leaderboardRoutes = require('./routes/leaderboard.js')
 const sportRoutes = require('./routes/sport');
+const competetionRouter = require('./routes/competetion');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
@@ -85,8 +85,6 @@ app.use('/favorites', favorites);
 // Mount Chat Router
 app.use('/payments',paymentRoutes);
 app.use('/leaderboard', leaderboardRoutes);
-
-
 // Mount Chat Router
 app.use('/chats', chatRoutes);
 

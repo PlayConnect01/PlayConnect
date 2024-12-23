@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from './Confirmationadding';
 import SearchBar from './SearchBar';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Navbar from "../navbar/Navbar";
+
 
 
 const Marketplace = () => {
@@ -437,9 +437,7 @@ const Marketplace = () => {
             message={`Great choice! Do you want to add ${itemToAdd ? itemToAdd.name : ''} to your cart? 🛒✨`}
           />
         </View>
-        <View style={styles.navbarContainer}>
-          <Navbar />
-        </View>
+        
       </View>
     </SafeAreaView>
   );
@@ -549,23 +547,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
   },
-  navbarContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
+ 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
