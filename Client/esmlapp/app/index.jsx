@@ -25,7 +25,7 @@ import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
 import EditProfile from "./profile/EditProfile";
-
+import FavoritesScreen from "./marketplace/FavoritesScreen";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -181,6 +181,15 @@ export default function App() {
           component={() => (
             <MainLayout>
               <PaymentSuccessScreen />
+            </MainLayout>
+          )}
+        />
+
+<Stack.Screen
+          name="FavoritesScreen"
+          component={() => (
+            <MainLayout>
+              <FavoritesScreen/>
             </MainLayout>
           )}
         />
