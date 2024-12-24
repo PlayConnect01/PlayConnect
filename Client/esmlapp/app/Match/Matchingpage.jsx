@@ -59,7 +59,7 @@ const Match = () => {
       const fetchPotentialMatches = async () => {
         try {
           const response = await axios.get(
-            `http://192.168.104.10:3000/matches/common-sports/${currentUserId}`
+            `http://192.168.104.5:3000/matches/common-sports/${currentUserId}`
           );
 
           if (response.data.length > 0) {
@@ -93,7 +93,7 @@ const Match = () => {
     try {
       const currentUser = users[currentUserIndex];
       await axios.post(
-        `http://192.168.104.10:3000/matches/create`,
+        `http://192.168.104.5:3000/matches/create`,
         {
           userId1: currentUserId,
           userId2: currentUser.user_id,

@@ -9,7 +9,7 @@ export default function ProductCard({ productId }) {
   useEffect(() => {
     const fetchProductDetail = async () => {
       try {
-        const response = await axios.get(`http://192.168.104.10:3000/product/products/${productId}`); // Use the productId prop
+        const response = await axios.get(`http://192.168.104.5:3000/product/products/${productId}`); // Use the productId prop
         setProduct(response.data);
       } catch (error) {
         console.error("Error fetching product details:", error);

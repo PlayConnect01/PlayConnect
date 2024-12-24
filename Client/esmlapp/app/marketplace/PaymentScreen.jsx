@@ -69,7 +69,7 @@ const PaymentScreen = ({ route, navigation }) => {
       const userId = await AsyncStorage.getItem('userId');
       
       // Simulate payment processing
-      const paymentResponse = await axios.post('http://192.168.104.10:3000/payments/process', {
+      const paymentResponse = await axios.post('http://192.168.104.5:3000/payments/process', {
         userId,
         amount: cartTotal + deliveryFee, // Ensure this calculation
         paymentMethod: selectedMethod,
@@ -78,7 +78,7 @@ const PaymentScreen = ({ route, navigation }) => {
 
       if (paymentResponse.data.success) {
         // Clear cart after successful payment
-        await axios.delete(`http://192.168.104.10:3000/cart/cart/clear/${userId}`);
+        await axios.delete(`http://192.168.104.5:3000/cart/cart/clear/${userId}`);
         
         navigation.navigate('PaymentSuccess', {
           amount: cartTotal + deliveryFee,

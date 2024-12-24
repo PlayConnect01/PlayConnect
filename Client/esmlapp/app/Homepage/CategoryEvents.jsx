@@ -17,7 +17,7 @@ const CategoryEvents = () => {
   useEffect(() => {
     // Fetch all events initially
     axios
-      .get("http://192.168.104.10:3000/events/getAll")
+      .get("http://192.168.104.5:3000/events/getAll")
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
@@ -47,7 +47,7 @@ const CategoryEvents = () => {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Back Arrow and Title */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
             <Ionicons name="arrow-back" size={24} color="#555" />
           </TouchableOpacity>
           <Text style={styles.categoryTitle}>{categoryName} Events</Text>

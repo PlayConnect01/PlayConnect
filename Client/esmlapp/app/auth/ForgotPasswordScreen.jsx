@@ -20,7 +20,7 @@ const PasswordRecoveryScreen = () => {
   const handleNextStep = async () => {
     if (step === 1) {
       try {
-        await axios.post(`http://192.168.104.10:3000/password/request-password-reset`, { email });
+        await axios.post(`http://192.168.104.5:3000/password/request-password-reset`, { email });
         showAlert('Success', 'Password reset request sent. Check your email for the code.');
         setStep(2);
       } catch (error) {
@@ -28,7 +28,7 @@ const PasswordRecoveryScreen = () => {
       }
     } else if (step === 2) {
       try {
-        await axios.post(`http://192.168.104.10:3000/password/verify-reset-code`, { email, code });
+        await axios.post(`http://192.168.104.5:3000/password/verify-reset-code`, { email, code });
         showAlert('Success', 'Code verified. You can now reset your password.');
         setStep(3);
       } catch (error) {
@@ -37,7 +37,7 @@ const PasswordRecoveryScreen = () => {
     } else if (step === 3) {
       if (newPassword === repeatPassword) {
         try {
-          await axios.post(`http://192.168.104.10:3000/password/update-password`, { email, newPassword });
+          await axios.post(`http://192.168.104.5:3000/password/update-password`, { email, newPassword });
           showAlert('Success', 'Password reset successfully. You can now log in.');
           navigation.navigate('Login');
         } catch (error) {

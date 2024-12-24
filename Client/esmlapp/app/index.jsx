@@ -16,13 +16,13 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import Profile from "./profile/ProfilePage";
-import MarketplaceHome from "./marketplace/marketplace";
 import products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen'
+import Marketplace from "./marketplace/marketplace"
 const Stack = createStackNavigator();
 import EditProfile from "./profile/EditProfile"
 export default function App() {
@@ -30,7 +30,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       
         <Stack.Navigator
-          initialRouteName="Landing"
+          initialRouteName="Login"
           screenOptions={{ headerShown: false }}
         >
           {/* Auth Screens */}
@@ -57,7 +57,7 @@ export default function App() {
 
 
           {/* Marketplace */}
-          <Stack.Screen name="MarketplaceHome" component={MarketplaceHome} />
+          <Stack.Screen name="Marketplace" component={Marketplace} />
           <Stack.Screen name="products" component={products} />
           <Stack.Screen name="ProductDetail" component={ProductDetail} />
           <Stack.Screen name="CartScreen" component={CartScreen} />

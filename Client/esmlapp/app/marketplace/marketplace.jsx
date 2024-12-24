@@ -23,7 +23,7 @@ import Navbar from "../navbar/Navbar";
 
 
 const Marketplace = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation();   
   const [products, setProducts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
@@ -38,12 +38,12 @@ const Marketplace = () => {
     try {
       setLoading(true);
       const allProductsResponse = await axios.get(
-        "http://192.168.104.10:3000/product/discounted"
+        "http://192.168.104.5:3000/product/discounted"
       );
       setProducts(allProductsResponse.data);
 
       const topDiscountedResponse = await axios.get(
-        "http://192.168.104.10:3000/product/discounted/top-three"
+        "http://192.168.104.5:3000/product/discounted/top-three"
       );
       setDiscounts(topDiscountedResponse.data);
 
@@ -60,7 +60,7 @@ const Marketplace = () => {
       const token = await AsyncStorage.getItem('userToken');
       const userId = await AsyncStorage.getItem('userId');
       if (token && userId) {
-        const response = await axios.get(`http://192.168.104.10:3000/cart/count/${userId}`, {
+        const response = await axios.get(`http://192.168.104.5:3000/cart/count/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -108,7 +108,7 @@ const Marketplace = () => {
       setLoading(true);
 
       const response = await axios.post(
-        'http://192.168.104.10:3000/cart/cart/add',
+        'http://192.168.104.5:3000/cart/cart/add',
         {
           userId: userId,
           productId: itemToAdd.product_id,
@@ -842,3 +842,4 @@ const styles = StyleSheet.create({
 
 export default Marketplace;
 
+ 

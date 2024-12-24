@@ -52,7 +52,7 @@ const MessagePage = ({ navigation }) => {
 
   const fetchAcceptedMatches = async (userId) => {
     try {
-      const response = await axios.get(`http://192.168.103.14:3000/matches/accepted/${userId}`);
+      const response = await axios.get(`http://192.168.104.5:3000/matches/accepted/${userId}`);
       console.log("ahmed"  , userId)
       setMatches(response.data);
       console.log(response.data);
