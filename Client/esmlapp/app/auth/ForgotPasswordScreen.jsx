@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 
 import { BASE_URL } from '../../.env/Api';
+
 const PasswordRecoveryScreen = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -120,7 +121,7 @@ const PasswordRecoveryScreen = () => {
 
         <TouchableOpacity style={styles.button} onPress={handleNextStep}>
           <LinearGradient
-            colors={['#ff8c00', '#ff6600']}
+            colors={['#3498db', '#2980b9']}
             style={styles.gradientButton}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
