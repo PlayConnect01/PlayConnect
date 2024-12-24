@@ -14,8 +14,17 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import NotificationsModal from '../components/NotificationsModal';
 
-axios.defaults.timeout = 5000;
+const API_URL = 'http://192.168.103.15:3000';
+
+const defaultConfig = {
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+  timeout: 5000
+};
 
 const decodeJWT = (token) => {
   const base64Payload = token.split('.')[1];
@@ -23,10 +32,12 @@ const decodeJWT = (token) => {
   return JSON.parse(payload);
 };
 
-const Matchingpage = () => {
+const Match = () => {
   const [users, setUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const position = useRef(new Animated.ValueXY()).current;
   const navigation = useNavigation();
 
@@ -58,9 +69,11 @@ const Matchingpage = () => {
     if (currentUserId) {
       const fetchPotentialMatches = async () => {
         try {
-          const response = await axios.get(
-            `http://192.168.0.201:3000/matches/common-sports/${currentUserId}`
-          );
+          const response = await axios({
+            ...defaultConfig,
+            method: 'get',
+            url: `${API_URL}/matches/common-sports/${currentUserId}`
+          });
 
           if (response.data.length > 0) {
             setUsers(response.data);
@@ -78,6 +91,26 @@ const Matchingpage = () => {
     }
   }, [currentUserId]);
 
+  useEffect(() => {
+    if (currentUserId) {
+      // Fetch unread notifications count
+      const fetchUnreadCount = async () => {
+        try {
+          const response = await axios({
+            ...defaultConfig,
+            method: 'get',
+            url: `${API_URL}/notifications/${currentUserId}/unread/count`
+          });
+          setUnreadNotifications(response.data.count);
+        } catch (error) {
+          console.error('Error fetching unread notifications:', error);
+        }
+      };
+
+      fetchUnreadCount();
+    }
+  }, [currentUserId, showNotifications]);
+
   const handleNextUser = () => {
     if (currentUserIndex < users.length - 1) {
       setCurrentUserIndex((prev) => prev + 1);
@@ -92,18 +125,16 @@ const Matchingpage = () => {
 
     try {
       const currentUser = users[currentUserIndex];
-      await axios.post(
-        `http://192.168.0.201:3000/matches/create`,
-        {
+      await axios({
+        ...defaultConfig,
+        method: 'post',
+        url: `${API_URL}/matches/create`,
+        data: {
           userId1: currentUserId,
           userId2: currentUser.user_id,
           sportId: currentUser.sports[0]?.sport_id,
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 10000,
         }
-      );
+      });
 
       Animated.timing(position, {
         toValue: { x: 500, y: 0 },
@@ -144,66 +175,6 @@ const Matchingpage = () => {
     },
   });
 
-  const renderCard = () => {
-    const user = users[currentUserIndex];
-    if (!user) {
-      return null;
-    }
-
-    return (
-      <Animated.View
-        style={[
-          styles.card,
-          {
-            transform: [
-              {
-                translateX: position.x,
-              },
-              {
-                translateY: position.y,
-              },
-              {
-                rotate: position.x.interpolate({
-                  inputRange: [-200, 0, 200],
-                  outputRange: ['-10deg', '0deg', '10deg'],
-                }),
-              },
-            ],
-          },
-        ]}
-        {...panResponder.panHandlers}
-      >
-        <Image source={{ uri: user.profile_picture }} style={styles.image} />
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>
-            {user.username || 'Unknown User'} 
-          </Text>
-          <Text style={styles.location}>
-            {user.location || 'Location not available'}
-          </Text>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>Online</Text>
-          </View>
-        </View>
-        <View style={styles.actions}>
-
-          <TouchableOpacity
-            style={[styles.actionButton, styles.dislikeButton]}
-            onPress={handleDislike}
-          >
-            <Ionicons name="close" size={30} color="#FF3B30" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.likeButton]}
-            onPress={handleLike}
-          >
-            <Ionicons name="checkmark" size={30} color="#34C759" />
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    );
-  };
-
   if (!currentUserId) {
     return (
       <View style={styles.container}>
@@ -212,23 +183,98 @@ const Matchingpage = () => {
     );
   }
 
+  const currentUser = users[currentUserIndex];
+
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading users...</Text>
+        <Text>Utilisez la photo de profil</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
+      {/* Header with notification icon */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={() => setShowNotifications(true)}
+        >
+          <Ionicons name="notifications" size={24} color="#333" />
+          {unreadNotifications > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {unreadNotifications > 99 ? '99+' : unreadNotifications}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('MessagePage')}>
           <Ionicons name="chatbubble-ellipses-outline" size={30} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => Alert.alert('Notifications', 'No new notifications.')}>
-          <Ionicons name="notifications-outline" size={30} color="#000" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.cardContainer}>
-        {renderCard()}
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.card,
+            {
+              transform: [
+                { translateX: position.x },
+                { translateY: position.y },
+                {
+                  rotate: position.x.interpolate({
+                    inputRange: [-200, 0, 200],
+                    outputRange: ['-10deg', '0deg', '10deg'],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Image
+            source={{ uri: currentUser.profile_picture }} // 
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>
+              {currentUser.username || 'Unknown User'} 
+            </Text>
+            <Text style={styles.location}>
+              {currentUser.location || 'Location not available'}
+            </Text>
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>Online</Text>
+            </View>
+          </View>
+        </Animated.View>
       </View>
 
       <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.dislikeButton]}
+          onPress={handleDislike}
+        >
+          <Ionicons name="close" size={30} color="#FF3B30" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.likeButton]}
+          onPress={handleLike}
+        >
+          <Ionicons name="checkmark" size={30} color="#34C759" />
+        </TouchableOpacity>
       </View>
+
+      {/* Notifications Modal */}
+      <NotificationsModal
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        userId={currentUserId}
+      />
     </View>
   );
 };
@@ -241,9 +287,30 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 15,
     backgroundColor: '#fff',
-    elevation: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 5,
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#ff4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   cardContainer: {
     flex: 1,
@@ -291,18 +358,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 12,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-
   actionButtons: {
     position: 'absolute',
     bottom: 20,
@@ -329,4 +384,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Matchingpage;
+export default Match;

@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const chatController = require('../controllers/chat');
+const cloudinary = require('../config/cloudinary');
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, '../uploads');
@@ -32,6 +33,19 @@ const upload = multer({
     }
 });
 
+const imageStorage = multer.memoryStorage();
+const imageUpload = multer({ 
+    storage: imageStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type'));
+        }
+    }
+});
+
 router.post('/audio/:chatId', upload.single('audio'), async (req, res) => {
     try {
         if (!req.file) {
@@ -49,7 +63,7 @@ router.post('/audio/:chatId', upload.single('audio'), async (req, res) => {
 
         // Generate the URL for the uploaded file
         const fileName = path.basename(req.file.path);
-        const fileUrl = `http://192.168.103.14:3000/uploads/${encodeURIComponent(fileName)}`;
+        const fileUrl = `http://192.168.103.15:3000/uploads/${encodeURIComponent(fileName)}`;
         
         console.log('Generated audio URL:', fileUrl);
         
@@ -63,6 +77,36 @@ router.post('/audio/:chatId', upload.single('audio'), async (req, res) => {
     } catch (error) {
         console.error('Error handling audio upload:', error);
         res.status(500).json({ error: 'Failed to process audio message' });
+    }
+});
+
+// Image upload route
+router.post('/upload/image', imageUpload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image file provided' });
+        }
+
+        const chatId = req.body.chatId;
+        const senderId = req.body.senderId;
+
+        // Convert buffer to base64
+        const b64 = Buffer.from(req.file.buffer).toString('base64');
+        const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataURI, {
+            resource_type: 'image',
+            folder: 'chat_images'
+        });
+
+        // Handle the image message using controller
+        const message = await chatController.handleImageMessage(chatId, senderId, result.secure_url);
+        
+        res.status(201).json(message);
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 

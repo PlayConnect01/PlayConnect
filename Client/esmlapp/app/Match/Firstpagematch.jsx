@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const Match = () => {
+const App = () => {
   const navigation = useNavigation();
   
   const handleChatNow = () => {
-    navigation.navigate('Matching');
+    navigation.navigate('Matchingpage');
   };
 
   return (
@@ -107,4 +107,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Match;
+export default App;

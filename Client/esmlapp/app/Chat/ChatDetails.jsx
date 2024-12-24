@@ -8,32 +8,16 @@ import {
     TextInput,
     ScrollView,
     Alert,
+    Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import io from 'socket.io-client';
 import axios from 'axios';
 import VoiceMessageHandler from './components/VoiceMessageHandler';
 import AudioMessage from './components/AudioMessage';
+import ImageMessageHandler from './components/ImageMessageHandler';
 
-const API_URL = 'http://192.168.0.201:3000';
-
-const axiosInstance = axios.create({
-    baseURL: API_URL,
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
-    }
-});
-
-axiosInstance.interceptors.response.use(
-    response => response,
-    error => {
-        console.error('API Error:', error);
-        const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
-        Alert.alert('Error', errorMessage);
-        return Promise.reject(error);
-    }
-);
+const API_URL = 'http://192.168.103.15:3000';
 
 const ChatDetails = ({ route, navigation }) => {
     const { user, chatId, currentUserId } = route.params;
@@ -41,9 +25,9 @@ const ChatDetails = ({ route, navigation }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedImage, setSelectedImage] = useState(null);
     const scrollViewRef = useRef(null);
     const socketRef = useRef(null);
-    const sentMessagesRef = useRef(new Set());
 
     const initializeSocket = useCallback(() => {
         if (socketRef.current) {
@@ -60,38 +44,16 @@ const ChatDetails = ({ route, navigation }) => {
 
         socket.on('connect', () => {
             console.log('Connected to socket server');
-            socket.emit('join_chat', { chatId, userId: currentUserId });
+            socket.emit('joinChat', chatId);
         });
 
-        socket.on('receive_message', (message) => {
+        socket.on('message', (message) => {
             console.log('Received message:', message);
-            setMessages((prevMessages) => {
-                if (message.sender_id === currentUserId && 
-                    sentMessagesRef.current.has(message.message_id)) {
-                    return prevMessages;
-                }
-                
-                const isDuplicate = prevMessages.some((msg) => 
-                    msg.message_id === message.message_id
-                );
-
-                if (isDuplicate) return prevMessages;
-                
-                const filteredMessages = prevMessages.filter(
-                    msg => msg.message_id !== `temp_${message.content}`
-                );
-
-                if (message.message_type === 'AUDIO') {
-                    message.voice_file_url = message.content;
-                }
-
-                return [...filteredMessages, message];
-            });
-            sentMessagesRef.current.delete(message.message_id);
-            
-            setTimeout(() => {
+            // Only add the message if it's not from the current user
+            if (message.sender_id !== currentUserId) {
+                setMessages(prev => [...prev, message]);
                 scrollViewRef.current?.scrollToEnd({ animated: true });
-            }, 100);
+            }
         });
 
         socket.on('disconnect', () => {
@@ -108,7 +70,7 @@ const ChatDetails = ({ route, navigation }) => {
     const loadMessages = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await axiosInstance.get(`/chats/${chatId}/messages`);
+            const response = await axios.get(`${API_URL}/chats/${chatId}/messages`);
             setMessages(response.data || []);
         } catch (error) {
             console.error('Error loading messages:', error);
@@ -121,43 +83,21 @@ const ChatDetails = ({ route, navigation }) => {
     const handleSendMessage = useCallback(async () => {
         if (!newMessage.trim()) return;
 
-        const tempMessageId = `temp_${newMessage.trim()}`;
-        const tempMessage = {
-            message_id: tempMessageId,
-            sender_id: currentUserId,
-            content: newMessage.trim(),
-            sent_at: new Date().toISOString(),
-            sender: {
-                username: user.name,
-                profile_picture: user.image
-            },
-            status: 'sending',
-        };
-
-        setMessages((prev) => [...prev, tempMessage]);
-        setNewMessage('');
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-
         try {
-            const response = await axiosInstance.post(`/chats/${chatId}/messages`, {
+            const response = await axios.post(`${API_URL}/chats/${chatId}/messages`, {
+                content: newMessage,
                 senderId: currentUserId,
-                content: tempMessage.content,
+                messageType: 'TEXT'
             });
-            sentMessagesRef.current.add(response.data.message_id);
-            socketRef.current?.emit('send_message', {
-                chatId,
-                senderId: currentUserId,
-                message: response.data,
-            });
+
+            setMessages(prev => [...prev, response.data]);
+            setNewMessage('');
+            scrollViewRef.current?.scrollToEnd({ animated: true });
         } catch (error) {
-            setMessages((prev) =>
-                prev.map((msg) =>
-                    msg.message_id === tempMessageId ? { ...msg, status: 'failed' } : msg
-                )
-            );
-            Alert.alert('Error', 'Failed to send message. Please try again.');
+            console.error('Error sending message:', error);
+            Alert.alert('Error', 'Failed to send message');
         }
-    }, [chatId, currentUserId, newMessage, user]);
+    }, [chatId, currentUserId, newMessage]);
 
     const handleAudioMessage = useCallback((audioMessage) => {
         console.log('Handling audio message:', audioMessage);
@@ -213,107 +153,144 @@ const ChatDetails = ({ route, navigation }) => {
                         })}
                     </Text>
                 )}
-                <View style={[
-                    styles.messageContainer,
-                    isCurrentUser ? styles.messageSent : styles.messageReceived
-                ]}>
-                    <View style={styles.messageContent}>
-                        {!isCurrentUser && (
-                            <Image 
-                                source={{ uri: message.sender?.profile_picture }} 
-                                style={styles.messageUserImage} 
-                            />
-                        )}
-                        <View style={[
-                            styles.messageTextContainer,
-                            isCurrentUser ? styles.messageTextContainerSent : styles.messageTextContainerReceived
-                        ]}>
-                            {message.message_type === 'AUDIO' ? (
-                                <AudioMessage 
-                                    audioUrl={message.voice_file_url || message.content} 
-                                    isCurrentUser={isCurrentUser}
-                                    sender={message.sender}
-                                    timestamp={message.sent_at}
+                {message.message_type === 'IMAGE' ? (
+                    <TouchableOpacity onPress={() => setSelectedImage(message.content)}>
+                        <Image
+                            source={{ uri: message.content }}
+                            style={[
+                                styles.messageImage,
+                                isCurrentUser ? styles.messageImageSent : styles.messageImageReceived
+                            ]}
+                            resizeMode="cover"
+                        />
+                    </TouchableOpacity>
+                ) : (
+                    <View style={[
+                        styles.messageContainer,
+                        isCurrentUser ? styles.messageSent : styles.messageReceived
+                    ]}>
+                        <View style={styles.messageContent}>
+                            {!isCurrentUser && (
+                                <Image 
+                                    source={{ uri: message.sender?.profile_picture }} 
+                                    style={styles.messageUserImage} 
                                 />
-                            ) : (
-                                <Text style={[
-                                    styles.messageText,
-                                    isCurrentUser ? styles.messageTextSent : styles.messageTextReceived
-                                ]}>
-                                    {message.content}
-                                </Text>
                             )}
+                            <View style={[
+                                styles.messageTextContainer,
+                                isCurrentUser ? styles.messageTextContainerSent : styles.messageTextContainerReceived
+                            ]}>
+                                {message.message_type === 'AUDIO' ? (
+                                    <AudioMessage 
+                                        audioUrl={message.voice_file_url || message.content} 
+                                        isCurrentUser={isCurrentUser}
+                                        sender={message.sender}
+                                        timestamp={message.sent_at}
+                                    />
+                                ) : (
+                                    <Text style={[
+                                        styles.messageText,
+                                        isCurrentUser ? styles.messageTextSent : styles.messageTextReceived
+                                    ]}>
+                                        {message.content}
+                                    </Text>
+                                )}
+                            </View>
                         </View>
                     </View>
-                </View>
+                )}
             </React.Fragment>
         );
     };
 
     return (
         <View style={styles.container}>
-            {isInVideoCall ? (
-                <VideoCall
+            <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Image 
+                        source={{ uri: user.profile_picture }} 
+                        style={styles.profileImage} 
+                    />
+                    <Text style={styles.username}>{user.username}</Text>
+                </View>
+            </View>
+            <ScrollView 
+                ref={scrollViewRef}
+                style={styles.messagesContainer}
+                onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <Text>Loading messages...</Text>
+                    </View>
+                ) : messages.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Text>No messages yet. Start the conversation!</Text>
+                    </View>
+                ) : (
+                    messages.map((message, index) => renderMessage(message, index))
+                )}
+                <View style={styles.bottomSpacing} />
+            </ScrollView>
+
+            <View style={styles.inputContainer}>
+                <ImageMessageHandler
                     chatId={chatId}
                     currentUserId={currentUserId}
-                    recipientId={user.id}
-                    onEndCall={() => setIsInVideoCall(false)}
+                    onImageUpload={(imageMessage) => {
+                        // Add the message locally immediately
+                        setMessages(prev => [...prev, imageMessage]);
+                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                        // Emit the message through socket
+                        socketRef.current?.emit('message', {
+                            chat_id: chatId,
+                            ...imageMessage
+                        });
+                    }}
                 />
-            ) : (
-                <>
-                    <View style={styles.header}>
-                        <View style={styles.headerLeft}>
-                            <TouchableOpacity onPress={() => navigation.goBack()}>
-                                <Ionicons name="arrow-back" size={24} color="#000" />
-                            </TouchableOpacity>
-                            <Image 
-                                source={{ uri: user.profile_picture }} 
-                                style={styles.profileImage} 
-                            />
-                            <Text style={styles.username}>{user.username}</Text>
-                        </View>
-                        <VideoCallButton 
-                            style={styles.videoCallButton}
-                        />
+                <VoiceMessageHandler 
+                    chatId={chatId}
+                    currentUserId={currentUserId}
+                    onAudioMessage={handleAudioMessage}
+                />
+                <TextInput
+                    style={styles.input}
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                    placeholder="Type a message..."
+                    multiline
+                />
+                <TouchableOpacity
+                    style={styles.sendButton}
+                    onPress={handleSendMessage}
+                    disabled={!newMessage.trim()}
+                >
+                    <View style={styles.sendButtonContainer}>
+                        <Ionicons name="send" size={20} color="#FFFFFF" />
                     </View>
-                    <ScrollView 
-                        ref={scrollViewRef}
-                        style={styles.messagesContainer}
-                        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-                    >
-                        {isLoading ? (
-                            <View style={styles.loadingContainer}>
-                                <Text>Loading messages...</Text>
-                            </View>
-                        ) : messages.length === 0 ? (
-                            <View style={styles.emptyContainer}>
-                                <Text>No messages yet. Start the conversation!</Text>
-                            </View>
-                        ) : (
-                            messages.map((message, index) => renderMessage(message, index))
-                        )}
-                        <View style={styles.bottomSpacing} />
-                    </ScrollView>
-
-                    <View style={styles.inputContainer}>
-                        <TextInput
-                            style={styles.input}
-                            value={newMessage}
-                            onChangeText={setNewMessage}
-                            placeholder="Type a message..."
-                            multiline
-                        />
-                        <VoiceMessageHandler 
-                            onAudioUploaded={handleAudioMessage}
-                            chatId={chatId}
-                            currentUserId={currentUserId}
-                        />
-                        <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-                            <Ionicons name="send" size={24} color="#007AFF" />
-                        </TouchableOpacity>
-                    </View>
-                </>
-            )}
+                </TouchableOpacity>
+            </View>
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={!!selectedImage}
+                onRequestClose={() => setSelectedImage(null)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setSelectedImage(null)}
+                >
+                    <Image
+                        source={{ uri: selectedImage }}
+                        style={styles.modalImage}
+                        resizeMode="contain"
+                    />
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 };
@@ -354,24 +331,73 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
     },
-    videoCallButton: {
-        backgroundColor: '#4F46E5',
+    backButton: {
+        padding: 8,
+        marginRight: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(98, 0, 238, 0.05)',
     },
-    messageContainer: {
-        marginBottom: 4,
-        maxWidth: '70%',
+    userInfo: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 4,
     },
-    messageContent: {
+    userNameContainer: {
+        flex: 1,
+    },
+    userStatusContainer: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    messageReceived: {
-        alignSelf: 'flex-start',
-        marginRight: 40,
+    userName: {
+        fontSize: 17,
+        fontWeight: '600',
+        color: '#000000',
+        letterSpacing: 0.3,
+        marginRight: 8,
+    },
+    dotSeparator: {
+        width: 3,
+        height: 3,
+        borderRadius: 1.5,
+        backgroundColor: '#666',
+        marginRight: 8,
+    },
+    userUsername: {
+        fontSize: 13,
+        color: '#666',
+        fontWeight: '500',
+    },
+    headerIcons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    iconButton: {
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(98, 0, 238, 0.05)',
+    },
+    messagesContainer: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: '#FAFAFA',
+    },
+    messageContainer: {
+        flexDirection: 'row',
+        marginVertical: 4,
+        paddingHorizontal: 16,
     },
     messageSent: {
-        alignSelf: 'flex-end',
-        marginLeft: 40,
+        justifyContent: 'flex-end',
+    },
+    messageReceived: {
+        justifyContent: 'flex-start',
+    },
+    messageContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        maxWidth: '80%',
     },
     messageUserImage: {
         width: 28,
@@ -383,41 +409,26 @@ const styles = StyleSheet.create({
         borderColor: '#fff',
     },
     messageTextContainer: {
-        padding: 8,
+        borderRadius: 20,
+        paddingVertical: 8,
         paddingHorizontal: 12,
-        borderRadius: 16,
         maxWidth: '100%',
-        elevation: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 2,
-    },
-    messageTextContainerReceived: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 4,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+        backgroundColor: 'transparent',
     },
     messageTextContainerSent: {
-        backgroundColor: '#6200ee',
-        borderTopRightRadius: 4,
-        elevation: 2,
-        shadowColor: '#6200ee',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
+        backgroundColor: '#4FA5F5',
+    },
+    messageTextContainerReceived: {
+        backgroundColor: '#E8E8E8',
     },
     messageText: {
-        fontSize: 14,
-        lineHeight: 18,
-        color: '#1a1a1a',
+        fontSize: 16,
     },
     messageTextSent: {
-        color: '#fff',
+        color: '#FFFFFF',
     },
     messageTextReceived: {
-        color: '#1a1a1a',
+        color: '#000000',
     },
     messageTime: {
         fontSize: 9,
@@ -468,8 +479,16 @@ const styles = StyleSheet.create({
     },
     sendButton: {
         padding: 8,
-        borderRadius: 20,
-        backgroundColor: '#6200ee',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    sendButtonContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#4FA5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     loadingContainer: {
         flex: 1,
@@ -502,6 +521,37 @@ const styles = StyleSheet.create({
     },
     bottomSpacing: {
         height: 20,
+    },
+    imageWrapper: {
+        backgroundColor: 'transparent',
+        padding: 0,
+        margin: 0,
+    },
+    messageImage: {
+        width: 200,
+        height: 200,
+        borderRadius: 12,
+        marginVertical: 5,
+    },
+    messageImageSent: {
+        alignSelf: 'flex-end',
+        marginLeft: 60,
+        marginRight: 10,
+    },
+    messageImageReceived: {
+        alignSelf: 'flex-start',
+        marginRight: 60,
+        marginLeft: 10,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalImage: {
+        width: '100%',
+        height: '90%',
     },
 });
 

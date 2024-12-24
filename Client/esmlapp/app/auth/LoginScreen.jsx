@@ -1,4 +1,4 @@
-import React, { useState, useRef , useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -35,7 +35,7 @@ export default function LoginScreen() {
   // Handle regular login with email and password
 const handleLogin = async () => {
     try {
-        const response = await axios.post('http://192.168.0.201:3000/users/login', {
+        const response = await axios.post('http://192.168.103.15:3000/users/login', {
             email,
             password,
         });
@@ -48,7 +48,6 @@ console.log(user , "userrrrrr");
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userId', JSON.stringify(user.user_id));
      
-        
         // Navigate to home page after successful login
         navigate.navigate('Match');
     } catch (error) {

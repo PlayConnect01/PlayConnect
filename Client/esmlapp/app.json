@@ -8,20 +8,14 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.esmlapp"
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.eyasahbeni.esmlapp",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       },
       "package": "com.esmlapp"
     },
-    "ios": {
-      "bundleIdentifier": "com.eyasahbeni.esmlapp"
-    },
-    "userInterfaceStyle": "automatic",
     "web": {
       "bundler": "metro",
       "output": "static"
@@ -38,8 +32,7 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "tsconfigPaths": true
+      "typedRoutes": true
     }
   }
 }

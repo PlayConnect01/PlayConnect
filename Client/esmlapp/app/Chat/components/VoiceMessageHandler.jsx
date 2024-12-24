@@ -11,26 +11,22 @@ import { Audio } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.0.201:3000';
-
-// Create axios instance with default config
-const api = axios.create({
-    baseURL: API_URL,
-    timeout: 10000,
-    headers: {
-        'Accept': 'application/json',
-    }
-});
+const API_URL = 'http://192.168.103.15:3000';
 
 const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
     const recordingRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [recordingDuration, setRecordingDuration] = useState(0);
+    const timerRef = useRef(null);
 
     useEffect(() => {
         return () => {
             if (recordingRef.current) {
                 recordingRef.current.stopAndUnloadAsync();
+            }
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
             }
         };
     }, []);
@@ -55,6 +51,12 @@ const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
 
                 recordingRef.current = recording;
                 setIsRecording(true);
+                setRecordingDuration(0);
+                
+                // Démarrer le compteur
+                timerRef.current = setInterval(() => {
+                    setRecordingDuration(prev => prev + 1);
+                }, 1000);
             } else {
                 Alert.alert('Permission required', 'Please grant microphone permission to record audio messages.');
             }
@@ -68,7 +70,14 @@ const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
         try {
             if (!recordingRef.current) return;
 
+            // Arrêter le compteur
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+
             setIsRecording(false);
+            setRecordingDuration(0);
             await recordingRef.current.stopAndUnloadAsync();
             const uri = recordingRef.current.getURI();
             recordingRef.current = null;
@@ -79,52 +88,39 @@ const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
         }
     };
 
+    const formatDuration = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
     const uploadAudio = async (uri) => {
+        if (!uri) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('audio', {
+            uri,
+            type: 'audio/m4a',
+            name: 'audio.m4a'
+        });
+
         try {
-            setUploading(true);
-            const formData = new FormData();
-            
-            formData.append('audio', {
-                uri: uri,
-                type: 'audio/m4a',
-                name: 'recording.m4a'
-            });
-            formData.append('senderId', currentUserId.toString());
-
-            console.log('Uploading to:', `${API_URL}/chats/audio/${chatId}`);
-
-            const response = await api.post(`/chats/audio/${chatId}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            console.log('Upload response:', response.data);
-
-            if (response.data) {
-                // Create a message object that matches the server's format
-                const audioMessage = {
-                    message_id: `temp_${Date.now()}`,
-                    content: response.data.voice_file_url,
-                    voice_file_url: response.data.voice_file_url,
-                    message_type: 'AUDIO'
-                };
-
-                // Call the callback with the audio message
-                onAudioUploaded(audioMessage);
-                
-                // Emit socket event for real-time updates
-                if (window.socket) {
-                    window.socket.emit('send_audio', {
-                        chatId,
-                        senderId: currentUserId,
-                        audioUrl: response.data.voice_file_url,
-                        messageType: 'AUDIO'
-                    });
+            const response = await axios.post(
+                `${API_URL}/chats/${chatId}/upload-audio`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
                 }
+            );
+
+            if (response.data && response.data.audioUrl) {
+                onAudioUploaded(response.data.audioUrl);
             }
         } catch (error) {
-            console.error('Error uploading audio:', error);
+            console.error('Failed to upload audio:', error);
             Alert.alert('Error', 'Failed to upload audio message');
         } finally {
             setUploading(false);
@@ -132,27 +128,48 @@ const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
     };
 
     return (
-        <TouchableOpacity 
-            onPress={isRecording ? stopRecording : startRecording}
-            style={styles.recordButton}
-        >
-            {uploading ? (
-                <ActivityIndicator color="#6B46C1" size="small" />
-            ) : (
-                <MaterialCommunityIcons
-                    name={isRecording ? "stop" : "microphone"}
-                    size={24}
-                    color="#6B46C1"
-                />
+        <View style={styles.container}>
+            {isRecording && (
+                <Text style={styles.timer}>
+                    {formatDuration(recordingDuration)}
+                </Text>
             )}
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.button}
+                onPress={isRecording ? stopRecording : startRecording}
+                disabled={uploading}
+            >
+                {uploading ? (
+                    <ActivityIndicator color="#4FA5F5" />
+                ) : (
+                    <MaterialCommunityIcons
+                        name={isRecording ? "stop" : "microphone"}
+                        size={24}
+                        color={isRecording ? "#FF0000" : "#4FA5F5"}
+                    />
+                )}
+            </TouchableOpacity>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    recordButton: {
-        padding: 8,
+    container: {
+        alignItems: 'center',
     },
+    button: {
+        padding: 8,
+        backgroundColor: 'transparent',
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    timer: {
+        fontSize: 12,
+        color: '#666',
+        marginBottom: 4,
+    }
 });
 
 export default VoiceMessageHandler;
