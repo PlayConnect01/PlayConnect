@@ -16,7 +16,7 @@ import VoiceMessageHandler from './components/VoiceMessageHandler';
 import AudioMessage from './components/AudioMessage';
 import VideoCall from './components/VideoCall';
 
-const API_URL = 'http://192.168.103.14:3000';
+const API_URL = 'http://192.168.104.10:3000';
 
 const axiosInstance = axios.create({
     baseURL: API_URL,

@@ -8,21 +8,17 @@ import { Calendar } from "react-native-calendars";
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
   const fetchEvents = (date) => {
-    setLoading(true);
     axios
       .get(`http://192.168.104.10:3000/events/getByDate/${date}`)
       .then((response) => {
         setEvents(response.data);
-        setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching events:", error);
         Alert.alert("Error", "Failed to load events. Please try again later.");
-        setLoading(false);
       });
   };
 
@@ -31,13 +27,40 @@ const CalendarPage = () => {
   }, [selectedDate]);
 
   const handleDayPress = (day) => {
-    setSelectedDate(day.dateString);
-    fetchEvents(day.dateString);
+    const selectedDate = day.dateString;
+    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+
+    setSelectedDate(selectedDate); // Set the selected date for display purposes
+
+    if (selectedDate < today) { // Check if the selected date is in the past
+      setEvents([]); // Clear events for past dates
+    } else {
+      fetchEvents(selectedDate); // Fetch events only for today or future dates
+    }
   };
 
-  if (loading) {
-    return <Text>Loading...</Text>;
-  }
+  const formatTime = (timeString) => {
+    const date = new Date(timeString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const getMarkedDates = () => {
+    const marked = {};
+    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+
+    // Mark past dates as disabled
+    for (let i = 0; i < 30; i++) { // Adjust the range as needed
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateString = date.toISOString().split("T")[0];
+      marked[dateString] = { disabled: true, color: "#d3d3d3" }; // Grey out past dates
+    }
+
+    // Mark the selected date
+    marked[selectedDate] = { selected: true, marked: true, selectedColor: "#0095FF" };
+
+    return marked;
+  };
 
   return (
     <View style={styles.container}>
@@ -47,40 +70,53 @@ const CalendarPage = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Calendar Title */}
+      <Text style={styles.calendarTitle}>Events Calendar</Text>
+
       {/* Calendar */}
       <Calendar
         onDayPress={handleDayPress}
-        markedDates={{
-          [selectedDate]: { selected: true, marked: true, selectedColor: "blue" },
-        }}
+        markedDates={getMarkedDates()}
         theme={{
           selectedDayBackgroundColor: "blue",
           todayTextColor: "red",
-          arrowColor: "blue",
+          arrowColor: "#0095FF",
+          monthTextColor: "#000",
+          textDayFontFamily: "sans-serif",
+          textMonthFontFamily: "sans-serif-bold",
+          textDayFontSize: 16,
+          textMonthFontSize: 20,
+          textDayHeaderFontSize: 14,
         }}
       />
 
       {/* Event List */}
       <View style={styles.eventsContainer}>
-        {loading ? (
-          <Text style={styles.loadingText}>Loading...</Text>
-        ) : events.length > 0 ? (
+        {events.length > 0 ? (
           <FlatList
             data={events}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.event_id.toString()}
             renderItem={({ item }) => (
-              <View style={styles.eventItem}>
+              <TouchableOpacity
+                style={styles.eventItem}
+                onPress={() =>
+                  navigation.navigate("Homepage/EventDetails", {
+                    eventId: item.event_id,
+                  })
+                }
+              >
+                <Text style={styles.eventTitle}>{item.event_name}</Text>
                 <View style={styles.eventTimeContainer}>
-                  <Text style={styles.eventTime}>{item.time}</Text>
-                  <MaterialCommunityIcons name="map-marker-outline" size={16} color="#555" />
+                  <MaterialCommunityIcons name="timer" size={16} color="#0095FF" />
+                  <Text style={styles.eventTime}>{`${formatTime(item.start_time)} - ${formatTime(item.end_time)}`}</Text>
+                  <MaterialCommunityIcons name="map-marker-outline" size={16} color="#0095FF" />
                   <Text style={styles.eventLocation}>{item.location}</Text>
                 </View>
-                <Text style={styles.eventTitle}>{item.title}</Text>
                 <Text style={styles.eventParticipants}>
                   <MaterialCommunityIcons name="account-multiple" size={16} color="#555" />
                   {` Participants: ${item.participants}`}
                 </Text>
-              </View>
+              </TouchableOpacity>
             )}
           />
         ) : (
@@ -88,13 +124,17 @@ const CalendarPage = () => {
         )}
       </View>
 
-
       <TouchableOpacity
         style={styles.floatingButton}
         onPress={() => navigation.navigate("Homepage/CreateEvent")}
       >
         <MaterialCommunityIcons name="plus" size={24} color="#fff" />
       </TouchableOpacity>
+
+      {/* Display message for past dates */}
+      {events.length === 0 && selectedDate < new Date().toISOString().split("T")[0] && (
+        <Text style={styles.noEventsText}>No events for this day.</Text>
+      )}
     </View>
   );
 };
@@ -113,11 +153,6 @@ const styles = StyleSheet.create({
   eventsContainer: {
     flex: 1,
     padding: 20,
-  },
-  loadingText: {
-    textAlign: "center",
-    color: "#555",
-    fontSize: 16,
   },
   noEventsText: {
     textAlign: "center",
@@ -164,7 +199,7 @@ const styles = StyleSheet.create({
     right: 20,
     width: 60,
     height: 60,
-    backgroundColor: "#007BFF",
+    backgroundColor: "#0095FF",
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
@@ -174,6 +209,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     zIndex: 100,
+  },
+  calendarTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: 20,
+    color: "#333",
   },
 });
 

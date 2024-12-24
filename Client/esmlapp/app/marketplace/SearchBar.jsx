@@ -45,7 +45,7 @@ const SearchBar = ({ onSelectProduct }) => {
   const fetchSearchResults = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://192.168.11.115:3000/product/search`, {
+      const response = await axios.get(`http://192.168.104.10:3000/product/search`, {
         params: { productName: searchTerm },
       });
       setResults(response.data);

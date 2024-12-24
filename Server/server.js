@@ -4,7 +4,6 @@ const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
 const { initializeSocket } = require('./config/socket');
-const handleVideoCall = require('./controllers/videoCallController');
 const passport = require('./config/passport.js');
 
 // Import Prisma for Passport
@@ -66,7 +65,6 @@ passport.deserializeUser(async (id, done) => {
 const server = http.createServer(app);
 
 // Initialize WebSocket server for video calls and other socket connections
-handleVideoCall(server);
 initializeSocket(server);
 
 // Serve static files from uploads directory
