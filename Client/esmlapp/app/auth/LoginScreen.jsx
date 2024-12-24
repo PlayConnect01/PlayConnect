@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import { BASE_URL } from '../../.env/Api';
+import { BASE_URL } from '../../../.env/Api';
 import { BlurView } from 'expo-blur';
 WebBrowser.maybeCompleteAuthSession();
 

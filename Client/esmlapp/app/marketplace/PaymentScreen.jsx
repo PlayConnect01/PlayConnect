@@ -13,7 +13,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
-import { BASE_URL } from '../../.env/Api'
+import { BASE_URL } from '../../../.env/Api'
 const PaymentScreen = ({ route, navigation }) => {
     const { cartTotal = 0, deliveryFee = 0 } = route.params || {};
     const [selectedMethod, setSelectedMethod] = useState(null);
