@@ -18,10 +18,11 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-
+import { BASE_URL } from '../../.env/Api';
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -55,7 +56,7 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://192.168.11.115:3000/users/login', {
+      const response = await axios.post(`${BASE_URL}/users/login`, {
         email,
         password,
       });

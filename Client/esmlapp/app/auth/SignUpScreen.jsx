@@ -14,8 +14,9 @@ import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-
+import { BASE_URL } from '../../.env/Api';
 const SignUpScreen = () => {
+ 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,10 +24,13 @@ const SignUpScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigation = useNavigation();
+  
 
   const handleSignUp = async () => {
+
+
     try {
-      const response = await axios.post('http://192.168.11.115:3000/users/signup', {
+      const response = await axios.post(`${BASE_URL}/users/signup`, {
         username,
         email,
         password,
