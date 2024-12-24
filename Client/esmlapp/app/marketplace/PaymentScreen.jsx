@@ -13,7 +13,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
-
+import { BASE_URL } from '../../.env/Api'
 const PaymentScreen = ({ route, navigation }) => {
     const { cartTotal = 0, deliveryFee = 0 } = route.params || {};
     const [selectedMethod, setSelectedMethod] = useState(null);
@@ -69,7 +69,7 @@ const PaymentScreen = ({ route, navigation }) => {
       const userId = await AsyncStorage.getItem('userId');
       
       // Simulate payment processing
-      const paymentResponse = await axios.post('http://192.168.11.115:3000/payments/process', {
+      const paymentResponse = await axios.post(`${BASE_URL}/payments/process`, {
         userId,
         amount: cartTotal + deliveryFee, // Ensure this calculation
         paymentMethod: selectedMethod,
@@ -78,7 +78,7 @@ const PaymentScreen = ({ route, navigation }) => {
 
       if (paymentResponse.data.success) {
         // Clear cart after successful payment
-        await axios.delete(`http://192.168.11.115:3000/cart/cart/clear/${userId}`);
+        await axios.delete(`${BASE_URL}/cart/cart/clear/${userId}`);
         
         navigation.navigate('PaymentSuccess', {
           amount: cartTotal + deliveryFee,
