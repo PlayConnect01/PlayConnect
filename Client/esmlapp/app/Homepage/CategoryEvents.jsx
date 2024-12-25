@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
-import { BASE_URL } from '../../.env';
+import { BASE_URL } from '../../Api';
 
 const { width } = Dimensions.get("window");
 
@@ -18,7 +18,7 @@ const CategoryEvents = () => {
   useEffect(() => {
     // Fetch all events initially
     axios
-      .get("http://192.168.104.5:3000/events/getAll")
+      .get(`${BASE_URL}/events/getAll`)
       .then((response) => {
         setEvents(response.data);
         setLoading(false);

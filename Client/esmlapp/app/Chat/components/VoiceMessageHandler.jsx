@@ -10,8 +10,10 @@ import {
 import { Audio } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
+import { BASE_URL } from '../../../Api';
 
-const API_URL = 'http://192.168.103.14:3000';
+
+const API_URL = BASE_URL;
 
 // Create axios instance with default config
 const api = axios.create({

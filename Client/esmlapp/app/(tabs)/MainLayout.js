@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import Navbar from "../navbar/Navbar.jsx"; // Adjust the path if needed.
+import Navbar from "../navbar/Navbar.jsx"; 
 
 const MainLayout = ({ children }) => {
   return (

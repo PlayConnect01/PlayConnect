@@ -10,7 +10,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../.env';
+import { BASE_URL } from '../../Api';
 
 const decodeToken = (token) => {
   try {

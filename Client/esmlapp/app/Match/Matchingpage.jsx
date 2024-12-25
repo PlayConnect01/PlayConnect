@@ -14,6 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import { BASE_URL } from '../../Api';
+
 
 axios.defaults.timeout = 5000;
 
@@ -59,7 +61,7 @@ const Match = () => {
       const fetchPotentialMatches = async () => {
         try {
           const response = await axios.get(
-            `http://192.168.11.115:3000/matches/common-sports/${currentUserId}`
+            `${ BASE_URL }/matches/common-sports/${currentUserId}`
           );
 
           if (response.data.length > 0) {
@@ -93,7 +95,7 @@ const Match = () => {
     try {
       const currentUser = users[currentUserIndex];
       await axios.post(
-        `http://192.168.11.115:3000/matches/create`,
+        `${ BASE_URL }/matches/create`,
         {
           userId1: currentUserId,
           userId2: currentUser.user_id,
