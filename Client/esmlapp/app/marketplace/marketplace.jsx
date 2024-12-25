@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from './Confirmationadding';
 import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
-import { BASE_URL } from '../../.env';
+import { BASE_URL } from '../../Api.js';
 
 
 const Marketplace = () => {

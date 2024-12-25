@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../.env';
+import { BASE_URL } from '../../Api.js';
 
 
 const decodeToken = (token) => {
