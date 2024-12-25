@@ -23,6 +23,7 @@ import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen'
+import { TournamentList, TournamentDetail } from './Homepage/CompetitionPage'
 const Stack = createStackNavigator();
 import EditProfile from "./profile/EditProfile"
 export default function App() {
@@ -45,6 +46,8 @@ export default function App() {
           <Stack.Screen name="CalendarPage" component={CalendarPage} />
           <Stack.Screen name="EventDetails" component={EventDetails} />
           <Stack.Screen name="AddNewEvent" component={AddNewEvent} /> 
+          <Stack.Screen name="TournamentList" component={TournamentList} /> 
+          <Stack.Screen name="TournamentDetail" component={TournamentDetail} /> 
 
           {/* Match */}
           <Stack.Screen name="Match" component={Match} />

@@ -12,6 +12,8 @@ const router = express.Router();
 // Get all tournaments
 router.get('/', getAllTournaments); 
 
+router.get('/Teams', getAllTournamentsAndTeams); 
+
 // Get a tournament by ID
 router.get('/:id', getTournamentById); 
 

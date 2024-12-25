@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -35,7 +36,6 @@ const iconMap = {
 
 const App = () => {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [competitions, setCompetitions] = useState([]);
   const [eventCategories, setEventCategories] = useState([
     { id: "1", name: "All Type" },
@@ -44,6 +44,7 @@ const App = () => {
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -55,7 +56,6 @@ const App = () => {
       })
       .catch((error) => {
         console.error("Error fetching categories:", error);
-        setLoading(false);
       });
 
     axios
@@ -121,10 +121,6 @@ const App = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  if (loading) {
-    return <Text>Loading...</Text>;
-  }
-
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -159,17 +155,19 @@ const App = () => {
             </View>
           </View>
 
-          <View style={styles.searchBarContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search events..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-
-          {searchQuery === "" && (
+          {loading ? (
+            <ActivityIndicator size="large" color="#0095FF" style={styles.loader} />
+          ) : (
             <>
+              <View style={styles.searchBarContainer}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search events..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
+
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Category</Text>
               </View>
@@ -194,7 +192,7 @@ const App = () => {
 
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Competition of the Week</Text>
-                <Text style={styles.seeAll} onPress={() => navigation.navigate("CompetitionPage")}>See All</Text>
+                <Text style={styles.seeAll} onPress={() => navigation.navigate("TournamentList")}>See All</Text>
               </View>
               <ScrollView
                 horizontal
@@ -218,75 +216,47 @@ const App = () => {
                   </View>
                 ))}
               </ScrollView>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Events</Text>
+              </View>
+
+              <ScrollView contentContainerStyle={searchQuery ? styles.singleEventGrid : styles.eventsGrid}>
+                {filteredEvents.map((event) => (
+                  <TouchableOpacity
+                    key={event.id}
+                    style={searchQuery ? styles.fullWidthEventItem : styles.eventItem}
+                    onPress={() =>
+                      navigation.navigate("Homepage/EventDetails", {
+                        eventId: event.event_id,
+                      })
+                    }
+                  >
+                    <Image source={{ uri: event.image }} style={styles.eventImage} />
+                    <View style={styles.eventDetails}>
+                      <Text style={styles.eventText}>{event.event_name}</Text>
+                      <View style={styles.eventRow}>
+                        <MaterialCommunityIcons
+                          name="google-maps"
+                          size={16}
+                          color="#0095FF"
+                        />
+                        <Text style={styles.eventDetailText}>{event.location}</Text>
+                      </View>
+                      <View style={styles.eventRow}>
+                        <MaterialCommunityIcons
+                          name="calendar-outline"
+                          size={16}
+                          color="#0095FF"
+                        />
+                        <Text style={styles.eventDetailText}>{formatDate(event.start_time)}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </>
           )}
-
-          {searchQuery === "" && (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Events</Text>
-            </View>
-          )}
-
-          {searchQuery === "" && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.categories}
-            >
-              {eventCategories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryButton,
-                    selectedCategory === category.name && styles.selectedCategory,
-                  ]}
-                  onPress={() => setSelectedCategory(category.name)}
-                >
-                  <Text style={[
-                    styles.categoryText,
-                    selectedCategory === category.name && { color: "#fff" }
-                  ]}>
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-
-          <ScrollView contentContainerStyle={searchQuery ? styles.singleEventGrid : styles.eventsGrid}>
-            {filteredEvents.map((event) => (
-              <TouchableOpacity
-                key={event.id}
-                style={searchQuery ? styles.fullWidthEventItem : styles.eventItem}
-                onPress={() =>
-                  navigation.navigate("Homepage/EventDetails", {
-                    eventId: event.event_id,
-                  })
-                }
-              >
-                <Image source={{ uri: event.image }} style={styles.eventImage} />
-                <View style={styles.eventDetails}>
-                  <Text style={styles.eventText}>{event.event_name}</Text>
-                  <View style={styles.eventRow}>
-                    <MaterialCommunityIcons
-                      name="google-maps"
-                      size={16}
-                      color="#0095FF"
-                    />
-                    <Text style={styles.eventDetailText}>{event.location}</Text>
-                  </View>
-                  <View style={styles.eventRow}>
-                    <MaterialCommunityIcons
-                      name="calendar-outline"
-                      size={16}
-                      color="#0095FF"
-                    />
-                    <Text style={styles.eventDetailText}>{formatDate(event.start_time)}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
       </ScrollView>
       <TouchableOpacity
@@ -501,6 +471,9 @@ const styles = StyleSheet.create({
   fullWidthEventItem: {
     width: "100%",
     marginBottom: 20,
+  },
+  loader: {
+    marginVertical: 20,
   },
 });
 
