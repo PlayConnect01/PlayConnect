@@ -14,11 +14,9 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ConfirmationModal from './Confirmationadding';
 import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
 import { BASE_URL } from '../../.env';
-
 
 const Marketplace = () => {
   const navigation = useNavigation();   
@@ -26,11 +24,12 @@ const Marketplace = () => {
   const [discounts, setDiscounts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [itemToAdd, setItemToAdd] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
+  const [showMessage, setShowMessage] = useState("");
+  const [cartProducts, setCartProducts] = useState([]);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -57,6 +56,7 @@ const Marketplace = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCartCount(response.data.count);
+        setCartProducts(response.data.products || []);
       }
     } catch (error) {
       console.error("Error fetching cart count:", error);
@@ -73,46 +73,59 @@ const Marketplace = () => {
     Promise.all([fetchProducts(), fetchCartCount()]).then(() => setRefreshing(false));
   }, [fetchProducts, fetchCartCount]);
 
-  const addToCart = useCallback((product) => {
-    setItemToAdd(product);
-    setModalVisible(true);
-  }, []);
-
-  const confirmAddToCart = useCallback(async () => {
+  const addToCart = useCallback(async (product) => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
-      if (!token || !userId || !itemToAdd?.product_id || !itemToAdd?.price) {
-        console.error("Invalid data for adding to cart");
-        return;
-      }
+        const existingCart = await AsyncStorage.getItem('cartProducts');
+        const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
 
-      setCartCount(prevCount => prevCount + 1);
-      setLoading(true);
 
-      const response = await axios.post(
-        `${API_BASE_URL}/cart/cart/add`,
-        {
-          userId: JSON.parse(userId),
-          productId: itemToAdd.product_id,
-          quantity: 1,
-          price: itemToAdd.price,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+        if (cartProducts.some(item => item.product_id === product.product_id)) {
+          setShowMessage("Product already in cart. Please view your cart to adjust quantity.");
+          setTimeout(() => setShowMessage(""), 1000);
+          return;
+        }
+        
 
-      if (response.status !== 201) {
-        console.error("Failed to add product to cart:", response.data);
-        setCartCount(prevCount => prevCount - 1);
-      }
+        const token = await AsyncStorage.getItem('userToken');
+        const userId = await AsyncStorage.getItem('userId');
+        if (!token || !userId || !product?.product_id || !product?.price) {
+            console.error("Invalid data for adding to cart");
+            return;
+        }
+
+        setCartCount(prevCount => prevCount + 1);
+        setLoading(true);
+
+        const response = await axios.post(
+            `${BASE_URL}/cart/cart/add`,
+            {
+                userId: JSON.parse(userId),
+                productId: product.product_id,
+                quantity: 1,
+                price: product.price,
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.status !== 201) {
+            setShowMessage(`${product.name} already in the cart! 🛒`);
+            setCartCount(prevCount => prevCount - 1);
+        } else {
+            cartProductsList.push(product);
+            await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
+            setCartProducts(cartProductsList);
+            setShowMessage(`${product.name} added to cart! 🛒`);
+            setTimeout(() => setShowMessage(""), 2000);
+        }
     } catch (error) {
-      console.error("Error adding product to cart:", error);
-      setCartCount(prevCount => prevCount - 1);
+        console.error("Error adding product to cart:", error);
+        setCartCount(prevCount => prevCount - 1);
+        setShowMessage("Error adding to cart. Please try again.");
+        setTimeout(() => setShowMessage(""), 2000);
     } finally {
-      setLoading(false);
-      setModalVisible(false);
+        setLoading(false);
     }
-  }, [itemToAdd]);
+  }, [cartProducts]);
 
   const calculateDiscountedPrice = useCallback((price, discount) => {
     const originalPrice = parseFloat(price);
@@ -124,13 +137,92 @@ const Marketplace = () => {
 
   const handleSelectCategory = useCallback((category) => {
     setSelectedCategory(category);
-    // Here you would typically fetch products for the selected category
     console.log("Selected category:", category);
   }, []);
 
   const toggleSidebar = () => {
     setSidebarVisible(!isSidebarVisible);
   };
+
+  const toggleFavorite = useCallback(async (product) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const userId = await AsyncStorage.getItem('userId');
+      
+      if (!token || !userId || !product?.product_id) {
+        console.error("Missing required data");
+        return;
+      }
+
+      const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
+
+      if (isAlreadyFavorite) {
+        const response = await axios.delete(
+          `${BASE_URL}/favorites/favorites/item/${product.favorite_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.status === 200) {
+          setFavoriteProducts(prevFavorites => 
+            prevFavorites.filter(id => id !== product.product_id)
+          );
+          setShowMessage('Product removed from favorites! 💔');
+          setTimeout(() => setShowMessage(''), 2000);
+        }
+      } else {
+        const response = await axios.post(
+          `${BASE_URL}/favorites/favorites/add`,
+          {
+            userId: parseInt(userId),
+            productId: product.product_id,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.status === 201) {
+          setFavoriteProducts(prevFavorites => [...prevFavorites, product.product_id]);
+          setShowMessage('Product added to favorites! ❤️');
+          setTimeout(() => setShowMessage(''), 2000);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error.response?.data || error.message);
+      setShowMessage('Something went wrong! Please try again.');
+      setTimeout(() => setShowMessage(''), 2000);
+    }
+  }, [favoriteProducts]);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const userId = await AsyncStorage.getItem('userId');
+        
+        if (!token || !userId) return;
+
+        const response = await axios.get(`${BASE_URL}/favorites/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const favoriteIds = response.data.map(fav => fav.product_id);
+        setFavoriteProducts(favoriteIds);
+      } catch (error) {
+        console.error("Error fetching favorites:", error);
+      }
+    };
+
+    fetchFavorites();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -155,7 +247,7 @@ const Marketplace = () => {
                     <Text style={styles.cartCount}>{cartCount}</Text>
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton}>
+                <TouchableOpacity style={styles.iconButton}  onPress={() => navigation.navigate('FavoritesScreen')}>
                   <FontAwesome name="heart-o" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
@@ -188,10 +280,24 @@ const Marketplace = () => {
                       style={styles.cartButton}
                       onPress={() => addToCart(product)}
                     >
-                      <FontAwesome name="shopping-cart" size={20} color="#fff" />
+                      <FontAwesome 
+                        name={cartProducts.some(item => item.product_id === product.product_id) ? "check" : "shopping-cart"} 
+                        size={20} 
+                        color="#fff" 
+                      />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.favoriteButton}>
-                      <FontAwesome name="heart-o" size={20} color="#ff3b8f" />
+                    <TouchableOpacity
+                      style={[
+                        styles.favoriteButton,
+                        favoriteProducts.includes(product.product_id) && styles.favoriteButtonActive
+                      ]}
+                      onPress={() => toggleFavorite(product)}
+                    >
+                      <FontAwesome
+                        name={favoriteProducts.includes(product.product_id) ? "heart" : "heart-o"}
+                        size={20}
+                        color={favoriteProducts.includes(product.product_id) ? "#ff0000" : "#333"}
+                      />
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
@@ -246,12 +352,13 @@ const Marketplace = () => {
             </View>
           )}
 
-          <ConfirmationModal
-            visible={isModalVisible}
-            onConfirm={confirmAddToCart}
-            onCancel={() => setModalVisible(false)}
-            message={`Do you want to add ${itemToAdd ? itemToAdd.name : ''} to your cart?`}
-          />
+         
+
+          {showMessage && (
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageText}>{showMessage}</Text>
+            </View>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -380,7 +487,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 40,
     height: 40,
-    borderColor: '#ff3b8f',
+    borderColor: '#ddd',
     borderWidth: 1,
   },
   discountItem: {
@@ -478,6 +585,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  messageContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#4CAF50',
+    borderRadius: 10,
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

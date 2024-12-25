@@ -25,8 +25,7 @@ import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
 import EditProfile from "./profile/EditProfile";
-// import FavoritesScreen from "../app/marketplace/"
-const Stack = createStackNavigator();
+
 
 export default function App() {
   return (
@@ -185,14 +184,6 @@ export default function App() {
           )}
         />
 
-{/* <Stack.Screen
-          name="FavoritesScreen"
-          component={() => (
-            <MainLayout>
-              <FavoritesScreen/>
-            </MainLayout>
-          )}
-        /> */}
       </Stack.Navigator>
     </GestureHandlerRootView>
   );
