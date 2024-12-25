@@ -16,10 +16,10 @@ import VoiceMessageHandler from './components/VoiceMessageHandler';
 import AudioMessage from './components/AudioMessage';
 import VideoCall from './components/VideoCall';
 
-const API_URL = 'http://192.168.104.10:3000';
+import { BASE_URL } from '../../Api';
 
 const axiosInstance = axios.create({
-    baseURL: API_URL,
+    baseURL: BASE_URL,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ const ChatDetails = ({ route, navigation }) => {
             socketRef.current.disconnect();
         }
 
-        const socket = io(API_URL, {
+        const socket = io(BASE_URL, {
             transports: ['websocket'],
             reconnection: true,
         });

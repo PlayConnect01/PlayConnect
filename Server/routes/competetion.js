@@ -5,6 +5,7 @@ const {
   createTournament,
   updateTournament,
   deleteTournament,
+  getAllTournamentsAndTeams
 } = require('../controllers/competetion');
 
 const router = express.Router();

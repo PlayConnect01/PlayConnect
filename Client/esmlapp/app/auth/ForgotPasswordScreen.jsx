@@ -4,7 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import {BASE_URL} from '../../Api';
 
+// rsr
 const PasswordRecoveryScreen = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ const PasswordRecoveryScreen = () => {
   const handleNextStep = async () => {
     if (step === 1) {
       try {
-        await axios.post(`http://192.168.104.10:3000/password/request-password-reset`, { email });
+        await axios.post(`${BASE_URL}/password/request-password-reset`, { email });
         showAlert('Success', 'Password reset request sent. Check your email for the code.');
         setStep(2);
       } catch (error) {
@@ -28,7 +30,7 @@ const PasswordRecoveryScreen = () => {
       }
     } else if (step === 2) {
       try {
-        await axios.post(`http://192.168.104.10:3000/password/verify-reset-code`, { email, code });
+        await axios.post(`${BASE_URL}/password/verify-reset-code`, { email, code });
         showAlert('Success', 'Code verified. You can now reset your password.');
         setStep(3);
       } catch (error) {
@@ -37,7 +39,7 @@ const PasswordRecoveryScreen = () => {
     } else if (step === 3) {
       if (newPassword === repeatPassword) {
         try {
-          await axios.post(`http://192.168.104.10:3000/password/update-password`, { email, newPassword });
+          await axios.post(`${BASE_URL}/password/update-password`, { email, newPassword });
           showAlert('Success', 'Password reset successfully. You can now log in.');
           navigation.navigate('Login');
         } catch (error) {
@@ -119,7 +121,7 @@ const PasswordRecoveryScreen = () => {
 
         <TouchableOpacity style={styles.button} onPress={handleNextStep}>
           <LinearGradient
-            colors={['#ff8c00', '#ff6600']}
+            colors={['#3498db', '#2980b9']}
             style={styles.gradientButton}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}

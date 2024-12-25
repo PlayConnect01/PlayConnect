@@ -10,6 +10,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
+import { BASE_URL } from '../../Api';
 
 const decodeToken = (token) => {
   try {
@@ -52,7 +53,7 @@ const AddNewEvent = () => {
       }
     })();
 
-    axios.get("http://192.168.104.10:3000/sports")
+    axios.get(`${BASE_URL}/sports`)
       .then((response) => {
         setSports(response.data);
       })
@@ -141,53 +142,61 @@ const AddNewEvent = () => {
       );
       return;
     }
-
+  
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
         Alert.alert('Error!', 'No authentication token found. Please log in again.');
         return;
       }
-
+  
       const decodedToken = decodeToken(token);
       if (!decodedToken) {
         throw new Error('Failed to decode token');
       }
-
+  
       const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
       if (!userId) {
         throw new Error('Could not find user ID in token');
       }
-
+  
       let imageUrl = null;
       if (image) {
         imageUrl = await uploadImageToCloudinary(image.uri);
-        console.log(imageUrl);
       }
 
+      // Format date to YYYY-MM-DD
+      const formattedDate = date.toISOString().split('T')[0];
+
+      // Format times to HH:mm format
+      const formattedStartTime = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
+      const formattedEndTime = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+
+      // Create event data object
       const eventData = {
         eventName,
         note,
-        date: date.toISOString(),
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
+        date: formattedDate,        // Will be like "2024-03-21"
+        startTime: formattedStartTime,  // Will be like "14:30"
+        endTime: formattedEndTime,      // Will be like "16:30"
         location,
         category,
         participants: parseInt(participants, 10),
         price: parseFloat(price),
         isFree,
-        creator_id: userId,
-        image: imageUrl, 
+        creator_id: parseInt(userId),
+        image: imageUrl,
       };
-      console.log(eventData);
-      
 
-      const response = await axios.post('http://192.168.104.10:3000/events/create', eventData, {
+      console.log('Sending event data:', eventData); // Debug log
+
+      const response = await axios.post(`${BASE_URL}/events/create`, eventData, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
-
+  
       Alert.alert(
         'Success!',
         'Event created successfully!',

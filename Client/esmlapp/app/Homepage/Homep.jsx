@@ -13,8 +13,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import Navbar from "../navbar/Navbar";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import { BASE_URL } from '../../Api';
 
 const { width } = Dimensions.get("window");
 
@@ -49,17 +49,16 @@ const App = () => {
 
   useEffect(() => {
     axios
-      .get("http://192.168.104.10:3000/sports")
+      .get(`${BASE_URL}/sports`)
       .then((response) => {
         setCategories(response.data);
-        setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching categories:", error);
       });
 
     axios
-      .get("http://192.168.104.10:3000/competetion")
+      .get(`${BASE_URL}/competetion`)
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -68,7 +67,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.104.10:3000/events/getAll")
+      .get(`${BASE_URL}/events/getAll`)
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
@@ -88,6 +87,7 @@ const App = () => {
       .catch((error) => {
         console.error("Error fetching events:", error);
       });
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -140,7 +140,7 @@ const App = () => {
               <TouchableOpacity
                 onPress={() => navigation.navigate("Homepage/CalendarPage")}
               >
-                <Ionicons
+                <Ionicons 
                   name="calendar-outline"
                   size={24}
                   color="#555"
@@ -192,7 +192,7 @@ const App = () => {
 
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Competition of the Week</Text>
-                <Text style={styles.seeAll} onPress={() => navigation.navigate("TournamentList")}>See All</Text>
+                <Text style={styles.seeAll} onPress={() => navigation.navigate("Homepage/TournamentList")}>See All</Text>
               </View>
               <ScrollView
                 horizontal
@@ -265,14 +265,20 @@ const App = () => {
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
-      <Navbar></Navbar>
     </View>
-  );
+  )
 };
 
 export default App;
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollView: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
