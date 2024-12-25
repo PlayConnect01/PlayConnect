@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import axios from 'axios';
-import { BASE_URL } from '../../../.env/Api';
+const BASE_URL = process.env.BASE_URL;
 export default function ProductCard({ productId }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);

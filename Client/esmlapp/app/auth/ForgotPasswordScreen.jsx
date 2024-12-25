@@ -5,8 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 
-import { BASE_URL } from '../../../.env/Api';
 
+const BASE_URL = process.env.BASE_URL;
 const PasswordRecoveryScreen = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');

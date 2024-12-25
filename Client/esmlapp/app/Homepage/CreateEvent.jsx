@@ -10,7 +10,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
-
+const BASE_URL = process.env.BASE_URL;
 const decodeToken = (token) => {
   try {
     const base64Url = token.split('.')[1];

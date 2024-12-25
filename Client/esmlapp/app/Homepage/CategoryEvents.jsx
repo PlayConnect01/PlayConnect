@@ -13,7 +13,7 @@ const CategoryEvents = () => {
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const BASE_URL = process.env.BASE_URL;
   useEffect(() => {
     // Fetch all events initially
     axios
