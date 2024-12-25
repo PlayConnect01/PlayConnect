@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import axios from "axios";
 import Navbar from "../navbar/Navbar";
+import { BASE_URL } from '../../.env';
 const { width } = Dimensions.get("window");
 
 const App = () => {
@@ -30,7 +31,7 @@ const App = () => {
 
   useEffect(() => {
     axios
-      .get("http://192.168.100.120:3000/sports")
+      .get(`${BASE_URL}/sports`)
       .then((response) => {
         setCategories(response.data);
         setLoading(false);
@@ -41,7 +42,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.100.120:3000/competetion")
+      .get(`${BASE_URL}/competetion`)
       .then((response) => {
         setCompetitions(response.data);
       })
@@ -50,7 +51,7 @@ const App = () => {
       });
 
     axios
-      .get("http://192.168.100.120:3000/events/getAll")
+      .get(`${BASE_URL}/events/getAll`)
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);

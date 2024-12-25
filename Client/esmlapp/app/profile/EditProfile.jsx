@@ -10,6 +10,8 @@ import { Picker } from '@react-native-picker/picker'; // Add this import
 import Navbar from '../navbar/Navbar';
 import CountryPicker from 'react-native-country-picker-modal';
 import DateTimePickerModal from 'react-native-modal-datetime-picker'; // Import the date picker
+import { BASE_URL } from '../../.env';
+
 
 global.Buffer = Buffer;
 
@@ -51,7 +53,7 @@ const EditProfile = () => {
         const decodedToken = JSON.parse(atob(base64));
         const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
-        const response = await axios.get(`http://192.168.103.10:3000/users/${userId}`);
+        const response = await axios.get(`${BASE_URL}/users/${userId}`);
         setUserData(response.data.user);
 
         // Set the form data with existing user data
@@ -205,7 +207,7 @@ const EditProfile = () => {
       console.log(userId);
       
       const response = await axios.put(
-        `http://192.168.103.10:3000/users/${userId}`,
+        `${BASE_URL}/users/${userId}`,
         requestData,
         {
           headers: {

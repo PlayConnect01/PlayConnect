@@ -104,36 +104,45 @@ const createEvent = async (req, res) => {
       image
     } = req.body;
 
-    if (!creator_id) {
-      return res.status(400).json({ error: "Creator ID is required" });
-    }
+    // Convert date string to Date object
+    const eventDate = new Date(date);
 
+    // Create the new event in the database
     const newEvent = await prisma.event.create({
       data: {
         event_name: eventName,
-        location,
-        date: new Date(date),
-        start_time: startTime ? new Date(startTime) : null,
-        end_time: endTime ? new Date(endTime) : null,
         description: note,
-        category,
+        date: eventDate,
+        start_time: startTime,    // Store directly as string "HH:mm"
+        end_time: endTime,        // Store directly as string "HH:mm"
+        location: location,
+        category: category,
         participants: parseInt(participants),
         price: parseFloat(price),
         is_free: isFree,
-        image , 
+        image: image,
         creator: {
           connect: {
-            user_id: creator_id,
-          },
-        },
-      },
+            user_id: creator_id  // Leave creator_id as is since it's working
+          }
+        }
+      }
     });
 
-    res.status(201).json(newEvent);
+    res.status(201).json({
+      message: "Event created successfully",
+      event: newEvent
+    });
   } catch (error) {
-    res.status(500).json({ error: "Error creating event", details: error.message });
+    console.error("Error creating event:", error);
+    res.status(500).json({
+      error: "Error creating event",
+      details: error.toString()
+    });
   }
 };
+
+
 
 const EventWithCreator = async (req, res) => {
   try {

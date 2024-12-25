@@ -6,6 +6,7 @@ import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from '../navbar/Navbar';
+import { BASE_URL } from '../../.env';
 
 // Function to decode the token
 const decodeToken = (token) => {
@@ -50,20 +51,20 @@ const ProfilePage = () => {
           throw new Error('Could not find user ID in token');
         }
 
-        const userResponse = await axios.get(`http://192.168.103.10:3000/users/${userId}`);
+        const userResponse = await axios.get(`${BASE_URL}/users/${userId}`);
         setUserData(userResponse.data.user);
 
-        const leaderboardResponse = await axios.get("http://192.168.103.10:3000/leaderboard");
+        const leaderboardResponse = await axios.get(`${BASE_URL}/leaderboard`);
         const leaderboard = leaderboardResponse.data;
 
         const userRank = leaderboard.findIndex(user => user.id === userId) + 1; 
         setRank(userRank);
 
-        const eventsResponse = await axios.get('http://192.168.103.10:3000/events/getAll');
+        const eventsResponse = await axios.get(`${BASE_URL}/events/getAll`);
         const userEvents = eventsResponse.data.filter(event => event.creator_id === userId);
         setEvents(userEvents);
 
-        const participatedEventsResponse = await axios.get(`http://192.168.103.10:3000/events/getParticipated/${userId}`);
+        const participatedEventsResponse = await axios.get(`${BASE_URL}/events/getParticipated/${userId}`);
         setParticipatedEvents(participatedEventsResponse.data);
 
       } catch (error) {
