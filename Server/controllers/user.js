@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { PrismaClient } = require("@prisma/client");
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 dotenv.config();
 
 
@@ -197,7 +199,7 @@ const getOneUser = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
-    const { username, email, location, profile_picture, birthdate, phone_number, phone_country_code } = req.body;
+    const { username, email, location, profile_picture, birthdate_day, birthdate_month, birthdate_year, phone_number, phone_country_code } = req.body;
 
     // Validate user exists
     const existingUser = await prismaClient.user.findUnique({
@@ -208,17 +210,34 @@ const updateUserProfile = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Handle profile picture (no size handling)
+    let processedProfilePicture = profile_picture;
+
+    // Create update object only with valid fields
+    const updateData = {
+      ...(username && { username }),
+      ...(email && { email }),
+      ...(location && { location }),
+      ...(processedProfilePicture && { profile_picture: processedProfilePicture }),
+      ...(phone_number && { phone_number }),
+      ...(phone_country_code && { phone_country_code }),
+    };
+
+    // Handle birthdate
+    if (birthdate_day && birthdate_month && birthdate_year) {
+      const birthdate = new Date(
+        parseInt(birthdate_year),
+        parseInt(birthdate_month) - 1,
+        parseInt(birthdate_day)
+      );
+      if (!isNaN(birthdate.getTime())) {
+        updateData.birthdate = birthdate;
+      }
+    }
+
     const updatedUser = await prismaClient.user.update({
       where: { user_id: userId },
-      data: {
-        username: username || undefined,
-        email: email || undefined,
-        location: location || null,
-        profile_picture: profile_picture || null,
-        birthdate: birthdate ? new Date(birthdate) : null,
-        phone_number: phone_number || null,
-        phone_country_code: phone_country_code || null,
-      },
+      data: updateData
     });
 
     res.json({

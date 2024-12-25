@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import { BASE_URL } from '../../.env';
 
 
 const decodeToken = (token) => {
@@ -33,7 +34,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await axios.get(`http://192.168.11.115:3000/events/getById/${eventId}`);
+        const response = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
         setEvent(response.data);
         
         const token = await AsyncStorage.getItem('userToken');
@@ -73,7 +74,7 @@ const EventDetails = () => {
       }
 
       await axios.post(
-        'http://192.168.11.115:3000/events/addParticipant',
+        `${BASE_URL}/events/addParticipant`,
         { eventId, userId },
         {
           headers: {
@@ -83,7 +84,7 @@ const EventDetails = () => {
       );
 
       Alert.alert('Success', 'You have been added to the event!');
-      const updatedEvent = await axios.get(`http://192.168.11.115:3000/events/getById/${eventId}`);
+      const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
       setUserJoined(true);
     } catch (error) {
@@ -117,7 +118,7 @@ const EventDetails = () => {
       }
 
       await axios.post(
-        'http://192.168.11.115:3000/events/removeParticipant',
+        `${BASE_URL}/events/removeParticipant`,
         { eventId, userId },
         {
           headers: {
@@ -127,7 +128,7 @@ const EventDetails = () => {
       );
 
       Alert.alert('Success', 'You have successfully left the event!');
-      const updatedEvent = await axios.get(`http://192.168.11.115:3000/events/getById/${eventId}`);
+      const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
       setUserJoined(false);
     } catch (error) {
@@ -136,7 +137,7 @@ const EventDetails = () => {
   };
 
   const handleGoBack = () => {
-    navigation.goBack();
+    navigation.navigate("Homepage/Homep");
   };
 
   if (loading) {

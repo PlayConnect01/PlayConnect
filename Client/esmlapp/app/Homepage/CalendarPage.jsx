@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import { Calendar } from "react-native-calendars";
+import { BASE_URL } from '../../.env';
 
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
@@ -14,7 +15,7 @@ const CalendarPage = () => {
   const fetchEvents = (date) => {
     setLoading(true);
     axios
-      .get(`http://192.168.11.115:3000/events/getByDate/${date}`)
+      .get(`http://192.168.104.5:3000/events/getByDate/${date}`)
       .then((response) => {
         setEvents(response.data);
         setLoading(false);

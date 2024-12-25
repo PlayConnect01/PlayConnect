@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
+import { BASE_URL } from '../../.env';
 
 const { width } = Dimensions.get("window");
 
@@ -17,7 +18,7 @@ const CategoryEvents = () => {
   useEffect(() => {
     // Fetch all events initially
     axios
-      .get("http://192.168.11.115:3000/events/getAll")
+      .get("http://192.168.104.5:3000/events/getAll")
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
@@ -47,7 +48,7 @@ const CategoryEvents = () => {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Back Arrow and Title */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
             <Ionicons name="arrow-back" size={24} color="#555" />
           </TouchableOpacity>
           <Text style={styles.categoryTitle}>{categoryName} Events</Text>

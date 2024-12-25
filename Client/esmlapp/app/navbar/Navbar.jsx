@@ -75,8 +75,9 @@ const Navbar = () => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.navItem, isActive("Profile") && styles.activeItem]}
-        onPress={() => navigation.navigate("Profile")}
+              style={[styles.navItem, isActive("Profile") && styles.activeItem]}
+
+        onPress={() => navigation.navigate("profile/ProfilePage")}
       >
         <Icon
           name="person"

@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import { BASE_URL } from '../../.env/Api';
+import { BASE_URL } from '../../.env';
 import { BlurView } from 'expo-blur';
 WebBrowser.maybeCompleteAuthSession();
 
@@ -67,7 +67,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('userToken', token);
 
       // Navigate to home page after successful login
-      navigation.navigate('Homep'); // Adjust the route accordingly
+      navigation.navigate('Homepage/Homep'); // Adjust the route accordingly
     } catch (error) {
       Alert.alert('Error', 'Invalid login credentials!');
     } finally {

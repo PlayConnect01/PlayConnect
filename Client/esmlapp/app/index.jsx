@@ -16,7 +16,7 @@ import Match from "./Match/Firstpagematch";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
-import Profile from "./profile/ProfilePage";
+import ProfilePage from "./profile/ProfilePage";
 import MarketplaceHome from "./marketplace/marketplace";
 import products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
@@ -25,8 +25,7 @@ import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
 import EditProfile from "./profile/EditProfile";
-import FavoritesScreen from "./marketplace/FavoritesScreen";
-const Stack = createStackNavigator();
+
 
 export default function App() {
   return (
@@ -114,7 +113,7 @@ export default function App() {
           name="Profile"
           component={() => (
             <MainLayout>
-              <Profile />
+              <ProfilePage />
             </MainLayout>
           )}
         />
@@ -185,14 +184,6 @@ export default function App() {
           )}
         />
 
-<Stack.Screen
-          name="FavoritesScreen"
-          component={() => (
-            <MainLayout>
-              <FavoritesScreen/>
-            </MainLayout>
-          )}
-        />
       </Stack.Navigator>
     </GestureHandlerRootView>
   );
