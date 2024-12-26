@@ -15,7 +15,7 @@ const TournamentList = () => {
   const fetchTournaments = async () => {
     try {
       const response = await fetch(`${BASE_URL}/competetion/Teams`);
-      const data = await response.json();
+      const data = await response.json();      
       setTournaments(data);
     } catch (error) {
       console.error('Error fetching tournaments:', error);
@@ -26,7 +26,7 @@ const TournamentList = () => {
     <TouchableOpacity 
       key={tournament.tournament_id}
       style={styles.card}
-      onPress={() => navigation.navigate('TournamentDetail', { id: tournament.tournament_id })}
+      onPress={() => navigation.navigate('Homepage/TournamentDetail', { id: tournament.tournament_id })}
     >
       <View style={styles.cardHeader}>
         <Text style={styles.tournamentName}>{tournament.tournament_name}</Text>
