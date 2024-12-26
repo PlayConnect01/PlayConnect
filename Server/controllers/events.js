@@ -99,7 +99,6 @@ const createEvent = async (req, res) => {
       category,
       participants,
       price,
-      isFree,
       creator_id,
       image
     } = req.body;
@@ -119,7 +118,6 @@ const createEvent = async (req, res) => {
         category: category,
         participants: parseInt(participants),
         price: parseFloat(price),
-        is_free: isFree,
         image: image,
         creator: {
           connect: {
@@ -175,7 +173,6 @@ const updateEvent = async (req, res) => {
       category,
       participants,
       price,
-      is_free,
     } = req.body;
 
     const updatedEvent = await prisma.event.update({
@@ -190,7 +187,6 @@ const updateEvent = async (req, res) => {
         category,
         participants: parseInt(participants),
         price: parseFloat(price),
-        is_free,
       },
     });
 

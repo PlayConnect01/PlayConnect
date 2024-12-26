@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import axios from 'axios';
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from '../../Api.js';
 const SearchBar = ({ onSelectProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
