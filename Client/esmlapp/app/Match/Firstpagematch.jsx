@@ -13,7 +13,7 @@ const App = () => {
   const navigation = useNavigation();
   
   const handleChatNow = () => {
-    navigation.navigate('Matchingpage');
+    navigation.navigate('Match/Matchingpage');
   };
 
   return (

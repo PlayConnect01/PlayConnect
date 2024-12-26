@@ -1,5 +1,6 @@
 const prisma = require("../prisma");
 const { getIO } = require("../config/socket");
+const cloudinary = require('../config/cloudinary');
 
 async function createChatWithWelcomeMessage(matchId) {
   try {
@@ -39,8 +40,9 @@ async function createChatWithWelcomeMessage(matchId) {
     await prisma.message.create({
       data: {
         chat_id: chat.chat_id,
-        content: `Match ID: ${matchId}`,
+        content: "You can start conversation now",
         message_type: "SYSTEM",
+        sender_id: null,
       },
     });
 
@@ -174,10 +176,50 @@ async function handleAudioMessage(chatId, senderId, fileUrl) {
     }
 }
 
+///////// handle message image /////////////
+async function handleImageMessage(chatId, senderId, imageUrl) {
+    try {
+        const isUserInChat = await verifyUserInChat(senderId, chatId);
+        if (!isUserInChat) {
+            throw new Error("User not authorized to send messages in this chat");
+        }
+
+        const message = await prisma.message.create({
+            data: {
+                chat_id: parseInt(chatId),
+                sender_id: parseInt(senderId),
+                content: imageUrl,
+                message_type: 'IMAGE',
+            },
+            include: {
+                sender: true,
+            },
+        });
+
+        // Get socket instance and emit the message
+        const io = getIO();
+        if (io) {
+            io.to(`chat_${chatId}`).emit('receive_message', {
+                ...message,
+                image_url: imageUrl // Add this to ensure the image URL is available
+            });
+        }
+
+        return {
+            ...message,
+            image_url: imageUrl // Add this to ensure the image URL is available in the response
+        };
+    } catch (error) {
+        console.error('Error handling image message:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     createChatWithWelcomeMessage,
     getChatMessages,
     verifyUserInChat,
     sendMessage,
     handleAudioMessage,
+    handleImageMessage
 };

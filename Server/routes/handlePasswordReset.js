@@ -3,7 +3,7 @@ const {
   sendCode,
   verifyCode,
   updatePassword, // Ensure this function matches the actual controller function
-} = require('../controllers/handlePasswordReset '); // Corrected file path
+} = require('../controllers/handlePasswordReset'); // Corrected file path
 
 const router = express.Router();
 

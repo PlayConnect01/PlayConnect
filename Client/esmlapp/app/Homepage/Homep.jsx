@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { BASE_URL } from '../../Api.js';
+import Navbar from "../navbar/Navbar.jsx";
 
 const { width } = Dimensions.get("window");
 
@@ -34,7 +35,7 @@ const iconMap = {
     tennis_ball_play_sport_game_ball_tennis_icon_209375: require('./Icons/tennis_ball_play_sport_game_ball_tennis_icon_209375.png'),
 };
 
-const App = () => {
+const Homep = () => {
   const [categories, setCategories] = useState([]);
   const [competitions, setCompetitions] = useState([]);
   const [eventCategories, setEventCategories] = useState([
@@ -265,11 +266,12 @@ const App = () => {
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
+      <Navbar />
+
     </View>
   )
 };
 
-export default App;
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -483,3 +485,4 @@ const styles = StyleSheet.create({
   },
 });
 
+export default Homep;

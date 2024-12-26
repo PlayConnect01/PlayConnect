@@ -14,8 +14,6 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../Api';
-
 
 axios.defaults.timeout = 5000;
 
@@ -29,6 +27,8 @@ const Match = () => {
   const [users, setUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const position = useRef(new Animated.ValueXY()).current;
   const navigation = useNavigation();
 
@@ -41,9 +41,9 @@ const Match = () => {
         }
 
         const decodedToken = decodeJWT(token);
-        if (decodedToken?.id) {
-          setCurrentUserId(decodedToken.id);
-          console.log('User ID:', decodedToken.id);
+        if (decodedToken?.userId) {
+          setCurrentUserId(decodedToken.userId);
+          console.log('User ID:', decodedToken.userId);
         } else {
           throw new Error('User ID not found in token');
         }
@@ -61,7 +61,7 @@ const Match = () => {
       const fetchPotentialMatches = async () => {
         try {
           const response = await axios.get(
-            `${ BASE_URL }/matches/common-sports/${currentUserId}`
+            `http://192.168.11.115:3000/matches/common-sports/${currentUserId}`
           );
 
           if (response.data.length > 0) {
@@ -80,6 +80,26 @@ const Match = () => {
     }
   }, [currentUserId]);
 
+  useEffect(() => {
+    if (currentUserId) {
+      // Fetch unread notifications count
+      const fetchUnreadCount = async () => {
+        try {
+          const response = await axios({
+            ...defaultConfig,
+            method: 'get',
+            url: `${BASE_URL}/notifications/${currentUserId}/unread/count`
+          });
+          setUnreadNotifications(response.data.count);
+        } catch (error) {
+          console.error('Error fetching unread notifications:', error);
+        }
+      };
+
+      fetchUnreadCount();
+    }
+  }, [currentUserId, showNotifications]);
+
   const handleNextUser = () => {
     if (currentUserIndex < users.length - 1) {
       setCurrentUserIndex((prev) => prev + 1);
@@ -95,22 +115,18 @@ const Match = () => {
     try {
       const currentUser = users[currentUserIndex];
       await axios.post(
-        `${ BASE_URL }/matches/create`,
+        `http://192.168.11.115:3000/matches/create`,
         {
           userId1: currentUserId,
           userId2: currentUser.user_id,
           sportId: currentUser.sports[0]?.sport_id,
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 10000,
         }
       );
 
       Animated.timing(position, {
         toValue: { x: 500, y: 0 },
         duration: 300,
-        useNativeDriver: false,
+        useNativeDriver: false
       }).start(() => handleNextUser());
     } catch (error) {
       console.error('Error creating match:', error.message);
@@ -122,7 +138,7 @@ const Match = () => {
     Animated.timing(position, {
       toValue: { x: -500, y: 0 },
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: false
     }).start(() => handleNextUser());
   };
 
@@ -167,12 +183,23 @@ const Match = () => {
 
   return (
     <View style={styles.container}>
+      {/* Header with notification icon */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={() => setShowNotifications(true)}
+        >
+          <Ionicons name="notifications" size={24} color="#333" />
+          {unreadNotifications > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {unreadNotifications > 99 ? '99+' : unreadNotifications}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('MessagePage')}>
           <Ionicons name="chatbubble-ellipses-outline" size={30} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => Alert.alert('Notifications', 'No new notifications.')}>
-          <Ionicons name="notifications-outline" size={30} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -228,6 +255,13 @@ const Match = () => {
           <Ionicons name="checkmark" size={30} color="#34C759" />
         </TouchableOpacity>
       </View>
+
+      {/* Notifications Modal */}
+      <NotificationsModal
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        userId={currentUserId}
+      />
     </View>
   );
 };
@@ -240,9 +274,30 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 15,
     backgroundColor: '#fff',
-    elevation: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 5,
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#ff4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   cardContainer: {
     flex: 1,
