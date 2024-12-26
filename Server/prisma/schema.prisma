@@ -185,7 +185,6 @@ model Event {
   category       String
   participants   Int
   price          Float
-  is_free        Boolean
   image          String?
 
   event_participants EventParticipant[]
@@ -196,7 +195,6 @@ model Event {
 
   @@index([event_name])
 }
-
 
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())
