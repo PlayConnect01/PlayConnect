@@ -16,8 +16,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
-import { BASE_URL } from '../../Api.js';
-
+import { BASE_URL } from '../../Api';
 
 const Marketplace = () => {
   const navigation = useNavigation();   

@@ -7,7 +7,7 @@ import * as Animatable from 'react-native-animatable';
 
 const { width } = Dimensions.get('window');
 
-const Landing = () => {
+const OnboardingScreen = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const navigate = useNavigation();
 
@@ -184,4 +184,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Landing;
+export default OnboardingScreen;

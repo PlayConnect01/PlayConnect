@@ -10,7 +10,7 @@ import { Picker } from '@react-native-picker/picker'; // Add this import
 import Navbar from '../navbar/Navbar';
 import CountryPicker from 'react-native-country-picker-modal';
 import DateTimePickerModal from 'react-native-modal-datetime-picker'; // Import the date picker
-import { BASE_URL } from '../../Api.js';
+import { BASE_URL } from '../../Api';
 
 
 global.Buffer = Buffer;

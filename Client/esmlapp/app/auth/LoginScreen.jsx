@@ -27,7 +27,7 @@ import { BASE_URL } from '../../Api';
 
 WebBrowser.maybeCompleteAuthSession();
 
-export default function Login() {
+export default function LoginScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
