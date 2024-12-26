@@ -1,14 +1,7 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import axios from "axios";
-import { BASE_URL } from '../../api.js';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import axios from 'axios';
+import { BASE_URL } from '../../Api';
 export default function ProductCard({ productId }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,9 +9,7 @@ export default function ProductCard({ productId }) {
   useEffect(() => {
     const fetchProductDetail = async () => {
       try {
-        const response = await axios.get(
-          `${BASE_URL}/product/products/${productId}` // Use the productId prop
-        );
+        const response = await axios.get(`${BASE_URL}/product/products/${productId}`); // Use the productId prop
         setProduct(response.data);
       } catch (error) {
         console.error("Error fetching product details:", error);

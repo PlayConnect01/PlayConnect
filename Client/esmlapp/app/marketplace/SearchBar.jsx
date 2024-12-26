@@ -8,9 +8,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
-} from "react-native";
-import axios from "axios";
-import { BASE_URL } from '../../api';
+} from 'react-native';
+import axios from 'axios';
+import { BASE_URL } from '../../Api';
 const SearchBar = ({ onSelectProduct }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState([]);
@@ -45,7 +45,7 @@ const SearchBar = ({ onSelectProduct }) => {
   const fetchSearchResults = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${BASE_URL}//product/search`, {
+      const response = await axios.get(`${BASE_URL}/product/search`, {
         params: { productName: searchTerm },
       });
       setResults(response.data);

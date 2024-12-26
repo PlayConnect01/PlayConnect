@@ -21,7 +21,10 @@ const sportRoutes = require('./routes/sport');
 const competetionRouter = require('./routes/competetion');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
-const favorites = require('./routes/favoriteRoutes')
+const favorites = require('./routes/favoriteRoutes');
+const paymentRoutes = require('./routes/Paymentrouter.js');
+
+
 const app = express();
 
 // Middleware
@@ -61,7 +64,7 @@ passport.deserializeUser(async (id, done) => {
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize other socket connections
+// Initialize WebSocket server for video calls and other socket connections
 initializeSocket(server);
 
 // Serve static files from uploads directory
@@ -77,7 +80,9 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
-
+// Mount Chat Router
+app.use('/payments',paymentRoutes);
+app.use('/leaderboard', leaderboardRoutes);
 // Mount Chat Router
 app.use('/chats', chatRoutes);
 
@@ -85,8 +90,4 @@ app.use('/chats', chatRoutes);
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-
-
-
+}); 

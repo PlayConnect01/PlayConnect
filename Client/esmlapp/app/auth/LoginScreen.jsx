@@ -18,10 +18,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BlurView } from 'expo-blur';
 import * as WebBrowser from 'expo-web-browser';
+import { BlurView } from 'expo-blur';
 
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 
 
 
@@ -72,7 +72,10 @@ export default function LoginScreen() {
 console.log(token , "tooooken");
 
       // Navigate to home page after successful login
-      navigation.navigate('Homepage/Homep'); // Adjust the route accordingly
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Homep' }],
+      });
     } catch (error) {
       Alert.alert('Error', 'Invalid login credentials!');
     } finally {

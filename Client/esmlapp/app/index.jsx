@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import MainLayout from "../app/(tabs)/MainLayout";
+import MainLayout from "../(Taps)/MainLayout";
 
 // Screens
 import EventDetails from "./Homepage/EventDetails";
@@ -13,7 +13,6 @@ import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
 import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
-import MatchingPage from "./Match/Matchingpage";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
@@ -22,13 +21,14 @@ import MarketplaceHome from "./marketplace/marketplace";
 import products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
-import PaymentScreen from "./marketplace/PaymentScreen";
-import PaymentSuccessScreen from "./marketplace/PaymentSuccessScreen";
-// import TournamentList from './Homepage/TournamentList'
-// import TournamentDetail from './Homepage/TournamentDetail'
-import EditProfile from "./profile/EditProfile";
-// import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
+import PaymentScreen from './marketplace/PaymentScreen';
+import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
+import TournamentList from './Homepage/TournamentList'
+import TournamentDetail from './Homepage/TournamentDetail'
+import EditProfile from "./profile/EditProfile"
+import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
 const Stack = createStackNavigator();
+
 
 export default function App() {
   return (
@@ -110,22 +110,21 @@ export default function App() {
             </MainLayout>
           )}
         />
-        <Stack.Screen name="MatchingPage" component={MatchingPage} />
-
-        {/* Chat */}
         <Stack.Screen
           name="MessagePage"
-          component={MessagePage}
-          options={{
-            headerShown: false
-          }}
+          component={() => (
+            <MainLayout>
+              <MessagePage />
+            </MainLayout>
+          )}
         />
         <Stack.Screen
           name="ChatDetails"
-          component={ChatDetails}
-          options={{
-            headerShown: false
-          }}
+          component={() => (
+            <MainLayout>
+              <ChatDetails />
+            </MainLayout>
+          )}
         />
 
         {/* Profile */}
@@ -203,6 +202,7 @@ export default function App() {
             </MainLayout>
           )}
         />
+
       </Stack.Navigator>
     </GestureHandlerRootView>
   );

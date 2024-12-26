@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import MatchNotification from './MatchNotification';
 import axios from 'axios';
 import io from 'socket.io-client';
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 
 const defaultConfig = {
   headers: {

@@ -12,14 +12,14 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import { FontAwesome } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import SearchBar from "./SearchBar";
-import Sidebar from "./Sidebar";
-import {BASE_URL} from "../../api"
+import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import SearchBar from './SearchBar';
+import Sidebar from './Sidebar';
+import { BASE_URL } from '../../Api';
 
 const Marketplace = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation();   
   const [products, setProducts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [cartCount, setCartCount] = useState(0);

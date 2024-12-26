@@ -1,17 +1,8 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import ConfirmationModal from "./ConfirmationModal"; // Adjust the path as necessary
-import {BASE_URL} from "../../api"
-
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
+import { BASE_URL } from '../../Api';
 const CartScreen = ({ navigation }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +19,7 @@ const CartScreen = ({ navigation }) => {
         if (!userId) throw new Error("User ID not found");
 
         const response = await fetch(`${BASE_URL}/cart/cart/user/${userId}`);
-        console.log("Fetch cart response status:", response.status);
+        console.log('Fetch cart response status:', response.status);
 
         if (!response.ok) throw new Error("Failed to fetch cart items");
 

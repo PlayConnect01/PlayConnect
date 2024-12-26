@@ -11,9 +11,10 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import { FontAwesome } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {BASE_URL} from "../../api"
+import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../../Api';
+
 const FavoritesScreen = () => {
   const navigation = useNavigation();
   const [favorites, setFavorites] = useState([]);

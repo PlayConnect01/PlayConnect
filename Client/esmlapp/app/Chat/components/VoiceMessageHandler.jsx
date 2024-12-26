@@ -10,9 +10,9 @@ import {
 import { Audio } from "expo-av";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
-import {BASE_URL} from "../../../api"
+import {BASE_URL} from "../../../Api"
 
-const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
+const VoiceMessageHandler = ({ onAudioMessage, chatId, currentUserId }) => {
   const recordingRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -106,10 +106,11 @@ const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
       type: "audio/m4a",
       name: "audio.m4a",
     });
+    formData.append("senderId", currentUserId);
 
     try {
       const response = await axios.post(
-        `${BASE_URL}/chats/${chatId}/upload-audio`,
+        `${BASE_URL}/chats/audio/${chatId}`,
         formData,
         {
           headers: {
@@ -118,8 +119,14 @@ const VoiceMessageHandler = ({ onAudioUploaded, chatId, currentUserId }) => {
         }
       );
 
-      if (response.data && response.data.audioUrl) {
-        onAudioUploaded(response.data.audioUrl);
+      if (response.data) {
+        onAudioMessage({
+          content: response.data.content || response.data.fileUrl,
+          message_type: "AUDIO",
+          sender_id: currentUserId,
+          chat_id: chatId,
+          sent_at: new Date().toISOString(),
+        });
       }
     } catch (error) {
       console.error("Failed to upload audio:", error);

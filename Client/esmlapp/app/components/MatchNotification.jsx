@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {BASE_URL} from "../../api"
+import {BASE_URL} from "../../Api"
 
 
 const MatchNotification = ({ notification, onAccept, onReject }) => {

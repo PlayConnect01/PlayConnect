@@ -18,32 +18,23 @@ const initializeSocket = (server) => {
     // Initialize match events handler with socket and io instance
     handleMatchEvents(socket, io);
 
-    socket.on('join_chat', async (data) => {
-      if (!data || !data.chatId || !data.userId) {
-        console.error('Invalid data for join_chat:', data);
+    socket.on('joinChat', async (chatId) => {
+      if (!chatId) {
+        console.error('Invalid chatId for joinChat:', chatId);
         return;
       }
 
-      const { chatId, userId } = data;
+      socket.join(`chat_${chatId}`);
+      console.log(`Socket ${socket.id} joined chat ${chatId}`);
+    });
 
-      try {
-        const chatMember = await prisma.chatMember.findFirst({
-          where: {
-            chat_id: parseInt(chatId),
-            user_id: parseInt(userId),
-          },
-        });
-
-        if (!chatMember) {
-          console.error('User is not a member of the chat');
-          return;
-        }
-
-        socket.join(`chat_${chatId}`);
-        console.log(`User ${userId} joined chat ${chatId}`);
-      } catch (error) {
-        console.error('Error verifying chat membership:', error);
-      }
+    // Gestion des messages en temps réel
+    socket.on('newMessage', async (messageData) => {
+      console.log('New message received:', messageData);
+      const { chatId } = messageData;
+      
+      // Émettre le message à tous les membres du chat sauf l'expéditeur
+      socket.to(`chat_${chatId}`).emit('messageReceived', messageData);
     });
 
     socket.on('disconnect', () => {

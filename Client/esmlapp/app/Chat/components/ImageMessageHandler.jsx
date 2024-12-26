@@ -9,7 +9,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
-import {BASE_URL} from "../../../api"
+import {BASE_URL} from "../../../Api"
 
 
 

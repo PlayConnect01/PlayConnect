@@ -14,16 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import NotificationsModal from '../components/NotificationsModal';
-import { BASE_URL } from '../../api';
 
-const defaultConfig = {
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  },
-  timeout: 5000
-};
+axios.defaults.timeout = 5000;
 
 const decodeJWT = (token) => {
   const base64Payload = token.split('.')[1];
@@ -68,11 +60,9 @@ const Match = () => {
     if (currentUserId) {
       const fetchPotentialMatches = async () => {
         try {
-          const response = await axios({
-            ...defaultConfig,
-            method: 'get',
-            url: `${BASE_URL}/matches/common-sports/${currentUserId}`
-          });
+          const response = await axios.get(
+            `http://192.168.11.115:3000/matches/common-sports/${currentUserId}`
+          );
 
           if (response.data.length > 0) {
             setUsers(response.data);
@@ -124,21 +114,19 @@ const Match = () => {
 
     try {
       const currentUser = users[currentUserIndex];
-      await axios({
-        ...defaultConfig,
-        method: 'post',
-        url: `${BASE_URL}/matches/create`,
-        data: {
+      await axios.post(
+        `http://192.168.11.115:3000/matches/create`,
+        {
           userId1: currentUserId,
           userId2: currentUser.user_id,
           sportId: currentUser.sports[0]?.sport_id,
         }
-      });
+      );
 
       Animated.timing(position, {
         toValue: { x: 500, y: 0 },
         duration: 300,
-        useNativeDriver: false,
+        useNativeDriver: false
       }).start(() => handleNextUser());
     } catch (error) {
       console.error('Error creating match:', error.message);
@@ -150,7 +138,7 @@ const Match = () => {
     Animated.timing(position, {
       toValue: { x: -500, y: 0 },
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: false
     }).start(() => handleNextUser());
   };
 

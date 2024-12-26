@@ -5,13 +5,13 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
+import Navbar from '../navbar/Navbar';
 
 const MessagePage = (props) => {
-  const navigationHook = useNavigation();
-  const navigation = props.navigation || navigationHook;
   const [matches, setMatches] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const navigation = useNavigation();
 
   // Function to decode JWT token
   const decodeJWT = (token) => {
@@ -21,6 +21,8 @@ const MessagePage = (props) => {
   };
 
   useEffect(() => {
+    console.log(navigation.navigate);
+    
     const loadToken = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
@@ -76,7 +78,7 @@ const MessagePage = (props) => {
             style={styles.messageItem}
             onPress={() => {
               console.log('Chat ID:', match.chat_id);
-              navigation.navigate('ChatDetails', {
+              navigation.navigate('Chat/ChatDetails', {
                 user: match.user_1.user_id === currentUserId ? match.user_2 : match.user_1,
                 chatId: match.chat_id,
                 currentUserId: currentUserId
@@ -96,6 +98,7 @@ const MessagePage = (props) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      <Navbar />
     </View>
   );
 };
