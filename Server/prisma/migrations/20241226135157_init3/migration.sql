@@ -97,6 +97,8 @@ CREATE TABLE `Event` (
     `start_time` VARCHAR(191) NULL,
     `end_time` VARCHAR(191) NULL,
     `description` VARCHAR(191) NOT NULL,
+    `latitude` DOUBLE NULL,
+    `longitude` DOUBLE NULL,
     `category` VARCHAR(191) NOT NULL,
     `participants` INTEGER NOT NULL,
     `price` DOUBLE NOT NULL,

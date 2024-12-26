@@ -182,6 +182,8 @@ model Event {
   start_time     String?  // Store time as a string (HH:mm)
   end_time       String?  // Store time as a string (HH:mm)
   description    String
+  latitude       Float?   
+  longitude      Float?
   category       String
   participants   Int
   price          Float

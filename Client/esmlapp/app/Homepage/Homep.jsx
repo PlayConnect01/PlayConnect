@@ -14,8 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { BASE_URL } from '../../Api.js';
-import Navbar from "../navbar/Navbar.jsx";
+import { BASE_URL } from '../../Api';
 
 const { width } = Dimensions.get("window");
 
@@ -35,7 +34,7 @@ const iconMap = {
     tennis_ball_play_sport_game_ball_tennis_icon_209375: require('./Icons/tennis_ball_play_sport_game_ball_tennis_icon_209375.png'),
 };
 
-const Homep = () => {
+const App = () => {
   const [categories, setCategories] = useState([]);
   const [competitions, setCompetitions] = useState([]);
   const [eventCategories, setEventCategories] = useState([
@@ -169,58 +168,90 @@ const Homep = () => {
                 />
               </View>
 
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Category</Text>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.categories}
-              >
-                {categories.map((category) => (
-                  <TouchableOpacity
-                    key={category.id}
-                    onPress={() => navigation.navigate("Homepage/CategoryEvents", { categoryName: category.name })}
-                    style={styles.categoryItemWrapper}
-                  >
-                    <View style={styles.categoryItem}>
-                      <Image source={iconMap[category.icon]} style={styles.categoryIcon} /> 
-                    </View>
-                    <Text style={styles.categoryName}>{category.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Competition of the Week</Text>
-                <Text style={styles.seeAll} onPress={() => navigation.navigate("Homepage/TournamentList")}>See All</Text>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.competitions}
-              >
-                {competitions.map((competition) => (
-                  <View
-                    key={competition.tournament_id}
-                    style={styles.competitionItemWrapper}
-                  >
-                    <View style={styles.competitionItem}>
-                      <Image
-                        source={require("./Icons/award_gold_medal_winner_cup_prize_trophy_icon_209386.png")}
-                        style={styles.cupIcon}
-                      />
-                      <Text style={styles.competitionTitle}>
-                        {competition.tournament_name}
-                      </Text>
-                    </View>
+              {searchQuery === "" && (
+                <>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Category</Text>
                   </View>
-                ))}
-              </ScrollView>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.categories}
+                  >
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category.id}
+                        onPress={() => navigation.navigate("Homepage/CategoryEvents", { categoryName: category.name })}
+                        style={styles.categoryItemWrapper}
+                      >
+                        <View style={styles.categoryItem}>
+                          <Image source={iconMap[category.icon]} style={styles.categoryIcon} /> 
+                        </View>
+                        <Text style={styles.categoryName}>{category.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
 
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Events</Text>
-              </View>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Competition of the Week</Text>
+                    <Text style={styles.seeAll} onPress={() => navigation.navigate("Homepage/TournamentList")}>See All</Text>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.competitions}
+                  >
+                    {competitions.map((competition) => (
+                      <View
+                        key={competition.tournament_id}
+                        style={styles.competitionItemWrapper}
+                      >
+                        <View style={styles.competitionItem}>
+                          <Image
+                            source={require("./Icons/award_gold_medal_winner_cup_prize_trophy_icon_209386.png")}
+                            style={styles.cupIcon}
+                          />
+                          <Text style={styles.competitionTitle}>
+                            {competition.tournament_name}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+
+              {searchQuery === "" && (
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Events</Text>
+                </View>
+              )}
+
+              {searchQuery === "" && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.categories}
+                >
+                  {eventCategories.map((category) => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={[
+                        styles.categoryButton,
+                        selectedCategory === category.name && styles.selectedCategory,
+                      ]}
+                      onPress={() => setSelectedCategory(category.name)}
+                    >
+                      <Text style={[
+                        styles.categoryText,
+                        selectedCategory === category.name && { color: "#fff" }
+                      ]}>
+                        {category.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
 
               <ScrollView contentContainerStyle={searchQuery ? styles.singleEventGrid : styles.eventsGrid}>
                 {filteredEvents.map((event) => (
@@ -266,12 +297,11 @@ const Homep = () => {
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
-      <Navbar />
-
     </View>
-  )
+  );
 };
 
+export default App;
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -442,13 +472,13 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   categoryIcon: {
-    width: 70, 
-    height: 70, 
+    width: 70,
+    height: 70,
     resizeMode: "contain",
   },
   cupIcon: {
-    width: 100, 
-    height: 100, 
+    width: 100,
+    height: 100,
     resizeMode: "contain",
   },
   floatingButton: {
@@ -484,5 +514,3 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
 });
-
-export default Homep;
