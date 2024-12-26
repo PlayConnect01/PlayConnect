@@ -6,6 +6,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 import { BASE_URL } from '../../Api.js';
+import MapView, { Marker } from 'react-native-maps';
 
 
 const decodeToken = (token) => {
@@ -202,10 +203,33 @@ const EventDetails = () => {
         </View>
 
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
-            style={styles.eventImage}
-          />
+          {event.latitude && event.longitude ? (
+            <MapView
+              style={styles.eventImage}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+              pitchEnabled={false}
+              initialRegion={{
+                latitude: event.latitude,
+                longitude: event.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+            >
+              <Marker
+                coordinate={{
+                  latitude: event.latitude,
+                  longitude: event.longitude,
+                }}
+              />
+            </MapView>
+          ) : (
+            <Image
+              source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
+              style={styles.eventImage}
+            />
+          )}
         </View>
 
         <View style={styles.participantsContainer}>
@@ -272,8 +296,18 @@ const styles = StyleSheet.create({
   },
   boldLabel: { fontSize: 16, fontWeight: 'bold', flex: 2 },
   boldContent: { fontSize: 16, textAlign: 'right', flex: 3 },
-  imageContainer: { alignItems: 'center', marginVertical: 10, marginBottom: 50 },
-  eventImage: { width: 350, height: 220, borderRadius: 10 },
+  imageContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+    marginBottom: 50,
+    height: 220,
+    width: '100%',
+  },
+  eventImage: {
+    width: '90%',
+    height: 220,
+    borderRadius: 10,
+  },
   participantsContainer: { marginHorizontal: 16, marginBottom: 16 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
   participantGrid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },

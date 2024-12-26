@@ -96,6 +96,8 @@ const createEvent = async (req, res) => {
       startTime,
       endTime,
       location,
+      latitude,
+      longitude,
       category,
       participants,
       price,
@@ -103,25 +105,25 @@ const createEvent = async (req, res) => {
       image
     } = req.body;
 
-    // Convert date string to Date object
     const eventDate = new Date(date);
 
-    // Create the new event in the database
     const newEvent = await prisma.event.create({
       data: {
         event_name: eventName,
         description: note,
         date: eventDate,
-        start_time: startTime,    // Store directly as string "HH:mm"
-        end_time: endTime,        // Store directly as string "HH:mm"
+        start_time: startTime,
+        end_time: endTime,
         location: location,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
         category: category,
         participants: parseInt(participants),
         price: parseFloat(price),
         image: image,
         creator: {
           connect: {
-            user_id: creator_id  // Leave creator_id as is since it's working
+            user_id: creator_id
           }
         }
       }
