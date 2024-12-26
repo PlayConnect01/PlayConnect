@@ -18,7 +18,7 @@ import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import Profile from "./profile/ProfilePage";
 import MarketplaceHome from "./marketplace/marketplace";
-import products from "./marketplace/products";
+import Products from "./marketplace/products"; // Corrected capitalization
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
@@ -26,6 +26,7 @@ import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
 import EditProfile from "./profile/EditProfile";
 import FavoritesScreen from "./marketplace/FavoritesScreen";
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -137,10 +138,10 @@ export default function App() {
           )}
         />
         <Stack.Screen
-          name="products"
+          name="Products"
           component={() => (
             <MainLayout>
-              <products />
+              <Products />
             </MainLayout>
           )}
         />
@@ -169,7 +170,7 @@ export default function App() {
           )}
         />
         <Stack.Screen
-          name="delivery"
+          name="Delivery"
           component={() => (
             <MainLayout>
               <DeliveryServicesScreen />
@@ -185,11 +186,11 @@ export default function App() {
           )}
         />
 
-<Stack.Screen
+        <Stack.Screen
           name="FavoritesScreen"
           component={() => (
             <MainLayout>
-              <FavoritesScreen/>
+              <FavoritesScreen />
             </MainLayout>
           )}
         />

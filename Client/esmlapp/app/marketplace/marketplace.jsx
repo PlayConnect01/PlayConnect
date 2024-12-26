@@ -16,7 +16,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
-const BASE_URL = process.env.BASE_URL;
+import { BASE_URL } from '../Api';
+import { Ionicons } from '@expo/vector-icons';
 
 const Marketplace = () => {
   const navigation = useNavigation();
@@ -148,31 +149,33 @@ const Marketplace = () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const userId = await AsyncStorage.getItem('userId');
-      
+  
       if (!token || !userId || !product?.product_id) {
         console.error("Missing required data");
         return;
       }
-
+  
       const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
-
+  
       if (isAlreadyFavorite) {
+        // Find the favorite entry
+        const { data } = await axios.get(`${BASE_URL}/favorites/favorites/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { userId: parseInt(userId), productId: product.product_id },
+        });
+  
         const response = await axios.delete(
-          `${BASE_URL}/favorites/favorites/item/${product.favorite_id}`,
+          `${BASE_URL}/favorites/favorites/item/${data.id}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
-
+  
         if (response.status === 200) {
-          setFavoriteProducts(prevFavorites => 
-            prevFavorites.filter(id => id !== product.product_id)
+          setFavoriteProducts((prevFavorites) =>
+            prevFavorites.filter((id) => id !== product.product_id)
           );
-          setShowMessage('Product removed from favorites! 💔');
-          setTimeout(() => setShowMessage(''), 2000);
+          setShowMessage("Product removed from favorites! 💔");
         }
       } else {
         const response = await axios.post(
@@ -184,45 +187,35 @@ const Marketplace = () => {
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              'Content-Type': 'application/json',
+            },
           }
         );
-
+  
         if (response.status === 201) {
-          setFavoriteProducts(prevFavorites => [...prevFavorites, product.product_id]);
-          setShowMessage('Product added to favorites! ❤️');
-          setTimeout(() => setShowMessage(''), 2000);
+          setFavoriteProducts((prevFavorites) => [
+            ...prevFavorites,
+            product.product_id,
+          ]);
+          setShowMessage("Product added to favorites! ❤️");
+        } else {
+          setShowMessage("Failed to add product to favorites.");
         }
       }
+  
+      // Clear the message after 2 seconds
+      setTimeout(() => setShowMessage(""), 2000);
     } catch (error) {
       console.error("Error toggling favorite:", error.response?.data || error.message);
-      setShowMessage('Something went wrong! Please try again.');
-      setTimeout(() => setShowMessage(''), 2000);
+      setShowMessage("An error occurred while toggling favorites.");
+      setTimeout(() => setShowMessage(""), 2000);
     }
   }, [favoriteProducts]);
+  
+  
+  
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        const userId = await AsyncStorage.getItem('userId');
-        
-        if (!token || !userId) return;
 
-        const response = await axios.get(`${BASE_URL}/favorites/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const favoriteIds = response.data.map(fav => fav.product_id);
-        setFavoriteProducts(favoriteIds);
-      } catch (error) {
-        console.error("Error fetching favorites:", error);
-      }
-    };
-
-    fetchFavorites();
-  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -293,10 +286,10 @@ const Marketplace = () => {
                       ]}
                       onPress={() => toggleFavorite(product)}
                     >
-                      <FontAwesome
-                        name={favoriteProducts.includes(product.product_id) ? "heart" : "heart-o"}
-                        size={20}
-                        color={favoriteProducts.includes(product.product_id) ? "#ff0000" : "#333"}
+                      <Ionicons 
+                        name={favoriteProducts.includes(product.product_id) ? "heart" : "heart-outline"} 
+                        size={20} 
+                        color={favoriteProducts.includes(product.product_id) ? "red" : "gray"} 
                       />
                     </TouchableOpacity>
                   </View>
@@ -365,7 +358,34 @@ const Marketplace = () => {
   );
 };
 
+
 const styles = StyleSheet.create({
+  favoriteButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    transition: 'all 0.3s ease',
+  },
+  favoriteButtonActive: {
+    backgroundColor: '#ffebee',
+    borderColor: '#ff4081',
+  },
+  productCard: {
+    padding: 10,
+    margin: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
@@ -603,4 +623,7 @@ const styles = StyleSheet.create({
   },
 });
 
+
+
 export default Marketplace;
+

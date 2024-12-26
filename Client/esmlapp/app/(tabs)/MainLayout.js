@@ -9,6 +9,7 @@ const MainLayout = ({ children }) => {
       <Navbar />
     </View>
   );
+  
 };
 
 const styles = StyleSheet.create({

@@ -13,7 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-const BASE_URL = process.env.BASE_URL;
+import { BASE_URL } from '../Api';
 
 const FavoritesScreen = () => {
   const navigation = useNavigation();
