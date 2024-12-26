@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import Navbar from '../navbar/Navbar';
+import { BASE_URL } from '../../Api';
 
 const CategoryEvents = () => {
   const navigation = useNavigation();
@@ -24,7 +25,7 @@ const CategoryEvents = () => {
 
   useEffect(() => {
     axios
-      .get('http://192.168.104.5:3000/events/getAll')
+      .get(`${BASE_URL}/events/getAll`)
       .then((response) => {
         setAllEvents(response.data);
         const events = response.data.filter((event) => event.category === categoryName);

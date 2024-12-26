@@ -120,7 +120,11 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   activeItem: {
-    // No background color change for active state
+    backgroundColor: "#0095FF",
+    borderRadius: 30,
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   navText: {
     color: "#9CA3AF",

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -174,27 +174,28 @@ const EventDetails = () => {
 
       <ScrollView>
         <View style={styles.eventNameContainer}>
-          <Ionicons name="football" size={24} color="black" style={styles.iconSpacing} />
           <Text style={styles.eventName}>{event.event_name}</Text>
         </View>
 
-        <Text style={styles.description}>{event.description}</Text>
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.descriptionText}>{event.description}</Text>
+        </View>
 
         <View style={styles.detailsContainer}>
           <View style={styles.detailRow}>
-            <Ionicons name="person" size={20} color="black" style={styles.detailIcon} />
+            <Ionicons name="person" size={20} color="#0095FF" style={styles.detailIcon} />
             <Text style={styles.boldLabel}>Event Creator:</Text>
             <Text style={styles.boldContent}>{event.creator ? event.creator.username : 'Unknown'}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Ionicons name="calendar" size={20} color="black" style={styles.detailIcon} />
+            <Ionicons name="calendar" size={20} color="#0095FF" style={styles.detailIcon} />
             <Text style={styles.boldLabel}>Date:</Text>
             <Text style={styles.boldContent}>{new Date(event.date).toLocaleString()}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Ionicons name="location" size={20} color="black" style={styles.detailIcon} />
+            <Ionicons name="location" size={20} color="#0095FF" style={styles.detailIcon} />
             <Text style={styles.boldLabel}>Location:</Text>
             <Text style={styles.boldContent}>{event.location}</Text>
           </View>
@@ -221,7 +222,7 @@ const EventDetails = () => {
 
             {event.event_participants?.length < event.participants && (
               <TouchableOpacity
-                style={styles.addButton}
+                style={[styles.addButton, { backgroundColor: userJoined ? 'red' : '#0095FF' }]}
                 onPress={() => {
                   if (userJoined) {
                     Alert.alert(
@@ -244,7 +245,7 @@ const EventDetails = () => {
                   }
                 }}
               >
-                <Ionicons name={userJoined ? 'remove' : 'add'} size={30} color="white" />
+                <MaterialCommunityIcons name={userJoined ? 'account-remove' : 'account-plus'} size={27} color="white" />
               </TouchableOpacity>
             )}
           </View>
@@ -281,18 +282,33 @@ const styles = StyleSheet.create({
   addButton: {
     width: 50,
     height: 50,
-    backgroundColor: 'orange',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 25,
     margin: 8,
-    marginLeft:60
+    marginLeft: 60,
   },
   detailIcon: {
     marginRight: 10,
   },
   loadingText: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: 50 },
   errorText: { fontSize: 16, color: 'red', textAlign: 'center', marginTop: 50 },
+  descriptionContainer: { 
+    margin: 16, 
+    padding: 15, 
+    backgroundColor: '#ffffff', 
+    borderRadius: 10, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.5, 
+    shadowRadius: 4, 
+    elevation: 3,
+  },
+  descriptionText: { 
+    fontSize: 16, 
+    color: '#333',
+    lineHeight: 24,
+  },
 });
 
 export default EventDetails;

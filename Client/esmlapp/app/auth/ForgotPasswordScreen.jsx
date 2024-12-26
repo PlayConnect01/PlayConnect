@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import {BASE_URL} from '../../Api';
 
 // rsr
 const PasswordRecoveryScreen = () => {

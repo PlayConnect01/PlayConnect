@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Audio } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BASE_URL } from '../../../Api';
 
-const API_URL = 'http://192.168.103.14:3000';
+
+const API_URL = BASE_URL;
 
 const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
     const [sound, setSound] = useState();

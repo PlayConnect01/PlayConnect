@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import { BASE_URL } from '../../Api';
+
 
 const MessagePage = ({ navigation }) => {
   const [matches, setMatches] = useState([]);
@@ -52,7 +54,7 @@ const MessagePage = ({ navigation }) => {
 
   const fetchAcceptedMatches = async (userId) => {
     try {
-      const response = await axios.get(`http://192.168.104.5:3000/matches/accepted/${userId}`);
+      const response = await axios.get(`${ BASE_URL }/matches/accepted/${userId}`);
       console.log("ahmed"  , userId)
       setMatches(response.data);
       console.log(response.data);
