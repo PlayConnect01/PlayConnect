@@ -33,7 +33,7 @@ const EventDetails = () => {
 
   useEffect(() => {
     const fetchEvent = async () => {
-      try {
+      try { 
         const response = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
         setEvent(response.data);
         
