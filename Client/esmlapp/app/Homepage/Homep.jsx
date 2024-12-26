@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from '../../Api.js';
 
 const { width } = Dimensions.get("window");
 
