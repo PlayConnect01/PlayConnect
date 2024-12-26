@@ -1,7 +1,7 @@
 const prisma = require('../prisma'); // Assuming you are using Prisma for database interaction
 
 // Get all tournaments
-const getAllTournaments = async (req, res) => {
+const getAllTournamentsAndTeams = async (req, res) => {
   try {
     const tournaments = await prisma.tournament.findMany({
       include: {
@@ -9,9 +9,22 @@ const getAllTournaments = async (req, res) => {
         creator: {
           select: { username: true }
         },
-        teams: true
+        teams: {
+          include: {
+            members: true 
+          }
+        }
       }
     });
+    res.status(200).json(tournaments);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getAllTournaments = async (req, res) => {
+  try {
+    const tournaments = await prisma.tournament.findMany();
     res.status(200).json(tournaments);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -29,7 +42,11 @@ const getTournamentById = async (req, res) => {
         creator: {
           select: { username: true }
         },
-        teams: true
+        teams: {
+          include: {
+            members: true // Include members for each team
+          }
+        }
       }
     });
     if (!tournament) {
@@ -101,5 +118,6 @@ module.exports = {
   getTournamentById,
   createTournament,
   updateTournament,
-  deleteTournament
+  deleteTournament,
+  getAllTournamentsAndTeams
 };

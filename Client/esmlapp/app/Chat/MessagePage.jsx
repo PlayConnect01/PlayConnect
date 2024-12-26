@@ -1,22 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
-  TextInput, 
-  ScrollView, 
-  Alert 
-} from 'react-native';
+import { View,Text, StyleSheet, TouchableOpacity,Image, ScrollView,Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import { BASE_URL } from '../../api';
+import Navbar from '../navbar/Navbar';
 
-const MessagePage = ({ navigation }) => {
+const MessagePage = (props) => {
   const [matches, setMatches] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const navigation = useNavigation();
 
   // Function to decode JWT token
   const decodeJWT = (token) => {
@@ -26,6 +21,8 @@ const MessagePage = ({ navigation }) => {
   };
 
   useEffect(() => {
+    console.log(navigation.navigate);
+    
     const loadToken = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
@@ -34,10 +31,10 @@ const MessagePage = ({ navigation }) => {
         }
 
         const decodedToken = decodeJWT(token); // Use the decode function directly
-        if (decodedToken?.id) {
-          setCurrentUserId(decodedToken.id);
-          console.log('User ID:', decodedToken.id);
-          fetchAcceptedMatches(decodedToken.id); // Fetch accepted matches
+        if (decodedToken?.userId) {
+          setCurrentUserId(decodedToken.userId);
+          console.log('User ID:', decodedToken.userId);
+          fetchAcceptedMatches(decodedToken.userId); // Fetch accepted matches
         } else {
           throw new Error('User ID not found in token');
         }
@@ -52,7 +49,7 @@ const MessagePage = ({ navigation }) => {
 
   const fetchAcceptedMatches = async (userId) => {
     try {
-      const response = await axios.get(`http://192.168.103.14:3000/matches/accepted/${userId}`);
+      const response = await axios.get(`${BASE_URL}/matches/accepted/${userId}`);
       console.log("ahmed"  , userId)
       setMatches(response.data);
       console.log(response.data);
@@ -81,7 +78,7 @@ const MessagePage = ({ navigation }) => {
             style={styles.messageItem}
             onPress={() => {
               console.log('Chat ID:', match.chat_id);
-              navigation.navigate('ChatDetails', {
+              navigation.navigate('Chat/ChatDetails', {
                 user: match.user_1.user_id === currentUserId ? match.user_2 : match.user_1,
                 chatId: match.chat_id,
                 currentUserId: currentUserId
@@ -101,6 +98,7 @@ const MessagePage = ({ navigation }) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      <Navbar />
     </View>
   );
 };

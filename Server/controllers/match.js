@@ -63,18 +63,56 @@ const createMatch = async (userId1, userId2, sportId) => {
       sport_id: sportId,
       status: 'PENDING',
     },
+    include: {
+      user_1: true,
+      user_2: true,
+      sport: true,
+    },
   });
+
+  // Create notification for user_2
+  const notification = await prisma.notification.create({
+    data: {
+      user_id: userId2,
+      type: 'MATCH_REQUEST',
+      title: 'New Match Request',
+      content: `${match.user_1.username} wants to match with you for ${match.sport.name}!`,
+      match_id: match.match_id,
+    },
+  });
+
+  // Get Socket.IO instance and emit notification
+  const { getIO } = require('../config/socket');
+  const io = getIO();
+  io.to(`user_${userId2}`).emit('match_request', {
+    match,
+    notification,
+  });
+
   return match;
 };
 
+const updateMatchStatus = async (matchId, status) => {
+  try {
+    const updatedMatch = await prisma.match.update({
+      where: {
+        match_id: parseInt(matchId),
+      },
+      data: {
+        status: status,
+        ...(status === 'ACCEPTED' ? { accepted_at: new Date() } : {}),
+        ...(status === 'REJECTED' ? { rejected_at: new Date() } : {}),
+      },
+    });
+    return updatedMatch;
+  } catch (error) {
+    console.error('Error updating match status:', error);
+    throw error;
+  }
+};
+
 const acceptMatch = async (matchId) => {
-  const updatedMatch = await prisma.match.update({
-    where: { match_id: matchId },
-    data: {
-      status: 'ACCEPTED',
-      accepted_at: new Date(),
-    },
-  });
+  const updatedMatch = await updateMatchStatus(matchId, 'ACCEPTED');
 
   // Create a chat and send a welcome message after accepting the match
   try {
@@ -87,13 +125,7 @@ const acceptMatch = async (matchId) => {
 };
 
 const rejectMatch = async (matchId) => {
-  const updatedMatch = await prisma.match.update({
-    where: { match_id: matchId },
-    data: {
-      status: 'REJECTED',
-      rejected_at: new Date(),
-    },
-  });
+  const updatedMatch = await updateMatchStatus(matchId, 'REJECTED');
   return updatedMatch;
 };
 
@@ -157,6 +189,7 @@ const getMatchDetails = async (matchId) => {
 module.exports = {
   getUsersWithCommonSports,
   createMatch,
+  updateMatchStatus,
   acceptMatch,
   rejectMatch,
   getAcceptedMatches,

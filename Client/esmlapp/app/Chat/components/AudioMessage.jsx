@@ -2,24 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Audio } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-const API_URL = 'http://192.168.103.14:3000';
-
+import {BASE_URL} from "../../../api"
 const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
     const [sound, setSound] = useState();
     const [isPlaying, setIsPlaying] = useState(false);
     const [loading, setLoading] = useState(false);
     const [duration, setDuration] = useState(0);
     const [position, setPosition] = useState(0);
+    const [waveformBars] = useState(() => {
+        const numberOfBars = 30;
+        return Array.from({ length: numberOfBars }, () => ({
+            height: Math.random() * 0.7 + 0.3,
+            active: false
+        }));
+    });
 
     useEffect(() => {
-        return sound
-            ? () => {
+        return () => {
+            if (sound) {
                 console.log('Unloading Sound');
                 sound.unloadAsync();
             }
-            : undefined;
+        };
     }, [sound]);
+
+    const cleanupSound = async () => {
+        if (sound) {
+            await sound.unloadAsync();
+            setSound(null);
+            setIsPlaying(false);
+            setPosition(0);
+        }
+    };
 
     useEffect(() => {
         async function setupAudio() {
@@ -38,24 +52,39 @@ const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
         setupAudio();
     }, []);
 
+    useEffect(() => {
+        if (duration > 0 && waveformBars.length > 0) {
+            const progress = position / duration;
+            const activeBarIndex = Math.floor(progress * waveformBars.length);
+            
+            waveformBars.forEach((bar, index) => {
+                bar.active = index <= activeBarIndex;
+            });
+        }
+    }, [position, duration]);
+
     const getCorrectUrl = (url) => {
         if (!url) return url;
-        // If it's a relative URL, prepend the correct API URL
         if (url.startsWith('/')) {
-            return `${API_URL}${url}`;
+            return `BASE_URL${url}`;
         }
-        // If it's a full URL but with wrong IP, replace it
-        return url.replace(/http:\/\/\d+\.\d+\.\d+\.\d+:\d+/, API_URL);
+        return url.replace(/http:\/\/\d+\.\d+\.\d+\.\d+:\d+/, BASE_URL);
     };
 
     const updatePlaybackStatus = (status) => {
         if (status.isLoaded) {
             setPosition(status.positionMillis);
             setDuration(status.durationMillis);
+            
+            if (status.didJustFinish) {
+                setIsPlaying(false);
+                setPosition(0);
+                cleanupSound();
+            }
         }
     };
 
-    const playSound = async () => {
+    const playPause = async () => {
         try {
             setLoading(true);
 
@@ -64,7 +93,7 @@ const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
                     await sound.pauseAsync();
                     setIsPlaying(false);
                 } else {
-                    await sound.playAsync();
+                    await sound.playFromPositionAsync(position);
                     setIsPlaying(true);
                 }
             } else {
@@ -79,59 +108,50 @@ const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
                 setSound(newSound);
                 setIsPlaying(true);
 
-                newSound.setOnPlaybackStatusUpdate((status) => {
-                    updatePlaybackStatus(status);
-                    if (status.didJustFinish) {
-                        setIsPlaying(false);
-                        setPosition(0);
-                    }
-                });
+                newSound.setOnPlaybackStatusUpdate(updatePlaybackStatus);
             }
         } catch (error) {
-            console.error('Error playing sound:', error);
+            console.error('Error playing audio:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const progress = duration > 0 ? (position / duration) : 0;
-
     return (
         <View style={styles.audioMessageContainer}>
             <TouchableOpacity 
-                onPress={playSound} 
-                style={styles.playButtonContainer}
+                style={styles.playButtonContainer} 
+                onPress={playPause}
                 disabled={loading}
             >
-                <View style={styles.playButton}>
-                    {loading ? (
-                        <ActivityIndicator color="#000" size="small" />
-                    ) : (
-                        <MaterialCommunityIcons 
-                            name={isPlaying ? "pause" : "play"} 
-                            size={28} 
-                            color="#000"
+                {loading ? (
+                    <ActivityIndicator color={isCurrentUser ? "#fff" : "#4FA5F5"} />
+                ) : (
+                    <View style={styles.playButton}>
+                        <MaterialCommunityIcons
+                            name={isPlaying ? "pause" : "play"}
+                            size={24}
+                            color={isCurrentUser ? "#fff" : "#4FA5F5"}
                         />
-                    )}
-                </View>
+                    </View>
+                )}
             </TouchableOpacity>
-
+            
             <View style={styles.waveformContainer}>
-                {Array(40).fill(0).map((_, index) => {
-                    const barHeight = Math.sin((index / 2) * 0.5) * 0.5 + 0.5;
-                    return (
-                        <View
-                            key={index}
-                            style={[
-                                styles.waveformBar,
-                                {
-                                    height: barHeight * 20,
-                                    opacity: index / 40 <= progress ? 1 : 0.3
-                                }
-                            ]}
-                        />
-                    );
-                })}
+                {waveformBars.map((bar, index) => (
+                    <View
+                        key={index}
+                        style={[
+                            styles.waveformBar,
+                            {
+                                height: bar.height * 20,
+                                backgroundColor: bar.active 
+                                    ? (isCurrentUser ? '#fff' : '#4FA5F5')
+                                    : (isCurrentUser ? 'rgba(255,255,255,0.4)' : 'rgba(79,165,245,0.4)')
+                            }
+                        ]}
+                    />
+                ))}
             </View>
         </View>
     );
@@ -141,27 +161,32 @@ const styles = StyleSheet.create({
     audioMessageContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        paddingVertical: 4,
+        minWidth: 150,
+        maxWidth: '100%',
     },
     playButtonContainer: {
-        marginRight: 12,
+        marginRight: 8,
     },
     playButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: 'transparent',
     },
     waveformContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: 30,
+        height: 24,
+        flex: 1,
+        marginRight: 4,
     },
     waveformBar: {
-        width: 3,
-        marginHorizontal: 1,
-        backgroundColor: '#000',
-        borderRadius: 1.5,
+        width: 2,
+        marginHorizontal: 0.5,
+        borderRadius: 1,
     },
 });
 

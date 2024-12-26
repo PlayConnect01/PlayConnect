@@ -7,103 +7,122 @@ const Navbar = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const isActive = (screenName) => route.name === screenName;
+  const isActive = (screenName) => {
+    const currentRoute = route.name;
+    if (screenName === "Homep" && currentRoute === "Homepage/Homep") return true;
+    if (screenName === "Profile" && currentRoute === "profile/ProfilePage") return true;
+    if (screenName === "MarketplaceHome" && currentRoute === "marketplace/marketplace") return true;
+    if (screenName === "MessagePage" && currentRoute === "Chat/MessagePage") return true;
+
+    return currentRoute === screenName;
+  };
 
   return (
-    <View style={styles.navbar}>
-      <TouchableOpacity
-        style={[styles.navItem, isActive("Homep") && styles.activeItem]}
-        onPress={() => navigation.navigate("Homep")}
-      >
-        <Icon
-          name="home"
-          size={24}
-          color={isActive("Homep") ? "#000" : "#9CA3AF"}
-        />
-        <Text style={isActive("Homep") ? styles.navTextActive : styles.navText}>
-          Home
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.navItem, isActive("MessagePage") && styles.activeItem]}
-        onPress={() => navigation.navigate("MessagePage")}
-      >
-        <Icon
-          name="chatbubble"
-          size={24}
-          color={isActive("MessagePage") ? "#000" : "#9CA3AF"}
-        />
-        <Text
-          style={
-            isActive("MessagePage") ? styles.navTextActive : styles.navText
-          }
+    <View style={styles.container}>
+      <View style={styles.navbar}>
+        <TouchableOpacity
+          style={[styles.navItem]}
+          onPress={() => navigation.navigate("Homep")}
         >
-          Message
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
-        onPress={() => navigation.navigate("Match")}
-      >
-        <View style={styles.centerButtonInner}>
           <Icon
-            name="flame"
-            size={28}
-            color="#FFFFFF"
+            name="home"
+            size={24}
+            color={isActive("Homep") ? "#0095FF" : "#9CA3AF"}
           />
-        </View>
-      </TouchableOpacity>
+          <Text style={isActive("Homep") ? styles.navTextActive : styles.navText}>
+            Home
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.navItem, isActive("MarketplaceHome") && styles.activeItem]}
-        onPress={() => navigation.navigate("MarketplaceHome")}
-      >
-        <Icon
-          name="cart"
-          size={24}
-          color={isActive("MarketplaceHome") ? "#000" : "#9CA3AF"}
-        />
-        <Text
-          style={
-            isActive("MarketplaceHome") ? styles.navTextActive : styles.navText
-          }
+        <TouchableOpacity
+          style={[styles.navItem]}
+          onPress={() => navigation.navigate("MessagePage")}
         >
-          Market
-        </Text>
-      </TouchableOpacity>
+          <Icon
+            name="chatbubble"
+            size={24}
+            color={isActive("MessagePage") ? "#0095FF" : "#9CA3AF"}
+          />
+          <Text
+            style={
+              isActive("MessagePage") ? styles.navTextActive : styles.navText
+            }
+          >
+            Message
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.navItem, isActive("Profile") && styles.activeItem]}
-        onPress={() => navigation.navigate("Profile")}
-      >
-        <Icon
-          name="person"
-          size={24}
-          color={isActive("Profile") ? "#000" : "#9CA3AF"}
-        />
-        <Text
-          style={isActive("Profile") ? styles.navTextActive : styles.navText}
+       
+
+        <TouchableOpacity
+          style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
+          onPress={() => navigation.navigate("Match")}
         >
-          Profile
-        </Text>
-      </TouchableOpacity>
+          <View style={styles.centerButtonInner}>
+            <Icon
+              name="flame"
+              size={28}
+              color="#FFFFFF"
+            />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navItem]}
+          onPress={() => navigation.navigate("MarketplaceHome")}
+        >
+          <Icon
+            name="cart"
+            size={24}
+            color={isActive("MarketplaceHome") ? "#0095FF" : "#9CA3AF"}
+          />
+          <Text
+            style={
+              isActive("MarketplaceHome") ? styles.navTextActive : styles.navText
+            }
+          >
+            Market
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navItem]}
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Icon
+            name="person"
+            size={24}
+            color={isActive("Profile") ? "#0095FF" : "#9CA3AF"}
+          />
+          <Text
+            style={isActive("Profile") ? styles.navTextActive : styles.navText}
+          >
+            Profile
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    elevation: 4,
+  },
   navbar: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
     height: 65,
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 10,
   },
   navItem: {
     alignItems: "center",
@@ -112,7 +131,8 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   activeItem: {
-    // No background color change for active state
+    backgroundColor: '#E0E0E0',
+    borderRadius: 10,
   },
   navText: {
     color: "#9CA3AF",
@@ -120,7 +140,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   navTextActive: {
-    color: "#000000",
+    color: "#0095FF",
     fontSize: 12,
     marginTop: 4,
     fontWeight: "500",
@@ -128,16 +148,16 @@ const styles = StyleSheet.create({
   centerButton: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -20, // Adjust this value to make the button overlap the navbar
+    marginTop: -15,
   },
   centerButtonInner: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#60A5FA",
+    backgroundColor: "#0095FF",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#60A5FA",
+    shadowColor: "#0095FF",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -146,9 +166,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 6,
   },
-  activeCenterButton: {
-    // Add any specific active states for the center button if needed
-  },
+  activeCenterButton: {},
 });
 
 export default Navbar;

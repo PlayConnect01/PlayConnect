@@ -10,7 +10,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
-const BASE_URL = process.env.BASE_URL;
+import { BASE_URL } from '../../api';
+
 const decodeToken = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -28,14 +29,13 @@ const AddNewEvent = () => {
   const navigation = useNavigation();
   const [eventName, setEventName] = useState("");
   const [note, setNote] = useState("");
-  const [date, setDate] = useState(null);
-  const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
+  const [date, setDate] = useState(new Date());
+  const [startTime, setStartTime] = useState(new Date());
+  const [endTime, setEndTime] = useState(new Date());
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("Sports");
   const [participants, setParticipants] = useState("10");
   const [price, setPrice] = useState("0");
-  const [isFree, setIsFree] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
@@ -52,7 +52,7 @@ const AddNewEvent = () => {
       }
     })();
 
-    axios.get("http://192.168.11.115:3000/sports")
+    axios.get(`${BASE_URL}/sports`)
       .then((response) => {
         setSports(response.data);
       })
@@ -106,29 +106,36 @@ const AddNewEvent = () => {
     }
   };
 
-  const toggleFree = () => {
-    setIsFree(!isFree);
-    if (!isFree) setPrice("0");
-  };
 
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
-    if (selectedDate) setDate(selectedDate);
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
   };
 
   const onStartTimeChange = (event, selectedTime) => {
     setShowStartTimePicker(false);
-    if (selectedTime) setStartTime(selectedTime);
+    if (selectedTime) {
+      setStartTime(selectedTime);
+    }
   };
 
   const onEndTimeChange = (event, selectedTime) => {
     setShowEndTimePicker(false);
-    if (selectedTime) setEndTime(selectedTime);
+    if (selectedTime) {
+      setEndTime(selectedTime);
+    }
   };
 
   const handleLocationSelect = (location) => {
-    setMapLocation(location);
-    setLocation(`Lat: ${location.latitude}, Lon: ${location.longitude}`);
+    console.log('Selected location:', location);
+    setMapLocation({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      address: location.address
+    });
+    setLocation(location.address || 'Selected location');
     setShowMapModal(false);
   };
 
@@ -141,53 +148,62 @@ const AddNewEvent = () => {
       );
       return;
     }
-
+  
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
         Alert.alert('Error!', 'No authentication token found. Please log in again.');
         return;
       }
-
+  
       const decodedToken = decodeToken(token);
       if (!decodedToken) {
         throw new Error('Failed to decode token');
       }
-
+  
       const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
       if (!userId) {
         throw new Error('Could not find user ID in token');
       }
-
+  
       let imageUrl = null;
       if (image) {
         imageUrl = await uploadImageToCloudinary(image.uri);
-        console.log(imageUrl);
       }
 
+      // Format date to YYYY-MM-DD
+      const formattedDate = date ? date.toISOString().split('T')[0] : null;
+
+      // Format times to HH:mm format
+      const formattedStartTime = startTime ? `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}` : null;
+      const formattedEndTime = endTime ? `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}` : null;
+
+      // Create event data object
       const eventData = {
         eventName,
         note,
-        date: date.toISOString(),
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        location,
+        date: formattedDate,        // Will be like "2024-03-21"
+        startTime: formattedStartTime,  // Will be like "14:30"
+        endTime: formattedEndTime,      // Will be like "16:30"
+        location: mapLocation.address,
         category,
         participants: parseInt(participants, 10),
         price: parseFloat(price),
-        isFree,
-        creator_id: userId,
-        image: imageUrl, 
+        creator_id: parseInt(userId),
+        image: imageUrl,
+        latitude: mapLocation.latitude,
+        longitude: mapLocation.longitude,
       };
-      console.log(eventData);
-      
 
-      const response = await axios.post('http://192.168.104.10:3000/events/create', eventData, {
+      console.log('Sending event data:', eventData); // Debug log
+
+      const response = await axios.post(`${BASE_URL}/events/create`, eventData, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
-
+  
       Alert.alert(
         'Success!',
         'Event created successfully!',
@@ -203,7 +219,6 @@ const AddNewEvent = () => {
       setCategory('Sports');
       setParticipants('10');
       setPrice('0');
-      setIsFree(false);
       setImage(null);
 
     } catch (error) {
@@ -254,10 +269,17 @@ const AddNewEvent = () => {
                 <Text style={styles.sectionTitle}>Date & Time</Text>
                 <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateTimeButton}>
                   <Icon name="calendar-outline" size={24} color="#6200ee" style={styles.dateTimeIcon} />
-                  <Text style={styles.dateTimeText}>{date ? date.toDateString() : "Select Date"}</Text>
+                  <Text style={styles.dateTimeText}>
+                    {date ? date.toDateString() : "Select Date"}
+                  </Text>
                 </TouchableOpacity>
+                
                 {showDatePicker && (
-                  <DateTimePicker value={date || new Date()} onChange={onDateChange} mode="date" />
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    onChange={onDateChange}
+                  />
                 )}
 
                 <View style={styles.timeContainer}>
@@ -267,15 +289,15 @@ const AddNewEvent = () => {
                   >
                     <Icon name="time-outline" size={24} color="#6200ee" style={styles.dateTimeIcon} />
                     <Text style={styles.dateTimeText}>
-                      {startTime ? startTime.toLocaleTimeString() : "Start Time"}
+                      {startTime ? startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Start Time"}
                     </Text>
                   </TouchableOpacity>
 
                   {showStartTimePicker && (
                     <DateTimePicker
-                      value={startTime || new Date()}
+                      value={startTime}
                       mode="time"
-                      is24Hour={false}
+                      is24Hour={true}
                       onChange={onStartTimeChange}
                     />
                   )}
@@ -286,15 +308,15 @@ const AddNewEvent = () => {
                   >
                     <Icon name="time-outline" size={24} color="#6200ee" style={styles.dateTimeIcon} />
                     <Text style={styles.dateTimeText}>
-                      {endTime ? endTime.toLocaleTimeString() : "End Time"}
+                      {endTime ? endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "End Time"}
                     </Text>
                   </TouchableOpacity>
 
                   {showEndTimePicker && (
                     <DateTimePicker
-                      value={endTime || new Date()}
+                      value={endTime}
                       mode="time"
-                      is24Hour={false}
+                      is24Hour={true}
                       onChange={onEndTimeChange}
                     />
                   )}
@@ -304,7 +326,15 @@ const AddNewEvent = () => {
               <View style={styles.inputSection}>
                 <Text style={styles.sectionTitle}>Location</Text>
                 <TouchableOpacity onPress={() => setShowMapModal(true)} style={styles.inputWithIcon}>
-                  <Text style={styles.placeholder}>{location || "Select Location"}</Text>
+                  <Text 
+                    style={[
+                      styles.placeholder, 
+                      location ? { color: '#000' } : null
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {location || "Select Location"}
+                  </Text>
                   <Icon name="location-outline" size={24} color="#8D8D8D" />
                 </TouchableOpacity>
 
@@ -364,17 +394,8 @@ const AddNewEvent = () => {
                       keyboardType="numeric"
                       value={price}
                       onChangeText={setPrice}
-                      editable={!isFree}
                     />
                   </View>
-                </View>
-              </View>
-
-              <View style={styles.inputSection}>
-                <Text style={styles.sectionTitle}>Free</Text>
-                <View style={styles.row}>
-                  <Text>Free</Text>
-                  <Switch value={isFree} onValueChange={toggleFree} />
                 </View>
               </View>
               <View style={styles.inputSection}>
@@ -481,17 +502,18 @@ const styles = StyleSheet.create({
   dateTimeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0e7fe',
+    backgroundColor: '#E6F4FF',
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
   },
   dateTimeIcon: {
     marginRight: 10,
+    color: '#0095FF',
   },
   dateTimeText: {
     fontSize: 16,
-    color: '#6200ee',
+    color: '#0095FF',
   },
   timeContainer: {
     flexDirection: 'row',
@@ -501,18 +523,17 @@ const styles = StyleSheet.create({
     flex: 0.48,
   },
   pickerContainer: {
-    backgroundColor: '#f0e7fe',
+    backgroundColor: '#E6F4FF',
     borderRadius: 10,
     marginBottom: 15,
     overflow: 'hidden',
   },
   createButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#0095FF',
     padding: 18,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#6200ee',
+    shadowColor: '#0095FF',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -520,11 +541,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    marginBottom: 25,
   },
   createButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    
   },
   inputGroup: {
     marginBottom: 10,
@@ -570,7 +593,6 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 5,
     padding: 15,
-    marginBottom: 5,
   },
   uploadContent: {
     flexDirection: 'row',
@@ -584,8 +606,9 @@ const styles = StyleSheet.create({
   previewImage: {
     width: '100%',
     height: 200,
-    marginBottom: 10,
+    marginBottom: 5,
     borderRadius: 5,
+    marginTop:10
   },
 });
 

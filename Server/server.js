@@ -4,7 +4,6 @@ const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
 const { initializeSocket } = require('./config/socket');
-const handleVideoCall = require('./controllers/videoCallController');
 const passport = require('./config/passport.js');
 
 // Import Prisma for Passport
@@ -16,7 +15,7 @@ const eventRoutes = require('./routes/events');
 const userRouter = require('./routes/user');
 const matchRouter = require('./routes/match');
 const chatRoutes = require('./routes/chat');
-const passwordRouter = require('./routes/handlePasswordReset .js')
+const passwordRouter = require('./routes/handlePasswordReset.js')
 const leaderboardRoutes = require('./routes/leaderboard.js')
 const sportRoutes = require('./routes/sport');
 const competetionRouter = require('./routes/competetion');
@@ -66,7 +65,6 @@ passport.deserializeUser(async (id, done) => {
 const server = http.createServer(app);
 
 // Initialize WebSocket server for video calls and other socket connections
-handleVideoCall(server);
 initializeSocket(server);
 
 // Serve static files from uploads directory
@@ -92,8 +90,4 @@ app.use('/chats', chatRoutes);
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-
-
-
+}); 

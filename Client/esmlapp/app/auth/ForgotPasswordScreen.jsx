@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 
 
-import { BASE_URL } from '../Api';
+import {BASE_URL} from '../../api';
 const PasswordRecoveryScreen = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState   } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,7 +7,7 @@ import * as Animatable from 'react-native-animatable';
 
 const { width } = Dimensions.get('window');
 
-const OnboardingScreen = () => {
+const Landing = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const navigate = useNavigation();
 
@@ -184,4 +184,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OnboardingScreen;
+export default Landing;

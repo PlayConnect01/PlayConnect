@@ -1,37 +1,19 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView, TouchableWithoutFeedback, Modal, FlatList } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { Picker } from '@react-native-picker/picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { Picker } from '@react-native-picker/picker'; // Add this import
 import Navbar from '../navbar/Navbar';
-global.Buffer = Buffer;
+import CountryPicker from 'react-native-country-picker-modal';
+import DateTimePickerModal from 'react-native-modal-datetime-picker'; // Import the date picker
+import { BASE_URL } from '../../api';
 
-// Country codes data with names
-const COUNTRY_CODES = [
-  { code: '+1', name: 'United States' },
-  { code: '+1', name: 'Canada' },
-  { code: '+44', name: 'United Kingdom' },
-  { code: '+33', name: 'France' },
-  { code: '+49', name: 'Germany' },
-  { code: '+34', name: 'Spain' },
-  { code: '+39', name: 'Italy' },
-  { code: '+81', name: 'Japan' },
-  { code: '+86', name: 'China' },
-  { code: '+91', name: 'India' },
-  { code: '+61', name: 'Australia' },
-  { code: '+64', name: 'New Zealand' },
-  { code: '+216', name: 'Tunisia' },
-  { code: '+971', name: 'UAE' },
-  { code: '+966', name: 'Saudi Arabia' },
-  { code: '+20', name: 'Egypt' },
-  { code: '+27', name: 'South Africa' },
-  { code: '+55', name: 'Brazil' },
-  { code: '+52', name: 'Mexico' },
-  { code: '+65', name: 'Singapore' },
-].sort((a, b) => a.name.localeCompare(b.name));
+
+global.Buffer = Buffer;
 
 const decodeToken = (token) => {
   try {
@@ -44,24 +26,67 @@ const decodeToken = (token) => {
   }
 };
 
-const EditProfile = ({ route, navigation }) => {
-  const userData = route?.params?.userData || {};
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
-
+const EditProfile = () => {
+  const navigation = useNavigation();
+  const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
-    username: userData.username || '',
-    email: userData.email || '',
-    location: userData.location || '',
-    profile_picture: userData.profile_picture || '',
-    phone_number: userData.phone_number || '',
-    birthdate_day: userData.birthdate ? new Date(userData.birthdate).getDate().toString() : '',
-    birthdate_month: userData.birthdate ? (new Date(userData.birthdate).getMonth() + 1).toString() : '',
-    birthdate_year: userData.birthdate ? new Date(userData.birthdate).getFullYear().toString() : '',
-    phone_country_code: userData.phone_country_code || '+1',
+    username: '',
+    email: '',
+    location: '',
+    profile_picture: '',
+    phone_number: '',
+    birthdate_day: '',
+    birthdate_month: '',
+    birthdate_year: '',
+    phone_country_code: '+1',
   });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) return;
+
+        // Decode the token to get user ID
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace('-', '+').replace('_', '/');
+        const decodedToken = JSON.parse(atob(base64));
+        const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+
+        const response = await axios.get(`${BASE_URL}/users/${userId}`);
+        setUserData(response.data.user);
+
+        // Set the form data with existing user data
+        setFormData(prev => ({
+          ...prev,
+          username: response.data.user.username || '',
+          email: response.data.user.email || '',
+          profile_picture: response.data.user.profile_picture || '',
+          phone_number: response.data.user.phone_number || '',
+          phone_country_code: response.data.user.phone_country_code || '+1',
+          location: response.data.user.location || '',
+        }));
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showDayPicker, setShowDayPicker] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker] = useState(false);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Generate date options
+  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 100 }, (_, i) => String(currentYear - i));
 
   const validateForm = () => {
     const newErrors = {};
@@ -120,23 +145,12 @@ const EditProfile = ({ route, navigation }) => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.1,
+        quality: 0.5, // Reduced quality for smaller file size
         base64: true,
-        exif: false,
-        width: 300,
-        height: 300,
       });
 
       if (!result.canceled && result.assets[0]) {
         const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
-        
-        const approximateSize = base64Image.length * 0.75 / 1024 / 1024;
-        
-        if (approximateSize > 1) {
-          alert('Image file is too large. Please choose a smaller image.');
-          return;
-        }
-
         setFormData(prev => ({ ...prev, profile_picture: base64Image }));
       }
     } catch (error) {
@@ -165,21 +179,24 @@ const EditProfile = ({ route, navigation }) => {
       }
 
       const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+
       console.log(userId);
       
       if (!userId) {
         throw new Error('Invalid user session. Please log in again.');
       }
 
-      const birthdate = formData.birthdate_year && formData.birthdate_month && formData.birthdate_day
-        ? `${formData.birthdate_year}-${String(formData.birthdate_month).padStart(2, '0')}-${String(formData.birthdate_day).padStart(2, '0')}`
+      // Construct the birthdate from day, month, and year
+      const { birthdate_day, birthdate_month, birthdate_year } = formData;
+      const birthdate = birthdate_day && birthdate_month && birthdate_year
+        ? `${birthdate_year}-${birthdate_month}-${birthdate_day}`
         : null;
 
       const requestData = {
         username: formData.username.trim(),
         email: formData.email.trim(),
         location: formData.location.trim() || null,
-        birthdate,
+        birthdate, // Send the formatted birthdate
         phone_number: formData.phone_number,
         phone_country_code: formData.phone_country_code,
         ...(formData.profile_picture?.startsWith('data:image') && {
@@ -190,7 +207,7 @@ const EditProfile = ({ route, navigation }) => {
       console.log(userId);
       
       const response = await axios.put(
-        `http://192.168.104.10:3000/users/${userId}`,
+        `${BASE_URL}/users/${userId}`,
         requestData,
         {
           headers: {
@@ -202,7 +219,8 @@ const EditProfile = ({ route, navigation }) => {
 
       if (response.data.success) {
         alert('Profile updated successfully!');
-        navigation.navigate('Profile');
+        navigation.navigate('profile/ProfilePage');
+
       } else {
         throw new Error(response.data.error || 'Failed to update profile');
       }
@@ -235,18 +253,38 @@ const EditProfile = ({ route, navigation }) => {
     </View>
   );
 
-  return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <TouchableWithoutFeedback onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#000" style={styles.backIcon} />
-        </TouchableWithoutFeedback>
+  const handleSelectDay = (day) => {
+    setFormData((prev) => ({ ...prev, birthdate_day: day }));
+    setShowDayPicker(false);
+  };
 
+  const handleSelectMonth = (month) => {
+    setFormData((prev) => ({ ...prev, birthdate_month: month }));
+    setShowMonthPicker(false);
+  };
+
+  const handleSelectYear = (year) => {
+    setFormData((prev) => ({ ...prev, birthdate_year: year }));
+    setShowYearPicker(false);
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+      </View>
+
+      <ScrollView 
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <TouchableOpacity onPress={handleImagePick} style={styles.imagePickerContainer}>
           <Image 
             source={{ 
-              uri: formData.profile_picture || 
-              'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541' 
+              uri: formData.profile_picture || 'https://via.placeholder.com/150'
             }} 
             style={styles.profileImage} 
           />
@@ -256,27 +294,38 @@ const EditProfile = ({ route, navigation }) => {
           </View>
         </TouchableOpacity>
 
-        {renderInput('username', 'Username', 'person-outline')}
-        {renderInput('email', 'Email', 'mail-outline', 'email-address')}
-        {renderInput('location', 'Location', 'location-outline')}
+        <View style={styles.inputContainer}>
+          <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+          <TextInput
+            style={styles.inputWithIcon}
+            placeholder={userData?.username || "Name"}
+            value={formData.username}
+            onChangeText={(value) => handleInputChange('username', value)}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+          <TextInput
+            style={styles.inputWithIcon}
+            placeholder={userData?.email || "Email"}
+            value={formData.email}
+            onChangeText={(value) => handleInputChange('email', value)}
+            keyboardType="email-address"
+          />
+        </View>
 
         <View style={styles.phoneContainer}>
-          <Ionicons name="call-outline" size={20} color="#666" style={styles.phoneIcon} />
           <TouchableOpacity 
-            style={styles.countryCodeButton}
-            onPress={() => setShowCountryPicker(!showCountryPicker)}
+            style={styles.countryCodeContainer}
+            onPress={() => setShowCountryPicker(true)}
           >
-            <Text>{formData.phone_country_code}</Text>
-            <Ionicons name="chevron-down" size={16} color="#666" />
+            <Text style={styles.countryCodeLabel}>{formData.phone_country_code}</Text>
+            <Ionicons name="chevron-down" size={20} color="#666" />
           </TouchableOpacity>
-
           <TextInput
-            style={[ 
-              styles.input, 
-              { flex: 1, marginLeft: 10 },
-              errors.phone_number && styles.inputError 
-            ]}
-            placeholder="Phone Number"
+            style={styles.phoneInput}
+            placeholder="(308) 555-0121"
             value={formData.phone_number}
             onChangeText={(value) => handleInputChange('phone_number', value)}
             keyboardType="phone-pad"
@@ -284,62 +333,131 @@ const EditProfile = ({ route, navigation }) => {
         </View>
 
         {showCountryPicker && (
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={formData.phone_country_code}
-              style={styles.picker}
-              onValueChange={(itemValue) => {
-                handleInputChange('phone_country_code', itemValue);
-                setShowCountryPicker(false);
-              }}
-            >
-              {COUNTRY_CODES.map((country) => (
-                <Picker.Item 
-                  key={`${country.code}-${country.name}`}
-                  label={`${country.name} (${country.code})`}
-                  value={country.code}
-                />
-              ))}
-            </Picker>
-          </View>
+          <CountryPicker
+            visible={showCountryPicker}
+            onClose={() => setShowCountryPicker(false)}
+            onSelect={(country) => {
+              handleInputChange('phone_country_code', `+${country.callingCode[0]}`);
+              setShowCountryPicker(false);
+            }}
+            withFilter
+            withFlag
+            withCallingCode
+            withEmoji
+          />
         )}
 
-        <View style={styles.birthdateContainer}>
-          <Ionicons name="calendar-outline" size={20} color="#666" style={styles.calendarIcon} />
-          <View style={styles.dateContainer}>
-            <TextInput
-              style={[styles.dateInput, errors.birthdate && styles.inputError]}
-              placeholder="DD"
-              keyboardType="numeric"
-              value={formData.birthdate_day}
-              onChangeText={(value) => handleInputChange('birthdate_day', value)}
-              maxLength={2}
-            />
-            <TextInput
-              style={[styles.dateInput, errors.birthdate && styles.inputError]}
-              placeholder="MM"
-              keyboardType="numeric"
-              value={formData.birthdate_month}
-              onChangeText={(value) => handleInputChange('birthdate_month', value)}
-              maxLength={2}
-            />
-            <TextInput
-              style={[styles.dateInput, errors.birthdate && styles.inputError]}
-              placeholder="YYYY"
-              keyboardType="numeric"
-              value={formData.birthdate_year}
-              onChangeText={(value) => handleInputChange('birthdate_year', value)}
-              maxLength={4}
-            />
-          </View>
-          {errors.birthdate && (
-            <Text style={[styles.errorText, { marginTop: 5 }]}>{errors.birthdate}</Text>
-          )}
+        <View style={styles.addressContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Address"
+            value={formData.location}
+            onChangeText={(value) => handleInputChange('location', value)}
+          />
         </View>
 
-        <TouchableOpacity 
-          style={[styles.button, isSubmitting && styles.buttonDisabled]} 
-          onPress={handleSubmit} 
+        <Text style={styles.birthdayLabel}>When's your birthday?</Text>
+        <View style={styles.birthdateContainer}>
+          <TouchableOpacity onPress={() => setShowDayPicker(true)} style={styles.dateInputContainer}>
+            <TextInput
+              style={styles.dateInput}
+              placeholder="Day"
+              value={formData.birthdate_day}
+              editable={false}
+            />
+            <Ionicons name="chevron-down" size={20} color="#666" />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setShowMonthPicker(true)} style={styles.dateInputContainer}>
+            <TextInput
+              style={styles.dateInput}
+              placeholder="Month"
+              value={formData.birthdate_month}
+              editable={false}
+            />
+            <Ionicons name="chevron-down" size={20} color="#666" />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setShowYearPicker(true)} style={styles.dateInputContainer}>
+            <TextInput
+              style={styles.dateInput}
+              placeholder="Year"
+              value={formData.birthdate_year}
+              editable={false}
+            />
+            <Ionicons name="chevron-down" size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Day Picker Modal */}
+        <Modal
+          transparent
+          animationType="slide"
+          visible={showDayPicker}
+          onRequestClose={() => setShowDayPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.pickerContainer}>
+              <FlatList
+                data={days}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleSelectDay(item)} style={styles.pickerItem}>
+                    <Text style={styles.pickerText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </Modal>
+
+        {/* Month Picker Modal */}
+        <Modal
+          transparent
+          animationType="slide"
+          visible={showMonthPicker}
+          onRequestClose={() => setShowMonthPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.pickerContainer}>
+              <FlatList
+                data={months}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleSelectMonth(item)} style={styles.pickerItem}>
+                    <Text style={styles.pickerText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </Modal>
+
+        {/* Year Picker Modal */}
+        <Modal
+          transparent
+          animationType="slide"
+          visible={showYearPicker}
+          onRequestClose={() => setShowYearPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.pickerContainer}>
+              <FlatList
+                data={years}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleSelectYear(item)} style={styles.pickerItem}>
+                    <Text style={styles.pickerText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </Modal>
+
+        <TouchableOpacity
+          style={[styles.saveButton, isSubmitting && styles.buttonDisabled]}
+          onPress={handleSubmit}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -348,13 +466,6 @@ const EditProfile = ({ route, navigation }) => {
             <Text style={styles.buttonText}>Save Changes</Text>
           )}
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
       </ScrollView>
       <Navbar />
     </View>
@@ -362,21 +473,33 @@ const EditProfile = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 16,
+  },
   container: {
     flexGrow: 1,
-    padding: 16,
+    paddingHorizontal: 16,
     backgroundColor: '#fff',
-    alignItems: 'center',
   },
   imagePickerContainer: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 24,
   },
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    marginBottom: 10,
+    marginBottom: 16,
   },
   changePhotoButton: {
     flexDirection: 'row',
@@ -390,112 +513,119 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 5,
   },
-  inputContainer: {
-    width: '90%',
-    marginVertical: 10,
-    position: 'relative',
-  },
   input: {
     width: '100%',
-    height: 40,
+    height: 56,
     borderWidth: 1,
-    borderColor: '#ccc',
-    paddingLeft: 10,
-    borderRadius: 5,
+    borderColor: '#E8E8E8',
+    borderRadius: 12,
+    paddingHorizontal: 16,
     fontSize: 16,
-  },
-  inputIcon: {
-    position: 'absolute',
-    top: 9,
-    left: 10,
-  },
-  inputError: {
-    borderColor: 'red',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
+    marginBottom: 16,
   },
   phoneContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    width: '90%',
-    marginVertical: 10,
+    marginBottom: 16,
+    gap: 12,
   },
-  phoneIcon: {
-    position: 'absolute',
-    top: 9,
-    left: 10,
-  },
-  countryCodeButton: {
+  countryCodeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    backgroundColor: '#F1F1F1',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+    justifyContent: 'space-between',
+    height: 56,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    borderRadius: 12,
+    width: '30%',
   },
-  pickerContainer: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginTop: 10,
-    padding: 10,
+  countryCodeLabel: {
+    fontSize: 16,
   },
-  picker: {
-    width: '100%',
-    height: 150,
+  phoneInput: {
+    flex: 1,
+    height: 56,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+  },
+  birthdayLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 12,
+    marginTop: 16,
   },
   birthdateContainer: {
-    width: '90%',
-    marginVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  dateInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  calendarIcon: {
-    position: 'absolute',
-    top: 9,
-    left: 10,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    width: '80%',
-    justifyContent: 'space-between',
+    width: '31%',
+    height: 56,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    borderRadius: 12,
+    paddingHorizontal: 16,
   },
   dateInput: {
-    width: '30%',
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingLeft: 10,
+    flex: 1,
     fontSize: 16,
-    borderRadius: 5,
   },
-  button: {
+  saveButton: {
     backgroundColor: '#6F61E8',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 5,
-    marginVertical: 10,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
   buttonDisabled: {
     backgroundColor: '#bbb',
   },
-  cancelButton: {
-    backgroundColor: '#ccc',
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    borderRadius: 12,
+    marginBottom: 16,
+    height: 56,
+    paddingHorizontal: 16,
   },
-  backIcon: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
+  inputIcon: {
+    marginRight: 12,
+  },
+  inputWithIcon: {
+    flex: 1,
+    height: '100%',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  pickerContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  pickerItem: {
+    padding: 16,
+  },
+  pickerText: {
+    fontSize: 18,
   },
 });
 
