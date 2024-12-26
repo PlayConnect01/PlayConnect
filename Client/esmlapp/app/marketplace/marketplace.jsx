@@ -1,23 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
-  TextInput,
   Image,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Animated,
+  SafeAreaView,
+  RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import Icon from "react-native-vector-icons/FontAwesome";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import ConfirmationModal from './Confirmationadding'; // Import the confirmation modal
-import SearchBar from './SearchBar'; // Import the SearchBar component
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons'; // Import Material Icons
-import { WebView } from 'react-native-webview';
+import { FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import SearchBar from "./SearchBar";
+import Sidebar from "./Sidebar";
+import {BASE_URL} from "../../api"
 
 const Marketplace = () => {
   const navigation = useNavigation();
@@ -25,500 +24,493 @@ const Marketplace = () => {
   const [discounts, setDiscounts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [itemToAdd, setItemToAdd] = useState(null); // State for the item to add
-  const [animation] = useState(new Animated.Value(1)); // State for animation
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
+  const [showMessage, setShowMessage] = useState("");
+  const [cartProducts, setCartProducts] = useState([]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const allProductsResponse = await axios.get(
-          "http://192.168.1.101:3000/product/discounted"
-        );
-        setProducts(allProductsResponse.data);
-
-        const topDiscountedResponse = await axios.get(
-          "http://192.168.1.101:3000/product/discounted/top-three"
-        );
-        setDiscounts(topDiscountedResponse.data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-
-    fetchProducts();
-    fetchCartCount(); // Fetch the cart count when the component mounts
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [allProductsResponse, topDiscountedResponse] = await Promise.all([
+        axios.get(`${BASE_URL}/product/discounted`),
+        axios.get(`${BASE_URL}/product/discounted/top-three`),
+      ]);
+      setProducts(allProductsResponse.data);
+      setDiscounts(topDiscountedResponse.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const fetchCartCount = async () => {
+  const fetchCartCount = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
+      const token = await AsyncStorage.getItem("userToken");
+      const userId = await AsyncStorage.getItem("userId");
       if (token && userId) {
-        const response = await axios.get(`http://192.168.1.101:3000/cart/count/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await axios.get(`${BASE_URL}/cart/count/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        setCartCount(response.data.count); // Update the cart count state
+        setCartCount(response.data.count);
+        setCartProducts(response.data.products || []);
       }
     } catch (error) {
       console.error("Error fetching cart count:", error);
     }
-  };
+  }, []);
 
-  const addToCart = (product) => {
-    setItemToAdd(product);
-    setModalVisible(true); // Show confirmation modal
-  };
+  useEffect(() => {
+    fetchProducts();
+    fetchCartCount();
+  }, [fetchProducts, fetchCartCount]);
 
-  const confirmAddToCart = async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken'); // Retrieve user token
-      let userId = await AsyncStorage.getItem('userId'); // Retrieve user ID
-      userId = JSON.parse(userId);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([fetchProducts(), fetchCartCount()]).then(() =>
+      setRefreshing(false)
+    );
+  }, [fetchProducts, fetchCartCount]);
 
-      // Check if user is authenticated
-      if (!token || !userId) {
-        console.error("User token or ID is missing.");
-        return; // Exit if user is not authenticated
-      }
+  const addToCart = useCallback(
+    async (product) => {
+      try {
+        const existingCart = await AsyncStorage.getItem("cartProducts");
+        const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
 
-      // Validate product details
-      if (!itemToAdd || !itemToAdd.product_id || !itemToAdd.price) {
-        console.error("Invalid product details.");
-        return; // Exit if product details are invalid
-      }
-
-      // Optimistically update the cart count
-      setCartCount(prevCount => prevCount + 1);
-      setLoading(true); // Set loading to true
-
-      const response = await axios.post(
-        'http://192.168.1.101:3000/cart/cart/add',
-        {
-          userId: userId,
-          productId: itemToAdd.product_id,
-          quantity: 1, // Default quantity to 1
-          price: itemToAdd.price,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        if (
+          cartProducts.some((item) => item.product_id === product.product_id)
+        ) {
+          setShowMessage(
+            "Product already in cart. Please view your cart to adjust quantity."
+          );
+          setTimeout(() => setShowMessage(""), 1000);
+          return;
         }
-      );
 
-      // Check response status
-      if (response.status === 201) {
-        console.log("Product added to cart:", response.data);
-      } else {
-        console.error("Failed to add product to cart:", response.data);
-        // Optionally revert the optimistic update if the request fails
-        setCartCount(prevCount => prevCount - 1);
+        const token = await AsyncStorage.getItem("userToken");
+        const userId = await AsyncStorage.getItem("userId");
+        if (!token || !userId || !product?.product_id || !product?.price) {
+          console.error("Invalid data for adding to cart");
+          return;
+        }
+
+        setCartCount((prevCount) => prevCount + 1);
+        setLoading(true);
+
+        const response = await axios.post(
+          `${API.BASE_URL}/cart/cart/add`,
+          {
+            userId: JSON.parse(userId),
+            productId: product.product_id,
+            quantity: 1,
+            price: product.price,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.status !== 201) {
+          setShowMessage(`${product.name} already in the cart! 🛒`);
+          setCartCount((prevCount) => prevCount - 1);
+        } else {
+          cartProductsList.push(product);
+          await AsyncStorage.setItem(
+            "cartProducts",
+            JSON.stringify(cartProductsList)
+          );
+          setCartProducts(cartProductsList);
+          setShowMessage(`${product.name} added to cart! 🛒`);
+          setTimeout(() => setShowMessage(""), 2000);
+        }
+      } catch (error) {
+        console.error("Error adding product to cart:", error);
+        setCartCount((prevCount) => prevCount - 1);
+        setShowMessage("Error adding to cart. Please try again.");
+        setTimeout(() => setShowMessage(""), 2000);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error adding product to cart:", error);
-      // Optionally revert the optimistic update if the request fails
-      setCartCount(prevCount => prevCount - 1);
-    } finally {
-      setLoading(false); // Set loading to false
-      setModalVisible(false); // Close the modal
-    }
- ;
-  }  
-  const calculateDiscountedPrice = (price, discount) => {
-    // Ensure price and discount are numbers
+    },
+    [cartProducts]
+  );
+
+  const calculateDiscountedPrice = useCallback((price, discount) => {
     const originalPrice = parseFloat(price);
     const discountValue = parseFloat(discount);
-     // Check if the values are valid numbers
-    if (isNaN(originalPrice) || isNaN(discountValue)) {
-        console.error("Invalid price or discount value");
-        return 0; // Return 0 or handle as needed
-    }
-     // Calculate the discounted price
-    return originalPrice - (originalPrice * (discountValue / 100));
- ;
-};
+    return isNaN(originalPrice) || isNaN(discountValue)
+      ? 0
+      : originalPrice - originalPrice * (discountValue / 100);
+  }, []);
 
-  const handleSelectProduct = (product) => {
-    // Handle product selection (e.g., navigate to product detail)
-    console.log("Selected product:", product);
-    // You can navigate to a product detail screen here
+  const handleSelectCategory = useCallback((category) => {
+    setSelectedCategory(category);
+    console.log("Selected category:", category);
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarVisible(!isSidebarVisible);
   };
 
-  const animateTab = () => {
-    Animated.sequence([
-      Animated.timing(animation, {
-        toValue: 0.9,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(animation, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  const toggleFavorite = useCallback(
+    async (product) => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        const userId = await AsyncStorage.getItem("userId");
+
+        if (!token || !userId || !product?.product_id) {
+          console.error("Missing required data");
+          return;
+        }
+
+        const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
+
+        if (isAlreadyFavorite) {
+          const response = await axios.delete(
+            `${API.BASE_URL}/favorites/favorites/item/${product.favorite_id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.status === 200) {
+            setFavoriteProducts((prevFavorites) =>
+              prevFavorites.filter((id) => id !== product.product_id)
+            );
+            setShowMessage("Product removed from favorites! 💔");
+            setTimeout(() => setShowMessage(""), 2000);
+          }
+        } else {
+          const response = await axios.post(
+            `${API.BASE_URL}/favorites/favorites/add`,
+            {
+              userId: parseInt(userId),
+              productId: product.product_id,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.status === 201) {
+            setFavoriteProducts((prevFavorites) => [
+              ...prevFavorites,
+              product.product_id,
+            ]);
+            setShowMessage("Product added to favorites! ❤️");
+            setTimeout(() => setShowMessage(""), 2000);
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Error toggling favorite:",
+          error.response?.data || error.message
+        );
+        setShowMessage("Something went wrong! Please try again.");
+        setTimeout(() => setShowMessage(""), 2000);
+      }
+    },
+    [favoriteProducts]
+  );
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        const userId = await AsyncStorage.getItem("userId");
+
+        if (!token || !userId) return;
+
+        const response = await axios.get(
+          `${API.BASE_URL}/favorites/user/${userId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const favoriteIds = response.data.map((fav) => fav.product_id);
+        setFavoriteProducts(favoriteIds);
+      } catch (error) {
+        console.error("Error fetching favorites:", error);
+      }
+    };
+
+    fetchFavorites();
+  }, []);
 
   return (
-    <View style={styles.container}>
-     
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <TouchableOpacity>
-            <Text style={styles.menuIcon}>
-              <Icon name="bars" size={24} color="#000" />
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Marketplace</Text>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('CartScreen')}>
-              <Icon name="shopping-cart" size={24} color="#000" />
-              <Text style={styles.cartCount}>{cartCount}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.favoriteIcon}>
-              <Icon name="heart-o" size={24} color="#000" />
-            </TouchableOpacity>
-          </View>
-        </View>
-         <View style={styles.searchSection}>
-         <SearchBar onSelectProduct={handleSelectProduct} />
-        </View>
-
-        <Text style={styles.sectionTitle}>Discover</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabContainer}
-        >
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <WebView
-              originWhitelist={['*']}
-              source={{ html: '<i class="bi bi-soccer"></i>' }}
-              style={{ width: 24, height: 24 }}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.mainContainer}>
+        {isSidebarVisible && (
+          <Sidebar onSelectCategory={handleSelectCategory} />
+        )}
+        <View style={styles.contentContainer}>
+          <TouchableOpacity onPress={toggleSidebar} style={styles.toggleButton}>
+            <FontAwesome
+              name={isSidebarVisible ? "times" : "bars"}
+              size={24}
+              color="#333"
             />
-            <Text style={styles.inactiveTab}>Football</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           >
-            <WebView
-              originWhitelist={['*']}
-              source={{ html: '<i class="bi bi-basketball"></i>' }}
-              style={{ width: 24, height: 24 }}
-            />
-            <Text style={styles.inactiveTab}>Basketball</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <WebView
-              originWhitelist={['*']}
-              source={{ html: '<i class="bi bi-table-tennis"></i>' }}
-              style={{ width: 24, height: 24 }}
-            />
-            <Text style={styles.inactiveTab}>Tennis</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="sports-soccer" size={24} color="#FF1493" />
-              <Text style={styles.inactiveTab}>Soccer</Text>
-            </Animated.View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="sports-baseball" size={24} color="#4169E1" />
-              <Text style={styles.inactiveTab}>Baseball</Text>
-            </Animated.View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="pool" size={24} color="#00CED1" />
-              <Text style={styles.inactiveTab}>Swimming</Text>
-            </Animated.View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="snowboarding" size={24} color="#87CEEB" />
-              <Text style={styles.inactiveTab}>Snowboarding</Text>
-            </Animated.View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="videogame-asset" size={24} color="#9932CC" />
-              <Text style={styles.inactiveTab}>Gaming</Text>
-            </Animated.View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="directions-bike" size={24} color="#FF4500" />
-              <Text style={styles.inactiveTab}>Cycling</Text>
-            </Animated.View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => { animateTab(); navigation.navigate("products"); }}
-            style={styles.sportTab}
-          >
-            <Animated.View style={{ transform: [{ scale: animation }] }}>
-              <MaterialIcons name="run" size={24} color="#32CD32" />
-              <Text style={styles.inactiveTab}>Running</Text>
-            </Animated.View>
-          </TouchableOpacity>
-        </ScrollView>
-
-        <Text style={styles.sectionTitle}>Check Out Some of Our Collection! 🎉🛍️</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.cardContainer}
-        >
-          {products.map((product, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.card}
-              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
-            >
-              <Image
-                source={{ uri: product.image_url }}
-                style={styles.cardImage}
-              />
-              <Text style={styles.cardTitle}>{product.name}</Text>
-              <Text style={styles.cardPrice}>{product.price}</Text>
-              <View style={styles.cardActions}>
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>Marketplace</Text>
+              <View style={styles.iconContainer}>
                 <TouchableOpacity
-                  style={styles.cartButton}
-                  onPress={() => addToCart(product)} // Call addToCart function
+                  onPress={() => navigation.navigate("CartScreen")}
+                  style={styles.iconButton}
                 >
-                  <Icon name="shopping-cart" size={20} color="#fff" />
+                  <FontAwesome name="shopping-cart" size={24} color="#333" />
+                  <View style={styles.cartCountContainer}>
+                    <Text style={styles.cartCount}>{cartCount}</Text>
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.favoriteButton}
-                  onPress={() => {
-                    /* Toggle favorite logic */
-                  }}
+                  style={styles.iconButton}
+                  onPress={() => navigation.navigate("FavoritesScreen")}
                 >
-                  <Icon name="heart-o" size={20} color="#ff3b8f" />
+                  <FontAwesome name="heart-o" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <Text style={styles.sectionTitle}>Exciting Discounts and Promotions! 🎉💰</Text>
-        {discounts.map((discount, index) => {
-          const discountedPrice = calculateDiscountedPrice(discount.price, discount.discount); // Use discount.price
-          const savings = discount.price - discountedPrice; // Calculate savings based on the original price
-          return (
-            <View key={index} style={styles.discountItem}>
-              <Image
-                source={{ uri: discount.image_url }}
-                style={styles.discountImage}
-              />
-              <View>
-                <Text style={styles.discountTitle}>{discount.name}</Text>
-                <Text style={styles.discountPrice}>
-                  ${discountedPrice.toFixed(2)}{" "} {/* Display new price */}
-                  <Text style={styles.discountOldPrice}>${discount.price}</Text> {/* Display original price */}
-                </Text>
-                <Text style={styles.discountSavings}>
-                  You save: ${savings.toFixed(2)} {/* Display savings */}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.cartButton}
-                onPress={() => addToCart(discount)} // Call addToCart with discount details
-              >
-                <Icon name="shopping-cart" size={20} color="#fff" />
-              </TouchableOpacity>
             </View>
-          );
-        })}
 
-        <TouchableOpacity
-          style={styles.viewAllButton}
-          onPress={() => navigation.navigate('AllDiscountedProducts')}
-        >
-          <Text style={styles.viewAllText}>View All Discounts! 👀</Text>
-        </TouchableOpacity>
-      </ScrollView>
+            <View style={styles.searchSection}>
+              <SearchBar onSelectProduct={() => {}} />
+            </View>
 
-      {loading && <ActivityIndicator size="large" color="#0000ff" />}
+            <Text style={styles.sectionTitle}>Featured Collection</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.cardContainer}
+            >
+              {products.map((product, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.card}
+                  onPress={() =>
+                    navigation.navigate("ProductDetail", {
+                      productId: product.id,
+                    })
+                  }
+                >
+                  <Image
+                    source={{ uri: product.image_url }}
+                    style={styles.cardImage}
+                  />
+                  <Text style={styles.cardTitle}>{product.name}</Text>
+                  <Text style={styles.cardPrice}>${product.price}</Text>
+                  <View style={styles.cardActions}>
+                    <TouchableOpacity
+                      style={styles.cartButton}
+                      onPress={() => addToCart(product)}
+                    >
+                      <FontAwesome
+                        name={
+                          cartProducts.some(
+                            (item) => item.product_id === product.product_id
+                          )
+                            ? "check"
+                            : "shopping-cart"
+                        }
+                        size={20}
+                        color="#fff"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.favoriteButton,
+                        favoriteProducts.includes(product.product_id) &&
+                          styles.favoriteButtonActive,
+                      ]}
+                      onPress={() => toggleFavorite(product)}
+                    >
+                      <FontAwesome
+                        name={
+                          favoriteProducts.includes(product.product_id)
+                            ? "heart"
+                            : "heart-o"
+                        }
+                        size={20}
+                        color={
+                          favoriteProducts.includes(product.product_id)
+                            ? "#ff0000"
+                            : "#333"
+                        }
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-      <ConfirmationModal
-        visible={isModalVisible}
-        onConfirm={confirmAddToCart}
-        onCancel={() => setModalVisible(false)}
-        message={`Great choice! Do you want to add ${itemToAdd ? itemToAdd.name : ''} to your cart? 🛒✨`}
-      />
-    </View>
+            <Text style={styles.sectionTitle}>Special Offers</Text>
+            {discounts.map((discount, index) => {
+              const discountedPrice = calculateDiscountedPrice(
+                discount.price,
+                discount.discount
+              );
+              const savings = discount.price - discountedPrice;
+              return (
+                <View key={index} style={styles.discountItem}>
+                  <Image
+                    source={{ uri: discount.image_url }}
+                    style={styles.discountImage}
+                  />
+                  <View style={styles.discountInfo}>
+                    <Text style={styles.discountTitle}>{discount.name}</Text>
+                    <Text style={styles.discountPrice}>
+                      ${discountedPrice.toFixed(2)}{" "}
+                      <Text style={styles.discountOldPrice}>
+                        ${discount.price}
+                      </Text>
+                    </Text>
+                    <Text style={styles.discountSavings}>
+                      You save: ${savings.toFixed(2)}
+                    </Text>
+                    <Text style={styles.discountPercentage}>
+                      {discount.discount}% OFF
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.discountCartButton}
+                    onPress={() => addToCart(discount)}
+                  >
+                    <FontAwesome name="shopping-cart" size={20} color="#fff" />
+                    <Text style={styles.discountCartButtonText}>Add</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+
+            <TouchableOpacity
+              style={styles.viewAllButton}
+              onPress={() => navigation.navigate("AllDiscountedProducts")}
+            >
+              <Text style={styles.viewAllText}>View All Offers</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#6e3de8" />
+            </View>
+          )}
+
+          {showMessage && (
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageText}>{showMessage}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-
-  cartCount: {
-    position: 'absolute',
-    right: 0,
-    top: -5,
-    backgroundColor: '#ff3b8f',
-    borderRadius: 10,
-    paddingHorizontal: 5,
-    color: '#fff',
-    fontSize: 12,
-  },
-  favoriteIcon: {
-    marginLeft: 15,
-  },
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: "#ffffff",
   },
+  mainContainer: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  contentContainer: {
+    flex: 1,
+  },
   scrollContent: {
-    paddingHorizontal: 10,
-    paddingTop: 40,
+    padding: 20,
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
-    backgroundColor: "#ffffff",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  menuIcon: {
-    fontSize: 24,
-    color: "#000",
+    marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#6e3de8",
+    color: "#333",
   },
   iconContainer: {
     flexDirection: "row",
+  },
+  iconButton: {
+    marginLeft: 15,
+    position: "relative",
+  },
+  cartCountContainer: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "#ff3b8f",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
     alignItems: "center",
   },
-  icon: {
-    fontSize: 24,
-    marginLeft: 15,
-    color: "#6e3de8",
+  cartCount: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   searchSection: {
-    marginTop: 20,
-  },
-  searchInput: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#000",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginVertical: 20,
-  },
-  tabContainer: {
-    flexDirection: "row",
-    marginTop: 10,
-  },
-  sportTab: {
-    alignItems: "center",
-    marginRight: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    elevation: 2,
-  },
-  inactiveTab: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 5,
-    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "bold",
+    marginVertical: 15,
+    color: "#333",
   },
   cardContainer: {
-    flexDirection: "row",
-    marginTop: 10,
+    marginBottom: 20,
   },
   card: {
     width: 180,
     marginRight: 15,
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 10,
     padding: 15,
     alignItems: "center",
-    elevation: 5,
-    shadowColor: "#6e3de8",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    marginBottom: 10,
-    marginTop: 5,
+    elevation: 3,
   },
   cardImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 10,
-    marginBottom: 8,
+    width: 150,
+    height: 150,
+    borderRadius: 8,
+    marginBottom: 10,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2d3436",
+    color: "#333",
     marginVertical: 6,
     textAlign: "center",
   },
@@ -551,7 +543,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 40,
     height: 40,
-    borderColor: "#ff3b8f",
+    borderColor: "#ddd",
     borderWidth: 1,
   },
   discountItem: {
@@ -560,101 +552,111 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 10,
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 10,
     padding: 15,
-    elevation: 4,
-    shadowColor: "#6e3de8",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   discountImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    marginRight: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  discountInfo: {
+    flex: 1,
+    marginLeft: 15,
   },
   discountTitle: {
     fontWeight: "bold",
-    color: "#000",
+    color: "#333",
+    fontSize: 16,
+    marginBottom: 5,
   },
   discountPrice: {
     color: "#6e3de8",
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: "bold",
   },
   discountOldPrice: {
     textDecorationLine: "line-through",
-    color: "#6e3de8",
+    color: "#999",
     fontSize: 14,
+  },
+  discountSavings: {
+    color: "#4CAF50",
+    fontSize: 14,
+    marginTop: 2,
   },
   discountPercentage: {
-    color: '#ff0000', // Red color for discount percentage
+    color: "#ff0000",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    marginTop: 2,
   },
-  bottomNav: {
+  discountCartButton: {
+    backgroundColor: "#6e3de8",
+    borderRadius: 8,
+    padding: 10,
     flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    backgroundColor: "#ffffff",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 5,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  navIcon: {
-    fontSize: 24,
-    color: "#6e3de8",
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-  },
-  quantityInput: {
-    width: 50,
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 5,
-    textAlign: 'center',
-    marginRight: 10,
+  discountCartButtonText: {
+    color: "#fff",
+    marginLeft: 5,
+    fontSize: 14,
+    fontWeight: "bold",
   },
   viewAllButton: {
-    backgroundColor: '#6A5AE0', // Button color
+    backgroundColor: "#6A5AE0",
     borderRadius: 10,
-    paddingVertical: 12, // Increased vertical padding
-    paddingHorizontal: 20, // Added horizontal padding
-    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: "center",
     marginVertical: 20,
-    elevation: 5, // Shadow effect for Android
-    shadowColor: '#000', // Shadow color for iOS
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
     shadowRadius: 4,
+    elevation: 4,
   },
   viewAllText: {
-    color: '#FFF',
-    fontSize: 18, // Increased font size
-    fontWeight: 'bold',
+    color: "#FFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
-  viewAllButtonHover: {
-    backgroundColor: '#5A4AE0', // Darker shade for hover effect
+  toggleButton: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    zIndex: 10,
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  messageContainer: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#4CAF50",
+    borderRadius: 10,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  messageText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 });
 
 export default Marketplace;
-

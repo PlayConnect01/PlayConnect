@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Audio } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-const API_URL = 'http://192.168.103.15:3000';
-
+import {BASE_URL} from "../../../api"
 const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
     const [sound, setSound] = useState();
     const [isPlaying, setIsPlaying] = useState(false);
@@ -68,7 +66,7 @@ const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
     const getCorrectUrl = (url) => {
         if (!url) return url;
         if (url.startsWith('/')) {
-            return `${API_URL}${url}`;
+            return `${BASE_URL}${url}`;
         }
         return url.replace(/http:\/\/\d+\.\d+\.\d+\.\d+:\d+/, API_URL);
     };

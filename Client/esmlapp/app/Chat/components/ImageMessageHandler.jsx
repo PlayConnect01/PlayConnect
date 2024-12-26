@@ -9,8 +9,9 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
+import {BASE_URL} from "../../../api"
 
-const API_URL = "http://192.168.103.15:3000";
+
 
 const ImageMessageHandler = ({ chatId, currentUserId, onImageUpload }) => {
   const [uploading, setUploading] = useState(false);
@@ -49,10 +50,10 @@ const ImageMessageHandler = ({ chatId, currentUserId, onImageUpload }) => {
         formData.append("senderId", currentUserId);
 
         try {
-          console.log("Uploading to:", `${API_URL}/chats/upload/image`);
+          console.log("Uploading to:", `${BASE_URL}/chats/upload/image`);
           const response = await axios({
             method: "post",
-            url: `${API_URL}/chats/upload/image`,
+            url: `${BASE_URL}/chats/upload/image`,
             data: formData,
             headers: {
               "Content-Type": "multipart/form-data",

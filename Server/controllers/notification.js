@@ -16,8 +16,6 @@ const getUserNotifications = async (userId) => {
             user_id: true,
             username: true,
             profile_picture: true,
-            age: true,
-            location: true,
           },
         },
       },
@@ -36,8 +34,6 @@ const getUserNotifications = async (userId) => {
                   user_id: true,
                   username: true,
                   profile_picture: true,
-                  age: true,
-                  location: true,
                 },
               },
               user_2: {
@@ -45,8 +41,6 @@ const getUserNotifications = async (userId) => {
                   user_id: true,
                   username: true,
                   profile_picture: true,
-                  age: true,
-                  location: true,
                 },
               },
             },
@@ -61,8 +55,6 @@ const getUserNotifications = async (userId) => {
               ...notification,
               senderName: sender.username,
               senderImage: sender.profile_picture,
-              senderAge: sender.age,
-              senderLocation: sender.location,
               match_id: match.match_id,
             };
           }

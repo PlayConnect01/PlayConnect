@@ -2,21 +2,19 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
-import { useNavigation } from '@react-navigation/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from "@react-navigation/native";
+import { Calendar } from "react-native-calendars";
 
 const CalendarPage = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
   const navigation = useNavigation();
 
   const fetchEvents = (date) => {
     setLoading(true);
-    const formattedDate = new Date(date).toISOString().split("T")[0];
     axios
-      .get(`http://192.168.104.4:3000/events/getByDate/${formattedDate}`)
+      .get(`http://192.168.11.115:3000/events/getByDate/${date}`)
       .then((response) => {
         setEvents(response.data);
         setLoading(false);
@@ -29,17 +27,12 @@ const CalendarPage = () => {
   };
 
   useEffect(() => {
-    const today = new Date().toISOString().split("T")[0];
-    setSelectedDate(today);
-    fetchEvents(today);
-  }, []);
+    fetchEvents(selectedDate);
+  }, [selectedDate]);
 
-  const handleDateChange = (event, date) => {
-    setShowPicker(false);
-    if (date) {
-      setSelectedDate(date);
-      fetchEvents(date.toISOString().split("T")[0]);
-    }
+  const handleDayPress = (day) => {
+    setSelectedDate(day.dateString);
+    fetchEvents(day.dateString);
   };
 
   if (loading) {
@@ -52,26 +45,20 @@ const CalendarPage = () => {
         <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Calendar</Text>
-        <TouchableOpacity>
-          <MaterialCommunityIcons name="calendar-outline" size={24} color="#555" />
-        </TouchableOpacity>
       </View>
 
-      {/* Date Picker */}
-      <View style={styles.datePickerContainer}>
-        <TouchableOpacity onPress={() => setShowPicker(true)}>
-          <Text>Select a date</Text>
-        </TouchableOpacity>
-        {showPicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
-        )}
-      </View>
+      {/* Calendar */}
+      <Calendar
+        onDayPress={handleDayPress}
+        markedDates={{
+          [selectedDate]: { selected: true, marked: true, selectedColor: "blue" },
+        }}
+        theme={{
+          selectedDayBackgroundColor: "blue",
+          todayTextColor: "red",
+          arrowColor: "blue",
+        }}
+      />
 
       {/* Event List */}
       <View style={styles.eventsContainer}>
@@ -100,6 +87,14 @@ const CalendarPage = () => {
           <Text style={styles.noEventsText}>No events for this day.</Text>
         )}
       </View>
+
+
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => navigation.navigate("Homepage/CreateEvent")}
+      >
+        <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -114,15 +109,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#555",
-  },
-  datePickerContainer: {
-    marginVertical: 20,
-    alignItems: 'center',
   },
   eventsContainer: {
     flex: 1,
@@ -171,6 +157,23 @@ const styles = StyleSheet.create({
   eventParticipants: {
     fontSize: 14,
     color: "#555",
+  },
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    backgroundColor: "#007BFF",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 100,
   },
 });
 

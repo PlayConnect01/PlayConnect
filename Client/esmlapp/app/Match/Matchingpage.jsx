@@ -15,8 +15,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 import NotificationsModal from '../components/NotificationsModal';
-
-const API_URL = 'http://192.168.103.15:3000';
+import { BASE_URL } from '../../api';
 
 const defaultConfig = {
   headers: {
@@ -50,9 +49,9 @@ const Match = () => {
         }
 
         const decodedToken = decodeJWT(token);
-        if (decodedToken?.id) {
-          setCurrentUserId(decodedToken.id);
-          console.log('User ID:', decodedToken.id);
+        if (decodedToken?.userId) {
+          setCurrentUserId(decodedToken.userId);
+          console.log('User ID:', decodedToken.userId);
         } else {
           throw new Error('User ID not found in token');
         }
@@ -72,7 +71,7 @@ const Match = () => {
           const response = await axios({
             ...defaultConfig,
             method: 'get',
-            url: `${API_URL}/matches/common-sports/${currentUserId}`
+            url: `${BASE_URL}/matches/common-sports/${currentUserId}`
           });
 
           if (response.data.length > 0) {
@@ -99,7 +98,7 @@ const Match = () => {
           const response = await axios({
             ...defaultConfig,
             method: 'get',
-            url: `${API_URL}/notifications/${currentUserId}/unread/count`
+            url: `${BASE_URL}/notifications/${currentUserId}/unread/count`
           });
           setUnreadNotifications(response.data.count);
         } catch (error) {
@@ -128,7 +127,7 @@ const Match = () => {
       await axios({
         ...defaultConfig,
         method: 'post',
-        url: `${API_URL}/matches/create`,
+        url: `${BASE_URL}/matches/create`,
         data: {
           userId1: currentUserId,
           userId2: currentUser.user_id,

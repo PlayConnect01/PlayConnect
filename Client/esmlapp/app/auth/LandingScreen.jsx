@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState   } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,24 +13,29 @@ const OnboardingScreen = () => {
 
   const pages = [
     {
-      title: "Welcome to SportsMate",
-      description: "Find your perfect esports team and compete!",
-      image: require('../../assets/images/landing.jpeg'),
+      title: "Welcome to SportsMaven",
+      description: "Discover partners, explore events, and gear up for your favorite sport!",
+      image:require('../../assets/images/welcome_screen.png.webp')
     },
     {
-      title: "Join Competitive Teams",
-      description: "Connect with gamers who share your passion.",
-      image: require('../../assets/images/landing.jpeg'),
+      title: "Find Your Sports Partner",
+      description: "Connect with enthusiasts who share your passion for the game.",
+      image: require('../../assets/images/Join Exciting Events.webp'),
     },
     {
-      title: "Track Your Stats",
-      description: "Monitor your gaming achievements and rankings.",
-      image: require('../../assets/images/landing.jpeg'),
+      title: "Join Exciting Events",
+      description: "Stay in the loop with events that match your interests.",
+      image: require('../../assets/images/Find Your Sports Partner.webp'),
     },
     {
-      title: "Get Started",
-      description: "Sign up or log in to join the competition.",
-      image: require('../../assets/images/landing.jpeg'),
+      title: "Gear Up for Your Journey",
+      description: "Shop top-notch products to enhance your performance.",
+      image: require('../../assets/images/Gear Up for Your Journey.webp'),
+    },
+    {
+      title: "Let’s Get Started",
+      description: "Sign up or log in and unleash your sporting potential!",
+      image: require('../../assets/images/LetGetStarted.png'),
     },
   ];
 
@@ -43,8 +48,8 @@ const OnboardingScreen = () => {
     return pages.map((page, index) => (
       <View key={index} style={styles.page}>
         <Animatable.Image
-          animation="bounceIn"
-          duration={1500}
+          animation="fadeIn"
+          duration={1000}
           source={page.image}
           style={styles.image}
         />
@@ -56,7 +61,7 @@ const OnboardingScreen = () => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={["#1c1c1c", "#333"]} style={styles.gradientBackground} />
+      <LinearGradient colors={["#00264d", "#004080"]} style={styles.gradientBackground} />
       <ScrollView
         horizontal
         pagingEnabled
@@ -99,43 +104,62 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    marginTop: 20,
   },
   image: {
-    width: 250,
-    height: 250,
+    width: 300,
+    height: 300,
     marginBottom: 20,
     borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#ffcc00',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10, // For Android shadow
   },
   title: {
     fontSize: 28,
-    color: '#ffcc00', // Change color for esports theme
+    color: '#ffcc00',
     marginBottom: 10,
     textAlign: 'center',
-    fontFamily: 'Roboto-Bold', // Use a bold font
+    fontFamily: 'Roboto-Bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
   },
   description: {
-    fontSize: 16,
-    color: '#fff', // Change description color
+    fontSize: 18,
+    color: '#e6f2ff',
     textAlign: 'center',
     marginBottom: 30,
+    paddingHorizontal: 10,
+    fontFamily: 'Roboto-Regular',
+    lineHeight: 24,
+    opacity: 0.9,
   },
   indicatorContainer: {
     flexDirection: 'row',
     position: 'absolute',
-    bottom: 100,
+    bottom: 120,
   },
   indicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#888',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#ccc',
     margin: 5,
+    borderWidth: 1,
+    borderColor: '#000',
+    opacity: 0.8,
   },
   activeIndicator: {
-    backgroundColor: '#ffcc00', // Active indicator color
+    backgroundColor: '#ffcc00',
+    transform: [{ scale: 1.2 }],
   },
   button: {
-    backgroundColor: '#ff4081',
+    backgroundColor: '#ff6600',
     padding: 15,
     borderRadius: 25,
     position: 'absolute',
@@ -143,15 +167,20 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ffcc00', // Border for button
+    borderColor: '#ffe680',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  icon: {
-    marginRight: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });
 

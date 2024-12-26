@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {BASE_URL} from "../../api"
+
 
 const MatchNotification = ({ notification, onAccept, onReject }) => {
   const [showModal, setShowModal] = useState(false);
@@ -42,44 +44,34 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
               source={{ uri: notification.sender?.profile_picture || notification.user?.profile_picture }}
               style={styles.userImage}
             />
-            <View style={styles.imageOverlay}>
-              <View style={styles.userInfoContainer}>
-                <View style={styles.nameAgeContainer}>
-                  <Text style={styles.userName}>
-                    {notification.sender?.username || notification.user?.username}
-                  </Text>
-                  <Text style={styles.userAge}>
-                    {notification.sender?.age || notification.user?.age}
-                  </Text>
-                </View>
-                <View style={styles.locationContainer}>
-                  <Ionicons name="location" size={18} color="#fff" />
-                  <Text style={styles.locationText}>
-                    {notification.sender?.location || notification.user?.location || notification.senderLocation}
-                  </Text>
-                </View>
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity 
-                    style={[styles.button, styles.acceptButton]} 
-                    onPress={() => {
-                      onAccept();
-                      setShowModal(false);
-                    }}
-                  >
-                    <Ionicons name="heart" size={28} color="#fff" />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.button, styles.rejectButton]} 
-                    onPress={() => {
-                      onReject();
-                      setShowModal(false);
-                    }}
-                  >
-                    <Ionicons name="close" size={28} color="#ff4d4d" />
-                  </TouchableOpacity>
-                </View>
-              </View>
+            <View style={styles.userInfoContainer}>
+              <Text style={styles.userName}>
+                {notification.sender?.username || notification.user?.username}
+              </Text>
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, styles.acceptButton]} 
+                onPress={() => {
+                  onAccept();
+                  setShowModal(false);
+                }}
+              >
+                <Ionicons name="heart" size={20} color="white" style={{ marginRight: 8 }} />
+                <Text style={[styles.buttonText, styles.acceptButtonText]}>Match</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.button, styles.rejectButton]} 
+                onPress={() => {
+                  onReject();
+                  setShowModal(false);
+                }}
+              >
+                <Ionicons name="close" size={20} color="#6366f1" style={{ marginRight: 8 }} />
+                <Text style={[styles.buttonText, styles.rejectButtonText]}>Decline</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -175,90 +167,76 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 450,
     resizeMode: 'cover',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 450,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'flex-end',
+    marginBottom: 0,
   },
   userInfoContainer: {
+    backgroundColor: 'rgba(67, 56, 202, 0.85)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: 25,
-    paddingBottom: 35,
-    width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-  nameAgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    paddingLeft: 10,
+    backdropFilter: 'blur(10px)',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
   },
   userName: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
     letterSpacing: 0.5,
-    marginRight: 10,
-  },
-  userAge: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingLeft: 10,
-  },
-  locationText: {
-    fontSize: 16,
-    color: '#fff',
-    marginLeft: 5,
-    fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     width: '100%',
-    gap: 40,
+    padding: 25,
+    paddingBottom: 30,
+    backgroundColor: '#fff',
   },
   button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 35,
+    borderRadius: 20,
+    minWidth: 130,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 3,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   acceptButton: {
     backgroundColor: '#6366f1',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.2)',
   },
   rejectButton: {
     backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#ff4d4d',
+    borderWidth: 1,
+    borderColor: '#6366f1',
   },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  acceptButtonText: {
+    color: '#fff',
+  },
+  rejectButtonText: {
+    color: '#6366f1',
+  }
 });
 
 export default MatchNotification;

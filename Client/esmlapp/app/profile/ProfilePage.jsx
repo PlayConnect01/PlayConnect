@@ -1,231 +1,200 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // Expo-compatible gradient
-import { MaterialIcons } from '@expo/vector-icons'; // Icons from Expo's built-in support
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import { Calendar } from 'react-native-calendars';
+import { useNavigation } from '@react-navigation/native';
+import { Buffer } from 'buffer';
+import Navbar from '../navbar/Navbar';
 
-const ProfilePage = () => {
+const decodeToken = (token) => {
+  try {
+    const base64Payload = token.split('.')[1]; // Get the payload part of the JWT
+    const payload = Buffer.from(base64Payload, 'base64').toString('utf8');
+    return JSON.parse(payload);
+  } catch (error) {
+    console.error('Failed to decode token:', error);
+    return null;
+  }
+};
+
+const ProfilePage = ({ token }) => {
   const [userData, setUserData] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [rank, setRank] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('achievement');
+  const [participatedEvents, setParticipatedEvents] = useState([]);
+
+  const navigation = useNavigation();
+
+  // Decode userId from token
+  const decodedToken = decodeToken(token);
+  if (!decodedToken) {
+    Alert.alert('Error', 'Invalid token. Please log in again.');
+    return null;
+  }
+
+  const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+  if (!userId) {
+    Alert.alert('Error', 'Failed to retrieve user information.');
+    return null;
+  }
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // Simulated fetch call
-      const data = {
-        name: 'Arya Muller',
-        email: 'albertflores@gmail.com',
-        profilePic: 'https://via.placeholder.com/150', // Example image URL
-        leaderboardRank: 2,
-        events: 55,
-        level: 2,
-        currentPoints: 5200,
-        totalPoints: 6000,
-        achievement: 'Gold Medal in Football Tournament',
-        achievementDate: 'May 1, 2022',
-      };
-      setUserData(data);
+      try {
+        const userResponse = await axios.get(`http://192.168.104.10:3000/users/${userId}`);
+        setUserData(userResponse.data.user);
+
+        const leaderboardResponse = await axios.get(`http://192.168.104.10:3000/leaderboard`);
+        const leaderboard = leaderboardResponse.data;
+
+        const userRank = leaderboard.findIndex(user => user.id === userId) + 1;
+        setRank(userRank);
+
+        const eventsResponse = await axios.get('http://192.168.104.10:3000/events/getAll');
+        const userEvents = eventsResponse.data.filter(event => event.creator_id === userId);
+        setEvents(userEvents);
+
+        const participatedEventsResponse = await axios.get(`http://192.168.104.10:3000/events/getParticipated/${userId}`);
+        setParticipatedEvents(participatedEventsResponse.data);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchUserData();
-  }, []);
+  }, [userId]);
 
-  if (!userData) return null; // Prevent rendering until data is fetched
+  const calculateLevel = (points) => {
+    if (points < 1000) return 1;
+    if (points < 2000) return 2;
+    if (points < 3000) return 3;
+    if (points < 5000) return 4;
+    return 5;
+  };
+
+  const markedDates = participatedEvents.reduce((acc, event) => {
+    const date = new Date(event.date).toISOString().split('T')[0];
+    acc[date] = { marked: true, dotColor: '#6F61E8', onPress: () => handleEventPress(event) };
+    return acc;
+  }, {});
+
+  const handleEventPress = (event) => {
+    navigation.navigate('EventDetails', { eventId: event.event_id });
+  };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#6F61E8" style={styles.loader} />;
+  }
+
+  if (!userData) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load user data.</Text>
+      </View>
+    );
+  }
+
+  const userLevel = calculateLevel(userData.points);
+  const pointsToNextLevel = 1000 * userLevel - userData.points;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Profile */}
-      <View style={styles.profileContainer}>
-        <Image source={{ uri: userData.profilePic }} style={styles.profileImage} />
-        <Text style={styles.profileName}>{userData.name}</Text>
-        <Text style={styles.email}>
-          {userData.email} <MaterialIcons name="verified" size={16} color="green" />
-        </Text>
-        <TouchableOpacity style={styles.editProfileButton}>
-          <Text style={styles.editProfileText}>Edit Profile</Text>
-          <MaterialIcons name="arrow-drop-down" size={18} color="gray" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabs}>
-        <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-          <Text style={styles.tabTextActive}>Achievement</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Events</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Text style={styles.tabText}>Reviews</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>#{userData.leaderboardRank}</Text>
-          <Text style={styles.statLabel}>Leaderboard</Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Image source={{ uri: userData.profilePicture }} style={styles.profilePicture} />
+          <Text style={styles.username}>{userData.name}</Text>
+          <Text style={styles.level}>Level {userLevel} - {pointsToNextLevel} points to next level</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{userData.events}</Text>
-          <Text style={styles.statLabel}>Events</Text>
+        <View style={styles.tabs}>
+          <TouchableOpacity onPress={() => setActiveTab('achievement')} style={[styles.tab, activeTab === 'achievement' && styles.activeTab]}>
+            <Text style={styles.tabText}>Achievements</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveTab('calendar')} style={[styles.tab, activeTab === 'calendar' && styles.activeTab]}>
+            <Text style={styles.tabText}>Calendar</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Level */}
-      <View style={styles.levelContainer}>
-        <Text style={styles.levelText}>Level {userData.level}</Text>
-        <Text style={styles.pointsText}>
-          {userData.totalPoints - userData.currentPoints} Points to next level
-        </Text>
-        <View style={styles.progressBar}>
-          <LinearGradient
-            colors={['#FFC107', '#FFD54F']}
-            style={[styles.progressFill, { width: `${(userData.currentPoints / userData.totalPoints) * 100}%` }]}
+        {activeTab === 'achievement' && (
+          <View style={styles.achievements}>
+            <Text>Achievements content here</Text>
+          </View>
+        )}
+        {activeTab === 'calendar' && (
+          <Calendar
+            markedDates={markedDates}
+            onDayPress={(day) => {
+              if (markedDates[day.dateString]?.onPress) {
+                markedDates[day.dateString].onPress();
+              }
+            }}
           />
-        </View>
-        <View style={styles.progressTextContainer}>
-          <Text style={styles.levelIndicator}>2</Text>
-          <Text style={styles.levelPoints}>
-            {userData.currentPoints}/{userData.totalPoints}
-          </Text>
-          <Text style={styles.levelIndicator}>3</Text>
-        </View>
-      </View>
-
-      {/* Achievement */}
-      <View style={styles.achievementContainer}>
-        <MaterialIcons name="emoji-events" size={30} color="#FFC107" />
-        <View>
-          <Text style={styles.achievementText}>
-            Earned <Text style={{ fontWeight: 'bold' }}>{userData.achievement}</Text>
-          </Text>
-          <Text style={styles.dateText}>{userData.achievementDate}</Text>
-        </View>
-      </View>
-    </ScrollView>
+        )}
+      </ScrollView>
+      <Navbar />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#fff',
+    flexGrow: 1,
+    padding: 20,
+    backgroundColor: '#f9f9f9',
   },
-  profileContainer: {
+  header: {
     alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: 20,
   },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
+  profilePicture: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
-  profileName: {
-    fontSize: 22,
+  username: {
+    fontSize: 20,
     fontWeight: 'bold',
+    marginTop: 10,
   },
-  email: {
-    color: 'gray',
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  editProfileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 8,
-    borderRadius: 8,
-  },
-  editProfileText: {
-    fontSize: 14,
-    color: 'gray',
+  level: {
+    fontSize: 16,
+    color: '#6F61E8',
   },
   tabs: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginVertical: 10,
+    marginBottom: 20,
   },
   tab: {
-    paddingVertical: 8,
+    padding: 10,
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderColor: '#6F61E8',
+    borderBottomColor: '#6F61E8',
   },
   tabText: {
-    color: 'gray',
+    fontSize: 16,
   },
-  tabTextActive: {
-    color: '#6F61E8',
-    fontWeight: 'bold',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginVertical: 10,
-  },
-  statBox: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    color: 'gray',
-    fontSize: 14,
-  },
-  levelContainer: {
-    marginVertical: 10,
-    alignItems: 'center',
-  },
-  levelText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  pointsText: {
-    color: 'gray',
-    marginVertical: 5,
-  },
-  progressBar: {
-    height: 10,
-    width: '90%',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-  },
-  progressTextContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    marginTop: 5,
-  },
-  levelIndicator: {
-    fontWeight: 'bold',
-    color: 'gray',
-  },
-  levelPoints: {
-    fontWeight: 'bold',
-    color: '#6F61E8',
-  },
-  achievementContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    backgroundColor: '#FFF3CD',
+  achievements: {
     padding: 10,
-    borderRadius: 10,
   },
-  achievementText: {
-    fontSize: 14,
-    marginLeft: 10,
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  dateText: {
-    fontSize: 12,
-    color: 'gray',
-    marginLeft: 10,
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
   },
 });
 

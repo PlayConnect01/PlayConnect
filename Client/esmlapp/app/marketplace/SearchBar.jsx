@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -7,15 +7,27 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  Image,
-} from 'react-native';
-import axios from 'axios';
-
+  Animated,
+} from "react-native";
+import axios from "axios";
+import { BASE_URL } from '../../api';
 const SearchBar = ({ onSelectProduct }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState([]);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Animation value for search bar focus
+  const animatedValue = new Animated.Value(0);
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: isFocused ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [isFocused]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -25,7 +37,7 @@ const SearchBar = ({ onSelectProduct }) => {
         setResults([]);
         setDropdownVisible(false);
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
@@ -33,7 +45,7 @@ const SearchBar = ({ onSelectProduct }) => {
   const fetchSearchResults = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://192.168.1.101:3000/product/search`, {
+      const response = await axios.get(`${BASE_URL}//product/search`, {
         params: { productName: searchTerm },
       });
       setResults(response.data);
@@ -47,24 +59,77 @@ const SearchBar = ({ onSelectProduct }) => {
 
   const handleSelectProduct = (product) => {
     onSelectProduct(product);
-    setSearchTerm('');
+    setSearchTerm("");
     setResults([]);
     setDropdownVisible(false);
+    setIsFocused(false);
+  };
+
+  const animatedStyles = {
+    transform: [
+      {
+        scale: animatedValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.02],
+        }),
+      },
+    ],
+    shadowOpacity: animatedValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.1, 0.25],
+    }),
   };
 
   return (
     <View style={styles.container}>
-      <TextInput
-        placeholder="Search for products..."
-        placeholderTextColor="#999"
-        style={styles.searchInput}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-      />
+      <Animated.View style={[styles.searchContainer, animatedStyles]}>
+        <TextInput
+          placeholder="Search for products..."
+          placeholderTextColor="#9CA3AF"
+          style={[styles.searchInput, isFocused && styles.searchInputFocused]}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            // Delay hiding the dropdown to allow for item selection
+            setTimeout(() => {
+              if (!isDropdownVisible) {
+                setIsFocused(false);
+              }
+            }, 200);
+          }}
+        />
+        {searchTerm.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              setSearchTerm("");
+              setDropdownVisible(false);
+              setResults([]);
+            }}
+          >
+            <Text style={styles.clearButtonText}>×</Text>
+          </TouchableOpacity>
+        )}
+      </Animated.View>
+
       {isDropdownVisible && (
-        <View style={styles.dropdown}>
+        <Animated.View
+          style={[
+            styles.dropdown,
+            {
+              opacity: animatedValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.9, 1],
+              }),
+            },
+          ]}
+        >
           {isLoading ? (
-            <ActivityIndicator size="small" color="#6A5AE0" style={styles.loadingIndicator} />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#6A5AE0" />
+              <Text style={styles.loadingText}>Searching...</Text>
+            </View>
           ) : results.length > 0 ? (
             <FlatList
               data={results}
@@ -74,17 +139,23 @@ const SearchBar = ({ onSelectProduct }) => {
                   style={styles.resultItem}
                   onPress={() => handleSelectProduct(item)}
                 >
-               
                   <View style={styles.textContainer}>
                     <Text style={styles.resultText}>{item.name}</Text>
                   </View>
                 </TouchableOpacity>
               )}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              style={styles.resultsList}
             />
           ) : (
-            <Text style={styles.noResultsText}>No results found</Text>
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>No results found</Text>
+              <Text style={styles.noResultsSubText}>
+                Try a different search term
+              </Text>
+            </View>
           )}
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -92,71 +163,126 @@ const SearchBar = ({ onSelectProduct }) => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
+    position: "relative",
+    marginHorizontal: 16,
+    marginTop: 12,
     marginBottom: 20,
+    zIndex: 1000, // Ensure the container stays above other elements
+    elevation: 1000, // For Android
+  },
+  searchContainer: {
+    position: "relative",
+    zIndex: 1001, // Higher than container
+    elevation: 1001, // For Android
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#6A5AE0",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
   searchInput: {
-    height: 50,
-    borderColor: '#6A5AE0',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
+    height: 60,
+    paddingHorizontal: 24,
+    paddingRight: 48,
     fontSize: 16,
-    backgroundColor: '#f8f8f8',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    color: "#1F2937",
+    fontWeight: "500",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    includeFontPadding: false,
+    textAlignVertical: "center",
+  },
+  searchInputFocused: {
+    borderColor: "#6A5AE0",
+    backgroundColor: "#FAFAFA",
   },
   dropdown: {
-    position: 'absolute',
-    top: 60,
+    position: "absolute",
+    top: 70,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    elevation: 5,
-    zIndex: 1,
-    maxHeight: 300,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 1002, // Higher than searchContainer
+    zIndex: 1002, // Higher than searchContainer
+    maxHeight: 350,
+    overflow: "hidden",
+  },
+  resultsList: {
+    maxHeight: 350,
   },
   resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  productImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 5,
-    marginRight: 15,
+    padding: 16,
+    backgroundColor: "#FFFFFF",
   },
   textContainer: {
     flex: 1,
   },
   resultText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#1F2937",
+    letterSpacing: 0.3,
   },
-  resultPrice: {
+  loadingContainer: {
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  loadingText: {
+    marginTop: 12,
     fontSize: 14,
-    color: '#6A5AE0',
-    marginTop: 5,
+    color: "#6B7280",
+    fontWeight: "500",
   },
-  loadingIndicator: {
-    marginVertical: 10,
+  noResultsContainer: {
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
   },
   noResultsText: {
-    padding: 15,
+    fontSize: 16,
+    color: "#6B7280",
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
+  noResultsSubText: {
+    marginTop: 8,
     fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
+    color: "#9CA3AF",
+  },
+  clearButton: {
+    position: "absolute",
+    right: 16,
+    top: "50%",
+    transform: [{ translateY: -12 }],
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1003,
+    elevation: 1003,
+  },
+  clearButtonText: {
+    color: "#4B5563",
+    fontSize: 18,
+    fontWeight: "600",
+    lineHeight: 22,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#F3F4F6",
   },
 });
 

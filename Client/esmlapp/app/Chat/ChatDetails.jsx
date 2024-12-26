@@ -16,10 +16,17 @@ import axios from 'axios';
 import VoiceMessageHandler from './components/VoiceMessageHandler';
 import AudioMessage from './components/AudioMessage';
 import ImageMessageHandler from './components/ImageMessageHandler';
-
-const API_URL = 'http://192.168.103.15:3000';
+import { BASE_URL } from '../../api';
 
 const ChatDetails = ({ route, navigation }) => {
+    if (!route || !route.params) {
+        return (
+            <View style={styles.container}>
+                <Text>Error: No chat details provided</Text>
+            </View>
+        );
+    }
+
     const { user, chatId, currentUserId } = route.params;
     
     const [messages, setMessages] = useState([]);
@@ -34,7 +41,7 @@ const ChatDetails = ({ route, navigation }) => {
             socketRef.current.disconnect();
         }
 
-        const socket = io(API_URL, {
+        const socket = io(BASE_URL, {
             transports: ['websocket'],
             reconnection: true,
         });
@@ -70,7 +77,7 @@ const ChatDetails = ({ route, navigation }) => {
     const loadMessages = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${API_URL}/chats/${chatId}/messages`);
+            const response = await axios.get(`${BASE_URL}/chats/${chatId}/messages`);
             setMessages(response.data || []);
         } catch (error) {
             console.error('Error loading messages:', error);
@@ -84,7 +91,7 @@ const ChatDetails = ({ route, navigation }) => {
         if (!newMessage.trim()) return;
 
         try {
-            const response = await axios.post(`${API_URL}/chats/${chatId}/messages`, {
+            const response = await axios.post(`${BASE_URL}/chats/${chatId}/messages`, {
                 content: newMessage,
                 senderId: currentUserId,
                 messageType: 'TEXT'

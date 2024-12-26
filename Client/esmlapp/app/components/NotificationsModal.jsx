@@ -13,8 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import MatchNotification from './MatchNotification';
 import axios from 'axios';
 import io from 'socket.io-client';
-
-const API_URL = 'http://192.168.103.15:3000';
+import { BASE_URL } from '../../api';
 
 const defaultConfig = {
   headers: {
@@ -31,7 +30,7 @@ const NotificationsModal = ({ visible, onClose, userId }) => {
 
   useEffect(() => {
     // Initialize socket connection
-    const newSocket = io('http://192.168.103.15:3000');
+    const newSocket = io(BASE_URL);
     setSocket(newSocket);
 
     // Join user's notification room
@@ -78,7 +77,7 @@ const NotificationsModal = ({ visible, onClose, userId }) => {
       const response = await axios({
         ...defaultConfig,
         method: 'get',
-        url: `${API_URL}/notifications/${userId}`,
+        url: `${BASE_URL}/notifications/${userId}`,
       });
       setNotifications(response.data);
     } catch (error) {
@@ -109,7 +108,7 @@ const NotificationsModal = ({ visible, onClose, userId }) => {
       const result = await axios({
         ...defaultConfig,
         method: 'patch',
-        url: `${API_URL}/match/${endpoint}/${matchId}`,
+        url: `${BASE_URL}/match/${endpoint}/${matchId}`,
       });
 
       // Notify through socket about the update
