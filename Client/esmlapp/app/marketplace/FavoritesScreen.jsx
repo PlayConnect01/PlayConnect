@@ -19,14 +19,16 @@ const FavoritesScreen = () => {
   const navigation = useNavigation();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showMessage, setShowMessage] = useState('');
+  const [showMessage, setShowMessage] = useState("");
 
   const fetchFavorites = useCallback(async () => {
     try {
       setLoading(true);
-      const userId = await AsyncStorage.getItem('userId');
+      const userId = await AsyncStorage.getItem("userId");
       if (userId) {
-        const response = await axios.get(`${BASE_URL}/favorites/favorites/user/${userId}`);
+        const response = await axios.get(
+          `${BASE_URL}/favorites/favorites/user/${userId}`
+        );
         setFavorites(response.data);
       }
     } catch (error) {
@@ -40,29 +42,36 @@ const FavoritesScreen = () => {
     fetchFavorites();
   }, [fetchFavorites]);
 
-  const removeFromFavorites = useCallback(async (favorite) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) return;
+  const removeFromFavorites = useCallback(
+    async (favorite) => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) return;
 
-      await axios.delete(`${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+        await axios.delete(
+          `${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      setFavorites(favorites.filter(fav => fav.favorite_id !== favorite.favorite_id));
+        setFavorites(
+          favorites.filter((fav) => fav.favorite_id !== favorite.favorite_id)
+        );
 
-      setShowMessage('Item removed from favorites! 💔');
-      setTimeout(() => setShowMessage(''), 2000);
-
-    } catch (error) {
-      console.error("Error removing from favorites:", error);
-      setShowMessage('Failed to remove from favorites');
-      setTimeout(() => setShowMessage(''), 2000);
-    }
-  }, [favorites]);
+        setShowMessage("Item removed from favorites! 💔");
+        setTimeout(() => setShowMessage(""), 2000);
+      } catch (error) {
+        console.error("Error removing from favorites:", error);
+        setShowMessage("Failed to remove from favorites");
+        setTimeout(() => setShowMessage(""), 2000);
+      }
+    },
+    [favorites]
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -104,7 +113,7 @@ const FavoritesScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   mainContainer: {
     flex: 1,
@@ -112,20 +121,20 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 20,
   },
   scrollContent: {
     paddingBottom: 20,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 15,
     marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -139,45 +148,45 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginVertical: 6,
-    textAlign: 'center',
+    textAlign: "center",
   },
   cardPrice: {
-    color: '#6e3de8',
+    color: "#6e3de8",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   removeButton: {
-    backgroundColor: '#ff3b8f',
+    backgroundColor: "#ff3b8f",
     borderRadius: 8,
     padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 10,
   },
   removeButtonText: {
-    color: '#fff',
+    color: "#fff",
     marginLeft: 5,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   messageContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#6e3de8',
+    backgroundColor: "#6e3de8",
     padding: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   messageText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

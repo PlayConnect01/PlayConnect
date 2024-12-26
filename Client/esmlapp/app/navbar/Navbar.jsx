@@ -12,6 +12,8 @@ const Navbar = () => {
     if (screenName === "Homep" && currentRoute === "Homepage/Homep") return true;
     if (screenName === "Profile" && currentRoute === "profile/ProfilePage") return true;
     if (screenName === "MarketplaceHome" && currentRoute === "marketplace/marketplace") return true;
+    if (screenName === "MessagePage" && currentRoute === "Chat/MessagePage") return true;
+
     return currentRoute === screenName;
   };
 

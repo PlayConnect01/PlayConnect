@@ -9,7 +9,7 @@ export default function ProductCard({ productId }) {
   useEffect(() => {
     const fetchProductDetail = async () => {
       try {
-        const response = await axios.get(`${ BASE_URL }/product/products/${productId}`); // Use the productId prop
+        const response = await axios.get(`${BASE_URL}/product/products/${productId}`); // Use the productId prop
         setProduct(response.data);
       } catch (error) {
         console.error("Error fetching product details:", error);
@@ -34,11 +34,11 @@ export default function ProductCard({ productId }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton}>
-          <Text style={styles.iconText}>{'<'}</Text>
+          <Text style={styles.iconText}>{"<"}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Cart</Text>
         <TouchableOpacity style={styles.iconButton}>
-          <Text style={styles.iconText}>{'♡'}</Text>
+          <Text style={styles.iconText}>{"♡"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -50,14 +50,15 @@ export default function ProductCard({ productId }) {
 
       {/* Product Info */}
       <View style={styles.infoContainer}>
-        <Text style={styles.tag}>{product.tag || 'Solid Male'}</Text>
-        <Text style={styles.productName}>{product.name || 'Moonstar'}</Text>
-        <Text style={styles.price}>${product.price || '491'}</Text>
-        <Text style={styles.rating}>⭐ {product.rating || '5'}</Text>
-        <Text style={styles.duration}>{product.duration || '3 Month'}</Text>
+        <Text style={styles.tag}>{product.tag || "Solid Male"}</Text>
+        <Text style={styles.productName}>{product.name || "Moonstar"}</Text>
+        <Text style={styles.price}>${product.price || "491"}</Text>
+        <Text style={styles.rating}>⭐ {product.rating || "5"}</Text>
+        <Text style={styles.duration}>{product.duration || "3 Month"}</Text>
         <Text style={styles.descriptionTitle}>Description</Text>
         <Text style={styles.description}>
-          {product.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nisi quam vulputate enim ultrices morbi...'}
+          {product.description ||
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nisi quam vulputate enim ultrices morbi..."}
           <Text style={styles.readMore}> Read More</Text>
         </Text>
       </View>
@@ -75,20 +76,20 @@ export default function ProductCard({ productId }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
   },
   iconButton: {
     width: 32,
     height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f2f2f2',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f2f2f2",
     borderRadius: 16,
   },
   iconText: {
@@ -96,27 +97,27 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 250,
   },
   infoContainer: {
     padding: 16,
   },
   tag: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
   },
   productName: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginVertical: 8,
   },
   price: {
     fontSize: 20,
-    color: '#4CAF50',
+    color: "#4CAF50",
     marginVertical: 4,
   },
   rating: {
@@ -124,38 +125,38 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   duration: {
-    backgroundColor: '#FFCDD2',
-    alignSelf: 'flex-start',
+    backgroundColor: "#FFCDD2",
+    alignSelf: "flex-start",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
     marginVertical: 4,
     fontSize: 14,
-    color: '#D32F2F',
+    color: "#D32F2F",
   },
   descriptionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 16,
   },
   description: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   readMore: {
-    color: '#3F51B5',
-    fontWeight: 'bold',
+    color: "#3F51B5",
+    fontWeight: "bold",
   },
   cartButton: {
-    backgroundColor: '#673AB7',
+    backgroundColor: "#673AB7",
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     margin: 16,
   },
   cartButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

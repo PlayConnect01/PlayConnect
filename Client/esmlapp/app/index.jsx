@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import MainLayout from "../app/(tabs)/MainLayout";
+import MainLayout from "../(Taps)/MainLayout";
 
 // Screens
 import EventDetails from "./Homepage/EventDetails";
