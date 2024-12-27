@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Modal } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 import { BASE_URL } from '../../Api.js';
-
+import MapView, { Marker } from 'react-native-maps';
+import { Camera } from 'expo-camera';
 
 const decodeToken = (token) => {
   try {
@@ -30,17 +31,31 @@ const EventDetails = () => {
   const [userJoined, setUserJoined] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [qrCode, setQrCode] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const [scannedData, setScannedData] = useState(null);
 
   useEffect(() => {
     const fetchEvent = async () => {
-      try {
+      try { 
         const response = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
         setEvent(response.data);
         
         const token = await AsyncStorage.getItem('userToken');
         if (token) {
           const decodedToken = decodeToken(token);
-          setUserJoined(response.data.event_participants.some(participant => participant.user_id === decodedToken.id));
+          const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+          setIsCreator(response.data.creator_id === userId);
+          const participantResponse = await axios.get(`${BASE_URL}/events/isUserParticipant/${eventId}/${userId}`);
+          setUserJoined(participantResponse.data.isParticipant);
+
+          if (participantResponse.data.isParticipant) {
+            const qrResponse = await axios.get(`${BASE_URL}/events/getParticipantQR/${eventId}/${userId}`);
+            setQrCode(qrResponse.data.qrCode);
+          }
         }
         setLoading(false);
       } catch (err) {
@@ -73,7 +88,7 @@ const EventDetails = () => {
         return;
       }
 
-      await axios.post(
+      const response = await axios.post(
         `${BASE_URL}/events/addParticipant`,
         { eventId, userId },
         {
@@ -84,9 +99,16 @@ const EventDetails = () => {
       );
 
       Alert.alert('Success', 'You have been added to the event!');
+      setUserJoined(true);
+
+      // Display the QR code
+      if (response.data.qrCode) {
+        setQrCode(response.data.qrCode);
+        setModalVisible(true);
+      }
+
       const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
-      setUserJoined(true);
     } catch (error) {
       if (error.response && error.response.status === 400 && error.response.data.error) {
         Alert.alert('Notice', error.response.data.error);
@@ -140,6 +162,22 @@ const EventDetails = () => {
     navigation.navigate("Homepage/Homep");
   };
 
+  const handleBarCodeScanned = ({ type, data }) => {
+    setScanned(true);
+    const participantData = JSON.parse(data);
+    setScannedData(participantData);
+    setModalVisible(true);
+  };
+
+  const requestCameraPermission = async () => {
+    const { status } = await Camera.requestPermissionsAsync();
+    setHasPermission(status === 'granted');
+  };
+
+  useEffect(() => {
+    requestCameraPermission();
+  }, []);
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -170,13 +208,20 @@ const EventDetails = () => {
         <TouchableOpacity onPress={handleGoBack}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
+        {isCreator ? (
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <MaterialCommunityIcons name="qrcode-scan" size={30} color="black" />
+          </TouchableOpacity>
+        ) : (
+          userJoined && qrCode && (
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
+              <MaterialCommunityIcons name="qrcode" size={30} color="black" />
+            </TouchableOpacity>
+          )
+        )}
       </View>
 
       <ScrollView>
-        <View style={styles.eventNameContainer}>
-          <Text style={styles.eventName}>{event.event_name}</Text>
-        </View>
-
         <View style={styles.descriptionContainer}>
           <Text style={styles.descriptionText}>{event.description}</Text>
         </View>
@@ -202,10 +247,33 @@ const EventDetails = () => {
         </View>
 
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
-            style={styles.eventImage}
-          />
+          {event.latitude && event.longitude ? (
+            <MapView
+              style={styles.eventImage}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+              pitchEnabled={false}
+              initialRegion={{
+                latitude: event.latitude,
+                longitude: event.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+            >
+              <Marker
+                coordinate={{
+                  latitude: event.latitude,
+                  longitude: event.longitude,
+                }}
+              />
+            </MapView>
+          ) : (
+            <Image
+              source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
+              style={styles.eventImage}
+            />
+          )}
         </View>
 
         <View style={styles.participantsContainer}>
@@ -252,6 +320,72 @@ const EventDetails = () => {
         </View>
 
       </ScrollView>
+      {isCreator && hasPermission && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+            setScanned(false);
+          }}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <Camera
+              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+              style={{ width: '100%', height: '100%' }}
+            />
+            {scanned && (
+              <TouchableOpacity onPress={() => setScanned(false)} style={{ position: 'absolute', bottom: 50 }}>
+                <Text style={{ fontSize: 18, color: 'white' }}>Tap to Scan Again</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Modal>
+      )}
+      {scannedData && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+            setScannedData(null);
+          }}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View style={{ width: 300, height: 400, backgroundColor: 'white', padding: 20, alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Participant Approved</Text>
+              <Image source={{ uri: scannedData.userProfilePicture }} style={{ width: 100, height: 100, borderRadius: 50, marginVertical: 20 }} />
+              <Text style={{ fontSize: 16 }}>{scannedData.userName}</Text>
+              <Text style={{ fontSize: 16, marginTop: 10 }}>{scannedData.eventName}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={{ marginTop: 20, color: 'blue' }}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+      {qrCode && !isCreator && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View style={{ width: 300, height: 300, backgroundColor: 'white', padding: 20, alignItems: 'center' }}>
+              <Text>Your QR Code</Text>
+              {qrCode && <Image source={{ uri: qrCode }} style={{ width: 200, height: 200 }} />}
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={{ marginTop: 20, color: 'blue' }}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -272,8 +406,18 @@ const styles = StyleSheet.create({
   },
   boldLabel: { fontSize: 16, fontWeight: 'bold', flex: 2 },
   boldContent: { fontSize: 16, textAlign: 'right', flex: 3 },
-  imageContainer: { alignItems: 'center', marginVertical: 10, marginBottom: 50 },
-  eventImage: { width: 350, height: 220, borderRadius: 10 },
+  imageContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+    marginBottom: 50,
+    height: 220,
+    width: '100%',
+  },
+  eventImage: {
+    width: '90%',
+    height: 220,
+    borderRadius: 10,
+  },
   participantsContainer: { marginHorizontal: 16, marginBottom: 16 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
   participantGrid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
@@ -308,6 +452,14 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     color: '#333',
     lineHeight: 24,
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
   },
 });
 

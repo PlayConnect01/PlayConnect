@@ -29,6 +29,8 @@ const ProfilePage = () => {
   const [participatedEvents, setParticipatedEvents] = useState([]);
   const [showLogout, setShowLogout] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [eventsOnSelectedDate, setEventsOnSelectedDate] = useState([]);
 
   const navigation = useNavigation(); 
 
@@ -86,14 +88,33 @@ const ProfilePage = () => {
     return 5;
   };
 
-  const markedDates = participatedEvents.reduce((acc, event) => {
+  const fetchEventsByDate = async (date) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/events/getByDate/${date}`);
+      setEventsOnSelectedDate(response.data);
+    } catch (error) {
+      console.error("Error fetching events by date:", error);
+      Alert.alert("Error", "Failed to load events. Please try again later.");
+    }
+  };
+
+  const handleDayPress = (day) => {
+    const selectedDate = day.dateString;
+    setSelectedDate(selectedDate);
+    fetchEventsByDate(selectedDate);
+  };
+
+  const markedDates = [...events, ...participatedEvents].reduce((acc, event) => {
     const date = new Date(event.date).toISOString().split('T')[0];
-    acc[date] = { marked: true, dotColor: '#6F61E8', onPress: () => handleEventPress(event) };
+    const today = new Date().toISOString().split('T')[0];
+    if (date >= today) { // Mark only upcoming events
+      acc[date] = { marked: true, dotColor: '#6F61E8' };
+    }
     return acc;
   }, {});
 
   const handleEventPress = (event) => {
-    navigation.navigate('EventDetails', { eventId: event.event_id }); 
+    navigation.navigate('Homepage/EventDetails', { eventId: event.event_id }); 
   };
 
   const handleLogout = async () => {
@@ -171,7 +192,7 @@ const ProfilePage = () => {
           />
           <Text style={styles.profileName}>{userData.username}</Text>
           <Text style={styles.email}>
-            {userData.email} <MaterialIcons name="verified" size={20} color="green" />
+            {userData.email} 
           </Text>
         </View>
 
@@ -269,7 +290,37 @@ const ProfilePage = () => {
           <View style={styles.calendarContainer}>
             <Calendar
               markedDates={markedDates}
+              onDayPress={handleDayPress}
             />
+            <View style={styles.eventsContainer}>
+              {eventsOnSelectedDate.length > 0 ? (
+                eventsOnSelectedDate.map((event, index) => (
+                  <TouchableOpacity 
+                    key={index} 
+                    style={styles.eventCard}
+                    onPress={() => handleEventPress(event)}
+                  >
+                    <Image 
+                      source={{ uri: event.image }} 
+                      style={styles.eventImage} 
+                    />
+                    <View style={styles.eventInfo}>
+                      <Text style={styles.eventName}>{event.event_name}</Text>
+                      <View style={styles.locationContainer}>
+                        <MaterialIcons name="location-on" size={16} color="#666" />
+                        <Text style={styles.locationText}>{event.location}</Text>
+                      </View>
+                      <View style={styles.ratingContainer}>
+                        <MaterialIcons name="star" size={16} color="#FFD700" />
+                        <Text style={styles.ratingText}>{event.rating || '4.5'}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noEventsText}>No events for this day.</Text>
+              )}
+            </View>
           </View>
         )}
       </ScrollView>
@@ -543,7 +594,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   eventCard: {
-    marginBottom: 20,
+    marginBottom: 80,
     backgroundColor: '#fff',
     borderRadius: 15,
     overflow: 'hidden', // This ensures the image respects the border radius

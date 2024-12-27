@@ -49,12 +49,13 @@ const CalendarPage = () => {
     const marked = {};
     const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
 
-    // Mark past dates as disabled
-    for (let i = 0; i < 30; i++) { // Adjust the range as needed
+    for (let i = 0; i < 30; i++) { 
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateString = date.toISOString().split("T")[0];
-      marked[dateString] = { disabled: true, color: "#d3d3d3" }; // Grey out past dates
+      if (dateString !== today) { // Skip greying out the current day date
+        marked[dateString] = { disabled: true, color: "#d3d3d3" }; // Grey out past dates
+      }
     }
 
     // Mark the selected date

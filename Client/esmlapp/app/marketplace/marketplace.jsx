@@ -37,7 +37,7 @@ const Marketplace = () => {
       setLoading(true);
       const [allProductsResponse, topDiscountedResponse] = await Promise.all([
         axios.get(`${BASE_URL}/product/discounted`),
-        axios.get(`${BASE_URL}/product/discounted/top-three`)
+        axios.get(`${BASE_URL}/product/discounted/top-three`),
       ]);
       setProducts(allProductsResponse.data);
       setDiscounts(topDiscountedResponse.data);
@@ -50,8 +50,8 @@ const Marketplace = () => {
 
   const fetchCartCount = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
+      const token = await AsyncStorage.getItem("userToken");
+      const userId = await AsyncStorage.getItem("userId");
       if (token && userId) {
         const response = await axios.get(`${BASE_URL}/cart/count/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -71,69 +71,79 @@ const Marketplace = () => {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    Promise.all([fetchProducts(), fetchCartCount()]).then(() => setRefreshing(false));
+    Promise.all([fetchProducts(), fetchCartCount()]).then(() =>
+      setRefreshing(false)
+    );
   }, [fetchProducts, fetchCartCount]);
 
-  const addToCart = useCallback(async (product) => {
-    try {
-        const existingCart = await AsyncStorage.getItem('cartProducts');
+  const addToCart = useCallback(
+    async (product) => {
+      try {
+        const existingCart = await AsyncStorage.getItem("cartProducts");
         const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
 
-
-        if (cartProducts.some(item => item.product_id === product.product_id)) {
-          setShowMessage("Product already in cart. Please view your cart to adjust quantity.");
+        if (
+          cartProducts.some((item) => item.product_id === product.product_id)
+        ) {
+          setShowMessage(
+            "Product already in cart. Please view your cart to adjust quantity."
+          );
           setTimeout(() => setShowMessage(""), 1000);
           return;
         }
-        
 
-        const token = await AsyncStorage.getItem('userToken');
-        const userId = await AsyncStorage.getItem('userId');
+        const token = await AsyncStorage.getItem("userToken");
+        const userId = await AsyncStorage.getItem("userId");
         if (!token || !userId || !product?.product_id || !product?.price) {
-            console.error("Invalid data for adding to cart");
-            return;
+          console.error("Invalid data for adding to cart");
+          return;
         }
 
-        setCartCount(prevCount => prevCount + 1);
+        setCartCount((prevCount) => prevCount + 1);
         setLoading(true);
 
         const response = await axios.post(
-            `${BASE_URL}/cart/cart/add`,
-            {
-                userId: JSON.parse(userId),
-                productId: product.product_id,
-                quantity: 1,
-                price: product.price,
-            },
-            { headers: { Authorization: `Bearer ${token}` } }
+          `${API.BASE_URL}/cart/cart/add`,
+          {
+            userId: JSON.parse(userId),
+            productId: product.product_id,
+            quantity: 1,
+            price: product.price,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (response.status !== 201) {
-            setShowMessage(`${product.name} already in the cart! 🛒`);
-            setCartCount(prevCount => prevCount - 1);
+          setShowMessage(`${product.name} already in the cart! 🛒`);
+          setCartCount((prevCount) => prevCount - 1);
         } else {
-            cartProductsList.push(product);
-            await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
-            setCartProducts(cartProductsList);
-            setShowMessage(`${product.name} added to cart! 🛒`);
-            setTimeout(() => setShowMessage(""), 2000);
+          cartProductsList.push(product);
+          await AsyncStorage.setItem(
+            "cartProducts",
+            JSON.stringify(cartProductsList)
+          );
+          setCartProducts(cartProductsList);
+          setShowMessage(`${product.name} added to cart! 🛒`);
+          setTimeout(() => setShowMessage(""), 2000);
         }
-    } catch (error) {
+      } catch (error) {
         console.error("Error adding product to cart:", error);
-        setCartCount(prevCount => prevCount - 1);
+        setCartCount((prevCount) => prevCount - 1);
         setShowMessage("Error adding to cart. Please try again.");
         setTimeout(() => setShowMessage(""), 2000);
-    } finally {
+      } finally {
         setLoading(false);
-    }
-  }, [cartProducts]);
+      }
+    },
+    [cartProducts]
+  );
 
   const calculateDiscountedPrice = useCallback((price, discount) => {
     const originalPrice = parseFloat(price);
     const discountValue = parseFloat(discount);
     return isNaN(originalPrice) || isNaN(discountValue)
       ? 0
-      : originalPrice - (originalPrice * (discountValue / 100));
+      : originalPrice - originalPrice * (discountValue / 100);
   }, []);
 
   const handleSelectCategory = useCallback((category) => {
@@ -145,77 +155,89 @@ const Marketplace = () => {
     setSidebarVisible(!isSidebarVisible);
   };
 
-  const toggleFavorite = useCallback(async (product) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
-      
-      if (!token || !userId || !product?.product_id) {
-        console.error("Missing required data");
-        return;
-      }
+  const toggleFavorite = useCallback(
+    async (product) => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        const userId = await AsyncStorage.getItem("userId");
 
-      const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
+        if (!token || !userId || !product?.product_id) {
+          console.error("Missing required data");
+          return;
+        }
 
-      if (isAlreadyFavorite) {
-        const response = await axios.delete(
-          `${BASE_URL}/favorites/favorites/item/${product.favorite_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
+        const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
+
+        if (isAlreadyFavorite) {
+          const response = await axios.delete(
+            `${API.BASE_URL}/favorites/favorites/item/${product.favorite_id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             }
-          }
-        );
-
-        if (response.status === 200) {
-          setFavoriteProducts(prevFavorites => 
-            prevFavorites.filter(id => id !== product.product_id)
           );
-          setShowMessage('Product removed from favorites! 💔');
-          setTimeout(() => setShowMessage(''), 2000);
-        }
-      } else {
-        const response = await axios.post(
-          `${BASE_URL}/favorites/favorites/add`,
-          {
-            userId: parseInt(userId),
-            productId: product.product_id,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
 
-        if (response.status === 201) {
-          setFavoriteProducts(prevFavorites => [...prevFavorites, product.product_id]);
-          setShowMessage('Product added to favorites! ❤️');
-          setTimeout(() => setShowMessage(''), 2000);
+          if (response.status === 200) {
+            setFavoriteProducts((prevFavorites) =>
+              prevFavorites.filter((id) => id !== product.product_id)
+            );
+            setShowMessage("Product removed from favorites! 💔");
+            setTimeout(() => setShowMessage(""), 2000);
+          }
+        } else {
+          const response = await axios.post(
+            `${API.BASE_URL}/favorites/favorites/add`,
+            {
+              userId: parseInt(userId),
+              productId: product.product_id,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.status === 201) {
+            setFavoriteProducts((prevFavorites) => [
+              ...prevFavorites,
+              product.product_id,
+            ]);
+            setShowMessage("Product added to favorites! ❤️");
+            setTimeout(() => setShowMessage(""), 2000);
+          }
         }
+      } catch (error) {
+        console.error(
+          "Error toggling favorite:",
+          error.response?.data || error.message
+        );
+        setShowMessage("Something went wrong! Please try again.");
+        setTimeout(() => setShowMessage(""), 2000);
       }
-    } catch (error) {
-      console.error("Error toggling favorite:", error.response?.data || error.message);
-      setShowMessage('Something went wrong! Please try again.');
-      setTimeout(() => setShowMessage(''), 2000);
-    }
-  }, [favoriteProducts]);
+    },
+    [favoriteProducts]
+  );
 
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken');
-        const userId = await AsyncStorage.getItem('userId');
-        
+        const token = await AsyncStorage.getItem("userToken");
+        const userId = await AsyncStorage.getItem("userId");
+
         if (!token || !userId) return;
 
-        const response = await axios.get(`${BASE_URL}/favorites/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.get(
+          `${API.BASE_URL}/favorites/user/${userId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-        const favoriteIds = response.data.map(fav => fav.product_id);
+        const favoriteIds = response.data.map((fav) => fav.product_id);
         setFavoriteProducts(favoriteIds);
       } catch (error) {
         console.error("Error fetching favorites:", error);
@@ -228,12 +250,18 @@ const Marketplace = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
-        {isSidebarVisible && <Sidebar onSelectCategory={handleSelectCategory} />}
+        {isSidebarVisible && (
+          <Sidebar onSelectCategory={handleSelectCategory} />
+        )}
         <View style={styles.contentContainer}>
           <TouchableOpacity onPress={toggleSidebar} style={styles.toggleButton}>
-            <FontAwesome name={isSidebarVisible ? "times" : "bars"} size={24} color="#333" />
+            <FontAwesome
+              name={isSidebarVisible ? "times" : "bars"}
+              size={24}
+              color="#333"
+            />
           </TouchableOpacity>
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.scrollContent}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -242,13 +270,19 @@ const Marketplace = () => {
             <View style={styles.header}>
               <Text style={styles.headerTitle}>Marketplace</Text>
               <View style={styles.iconContainer}>
-                <TouchableOpacity onPress={() => navigation.navigate('CartScreen')} style={styles.iconButton}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("CartScreen")}
+                  style={styles.iconButton}
+                >
                   <FontAwesome name="shopping-cart" size={24} color="#333" />
                   <View style={styles.cartCountContainer}>
                     <Text style={styles.cartCount}>{cartCount}</Text>
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton}  onPress={() => navigation.navigate('FavoritesScreen')}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => navigation.navigate("FavoritesScreen")}
+                >
                   <FontAwesome name="heart-o" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
@@ -268,7 +302,11 @@ const Marketplace = () => {
                 <TouchableOpacity
                   key={index}
                   style={styles.card}
-                  onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+                  onPress={() =>
+                    navigation.navigate("ProductDetail", {
+                      productId: product.id,
+                    })
+                  }
                 >
                   <Image
                     source={{ uri: product.image_url }}
@@ -281,23 +319,38 @@ const Marketplace = () => {
                       style={styles.cartButton}
                       onPress={() => addToCart(product)}
                     >
-                      <FontAwesome 
-                        name={cartProducts.some(item => item.product_id === product.product_id) ? "check" : "shopping-cart"} 
-                        size={20} 
-                        color="#fff" 
+                      <FontAwesome
+                        name={
+                          cartProducts.some(
+                            (item) => item.product_id === product.product_id
+                          )
+                            ? "check"
+                            : "shopping-cart"
+                        }
+                        size={20}
+                        color="#fff"
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[
                         styles.favoriteButton,
-                        favoriteProducts.includes(product.product_id) && styles.favoriteButtonActive
+                        favoriteProducts.includes(product.product_id) &&
+                          styles.favoriteButtonActive,
                       ]}
                       onPress={() => toggleFavorite(product)}
                     >
                       <FontAwesome
-                        name={favoriteProducts.includes(product.product_id) ? "heart" : "heart-o"}
+                        name={
+                          favoriteProducts.includes(product.product_id)
+                            ? "heart"
+                            : "heart-o"
+                        }
                         size={20}
-                        color={favoriteProducts.includes(product.product_id) ? "#ff0000" : "#333"}
+                        color={
+                          favoriteProducts.includes(product.product_id)
+                            ? "#ff0000"
+                            : "#333"
+                        }
                       />
                     </TouchableOpacity>
                   </View>
@@ -307,7 +360,10 @@ const Marketplace = () => {
 
             <Text style={styles.sectionTitle}>Special Offers</Text>
             {discounts.map((discount, index) => {
-              const discountedPrice = calculateDiscountedPrice(discount.price, discount.discount);
+              const discountedPrice = calculateDiscountedPrice(
+                discount.price,
+                discount.discount
+              );
               const savings = discount.price - discountedPrice;
               return (
                 <View key={index} style={styles.discountItem}>
@@ -319,7 +375,9 @@ const Marketplace = () => {
                     <Text style={styles.discountTitle}>{discount.name}</Text>
                     <Text style={styles.discountPrice}>
                       ${discountedPrice.toFixed(2)}{" "}
-                      <Text style={styles.discountOldPrice}>${discount.price}</Text>
+                      <Text style={styles.discountOldPrice}>
+                        ${discount.price}
+                      </Text>
                     </Text>
                     <Text style={styles.discountSavings}>
                       You save: ${savings.toFixed(2)}
@@ -341,7 +399,7 @@ const Marketplace = () => {
 
             <TouchableOpacity
               style={styles.viewAllButton}
-              onPress={() => navigation.navigate('AllDiscountedProducts')}
+              onPress={() => navigation.navigate("AllDiscountedProducts")}
             >
               <Text style={styles.viewAllText}>View All Offers</Text>
             </TouchableOpacity>
@@ -352,8 +410,6 @@ const Marketplace = () => {
               <ActivityIndicator size="large" color="#6e3de8" />
             </View>
           )}
-
-         
 
           {showMessage && (
             <View style={styles.messageContainer}>
@@ -369,11 +425,11 @@ const Marketplace = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   mainContainer: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   contentContainer: {
     flex: 1,
@@ -383,52 +439,52 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   iconContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   iconButton: {
     marginLeft: 15,
-    position: 'relative',
+    position: "relative",
   },
   cartCountContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: -8,
     right: -8,
-    backgroundColor: '#ff3b8f',
+    backgroundColor: "#ff3b8f",
     borderRadius: 10,
     width: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   cartCount: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   searchSection: {
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginVertical: 15,
-    color: '#333',
+    color: "#333",
   },
   cardContainer: {
     marginBottom: 20,
@@ -436,11 +492,11 @@ const styles = StyleSheet.create({
   card: {
     width: 180,
     marginRight: 15,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 15,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -454,52 +510,52 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginVertical: 6,
-    textAlign: 'center',
+    textAlign: "center",
   },
   cardPrice: {
-    color: '#6e3de8',
+    color: "#6e3de8",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
     marginTop: 10,
   },
   cartButton: {
-    backgroundColor: '#6e3de8',
+    backgroundColor: "#6e3de8",
     borderRadius: 8,
     padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: 40,
     height: 40,
   },
   favoriteButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: 40,
     height: 40,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderWidth: 1,
   },
   discountItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginVertical: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -515,92 +571,92 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   discountTitle: {
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     fontSize: 16,
     marginBottom: 5,
   },
   discountPrice: {
-    color: '#6e3de8',
+    color: "#6e3de8",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   discountOldPrice: {
-    textDecorationLine: 'line-through',
-    color: '#999',
+    textDecorationLine: "line-through",
+    color: "#999",
     fontSize: 14,
   },
   discountSavings: {
-    color: '#4CAF50',
+    color: "#4CAF50",
     fontSize: 14,
     marginTop: 2,
   },
   discountPercentage: {
-    color: '#ff0000',
+    color: "#ff0000",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 2,
   },
   discountCartButton: {
-    backgroundColor: '#6e3de8',
+    backgroundColor: "#6e3de8",
     borderRadius: 8,
     padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   discountCartButtonText: {
-    color: '#fff',
+    color: "#fff",
     marginLeft: 5,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   viewAllButton: {
-    backgroundColor: '#6A5AE0',
+    backgroundColor: "#6A5AE0",
     borderRadius: 10,
     paddingVertical: 15,
     paddingHorizontal: 20,
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
   viewAllText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   toggleButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     left: 10,
     zIndex: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 10,
     borderRadius: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   messageContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     borderRadius: 10,
     padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   messageText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 
