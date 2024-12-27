@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { BASE_URL } from '../../Api';
+import Navbar from "../navbar/Navbar";
 
 const { width } = Dimensions.get("window");
 
@@ -297,6 +298,7 @@ const App = () => {
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
+      <Navbar/>
     </View>
   );
 };

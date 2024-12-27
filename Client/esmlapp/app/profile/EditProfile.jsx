@@ -7,10 +7,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 import { Picker } from '@react-native-picker/picker'; // Add this import
-import Navbar from '../navbar/Navbar';
 import CountryPicker from 'react-native-country-picker-modal';
 import DateTimePickerModal from 'react-native-modal-datetime-picker'; // Import the date picker
 import { BASE_URL } from '../../Api.js';
+import Navbar from '../navbar/Navbar.jsx';
 
 
 global.Buffer = Buffer;
@@ -278,7 +278,7 @@ const EditProfile = () => {
       </View>
 
       <ScrollView 
-        contentContainerStyle={styles.container}
+        contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity onPress={handleImagePick} style={styles.imagePickerContainer}>
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginBottom: 16,
   },
   buttonText: {
     color: '#fff',
@@ -627,6 +627,12 @@ const styles = StyleSheet.create({
   pickerText: {
     fontSize: 18,
   },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 80, // Add padding to ensure button is not covered by navbar
+    backgroundColor: '#fff',
+  },
 });
 
-export default EditProfile;
+export default EditProfile; 

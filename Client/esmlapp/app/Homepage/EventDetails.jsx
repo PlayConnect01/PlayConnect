@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Modal } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 import { BASE_URL } from '../../Api.js';
 import MapView, { Marker } from 'react-native-maps';
-
+import { WebView } from 'react-native-webview';
 
 const decodeToken = (token) => {
   try {
@@ -31,6 +31,8 @@ const EventDetails = () => {
   const [userJoined, setUserJoined] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -134,6 +136,29 @@ const EventDetails = () => {
       setUserJoined(false);
     } catch (error) {
       Alert.alert('Error', 'Failed to leave the event. Please try again.');
+    }
+  };
+
+  const handleJoinEvent = async () => {
+    if (event.price > 0) {
+      setIsProcessingPayment(true);
+      setShowPaymentModal(true);
+
+      // Simulate payment processing
+      setTimeout(async () => {
+        try {
+          await handleAddParticipant();
+          setShowPaymentModal(false);
+          setIsProcessingPayment(false);
+          Alert.alert('Success', 'Payment successful! You have joined the event.');
+        } catch (error) {
+          console.error('Error joining event:', error);
+          Alert.alert('Error', 'Failed to join event after payment');
+          setIsProcessingPayment(false);
+        }
+      }, 2000); // Simulate 2 second payment process
+     } else {
+      handleAddParticipant();
     }
   };
 
@@ -249,33 +274,51 @@ const EventDetails = () => {
                 style={[styles.addButton, { backgroundColor: userJoined ? 'red' : '#0095FF' }]}
                 onPress={() => {
                   if (userJoined) {
-                    Alert.alert(
-                      'Confirmation',
-                      'Are you sure you want to quit this event?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Yes', onPress: handleRemoveParticipant },
-                      ]
-                    );
+                    handleRemoveParticipant();
                   } else {
-                    Alert.alert(
-                      'Confirmation',
-                      'Are you sure you want to join this event?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Yes', onPress: handleAddParticipant },
-                      ]
-                    );
+                    handleJoinEvent();
                   }
                 }}
               >
-                <MaterialCommunityIcons name={userJoined ? 'account-remove' : 'account-plus'} size={27} color="white" />
+                <MaterialCommunityIcons 
+                  name={userJoined ? 'account-remove' : 'account-plus'} 
+                  size={27} 
+                  color="white" 
+                />
               </TouchableOpacity>
             )}
           </View>
         </View>
 
       </ScrollView>
+
+      <Modal
+        visible={showPaymentModal}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.paymentModalContent}>
+            <Text style={styles.paymentModalTitle}>Processing Payment</Text>
+            {isProcessingPayment ? (
+              <View style={styles.paymentProcessing}>
+                <Text style={styles.processingText}>Please wait...</Text>
+              </View>
+            ) : null}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                if (!isProcessingPayment) {
+                  setShowPaymentModal(false);
+                }
+              }}
+            >
+              <Text style={styles.closeButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 };
@@ -305,7 +348,7 @@ const styles = StyleSheet.create({
   },
   eventImage: {
     width: '90%',
-    height: 220,
+    height: 220,  
     borderRadius: 10,
   },
   participantsContainer: { marginHorizontal: 16, marginBottom: 16 },
@@ -342,6 +385,54 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     color: '#333',
     lineHeight: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paymentModalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  paymentModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  paymentProcessing: {
+    marginVertical: 20,
+  },
+  processingText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  closeButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#ddd',
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: '#333',
+    fontSize: 16,
+  },
+  joinButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    padding: 15,
+    borderRadius: 10,
+    elevation: 3,
+  },
+  joinButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
