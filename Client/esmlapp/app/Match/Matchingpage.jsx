@@ -14,6 +14,10 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import { BASE_URL } from '../../Api.js';
+import { Import } from 'lucide-react';
+import MatchNotification from '../components/MatchNotification';
+import NotificationsModal from '../components/NotificationsModal';
 
 axios.defaults.timeout = 5000;
 
@@ -29,6 +33,7 @@ const Match = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notifications, setNotifications] = useState([]);
   const position = useRef(new Animated.ValueXY()).current;
   const navigation = useNavigation();
 
@@ -44,12 +49,14 @@ const Match = () => {
         if (decodedToken?.userId) {
           setCurrentUserId(decodedToken.userId);
           console.log('User ID:', decodedToken.userId);
+          fetchNotifications(decodedToken.userId);
         } else {
           throw new Error('User ID not found in token');
         }
       } catch (error) {
         console.error('Error loading token:', error);
-        Alert.alert('Error', 'Failed to load user data. Please log in again.');
+        Alert.alert('Error', 'Please login again');
+        navigation.navigate('Login');
       }
     };
 
@@ -61,7 +68,7 @@ const Match = () => {
       const fetchPotentialMatches = async () => {
         try {
           const response = await axios.get(
-            `http://192.168.11.115:3000/matches/common-sports/${currentUserId}`
+            `${BASE_URL}/matches/common-sports/${currentUserId}`
           );
 
           if (response.data.length > 0) {
@@ -85,20 +92,55 @@ const Match = () => {
       // Fetch unread notifications count
       const fetchUnreadCount = async () => {
         try {
-          const response = await axios({
-            ...defaultConfig,
-            method: 'get',
-            url: `${BASE_URL}/notifications/${currentUserId}/unread/count`
-          });
-          setUnreadNotifications(response.data.count);
+          const response = await axios.get(`${BASE_URL}/notifications/${currentUserId}/unread/count`);
+          setUnreadNotifications(response.data.count || 0);
         } catch (error) {
           console.error('Error fetching unread notifications:', error);
+          setUnreadNotifications(0);
         }
       };
 
       fetchUnreadCount();
     }
   }, [currentUserId, showNotifications]);
+
+  const fetchNotifications = async (userId) => {
+    if (!userId) return;
+    
+    try {
+      const response = await axios.get(`${BASE_URL}/notifications/${userId}`);
+      if (response.data && Array.isArray(response.data)) {
+        setNotifications(response.data);
+        setUnreadNotifications(response.data.filter(n => !n.read).length);
+      } else {
+        console.warn('Unexpected notifications response format:', response.data);
+        setNotifications([]);
+        setUnreadNotifications(0);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setNotifications([]);
+      setUnreadNotifications(0);
+    }
+  };
+
+  const handleAcceptMatch = async (matchId) => {
+    try {
+      await axios.patch(`${BASE_URL}/match/accept/${matchId}`);
+      fetchNotifications(currentUserId);
+    } catch (error) {
+      console.error('Error accepting match:', error);
+    }
+  };
+
+  const handleRejectMatch = async (matchId) => {
+    try {
+      await axios.patch(`${BASE_URL}/match/reject/${matchId}`);
+      fetchNotifications(currentUserId);
+    } catch (error) {
+      console.error('Error rejecting match:', error);
+    }
+  };
 
   const handleNextUser = () => {
     if (currentUserIndex < users.length - 1) {
@@ -115,7 +157,7 @@ const Match = () => {
     try {
       const currentUser = users[currentUserIndex];
       await axios.post(
-        `http://192.168.11.115:3000/matches/create`,
+        `${BASE_URL}/matches/create`,
         {
           userId1: currentUserId,
           userId2: currentUser.user_id,
@@ -257,11 +299,13 @@ const Match = () => {
       </View>
 
       {/* Notifications Modal */}
-      <NotificationsModal
-        visible={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        userId={currentUserId}
-      />
+      {showNotifications && (
+        <NotificationsModal
+          visible={showNotifications}
+          onClose={() => setShowNotifications(false)}
+          userId={currentUserId}
+        />
+      )}
     </View>
   );
 };

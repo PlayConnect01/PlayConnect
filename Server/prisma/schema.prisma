@@ -182,10 +182,11 @@ model Event {
   start_time     String?  // Store time as a string (HH:mm)
   end_time       String?  // Store time as a string (HH:mm)
   description    String
+  latitude       Float?   
+  longitude      Float?
   category       String
   participants   Int
   price          Float
-  is_free        Boolean
   image          String?
 
   event_participants EventParticipant[]
@@ -196,7 +197,6 @@ model Event {
 
   @@index([event_name])
 }
-
 
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())

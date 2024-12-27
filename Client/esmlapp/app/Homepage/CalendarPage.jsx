@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import { Calendar } from "react-native-calendars";
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from '../../Api.js';
 
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);

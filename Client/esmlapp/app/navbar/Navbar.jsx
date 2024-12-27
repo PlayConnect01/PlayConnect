@@ -54,7 +54,7 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
-          onPress={() => navigation.navigate("Match")}
+          onPress={() => navigation.navigate("Match/Firstpagematch")}
         >
           <View style={styles.centerButtonInner}>
             <Icon

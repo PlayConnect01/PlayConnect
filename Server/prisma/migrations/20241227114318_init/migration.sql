@@ -94,13 +94,14 @@ CREATE TABLE `Event` (
     `event_name` VARCHAR(191) NOT NULL,
     `location` VARCHAR(191) NOT NULL,
     `date` DATETIME(3) NOT NULL,
-    `start_time` DATETIME(3) NULL,
-    `end_time` DATETIME(3) NULL,
+    `start_time` VARCHAR(191) NULL,
+    `end_time` VARCHAR(191) NULL,
     `description` VARCHAR(191) NOT NULL,
+    `latitude` DOUBLE NULL,
+    `longitude` DOUBLE NULL,
     `category` VARCHAR(191) NOT NULL,
     `participants` INTEGER NOT NULL,
     `price` DOUBLE NOT NULL,
-    `is_free` BOOLEAN NOT NULL,
     `image` VARCHAR(191) NULL,
     `creator_id` INTEGER NOT NULL,
 
@@ -267,14 +268,16 @@ CREATE TABLE `PointsLog` (
 CREATE TABLE `Notification` (
     `notification_id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
-    `type` VARCHAR(191) NOT NULL,
+    `type` ENUM('MATCH_REQUEST', 'MATCH_ACCEPTED', 'MATCH_REJECTED', 'GENERAL', 'EVENT_INVITATION', 'TOURNAMENT_INVITATION') NOT NULL DEFAULT 'GENERAL',
     `title` VARCHAR(191) NOT NULL,
     `content` VARCHAR(191) NOT NULL,
     `is_read` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `action_url` VARCHAR(191) NULL,
+    `match_id` INTEGER NULL,
 
     INDEX `Notification_user_id_idx`(`user_id`),
+    INDEX `Notification_match_id_idx`(`match_id`),
     PRIMARY KEY (`notification_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -407,6 +410,9 @@ ALTER TABLE `PointsLog` ADD CONSTRAINT `PointsLog_user_id_fkey` FOREIGN KEY (`us
 
 -- AddForeignKey
 ALTER TABLE `Notification` ADD CONSTRAINT `Notification_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_match_id_fkey` FOREIGN KEY (`match_id`) REFERENCES `Match`(`match_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Match` ADD CONSTRAINT `Match_user_id_1_fkey` FOREIGN KEY (`user_id_1`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

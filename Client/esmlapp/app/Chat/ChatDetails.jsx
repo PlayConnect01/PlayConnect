@@ -16,7 +16,7 @@ import axios from "axios";
 import VoiceMessageHandler from "./components/VoiceMessageHandler";
 import AudioMessage from "./components/AudioMessage";
 import ImageMessageHandler from "./components/ImageMessageHandler";
-import { BASE_URL } from "../../Api";
+import { BASE_URL } from '../../Api.js';
 import { useRoute, useNavigation } from '@react-navigation/native';
 const ChatDetails = () => {
   const route = useRoute();

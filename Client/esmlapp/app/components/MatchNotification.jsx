@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {BASE_URL} from "../../Api"
-
+import { BASE_URL } from "../../Api"
 
 const MatchNotification = ({ notification, onAccept, onReject }) => {
   const [showModal, setShowModal] = useState(false);
@@ -11,16 +10,20 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
     setShowModal(true);
   };
 
+  // Get the appropriate user data from the notification
+  const senderName = notification?.senderName || notification?.user?.username || 'Unknown User';
+  const senderImage = notification?.senderImage || notification?.user?.profile_picture || 'default_image_url';
+
   return (
     <>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.content}>
           <Image
-            source={{ uri: notification.sender?.profile_picture || notification.user?.profile_picture }}
+            source={{ uri: senderImage }}
             style={styles.notificationImage}
           />
           <Text style={styles.message}>
-            {notification.sender?.username || notification.user?.username} wants to match with you!
+            {senderName} wants to match with you!
           </Text>
         </View>
       </TouchableOpacity>
@@ -41,36 +44,36 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
             </TouchableOpacity>
 
             <Image
-              source={{ uri: notification.sender?.profile_picture || notification.user?.profile_picture }}
+              source={{ uri: senderImage }}
               style={styles.userImage}
             />
             <View style={styles.userInfoContainer}>
               <Text style={styles.userName}>
-                {notification.sender?.username || notification.user?.username}
+                {senderName}
+              </Text>
+              <Text style={styles.matchText}>
+                Would you like to match with this user?
               </Text>
             </View>
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={[styles.button, styles.acceptButton]} 
+              <TouchableOpacity
+                style={[styles.actionButton, styles.rejectButton]}
                 onPress={() => {
-                  onAccept();
+                  onReject(notification.match_id);
                   setShowModal(false);
                 }}
               >
-                <Ionicons name="heart" size={20} color="white" style={{ marginRight: 8 }} />
-                <Text style={[styles.buttonText, styles.acceptButtonText]}>Match</Text>
+                <Text style={[styles.buttonText, styles.rejectText]}>Reject</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.button, styles.rejectButton]} 
+              <TouchableOpacity
+                style={[styles.actionButton, styles.acceptButton]}
                 onPress={() => {
-                  onReject();
+                  onAccept(notification.match_id);
                   setShowModal(false);
                 }}
               >
-                <Ionicons name="close" size={20} color="#6366f1" style={{ marginRight: 8 }} />
-                <Text style={[styles.buttonText, styles.rejectButtonText]}>Decline</Text>
+                <Text style={[styles.buttonText, styles.acceptText]}>Accept</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -190,6 +193,16 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
     letterSpacing: 0.5,
   },
+  matchText: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#fff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+    letterSpacing: 0.5,
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -198,7 +211,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     backgroundColor: '#fff',
   },
-  button: {
+  actionButton: {
     paddingVertical: 14,
     paddingHorizontal: 35,
     borderRadius: 20,
@@ -231,10 +244,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.5,
   },
-  acceptButtonText: {
+  acceptText: {
     color: '#fff',
   },
-  rejectButtonText: {
+  rejectText: {
     color: '#6366f1',
   }
 });

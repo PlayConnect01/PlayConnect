@@ -66,7 +66,7 @@ const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
     const getCorrectUrl = (url) => {
         if (!url) return url;
         if (url.startsWith('/')) {
-            return `http://192.168.103.15:3000${url}`;
+            return `BASE_URL${url}`;
         }
         return url.replace(/http:\/\/\d+\.\d+\.\d+\.\d+:\d+/, BASE_URL);
     };
