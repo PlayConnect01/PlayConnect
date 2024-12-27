@@ -14,6 +14,27 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
   const senderName = notification?.senderName || notification?.user?.username || 'Unknown User';
   const senderImage = notification?.senderImage || notification?.user?.profile_picture || 'default_image_url';
 
+  const handleAccept = () => {
+    if (notification?.match_id) {
+      onAccept(notification.match_id);
+      setShowModal(false);
+    }
+  };
+
+  const handleReject = () => {
+    if (notification?.match_id) {
+      onReject(notification.match_id);
+      setShowModal(false);
+    }
+  };
+
+  // Don't show if it's not a match request or if it's already been responded to
+  if (notification?.type !== 'MATCH_REQUEST' || 
+      notification?.status === 'ACCEPTED' || 
+      notification?.status === 'REJECTED') {
+    return null;
+  }
+
   return (
     <>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
@@ -59,19 +80,13 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.rejectButton]}
-                onPress={() => {
-                  onReject(notification.match_id);
-                  setShowModal(false);
-                }}
+                onPress={handleReject}
               >
                 <Text style={[styles.buttonText, styles.rejectText]}>Reject</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.actionButton, styles.acceptButton]}
-                onPress={() => {
-                  onAccept(notification.match_id);
-                  setShowModal(false);
-                }}
+                onPress={handleAccept}
               >
                 <Text style={[styles.buttonText, styles.acceptText]}>Accept</Text>
               </TouchableOpacity>
@@ -192,16 +207,14 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
     letterSpacing: 0.5,
+    marginBottom: 10,
   },
   matchText: {
     fontSize: 18,
-    fontWeight: '400',
     color: '#fff',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-    letterSpacing: 0.5,
+    opacity: 0.9,
+    marginTop: 5,
   },
   buttonContainer: {
     flexDirection: 'row',
