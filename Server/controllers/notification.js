@@ -123,9 +123,25 @@ const markAllAsRead = async (userId) => {
   }
 };
 
+// Delete a notification
+const deleteNotification = async (notificationId) => {
+  try {
+    await prisma.notification.delete({
+      where: {
+        notification_id: notificationId,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,
+  deleteNotification,
 };

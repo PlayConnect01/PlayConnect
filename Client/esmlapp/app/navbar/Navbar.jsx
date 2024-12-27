@@ -127,13 +127,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minWidth: 60,
   },
-  activeItem: {
-    backgroundColor: "#0095FF",
-    borderRadius: 30,
-    padding: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   navText: {
     color: "#9CA3AF",
     fontSize: 12,

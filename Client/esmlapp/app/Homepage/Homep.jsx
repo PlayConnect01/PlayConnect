@@ -168,6 +168,12 @@ const App = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  const handleNotificationPress = () => {
+    setShowNotifications(true);
+    // Reset notification count when opening notifications
+    setUnreadNotifications(0);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -195,7 +201,7 @@ const App = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.notificationButton}
-                onPress={() => setShowNotifications(true)}
+                onPress={handleNotificationPress}
               >
                 <Ionicons
                   name="notifications-outline"
