@@ -26,6 +26,8 @@ const ChatDetails = () => {
   
  
 
+
+
   // const { user, chatId, currentUserId } = route.params;
   // console.log(route.params, "salem");
 
@@ -50,7 +52,18 @@ const ChatDetails = () => {
 
     socket.on("connect", () => {
       console.log("Connected to socket server");
-      socket.emit("joinChat", chatId);
+      if (chatId) {
+        socket.emit("joinChat", chatId);
+      }
+    });
+
+    // Recevoir les messages des autres utilisateurs uniquement
+    socket.on("receiveMessage", (data) => {
+      console.log('Message received from other user:', data);
+      if (data.senderId !== currentUserId) {
+        setMessages((prevMessages) => [...prevMessages, data]);
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }
     });
 
     socket.on("disconnect", () => {
@@ -62,17 +75,19 @@ const ChatDetails = () => {
     });
 
     return socket;
-  }, [chatId]);
+  }, [chatId, currentUserId]);
 
   const loadMessages = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log(BASE_URL, "url");
+      console.log('Loading messages for chat:', chatId);
+      console.log('API URL:', `${BASE_URL}/chats/${chatId}/messages`);
 
       const response = await axios.get(`${BASE_URL}/chats/${chatId}/messages`);
+      console.log('Messages loaded:', response.data);
       setMessages(response.data || []);
     } catch (error) {
-      console.error("Error loading messages:", error);
+      console.error("Error loading messages:", error.response || error);
       Alert.alert("Error", "Failed to load messages. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -94,10 +109,10 @@ const ChatDetails = () => {
 
       const messageData = response.data;
       
-      // Update local state immediately for sender
+      // Ajouter le message à la liste locale
       setMessages((prev) => [...prev, messageData]);
       
-      // Emit socket event for receivers
+      // Émettre le message aux autres utilisateurs
       socketRef.current.emit("newMessage", {
         ...messageData,
         chatId: chatId
@@ -141,21 +156,13 @@ const ChatDetails = () => {
 
   useEffect(() => {
     const socket = initializeSocket();
-
-    socket.on("messageReceived", (newMessage) => {
-      // Only update messages if the sender is not the current user
-      if (newMessage.sender_id !== currentUserId) {
-        console.log("Message reçu:", newMessage);
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }
-    });
-
+    
+    // Charger les messages au montage du composant
     loadMessages();
 
     return () => {
       if (socket) {
-        socket.off("messageReceived");
+        socket.off("receiveMessage");
         socket.disconnect();
       }
     };
@@ -191,18 +198,23 @@ const ChatDetails = () => {
           </Text>
         )}
         {message.message_type === "IMAGE" ? (
-          <TouchableOpacity onPress={() => setSelectedImage(message.content)}>
-            <Image
-              source={{ uri: message.content }}
-              style={[
-                styles.messageImage,
-                isCurrentUser
-                  ? styles.messageImageSent
-                  : styles.messageImageReceived,
-              ]}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
+          <View style={[
+            styles.messageContainer,
+            isCurrentUser ? styles.messageSent : styles.messageReceived
+          ]}>
+            <TouchableOpacity onPress={() => setSelectedImage(message.content)}>
+              <Image
+                source={{ uri: message.content }}
+                style={[
+                  styles.messageImage,
+                  isCurrentUser
+                    ? styles.messageImageSent
+                    : styles.messageImageReceived,
+                ]}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          </View>
         ) : (
           <View
             style={[
@@ -292,14 +304,20 @@ const ChatDetails = () => {
           chatId={chatId}
           currentUserId={currentUserId}
           onImageUpload={(imageMessage) => {
-            // Add the message locally immediately
+            console.log('Image message to send:', imageMessage);
+            // Ajouter l'image localement
             setMessages((prev) => [...prev, imageMessage]);
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-            // Emit the message through socket
-            socketRef.current?.emit("message", {
-              chat_id: chatId,
+            
+            // Émettre le message d'image aux autres utilisateurs
+            socketRef.current?.emit("newMessage", {
               ...imageMessage,
+              chatId: chatId,
+              senderId: currentUserId,
+              messageType: "IMAGE"
             });
+            
+            // Faire défiler jusqu'au nouveau message
+            scrollViewRef.current?.scrollToEnd({ animated: true });
           }}
         />
         <VoiceMessageHandler
@@ -585,12 +603,12 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   messageImageSent: {
-    alignSelf: "flex-end",
+    alignSelf: 'flex-end',
     marginLeft: 60,
     marginRight: 10,
   },
   messageImageReceived: {
-    alignSelf: "flex-start",
+    alignSelf: 'flex-start',
     marginRight: 60,
     marginLeft: 10,
   },
