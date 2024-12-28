@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  Image,
+  ImageBackground,
   StyleSheet,
   Animated,
   PanResponder,
   TouchableOpacity,
-  Alert,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +18,7 @@ import { BASE_URL } from '../../Api.js';
 import { Import } from 'lucide-react';
 import MatchNotification from '../components/MatchNotification';
 import NotificationsModal from '../components/NotificationsModal';
+import { LinearGradient } from 'expo-linear-gradient';
 
 axios.defaults.timeout = 5000;
 
@@ -35,6 +36,8 @@ const Match = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const position = useRef(new Animated.ValueXY()).current;
+  const likeScale = useRef(new Animated.Value(1)).current;
+  const dislikeScale = useRef(new Animated.Value(1)).current;
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -154,6 +157,20 @@ const Match = () => {
   const handleLike = async () => {
     if (!users[currentUserIndex]) return;
 
+    // Animate the button press
+    Animated.sequence([
+      Animated.spring(likeScale, {
+        toValue: 0.8,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(likeScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     try {
       const currentUser = users[currentUserIndex];
       await axios.post(
@@ -177,6 +194,20 @@ const Match = () => {
   };
 
   const handleDislike = () => {
+    // Animate the button press
+    Animated.sequence([
+      Animated.spring(dislikeScale, {
+        toValue: 0.8,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(dislikeScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     Animated.timing(position, {
       toValue: { x: -500, y: 0 },
       duration: 300,
@@ -225,26 +256,6 @@ const Match = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with notification icon */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={() => setShowNotifications(true)}
-        >
-          <Ionicons name="notifications" size={24} color="#333" />
-          {unreadNotifications > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {unreadNotifications > 99 ? '99+' : unreadNotifications}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('MessagePage')}>
-          <Ionicons name="chatbubble-ellipses-outline" size={30} color="#000" />
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.cardContainer}>
         <Animated.View
           {...panResponder.panHandlers}
@@ -264,48 +275,85 @@ const Match = () => {
             },
           ]}
         >
-          <Image
-            source={{ uri: currentUser.profile_picture }} // 
-            style={styles.image}
-            resizeMode="cover"
-          />
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>
-              {currentUser.username || 'Unknown User'} 
-            </Text>
-            <Text style={styles.location}>
-              {currentUser.location || 'Location not available'}
-            </Text>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>Online</Text>
-            </View>
-          </View>
+          <ImageBackground
+            source={{ uri: currentUser.profile_picture }}
+            style={styles.imageBackground}
+            imageStyle={styles.image}
+          >
+            <LinearGradient
+              colors={['transparent', 'rgba(0, 0, 0, 0.95)']}
+              style={styles.gradient}
+            >
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>
+                  {currentUser.username || 'Unknown User'} 
+                </Text>
+                <View style={styles.locationContainer}>
+                  <Ionicons name="location" size={20} color="#fff" />
+                  <Text style={styles.location}>
+                    {currentUser.location || 'Location not available'}
+                  </Text>
+                </View>
+                <View style={styles.sportsContainer}>
+                  <Text style={styles.sportsTitle}>Interested in:</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsList}>
+                    {currentUser.sports?.map((sport, index) => (
+                      <View key={index} style={styles.sportBadge}>
+                        <Ionicons name="basketball-outline" size={16} color="#fff" />
+                        <Text style={styles.sportText}>{sport.sport.name}</Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[styles.actionButton]}
+                    onPress={handleDislike}
+                    activeOpacity={0.9}
+                  >
+                    <LinearGradient
+                      colors={['#FF0000', '#FF69B4']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.gradientButton}
+                    >
+                      <Animated.View style={[styles.buttonContent, { transform: [{ scale: dislikeScale }] }]}>
+                        <Ionicons name="close" size={35} color="#fff" />
+                      </Animated.View>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton]}
+                    onPress={handleLike}
+                    activeOpacity={0.9}
+                  >
+                    <LinearGradient
+                      colors={['#4CAF50', '#FFEB3B']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.gradientButton}
+                    >
+                      <Animated.View style={[styles.buttonContent, { transform: [{ scale: likeScale }] }]}>
+                        <Ionicons name="heart" size={35} color="#fff" />
+                      </Animated.View>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </LinearGradient>
+          </ImageBackground>
         </Animated.View>
       </View>
 
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.dislikeButton]}
-          onPress={handleDislike}
-        >
-          <Ionicons name="close" size={30} color="#FF3B30" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.likeButton]}
-          onPress={handleLike}
-        >
-          <Ionicons name="checkmark" size={30} color="#34C759" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Notifications Modal */}
-      {showNotifications && (
-        <NotificationsModal
-          visible={showNotifications}
-          onClose={() => setShowNotifications(false)}
-          userId={currentUserId}
-        />
-      )}
+      <NotificationsModal
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        notifications={notifications}
+        onAccept={handleAcceptMatch}
+        onReject={handleRejectMatch}
+        currentUserId={currentUserId}
+      />
     </View>
   );
 };
@@ -315,103 +363,131 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  notificationButton: {
-    position: 'relative',
-    padding: 5,
-  },
-  badge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#ff4444',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
   cardContainer: {
     flex: 1,
     margin: 16,
-    borderRadius: 20,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#fff',
   },
   card: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#6366f1',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  imageBackground: {
+    flex: 1,
     width: '100%',
     height: '100%',
-    borderRadius: 20,
   },
   image: {
-    width: '100%',
-    height: '100%',
     borderRadius: 20,
   },
+  gradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   userInfo: {
-    position: 'absolute',
-    bottom: 100,
-    left: 20,
-    right: 20,
+    padding: 25,
+    paddingBottom: 30,
   },
   userName: {
-    color: '#fff',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#fff',
+    marginBottom: 15,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   location: {
     color: '#fff',
     fontSize: 16,
-  },
-  statusBadge: {
-    backgroundColor: 'rgba(147, 51, 234, 0.9)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 14,
+    marginLeft: 8,
     fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  sportsContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  sportsTitle: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 10,
+    opacity: 0.9,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  sportsList: {
+    maxHeight: 50,
+  },
+  sportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginRight: 8,
+  },
+  sportText: {
+    color: '#fff',
+    marginLeft: 6,
+    fontSize: 14,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   actionButtons: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingHorizontal: 30,
   },
   actionButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#fff',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.5,
+    elevation: 8,
+    backgroundColor: '#fff',
+    padding: 2,
   },
-  dislikeButton: {
-    borderColor: '#FF3B30',
+  gradientButton: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 28,
   },
-  likeButton: {
-    borderColor: '#34C759',
+  buttonContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: [{ scale: 1 }],
   },
 });
 

@@ -219,11 +219,15 @@ const ChatDetails = () => {
           <View
             style={[
               styles.messageContainer,
+              message.message_type === 'SYSTEM' ? styles.messageContainerSystem : 
               isCurrentUser ? styles.messageSent : styles.messageReceived,
             ]}
           >
-            <View style={styles.messageContent}>
-              {!isCurrentUser && (
+            <View style={[
+              styles.messageContent,
+              message.message_type === 'SYSTEM' && styles.messageContentSystem
+            ]}>
+              {!isCurrentUser && message.message_type !== 'SYSTEM' && (
                 <Image
                   source={{ uri: message.sender?.profile_picture }}
                   style={styles.messageUserImage}
@@ -234,6 +238,8 @@ const ChatDetails = () => {
                   styles.messageTextContainer,
                   isCurrentUser
                     ? styles.messageTextContainerSent
+                    : message.message_type === 'SYSTEM'
+                    ? styles.messageTextContainerSystem
                     : styles.messageTextContainerReceived,
                 ]}
               >
@@ -250,6 +256,8 @@ const ChatDetails = () => {
                       styles.messageText,
                       isCurrentUser
                         ? styles.messageTextSent
+                        : message.message_type === 'SYSTEM'
+                        ? styles.messageTextSystem
                         : styles.messageTextReceived,
                     ]}
                   >
@@ -291,7 +299,7 @@ const ChatDetails = () => {
           </View>
         ) : messages.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text>No messages yet. Start the conversation!</Text>
+            <Text style={styles.emptyText} numberOfLines={1} ellipsizeMode="tail">You can start conversation now</Text>
           </View>
         ) : (
           messages.map((message, index) => renderMessage(message, index))
@@ -453,9 +461,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   messageContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginVertical: 4,
     paddingHorizontal: 16,
+  },
+  messageContainerSystem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   messageSent: {
     justifyContent: "flex-end",
@@ -464,9 +477,14 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   messageContent: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    maxWidth: "80%",
+    flexDirection: 'row',
+    maxWidth: '80%',
+    alignItems: 'flex-end',
+  },
+  messageContentSystem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   messageUserImage: {
     width: 28,
@@ -490,6 +508,14 @@ const styles = StyleSheet.create({
   messageTextContainerReceived: {
     backgroundColor: "#E8E8E8",
   },
+  messageTextContainerSystem: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    alignSelf: 'center',
+    marginVertical: 10,
+    borderRadius: 15,
+    maxWidth: '70%',
+    padding: 8,
+  },
   messageText: {
     fontSize: 16,
   },
@@ -498,6 +524,12 @@ const styles = StyleSheet.create({
   },
   messageTextReceived: {
     color: "#000000",
+  },
+  messageTextSystem: {
+    color: '#666',
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
   },
   messageTime: {
     fontSize: 9,
@@ -566,10 +598,20 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    transform: [{ translateY: -10 }],
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontWeight: '500',
+    width: '100%',
   },
   messageSendingStatus: {
     fontSize: 10,

@@ -12,9 +12,10 @@ import axios from 'axios';
 import { BASE_URL } from '../../Api';
 import MatchNotification from './MatchNotification';
 
-const NotificationsModal = ({ visible, onClose, userId, onNotificationsUpdate }) => {
+const NotificationsModal = ({ visible, onClose, userId, onNotificationsUpdate, navigation }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
     if (visible && userId) {
@@ -37,26 +38,17 @@ const NotificationsModal = ({ visible, onClose, userId, onNotificationsUpdate })
   };
 
   const handleNotificationClick = async (notification) => {
-    if (notification.is_read) return; // Skip if already read
-    
-    try {
-      // Mark the notification as read in the backend
-      await axios.put(`${BASE_URL}/notifications/${notification.notification_id}/read`);
-      
-      // Update local state
-      setNotifications(prev => prev.map(notif => 
-        notif.notification_id === notification.notification_id 
-          ? { ...notif, is_read: true }
-          : notif
-      ));
-
-      // Update the notification count in the parent component
-      if (onNotificationsUpdate) {
-        onNotificationsUpdate();
+    if (!notification.is_read) {
+      try {
+        await axios.put(`${BASE_URL}/notifications/${notification.notification_id}/read`);
+        if (onNotificationsUpdate) {
+          onNotificationsUpdate();
+        }
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
       }
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
     }
+    setSelectedMatch(notification);
   };
 
   const handleAcceptMatch = async (matchId, notificationId) => {
@@ -111,12 +103,10 @@ const NotificationsModal = ({ visible, onClose, userId, onNotificationsUpdate })
             onPress={() => handleNotificationClick(notification)}
             style={notificationStyle}
           >
-            <View>
-              <MatchNotification
-                notification={notification}
-                onAccept={() => handleAcceptMatch(notification.match_id, notification.notification_id)}
-                onReject={() => handleRejectMatch(notification.match_id, notification.notification_id)}
-              />
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageText}>
+                {notification.senderName || notification.user?.username || 'Someone'} wants to match with you!
+              </Text>
               {!notification.is_read && (
                 <View style={styles.unreadDot} />
               )}
@@ -147,33 +137,58 @@ const NotificationsModal = ({ visible, onClose, userId, onNotificationsUpdate })
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Notifications</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
+    <>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={onClose}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Notifications</Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
 
-          {loading ? (
-            <ActivityIndicator size="large" color="#0095FF" />
-          ) : notifications.length === 0 ? (
-            <Text style={styles.emptyText}>No notifications</Text>
-          ) : (
-            <ScrollView style={styles.notificationsList}>
-              {notifications.map(notification => renderNotification(notification))}
-            </ScrollView>
-          )}
+            {loading ? (
+              <ActivityIndicator size="large" color="#0095FF" />
+            ) : notifications.length === 0 ? (
+              <Text style={styles.emptyText}>No notifications</Text>
+            ) : (
+              <ScrollView style={styles.notificationsList}>
+                {notifications.map(notification => renderNotification(notification))}
+              </ScrollView>
+            )}
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <Modal
+        visible={!!selectedMatch}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedMatch(null)}
+      >
+        {selectedMatch && (
+          <View style={styles.matchModalContainer}>
+            <MatchNotification
+              notification={selectedMatch}
+              onAccept={() => {
+                handleAcceptMatch(selectedMatch.match_id, selectedMatch.notification_id);
+                setSelectedMatch(null);
+              }}
+              onReject={() => {
+                handleRejectMatch(selectedMatch.match_id, selectedMatch.notification_id);
+                setSelectedMatch(null);
+              }}
+            />
+          </View>
+        )}
+      </Modal>
+    </>
   );
 };
 
@@ -253,6 +268,23 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#0095FF',
+  },
+  messageContainer: {
+    padding: 15,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 10,
+    margin: 10,
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#4b5563',
+    textAlign: 'center',
+  },
+  matchModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
