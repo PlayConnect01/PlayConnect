@@ -215,11 +215,37 @@ async function handleImageMessage(chatId, senderId, imageUrl) {
     }
 }
 
+// Get last message of a chat
+async function getLastMessage(chatId) {
+  try {
+    const lastMessage = await prisma.message.findFirst({
+      where: {
+        chat_id: parseInt(chatId),
+      },
+      orderBy: {
+        sent_at: 'desc',
+      },
+      select: {
+        message_id: true,
+        content: true,
+        message_type: true,
+        sent_at: true,
+        sender_id: true,
+      },
+    });
+    return lastMessage;
+  } catch (error) {
+    console.error('Error getting last message:', error);
+    throw error;
+  }
+}
+
 module.exports = {
     createChatWithWelcomeMessage,
     getChatMessages,
     verifyUserInChat,
     sendMessage,
     handleAudioMessage,
-    handleImageMessage
+    handleImageMessage,
+    getLastMessage,
 };

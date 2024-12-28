@@ -221,4 +221,15 @@ router.get('/user/:userId', async (req, res) => {
     }
 });
 
+// Get last message of a chat
+router.get('/:chatId/lastMessage', async (req, res) => {
+    try {
+        const lastMessage = await chatController.getLastMessage(req.params.chatId);
+        res.json(lastMessage);
+    } catch (error) {
+        console.error('Error getting last message:', error);
+        res.status(500).json({ error: 'Failed to get last message' });
+    }
+});
+
 module.exports = router; 

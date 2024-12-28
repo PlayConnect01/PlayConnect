@@ -11,6 +11,31 @@ const getUsersWithCommonSports = async (userId) => {
 
     const numericUserId = parseInt(userId, 10);
 
+    // Get existing accepted matches for the user
+    const existingMatches = await prisma.match.findMany({
+      where: {
+        OR: [
+          { user_id_1: numericUserId },
+          { user_id_2: numericUserId }
+        ],
+        status: 'ACCEPTED'
+      },
+      select: {
+        user_id_1: true,
+        user_id_2: true
+      }
+    });
+
+    // Get all user IDs that the current user has already matched with
+    const matchedUserIds = existingMatches.reduce((acc, match) => {
+      if (match.user_id_1 === numericUserId) {
+        acc.push(match.user_id_2);
+      } else {
+        acc.push(match.user_id_1);
+      }
+      return acc;
+    }, []);
+
     const userSports = await prisma.userSport.findMany({
       where: { user_id: numericUserId },
       select: { sport_id: true },
@@ -24,7 +49,10 @@ const getUsersWithCommonSports = async (userId) => {
 
     const usersWithCommonSports = await prisma.user.findMany({
       where: {
-        user_id: { not: numericUserId },
+        user_id: { 
+          not: numericUserId,
+          notIn: matchedUserIds // Exclude users who already have an accepted match
+        },
         sports: {
           some: {
             sport_id: { in: sportIds },
@@ -34,18 +62,17 @@ const getUsersWithCommonSports = async (userId) => {
       include: {
         sports: {
           include: {
-            sport: true // inclu sport id for tracking 
+            sport: true 
           }
         },
       },
     });
 
-    // envoi les donneé pour inclu  le nom de sport 
     return usersWithCommonSports.map(user => ({
       ...user,
       sports: user.sports.map(us => ({
         ...us,
-        name: us.sport.name // Ajouter le nom du sport
+        name: us.sport.name
       }))
     }));
 
@@ -168,7 +195,6 @@ const getAcceptedMatches = async (userId) => {
 };
 
 
-
 const getMatchDetails = async (matchId) => {
   const match = await prisma.match.findUnique({
     where: { match_id: matchId },
@@ -183,7 +209,6 @@ const getMatchDetails = async (matchId) => {
   }
   return match;
 };
-
 
 
 module.exports = {

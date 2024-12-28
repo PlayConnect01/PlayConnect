@@ -1,11 +1,61 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import io from "socket.io-client";
+import { BASE_URL } from '../../Api.js';
 
 const Navbar = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    console.log('Initializing socket connection in Navbar');
+    
+    if (!socketRef.current) {
+      socketRef.current = io(BASE_URL, {
+        transports: ["websocket"],
+        reconnection: true,
+      });
+
+      const socket = socketRef.current;
+
+      socket.on('connect', () => {
+        console.log('Navbar socket connected successfully');
+      });
+
+      socket.on('newNotification', (data) => {
+        console.log('New notification received:', data);
+        if (route.name !== 'Chat/MessagePage') {
+          console.log('Incrementing unread count');
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+
+      socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
+    }
+
+    return () => {
+      if (socketRef.current) {
+        console.log('Disconnecting socket in Navbar cleanup');
+        socketRef.current.off('newNotification');
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, []);
+
+  // Reset unread count when entering MessagePage
+  useEffect(() => {
+    if (route.name === 'Chat/MessagePage') {
+      console.log('Resetting unread count');
+      setUnreadCount(0);
+    }
+  }, [route.name]);
 
   const isActive = (screenName) => {
     const currentRoute = route.name;
@@ -13,7 +63,6 @@ const Navbar = () => {
     if (screenName === "Profile" && currentRoute === "profile/ProfilePage") return true;
     if (screenName === "MarketplaceHome" && currentRoute === "marketplace/marketplace") return true;
     if (screenName === "MessagePage" && currentRoute === "Chat/MessagePage") return true;
-
     return currentRoute === screenName;
   };
 
@@ -36,13 +85,24 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Chat/MessagePage")}
+          onPress={() => {
+            console.log('Navigating to MessagePage');
+            setUnreadCount(0);
+            navigation.navigate("Chat/MessagePage");
+          }}
         >
-          <Icon
-            name="chatbubble"
-            size={24}
-            color={isActive("MessagePage") ? "#0095FF" : "#9CA3AF"}
-          />
+          <View style={styles.iconContainer}>
+            <Icon
+              name="chatbubble"
+              size={24}
+              color={isActive("MessagePage") ? "#0095FF" : "#9CA3AF"}
+            />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
           <Text
             style={
               isActive("MessagePage") ? styles.navTextActive : styles.navText
@@ -54,7 +114,7 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
-          onPress={() => navigation.navigate("Match")}
+          onPress={() => navigation.navigate("Match/Firstpagematch")}
         >
           <View style={styles.centerButtonInner}>
             <Icon
@@ -127,13 +187,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minWidth: 60,
   },
-  activeItem: {
-    backgroundColor: "#0095FF",
-    borderRadius: 30,
-    padding: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   navText: {
     color: "#9CA3AF",
     fontSize: 12,
@@ -168,6 +221,28 @@ const styles = StyleSheet.create({
   },
   activeCenterButton: {
     // Add any specific active states for the center button if needed
+  },
+  iconContainer: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+  },
+  badge: {
+    position: 'absolute',
+    right: -8,
+    top: -8,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 

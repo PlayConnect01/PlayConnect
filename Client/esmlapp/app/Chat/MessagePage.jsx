@@ -50,9 +50,22 @@ const MessagePage = (props) => {
   const fetchAcceptedMatches = async (userId) => {
     try {
       const response = await axios.get(`${BASE_URL}/matches/accepted/${userId}`);
-      console.log("ahmed"  , userId)
-      setMatches(response.data);
-      console.log(response.data);
+      // Fetch last messages for each match
+      const matchesWithLastMessage = await Promise.all(
+        response.data.map(async (match) => {
+          try {
+            const lastMessageResponse = await axios.get(`${BASE_URL}/chats/${match.chat_id}/lastMessage`);
+            return {
+              ...match,
+              lastMessage: lastMessageResponse.data
+            };
+          } catch (error) {
+            console.error('Error fetching last message:', error);
+            return match;
+          }
+        })
+      );
+      setMatches(matchesWithLastMessage);
     } catch (error) {
       console.error('Error fetching accepted matches:', error);
       Alert.alert('Error', 'Failed to load accepted matches.');
@@ -92,7 +105,15 @@ const MessagePage = (props) => {
                 <Text style={styles.messageTime}>{new Date(match.matched_at).toLocaleDateString()}</Text>
               </View>
               <Text style={styles.messageText} numberOfLines={1}>
-                You can start your discussion!
+                {match.lastMessage ? (
+                  match.lastMessage.message_type === 'IMAGE' 
+                    ? 'You received an image'
+                    : match.lastMessage.message_type === 'AUDIO'
+                    ? 'New voice message'
+                    : match.lastMessage.content || 'New message'
+                ) : (
+                  'Start a new conversation!'
+                )}
               </Text>
             </View>
           </TouchableOpacity>
