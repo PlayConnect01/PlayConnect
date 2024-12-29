@@ -14,7 +14,7 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import VoiceMessageHandler from './components/VoiceMessageHandler';
 import AudioMessage from './components/AudioMessage';
-import VideoCall from './components/VideoCall';
+
 
 const API_URL = 'http://192.168.103.14:3000';
 
