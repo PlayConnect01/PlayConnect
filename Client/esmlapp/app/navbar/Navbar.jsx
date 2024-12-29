@@ -63,6 +63,7 @@ const Navbar = () => {
     if (screenName === "Profile" && currentRoute === "profile/ProfilePage") return true;
     if (screenName === "MarketplaceHome" && currentRoute === "marketplace/marketplace") return true;
     if (screenName === "MessagePage" && currentRoute === "Chat/MessagePage") return true;
+
     return currentRoute === screenName;
   };
 
@@ -71,7 +72,8 @@ const Navbar = () => {
       <View style={styles.navbar}>
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Homepage/Homep")}
+          onPress={() => navigation.navigate("Homep")}
+  
         >
           <Icon
             name="home"
@@ -85,12 +87,11 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => {
-            console.log('Navigating to MessagePage');
-            setUnreadCount(0);
-            navigation.navigate("Chat/MessagePage");
-          }}
+          onPress={() => navigation.navigate("MessagePage")}
         >
+       
+        
+        
           <View style={styles.iconContainer}>
             <Icon
               name="chatbubble"
@@ -112,9 +113,13 @@ const Navbar = () => {
           </Text>
         </TouchableOpacity>
 
+       
+
         <TouchableOpacity
           style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
-          onPress={() => navigation.navigate("Match/Firstpagematch")}
+          onPress={() => navigation.navigate("Match")}
+       
+          
         >
           <View style={styles.centerButtonInner}>
             <Icon
@@ -127,7 +132,8 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("marketplace/marketplace")}
+          onPress={() => navigation.navigate("MarketplaceHome")}
+          
         >
           <Icon
             name="cart"
@@ -145,7 +151,8 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("profile/ProfilePage")}
+          onPress={() => navigation.navigate("Profile")}
+      
         >
           <Icon
             name="person"
@@ -172,12 +179,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
+    elevation: 4,
   },
   navbar: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
     height: 65,
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 10,
     paddingBottom: 0,
     backgroundColor: '#FFFFFF',
   },
@@ -186,6 +196,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 8,
     minWidth: 60,
+  },
+  activeItem: {
+    backgroundColor: '#E0E0E0',
+    borderRadius: 10,
   },
   navText: {
     color: "#9CA3AF",
@@ -219,6 +233,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 6,
   },
+  activeCenterButton: {},
   activeCenterButton: {
     // Add any specific active states for the center button if needed
   },
@@ -231,6 +246,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: -8,
     top: -8,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+top: -8,
     backgroundColor: 'red',
     borderRadius: 10,
     minWidth: 18,

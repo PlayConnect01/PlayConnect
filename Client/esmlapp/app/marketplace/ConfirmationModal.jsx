@@ -33,7 +33,7 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
           ]}
         >
           <View style={styles.iconContainer}>
-            <Ionicons name="trash-bin-outline" size={50} color="#FF6B6B" />
+            <Ionicons name="trash-bin-outline" size={40} color="#FF4B4B" />
           </View>
           
           <Text style={styles.title}>Delete Item</Text>
@@ -44,7 +44,7 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
               style={[styles.button, styles.cancelButton]}
               onPress={onCancel}
             >
-              <Ionicons name="close-outline" size={24} color="#6A5AE0" />
+              <Ionicons name="close-outline" size={20} color="#4FA5F5" />
               <Text style={[styles.buttonText, styles.cancelText]}>Cancel</Text>
             </TouchableOpacity>
             
@@ -52,7 +52,7 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
               style={[styles.button, styles.deleteButton]}
               onPress={onConfirm}
             >
-              <Ionicons name="trash-outline" size={24} color="#FFF" />
+              <Ionicons name="trash-outline" size={20} color="#FFF" />
               <Text style={[styles.buttonText, styles.deleteText]}>Delete</Text>
             </TouchableOpacity>
           </View>
@@ -65,81 +65,80 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 25,
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
     width: Dimensions.get('window').width * 0.85,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
-      height: 12,
+      height: 8,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 15,
-    elevation: 24,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FFE8E8',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFF5F5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#2D3436',
-    marginBottom: 10,
+    color: '#2D3748',
+    marginBottom: 8,
   },
   message: {
     fontSize: 16,
-    color: '#636E72',
+    color: '#4A5568',
     textAlign: 'center',
-    marginBottom: 25,
-    paddingHorizontal: 20,
-    lineHeight: 22,
+    marginBottom: 24,
+    lineHeight: 24,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 12,
     width: '100%',
-    paddingHorizontal: 10,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 50,
-    width: '45%',
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flex: 1,
+    gap: 8,
+  },
+  cancelButton: {
+    backgroundColor: '#EDF2F7',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  deleteButton: {
+    backgroundColor: '#FF4B4B',
   },
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#F0EEFF',
-    borderWidth: 1,
-    borderColor: '#6A5AE0',
-  },
-  deleteButton: {
-    backgroundColor: '#FF6B6B',
   },
   cancelText: {
-    color: '#6A5AE0',
+    color: '#4FA5F5',
   },
   deleteText: {
-    color: '#FFF',
+    color: '#FFFFFF',
   },
 });
 
