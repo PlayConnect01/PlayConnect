@@ -20,7 +20,7 @@ import {BASE_URL} from '../../api';
 import { Ionicons } from '@expo/vector-icons';
 
 const Marketplace = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation();   
   const [products, setProducts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
@@ -43,6 +43,7 @@ const Marketplace = () => {
       setDiscounts(topDiscountedResponse.data);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setShowMessage("Failed to load products. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -59,9 +60,12 @@ const Marketplace = () => {
         });
         setCartCount(response.data.count);
         setCartProducts(response.data.products || []);
+      } else {
+        setShowMessage("User not logged in.");
       }
     } catch (error) {
       console.error("Error fetching cart count:", error);
+      setShowMessage("Failed to load cart count. Please try again.");
     }
   }, []);
 
@@ -204,8 +208,12 @@ const Marketplace = () => {
         }
       }
     } catch (error) {
-      console.error("Error toggling favorite:", error.response?.data || error.message);
-      setShowMessage(error.response?.data?.message || "Failed to update favorites");
+      console.error(
+        "Error toggling favorite:",
+        error.response?.data || error.message
+      );
+      setShowMessage("Something went wrong! Please try again.");
+      setTimeout(() => setShowMessage(""), 2000);
     } finally {
       const timeout = setTimeout(() => setShowMessage(""), 2000);
       return () => clearTimeout(timeout);

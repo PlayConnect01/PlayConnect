@@ -5,8 +5,6 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../api';
-import Navbar from '../navbar/Navbar';
 
 const MessagePage = (props) => {
   const [matches, setMatches] = useState([]);
@@ -49,7 +47,7 @@ const MessagePage = (props) => {
 
   const fetchAcceptedMatches = async (userId) => {
     try {
-      const response = await axios.get(`${BASE_URL}/matches/accepted/${userId}`);
+      const response = await axios.get(`http://192.168.103.14:3000/matches/accepted/${userId}`);
       console.log("ahmed"  , userId)
       setMatches(response.data);
       console.log(response.data);
@@ -92,7 +90,15 @@ const MessagePage = (props) => {
                 <Text style={styles.messageTime}>{new Date(match.matched_at).toLocaleDateString()}</Text>
               </View>
               <Text style={styles.messageText} numberOfLines={1}>
-                You can start your discussion!
+                {match.lastMessage ? (
+                  match.lastMessage.message_type === 'IMAGE' 
+                    ? 'You received an image'
+                    : match.lastMessage.message_type === 'AUDIO'
+                    ? 'New voice message'
+                    : match.lastMessage.content || 'New message'
+                ) : (
+                  'Start a new conversation!'
+                )}
               </Text>
             </View>
           </TouchableOpacity>

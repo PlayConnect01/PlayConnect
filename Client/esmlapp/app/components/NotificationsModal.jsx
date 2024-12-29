@@ -1,180 +1,194 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Modal,
   View,
   Text,
-  Modal,
-  TouchableOpacity,
   StyleSheet,
-  FlatList,
+  TouchableOpacity,
+  ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import MatchNotification from './MatchNotification';
 import axios from 'axios';
-import io from 'socket.io-client';
 import { BASE_URL } from '../../api';
+import MatchNotification from './MatchNotification';
 
-const defaultConfig = {
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  },
-  timeout: 5000
-};
-
-const NotificationsModal = ({ visible, onClose, userId }) => {
+const NotificationsModal = ({ visible, onClose, userId, onNotificationsUpdate, navigation }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [socket, setSocket] = useState(null);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
-    // Initialize socket connection
-    const newSocket = io(BASE_URL);
-    setSocket(newSocket);
-
-    // Join user's notification room
-    if (userId) {
-      newSocket.emit('join_user_room', userId);
-    }
-
-    // Listen for new match requests
-    newSocket.on('match_request', ({ notification }) => {
-      setNotifications(prev => [notification, ...prev]);
-    });
-
-    // Listen for match updates
-    newSocket.on('match_update', ({ type, match }) => {
-      setNotifications(prev => 
-        prev.map(notif => {
-          if (notif.type === 'MATCH_REQUEST' && notif.match_id === match.match_id) {
-            return {
-              ...notif,
-              match_status: type,
-            };
-          }
-          return notif;
-        })
-      );
-    });
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [userId]);
-
-  useEffect(() => {
-    if (visible) {
+    if (visible && userId) {
       fetchNotifications();
     }
   }, [visible, userId]);
 
   const fetchNotifications = async () => {
-    if (!userId) return;
-    
-    setLoading(true);
     try {
-      const response = await axios({
-        ...defaultConfig,
-        method: 'get',
-        url: `${BASE_URL}/notifications/${userId}`,
-      });
-      setNotifications(response.data);
+      setLoading(true);
+      const response = await axios.get(`${BASE_URL}/notifications/${userId}`);
+      if (response.data && Array.isArray(response.data)) {
+        setNotifications(response.data);
+      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      Alert.alert('Error', 'Failed to fetch notifications');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMatchResponse = async (matchId, response) => {
-    try {
-      // Optimistically update the UI
-      setNotifications(prev => 
-        prev.map(notif => {
-          if (notif.type === 'MATCH_REQUEST' && notif.match_id === matchId) {
-            return {
-              ...notif,
-              match_status: response === 'accept' ? 'ACCEPTED' : 'REJECTED',
-            };
-          }
-          return notif;
-        })
-      );
-
-      // Make API call to update match status
-      const endpoint = response === 'accept' ? 'accept' : 'reject';
-      const result = await axios({
-        ...defaultConfig,
-        method: 'patch',
-        url: `${BASE_URL}/match/${endpoint}/${matchId}`,
-      });
-
-      // Notify through socket about the update
-      if (socket && result.data) {
-        socket.emit('match_response', {
-          matchId,
-          userId,
-          response,
-          match: result.data,
-        });
+  const handleNotificationClick = async (notification) => {
+    if (!notification.is_read) {
+      try {
+        await axios.put(`${BASE_URL}/notifications/${notification.notification_id}/read`);
+        if (onNotificationsUpdate) {
+          onNotificationsUpdate();
+        }
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
       }
+    }
+    setSelectedMatch(notification);
+  };
 
-      // Show success message
-      const message = response === 'accept' ? 'Match accepted!' : 'Match declined';
-      Alert.alert('Success', message);
-    } catch (error) {
-      console.error('Error responding to match:', error);
-      Alert.alert('Error', 'Failed to process match response');
+  const handleAcceptMatch = async (matchId, notificationId) => {
+    try {
+      // Accept the match
+      await axios.patch(`${BASE_URL}/matches/accept/${matchId}`);
       
-      // Revert the optimistic update
-      await fetchNotifications();
+      // Remove the notification from the backend
+      await axios.delete(`${BASE_URL}/notifications/${notificationId}`);
+      
+      // Remove the notification from the list
+      setNotifications(prev => prev.filter(notif => notif.notification_id !== notificationId));
+      
+      if (onNotificationsUpdate) {
+        onNotificationsUpdate();
+      }
+    } catch (error) {
+      console.error('Error accepting match:', error);
     }
   };
 
-  const renderNotification = ({ item }) => {
-    if (item.type === 'MATCH_REQUEST') {
-      return (
-        <MatchNotification
-          notification={item}
-          onAccept={() => handleMatchResponse(item.match_id, 'accept')}
-          onReject={() => handleMatchResponse(item.match_id, 'reject')}
-        />
-      );
+  const handleRejectMatch = async (matchId, notificationId) => {
+    try {
+      // Reject the match
+      await axios.patch(`${BASE_URL}/matches/reject/${matchId}`);
+      
+      // Remove the notification from the backend
+      await axios.delete(`${BASE_URL}/notifications/${notificationId}`);
+      
+      // Remove the notification from the list
+      setNotifications(prev => prev.filter(notif => notif.notification_id !== notificationId));
+      
+      if (onNotificationsUpdate) {
+        onNotificationsUpdate();
+      }
+    } catch (error) {
+      console.error('Error rejecting match:', error);
     }
-    return null;
+  };
+
+  const renderNotification = (notification) => {
+    const notificationStyle = [
+      styles.notificationItem,
+      !notification.is_read && styles.unreadNotification
+    ];
+
+    switch (notification.type) {
+      case 'MATCH_REQUEST':
+        return (
+          <TouchableOpacity 
+            key={notification.notification_id}
+            onPress={() => handleNotificationClick(notification)}
+            style={notificationStyle}
+          >
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageText}>
+                {notification.senderName || notification.user?.username || 'Someone'} wants to match with you!
+              </Text>
+              {!notification.is_read && (
+                <View style={styles.unreadDot} />
+              )}
+            </View>
+          </TouchableOpacity>
+        );
+      default:
+        return (
+          <TouchableOpacity 
+            key={notification.notification_id}
+            onPress={() => handleNotificationClick(notification)}
+            style={notificationStyle}
+          >
+            <View>
+              <Text style={[styles.notificationTitle, !notification.is_read && styles.unreadTitle]}>
+                {notification.title}
+              </Text>
+              <Text style={[styles.notificationContent, !notification.is_read && styles.unreadContent]}>
+                {notification.content}
+              </Text>
+              {!notification.is_read && (
+                <View style={styles.unreadDot} />
+              )}
+            </View>
+          </TouchableOpacity>
+        );
+    }
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Notifications</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#000" />
-            </TouchableOpacity>
-          </View>
+    <>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={onClose}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Notifications</Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
 
-          {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : (
-            <FlatList
-              data={notifications}
-              renderItem={renderNotification}
-              keyExtractor={(item) => item.notification_id.toString()}
-              contentContainerStyle={styles.notificationsList}
-            />
-          )}
+            {loading ? (
+              <ActivityIndicator size="large" color="#0095FF" />
+            ) : notifications.length === 0 ? (
+              <Text style={styles.emptyText}>No notifications</Text>
+            ) : (
+              <ScrollView style={styles.notificationsList}>
+                {notifications.map(notification => renderNotification(notification))}
+              </ScrollView>
+            )}
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <Modal
+        visible={!!selectedMatch}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedMatch(null)}
+      >
+        {selectedMatch && (
+          <View style={styles.matchModalContainer}>
+            <MatchNotification
+              notification={selectedMatch}
+              onAccept={() => {
+                handleAcceptMatch(selectedMatch.match_id, selectedMatch.notification_id);
+                setSelectedMatch(null);
+              }}
+              onReject={() => {
+                handleRejectMatch(selectedMatch.match_id, selectedMatch.notification_id);
+                setSelectedMatch(null);
+              }}
+            />
+          </View>
+        )}
+      </Modal>
+    </>
   );
 };
 
@@ -185,64 +199,92 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-    height: '80%',
+    minHeight: '50%',
+    maxHeight: '80%',
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
     marginBottom: 20,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
   },
   closeButton: {
-    padding: 5,
+    padding: 10,
   },
-  notification: {
-    backgroundColor: '#fff',
+  closeButtonText: {
+    fontSize: 24,
+    color: '#000',
+  },
+  notificationsList: {
+    flex: 1,
+  },
+  notificationItem: {
     padding: 15,
-    marginVertical: 5,
-    marginHorizontal: 10,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  unreadNotification: {
+    backgroundColor: '#F0F9FF',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0095FF',
   },
   notificationTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginBottom: 5,
-    color: '#333',
+    color: '#666',
+  },
+  unreadTitle: {
+    fontWeight: '600',
+    color: '#000',
   },
   notificationContent: {
     fontSize: 14,
     color: '#666',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  unreadContent: {
+    color: '#333',
   },
   emptyText: {
-    fontSize: 16,
+    textAlign: 'center',
     color: '#666',
+    marginTop: 20,
   },
-  notificationsList: {
-    padding: 20,
+  unreadDot: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0095FF',
+  },
+  messageContainer: {
+    padding: 15,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 10,
+    margin: 10,
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#4b5563',
+    textAlign: 'center',
+  },
+  matchModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

@@ -30,11 +30,26 @@ const initializeSocket = (server) => {
 
     // Gestion des messages en temps réel
     socket.on('newMessage', async (messageData) => {
+<<<<<<< HEAD
       console.log('New message received:', messageData);
       const { chatId } = messageData;
       
       // Émettre le message à tous les membres du chat sauf l'expéditeur
       socket.to(`chat_${chatId}`).emit('messageReceived', messageData);
+=======
+      console.log('New message received on server:', messageData);
+      const { chatId, senderId } = messageData;
+      
+      // Émettre le message uniquement aux autres membres du chat
+      socket.to(`chat_${chatId}`).emit('receiveMessage', messageData);
+      
+      // Émettre une notification globale pour le Navbar
+      socket.broadcast.emit('newNotification', {
+        chatId,
+        senderId,
+        timestamp: new Date()
+      });
+>>>>>>> 0c99f25d94dbcc0ca8d801efce82d1f3edc953b8
     });
 
     socket.on('disconnect', () => {

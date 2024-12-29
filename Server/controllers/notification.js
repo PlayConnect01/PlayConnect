@@ -16,6 +16,7 @@ const getUserNotifications = async (userId) => {
             user_id: true,
             username: true,
             profile_picture: true,
+            location: true,
           },
         },
       },
@@ -34,6 +35,7 @@ const getUserNotifications = async (userId) => {
                   user_id: true,
                   username: true,
                   profile_picture: true,
+                  location: true,
                 },
               },
               user_2: {
@@ -41,6 +43,7 @@ const getUserNotifications = async (userId) => {
                   user_id: true,
                   username: true,
                   profile_picture: true,
+                  location: true,
                 },
               },
             },
@@ -55,6 +58,7 @@ const getUserNotifications = async (userId) => {
               ...notification,
               senderName: sender.username,
               senderImage: sender.profile_picture,
+              senderLocation: sender.location,
               match_id: match.match_id,
             };
           }
@@ -123,9 +127,25 @@ const markAllAsRead = async (userId) => {
   }
 };
 
+// Delete a notification
+const deleteNotification = async (notificationId) => {
+  try {
+    await prisma.notification.delete({
+      where: {
+        notification_id: notificationId,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,
+  deleteNotification,
 };

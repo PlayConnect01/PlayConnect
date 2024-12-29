@@ -62,7 +62,7 @@ const SearchBar = ({ onSelectProduct }) => {
 
   const handleSelectProduct = (product) => {
     onSelectProduct(product);
-    setSearchTerm('');
+    setSearchTerm("");
     setResults([]);
     setDropdownVisible(false);
     setIsFocused(false);
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     elevation: 1000,
   },
   searchContainer: {
-    position: 'relative',
+    position: "relative",
     zIndex: 1001, // Higher than container
     elevation: 1001, // For Android
     borderRadius: 20,
@@ -250,8 +250,8 @@ const styles = StyleSheet.create({
   },
   resultText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: "600",
+    color: "#1F2937",
     letterSpacing: 0.3,
   },
   loadingContainer: {
@@ -274,8 +274,8 @@ const styles = StyleSheet.create({
   },
   noResultsText: {
     fontSize: 16,
-    color: '#6B7280',
-    fontWeight: '600',
+    color: "#6B7280",
+    fontWeight: "600",
     letterSpacing: 0.3,
   },
   noResultsSubText: {

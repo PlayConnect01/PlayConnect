@@ -175,12 +175,12 @@ model TournamentTeam {
 }
 
 model Event {
-  event_id       Int         @id @default(autoincrement())
+  event_id       Int      @id @default(autoincrement())
   event_name     String
   location       String
   date           DateTime
-  start_time     DateTime?
-  end_time       DateTime?
+  start_time     String?  // Store time as a string (HH:mm)
+  end_time       String?  // Store time as a string (HH:mm)
   description    String
   latitude       Float?   
   longitude      Float?
@@ -188,7 +188,7 @@ model Event {
   participants   Int
   price          Float
   image          String?
-  
+
   event_participants EventParticipant[]
   calendar_entries   Calendar[]
 

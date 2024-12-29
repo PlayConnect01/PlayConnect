@@ -59,6 +59,7 @@
     "node-emoji": "^2.2.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pretty-format": "^29.7.0",
     "react": "18.3.1",
     "react-async-hook": "^4.0.0",
     "react-datepicker": "^7.5.0",

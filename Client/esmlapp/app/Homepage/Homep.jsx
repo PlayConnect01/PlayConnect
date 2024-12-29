@@ -15,6 +15,9 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { BASE_URL } from '../../api';
+import Navbar from '../navbar/Navbar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NotificationsModal from '../components/NotificationsModal';
 
 const { width } = Dimensions.get("window");
 
@@ -37,15 +40,59 @@ const iconMap = {
 const App = () => {
   const [categories, setCategories] = useState([]);
   const [competitions, setCompetitions] = useState([]);
-  const [eventCategories, setEventCategories] = useState([
-    { id: "1", name: "All Type" },
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState("All Type");
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
+  const [eventCategories, setEventCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("All Type");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (token) {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          const { userId } = JSON.parse(jsonPayload);
+          setCurrentUserId(userId);
+          fetchNotifications(userId);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  const fetchNotifications = async (userId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/notifications/${userId}`);
+      if (response.data && Array.isArray(response.data)) {
+        setUnreadNotifications(response.data.filter(n => !n.read).length);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUserId) {
+      const interval = setInterval(() => {
+        fetchNotifications(currentUserId);
+      }, 30000); // Check for new notifications every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [currentUserId]);
 
   useEffect(() => {
     axios
@@ -121,6 +168,12 @@ const App = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  const handleNotificationPress = () => {
+    setShowNotifications(true);
+    // Reset notification count when opening notifications
+    setUnreadNotifications(0);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -146,12 +199,23 @@ const App = () => {
                   color="#555"
                 />
               </TouchableOpacity>
-              <Ionicons
-                name="notifications-outline"
-                size={24}
-                color="#555"
-                style={{ marginLeft: 15 }}
-              />
+              <TouchableOpacity
+                style={styles.notificationButton}
+                onPress={handleNotificationPress}
+              >
+                <Ionicons
+                  name="notifications-outline"
+                  size={24}
+                  color="#555"
+                />
+                {unreadNotifications > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -297,11 +361,20 @@ const App = () => {
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
+      <Navbar />
+      
+      {/* Notifications Modal */}
+      {showNotifications && currentUserId && (
+        <NotificationsModal
+          visible={showNotifications}
+          onClose={() => setShowNotifications(false)}
+          userId={currentUserId}
+          onNotificationsUpdate={() => fetchNotifications(currentUserId)}
+        />
+      )}
     </View>
   );
 };
-
-export default App;
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -513,4 +586,27 @@ const styles = StyleSheet.create({
   loader: {
     marginVertical: 20,
   },
+  notificationButton: {
+    position: 'relative',
+    marginLeft: 15,
+    padding: 5,
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#ff4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
+
+export default App;

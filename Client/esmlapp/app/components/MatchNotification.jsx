@@ -1,92 +1,135 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Modal, ScrollView, ImageBackground, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../../api';
-
+import { LinearGradient } from 'expo-linear-gradient';
+import { BASE_URL } from "../../api";
 
 const MatchNotification = ({ notification, onAccept, onReject }) => {
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(true);
+  const likeScale = useRef(new Animated.Value(1)).current;
+  const dislikeScale = useRef(new Animated.Value(1)).current;
 
-  const handlePress = () => {
-    setShowModal(true);
+  const senderName = notification?.senderName || notification?.user?.username || 'Unknown User';
+  const senderImage = notification?.senderImage || notification?.user?.profile_picture || 'default_image_url';
+  const senderLocation = notification?.senderLocation || notification?.user?.location || 'Location not specified';
+  const senderSports = notification?.user?.interested_sports || [];
+
+  const animateButton = (scale) => {
+    Animated.sequence([
+      Animated.spring(scale, {
+        toValue: 0.8,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleAccept = () => {
+    if (notification?.match_id) {
+      animateButton(likeScale);
+      onAccept(notification.match_id);
+    }
+  };
+
+  const handleReject = () => {
+    if (notification?.match_id) {
+      animateButton(dislikeScale);
+      onReject(notification.match_id);
+    }
   };
 
   return (
-    <>
-      <TouchableOpacity style={styles.container} onPress={handlePress}>
-        <View style={styles.content}>
-          <Image
-            source={{ uri: notification.sender?.profile_picture || notification.user?.profile_picture }}
-            style={styles.notificationImage}
-          />
-          <Text style={styles.message}>
-            {notification.sender?.username || notification.user?.username} wants to match with you!
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      <Modal
-        visible={showModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowModal(false)}
+    <View style={styles.container}>
+      <ImageBackground
+        source={{ uri: senderImage }}
+        style={styles.userImageBackground}
+        imageStyle={styles.userImageStyle}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowModal(false)}
-            >
-              <Ionicons name="close" size={24} color="#6366f1" />
-            </TouchableOpacity>
+        <LinearGradient
+          colors={['transparent', 'rgba(0, 0, 0, 0.95)']}
+          style={styles.gradient}
+        >
+          <View style={styles.userInfoContainer}>
+            <Text style={styles.userNameModal}>{senderName}</Text>
+            
+            <View style={styles.infoSection}>
+              <View style={styles.locationInfo}>
+                <Ionicons name="location" size={20} color="#fff" />
+                <Text style={styles.locationTextModal}>{senderLocation}</Text>
+              </View>
 
-            <Image
-              source={{ uri: notification.sender?.profile_picture || notification.user?.profile_picture }}
-              style={styles.userImage}
-            />
-            <View style={styles.userInfoContainer}>
-              <Text style={styles.userName}>
-                {notification.sender?.username || notification.user?.username}
-              </Text>
+              <View style={styles.sportsContainer}>
+                <Text style={styles.sportsTitle}>Interested in:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsList}>
+                  {senderSports.map((sport, index) => (
+                    <View key={index} style={styles.sportBadge}>
+                      <Ionicons name="football-outline" size={16} color="#fff" />
+                      <Text style={styles.sportText}>{sport}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
             </View>
 
+            <Text style={styles.matchText}>
+              Would you like to match with this user?
+            </Text>
+
             <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={[styles.button, styles.acceptButton]} 
-                onPress={() => {
-                  onAccept();
-                  setShowModal(false);
-                }}
+              <TouchableOpacity
+                style={[styles.actionButton]}
+                onPress={handleReject}
+                activeOpacity={0.9}
               >
-                <Ionicons name="heart" size={20} color="white" style={{ marginRight: 8 }} />
-                <Text style={[styles.buttonText, styles.acceptButtonText]}>Match</Text>
+                <LinearGradient
+                  colors={['#FF0000', '#FF69B4']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.gradientButton}
+                >
+                  <Animated.View style={[styles.buttonContent, { transform: [{ scale: dislikeScale }] }]}>
+                    <Ionicons name="close" size={35} color="#fff" />
+                  </Animated.View>
+                </LinearGradient>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.button, styles.rejectButton]} 
-                onPress={() => {
-                  onReject();
-                  setShowModal(false);
-                }}
+
+              <TouchableOpacity
+                style={[styles.actionButton]}
+                onPress={handleAccept}
+                activeOpacity={0.9}
               >
-                <Ionicons name="close" size={20} color="#6366f1" style={{ marginRight: 8 }} />
-                <Text style={[styles.buttonText, styles.rejectButtonText]}>Decline</Text>
+                <LinearGradient
+                  colors={['#4CAF50', '#FFEB3B']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.gradientButton}
+                >
+                  <Animated.View style={[styles.buttonContent, { transform: [{ scale: likeScale }] }]}>
+                    <Ionicons name="heart" size={35} color="#fff" />
+                  </Animated.View>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-    </>
+        </LinearGradient>
+      </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    width: '90%',
+    height: '80%',
+    borderRadius: 30,
+    overflow: 'hidden',
     backgroundColor: '#fff',
-    borderRadius: 20,
-    marginHorizontal: 15,
-    marginVertical: 10,
-    shadowColor: '#6366f1',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -94,149 +137,124 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 10,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.1)',
   },
-  content: {
+  userImageBackground: {
+    width: '100%',
+    height: '100%',
+  },
+  userImageStyle: {
+    resizeMode: 'cover',
+  },
+  gradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  userInfoContainer: {
+    width: '100%',
+    padding: 25,
+    paddingTop: 40,
+  },
+  userNameModal: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 15,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  infoSection: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  locationInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    justifyContent: 'center',
+    marginBottom: 15,
+  },
+  locationTextModal: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  sportsContainer: {
     width: '100%',
-    backgroundColor: 'rgba(99, 102, 241, 0.03)',
   },
-  notificationImage: {
-    width: 55,
-    height: 55,
-    borderRadius: 18,
-    marginRight: 15,
-    borderWidth: 3,
-    borderColor: '#6366f1',
+  sportsTitle: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 10,
+    textAlign: 'center',
+    opacity: 0.9,
   },
-  message: {
-    fontSize: 15,
-    flex: 1,
-    color: '#4338ca',
-    fontWeight: '600',
-    letterSpacing: 0.3,
+  sportsList: {
+    maxHeight: 50,
   },
-  modalContainer: {
-    flex: 1,
+  sportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginRight: 8,
+  },
+  sportText: {
+    color: '#fff',
+    marginLeft: 6,
+    fontSize: 14,
+  },
+  matchText: {
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
+    opacity: 0.9,
+    marginTop: 15,
+    marginBottom: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingHorizontal: 30,
+  },
+  actionButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-    backdropFilter: 'blur(10px)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: '92%',
-    alignItems: 'center',
     overflow: 'hidden',
-    shadowColor: '#6366f1',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.2)',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    zIndex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 15,
-    padding: 10,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 3,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.2)',
-  },
-  userImage: {
-    width: '100%',
-    height: 450,
-    resizeMode: 'cover',
-    marginBottom: 0,
-  },
-  userInfoContainer: {
-    backgroundColor: 'rgba(67, 56, 202, 0.85)',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 25,
-    backdropFilter: 'blur(10px)',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-  },
-  userName: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-    letterSpacing: 0.5,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    padding: 25,
-    paddingBottom: 30,
+    shadowRadius: 4.5,
+    elevation: 8,
     backgroundColor: '#fff',
+    padding: 2,
   },
-  button: {
-    paddingVertical: 14,
-    paddingHorizontal: 35,
-    borderRadius: 20,
-    minWidth: 130,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
+  gradientButton: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 28,
   },
-  acceptButton: {
-    backgroundColor: '#6366f1',
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.2)',
+  buttonContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  rejectButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#6366f1',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  acceptButtonText: {
-    color: '#fff',
-  },
-  rejectButtonText: {
-    color: '#6366f1',
-  }
 });
 
 export default MatchNotification;

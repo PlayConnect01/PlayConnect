@@ -69,7 +69,10 @@ export default function Login() {
 console.log(token , "tooooken");
 
       // Navigate to home page after successful login
-      navigation.navigate('Homep'); // Adjust the route accordingly
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Homep' }],
+      });
     } catch (error) {
       Alert.alert('Error', 'Invalid login credentials!');
     } finally {
