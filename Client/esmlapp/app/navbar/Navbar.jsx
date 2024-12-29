@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import io from "socket.io-client";
-import { BASE_URL } from '../../Api.js';
+import { BASE_URL } from '../../api';
 
 const Navbar = () => {
   const navigation = useNavigation();

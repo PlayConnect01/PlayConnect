@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from '../../api';
 import MatchNotification from './MatchNotification';
 
 const NotificationsModal = ({ visible, onClose, userId, onNotificationsUpdate, navigation }) => {

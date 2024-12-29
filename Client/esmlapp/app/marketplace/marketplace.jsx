@@ -16,8 +16,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
-import { BASE_URL } from '../../Api.js';
-
+import {BASE_URL} from '../../api';
+import { Ionicons } from '@expo/vector-icons';
 
 const Marketplace = () => {
   const navigation = useNavigation();   
@@ -43,6 +43,7 @@ const Marketplace = () => {
       setDiscounts(topDiscountedResponse.data);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setShowMessage("Failed to load products. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -50,17 +51,21 @@ const Marketplace = () => {
 
   const fetchCartCount = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const userId = await AsyncStorage.getItem("userId");
+      const token = await AsyncStorage.getItem('userToken');
+      const userId = await AsyncStorage.getItem('userId');
+
       if (token && userId) {
         const response = await axios.get(`${BASE_URL}/cart/count/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCartCount(response.data.count);
         setCartProducts(response.data.products || []);
+      } else {
+        setShowMessage("User not logged in.");
       }
     } catch (error) {
       console.error("Error fetching cart count:", error);
+      setShowMessage("Failed to load cart count. Please try again.");
     }
   }, []);
 
@@ -76,67 +81,68 @@ const Marketplace = () => {
     );
   }, [fetchProducts, fetchCartCount]);
 
-  const addToCart = useCallback(
-    async (product) => {
-      try {
-        const existingCart = await AsyncStorage.getItem("cartProducts");
-        const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
+  const addToCart = useCallback(async (product) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const userId = await AsyncStorage.getItem('userId');
+      const existingCart = await AsyncStorage.getItem('cartProducts');
+      const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
 
-        if (
-          cartProducts.some((item) => item.product_id === product.product_id)
-        ) {
-          setShowMessage(
-            "Product already in cart. Please view your cart to adjust quantity."
-          );
-          setTimeout(() => setShowMessage(""), 1000);
-          return;
-        }
-
-        const token = await AsyncStorage.getItem("userToken");
-        const userId = await AsyncStorage.getItem("userId");
-        if (!token || !userId || !product?.product_id || !product?.price) {
-          console.error("Invalid data for adding to cart");
-          return;
-        }
-
-        setCartCount((prevCount) => prevCount + 1);
-        setLoading(true);
-
-        const response = await axios.post(
-          `${API.BASE_URL}/cart/cart/add`,
-          {
-            userId: JSON.parse(userId),
-            productId: product.product_id,
-            quantity: 1,
-            price: product.price,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (response.status !== 201) {
-          setShowMessage(`${product.name} already in the cart! 🛒`);
-          setCartCount((prevCount) => prevCount - 1);
-        } else {
-          cartProductsList.push(product);
-          await AsyncStorage.setItem(
-            "cartProducts",
-            JSON.stringify(cartProductsList)
-          );
-          setCartProducts(cartProductsList);
-          setShowMessage(`${product.name} added to cart! 🛒`);
-          setTimeout(() => setShowMessage(""), 2000);
-        }
-      } catch (error) {
-        console.error("Error adding product to cart:", error);
-        setCartCount((prevCount) => prevCount - 1);
-        setShowMessage("Error adding to cart. Please try again.");
+      if (!token || !userId || !product?.product_id) {
+        setShowMessage("Error: Missing required data");
         setTimeout(() => setShowMessage(""), 2000);
-      } finally {
-        setLoading(false);
+        return;
       }
-    },
-    [cartProducts]
-  );
+
+      // If product is already in cart, navigate to product detail
+      if (cartProducts.some(item => item.product_id === product.product_id)) {
+        navigation.navigate('ProductDetail', { productId: product.product_id });
+        return;
+      }
+
+      setLoading(true);
+
+      const response = await axios.post(
+        `${BASE_URL}/cart/cart/add`,
+        {
+          userId: parseInt(userId),
+          productId: product.product_id,
+          quantity: 1,
+          price: product.price,
+        },
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          } 
+        }
+      );
+
+      if (response.status === 201) {
+        // Add the product to local storage with quantity
+        const productWithQuantity = {
+          ...product,
+          quantity: 1
+        };
+        cartProductsList.push(productWithQuantity);
+        await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
+        setCartProducts(cartProductsList);
+        setCartCount(prevCount => prevCount + 1);
+        setShowMessage(`${product.name} added to cart! 🛒`);
+        setTimeout(() => setShowMessage(""), 2000);
+        navigation.navigate('ProductDetail', { productId: product.product_id });
+      } else {
+        setShowMessage("Failed to add product to cart");
+        setTimeout(() => setShowMessage(""), 2000);
+      }
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      setShowMessage(error.response?.data?.message || "Error adding to cart. Please try again.");
+      setTimeout(() => setShowMessage(""), 2000);
+    } finally {
+      setLoading(false);
+    }
+  }, [cartProducts, navigation]);
 
   const calculateDiscountedPrice = useCallback((price, discount) => {
     const originalPrice = parseFloat(price);
@@ -148,105 +154,71 @@ const Marketplace = () => {
 
   const handleSelectCategory = useCallback((category) => {
     setSelectedCategory(category);
-    console.log("Selected category:", category);
   }, []);
 
   const toggleSidebar = () => {
     setSidebarVisible(!isSidebarVisible);
   };
 
-  const toggleFavorite = useCallback(
-    async (product) => {
-      try {
-        const token = await AsyncStorage.getItem("userToken");
-        const userId = await AsyncStorage.getItem("userId");
-
-        if (!token || !userId || !product?.product_id) {
-          console.error("Missing required data");
-          return;
-        }
-
-        const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
-
-        if (isAlreadyFavorite) {
-          const response = await axios.delete(
-            `${API.BASE_URL}/favorites/favorites/item/${product.favorite_id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (response.status === 200) {
-            setFavoriteProducts((prevFavorites) =>
-              prevFavorites.filter((id) => id !== product.product_id)
-            );
-            setShowMessage("Product removed from favorites! 💔");
-            setTimeout(() => setShowMessage(""), 2000);
-          }
-        } else {
-          const response = await axios.post(
-            `${API.BASE_URL}/favorites/favorites/add`,
-            {
-              userId: parseInt(userId),
-              productId: product.product_id,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (response.status === 201) {
-            setFavoriteProducts((prevFavorites) => [
-              ...prevFavorites,
-              product.product_id,
-            ]);
-            setShowMessage("Product added to favorites! ❤️");
-            setTimeout(() => setShowMessage(""), 2000);
-          }
-        }
-      } catch (error) {
-        console.error(
-          "Error toggling favorite:",
-          error.response?.data || error.message
-        );
-        setShowMessage("Something went wrong! Please try again.");
+  const toggleFavorite = useCallback(async (product) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const userId = await AsyncStorage.getItem('userId');
+  
+      if (!token || !userId || !product?.product_id) {
+        setShowMessage("Please login to add favorites");
         setTimeout(() => setShowMessage(""), 2000);
+        return;
       }
-    },
-    [favoriteProducts]
-  );
-
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      try {
-        const token = await AsyncStorage.getItem("userToken");
-        const userId = await AsyncStorage.getItem("userId");
-
-        if (!token || !userId) return;
-
-        const response = await axios.get(
-          `${API.BASE_URL}/favorites/user/${userId}`,
+  
+      const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
+  
+      if (isAlreadyFavorite) {
+        const response = await axios.delete(
+         `${BASE_URL}/favorites/favorites/item/${product.product_id}`,
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${token}` }
           }
         );
-
-        const favoriteIds = response.data.map((fav) => fav.product_id);
-        setFavoriteProducts(favoriteIds);
-      } catch (error) {
-        console.error("Error fetching favorites:", error);
+  
+        if (response.status === 200) {
+          setFavoriteProducts((prevFavorites) =>
+            prevFavorites.filter((id) => id !== product.product_id)
+          );
+          setShowMessage("Removed from favorites ❌");
+        }
+      } else {
+        const response = await axios.post(
+          `${BASE_URL}/favorites/favorites/add`,
+          {
+            userId: parseInt(userId),
+            productId: product.product_id,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+  
+        if (response.status === 201) {
+          setFavoriteProducts((prevFavorites) => [...prevFavorites, product.product_id]);
+          setShowMessage("Added to favorites ❤️");
+        }
       }
-    };
-
-    fetchFavorites();
-  }, []);
-
+    } catch (error) {
+      console.error(
+        "Error toggling favorite:",
+        error.response?.data || error.message
+      );
+      setShowMessage("Something went wrong! Please try again.");
+      setTimeout(() => setShowMessage(""), 2000);
+    } finally {
+      const timeout = setTimeout(() => setShowMessage(""), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [favoriteProducts]);
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
@@ -268,12 +240,15 @@ const Marketplace = () => {
             }
           >
             <View style={styles.header}>
+              <View style={styles.headerGradient} />
               <Text style={styles.headerTitle}>Marketplace</Text>
               <View style={styles.iconContainer}>
+                <View style={styles.iconContainerGradient} />
                 <TouchableOpacity
-                  onPress={() => navigation.navigate("CartScreen")}
+                  onPress={() => navigation.navigate('CartScreen')}
                   style={styles.iconButton}
                 >
+                  <View style={styles.iconButtonGradient} />
                   <FontAwesome name="shopping-cart" size={24} color="#333" />
                   <View style={styles.cartCountContainer}>
                     <Text style={styles.cartCount}>{cartCount}</Text>
@@ -281,8 +256,9 @@ const Marketplace = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.iconButton}
-                  onPress={() => navigation.navigate("FavoritesScreen")}
+                  onPress={() => navigation.navigate('FavoritesScreen')}
                 >
+                  <View style={styles.iconButtonGradient} />
                   <FontAwesome name="heart-o" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
@@ -302,16 +278,17 @@ const Marketplace = () => {
                 <TouchableOpacity
                   key={index}
                   style={styles.card}
-                  onPress={() =>
-                    navigation.navigate("ProductDetail", {
-                      productId: product.id,
-                    })
-                  }
+                  onPress={() => navigation.navigate('ProductDetail', { productId: product.product_id })}
                 >
-                  <Image
-                    source={{ uri: product.image_url }}
-                    style={styles.cardImage}
-                  />
+                  <View style={styles.cardGradient} />
+                  <View style={styles.cardImageContainer}>
+                    <View style={styles.cardImageBorder} />
+                    <Image
+                      source={{ uri: product.image_url }}
+                      style={styles.cardImage}
+                    />
+                    <View style={styles.cardImageOverlay} />
+                  </View>
                   <Text style={styles.cardTitle}>{product.name}</Text>
                   <Text style={styles.cardPrice}>${product.price}</Text>
                   <View style={styles.cardActions}>
@@ -320,13 +297,7 @@ const Marketplace = () => {
                       onPress={() => addToCart(product)}
                     >
                       <FontAwesome
-                        name={
-                          cartProducts.some(
-                            (item) => item.product_id === product.product_id
-                          )
-                            ? "check"
-                            : "shopping-cart"
-                        }
+                        name={cartProducts.some(item => item.product_id === product.product_id) ? "check" : "shopping-cart"}
                         size={20}
                         color="#fff"
                       />
@@ -339,18 +310,10 @@ const Marketplace = () => {
                       ]}
                       onPress={() => toggleFavorite(product)}
                     >
-                      <FontAwesome
-                        name={
-                          favoriteProducts.includes(product.product_id)
-                            ? "heart"
-                            : "heart-o"
-                        }
+                      <Ionicons
+                        name={favoriteProducts.includes(product.product_id) ? "heart" : "heart-outline"}
                         size={20}
-                        color={
-                          favoriteProducts.includes(product.product_id)
-                            ? "#ff0000"
-                            : "#333"
-                        }
+                        color={favoriteProducts.includes(product.product_id) ? "red" : "gray"}
                       />
                     </TouchableOpacity>
                   </View>
@@ -367,23 +330,25 @@ const Marketplace = () => {
               const savings = discount.price - discountedPrice;
               return (
                 <View key={index} style={styles.discountItem}>
-                  <Image
-                    source={{ uri: discount.image_url }}
-                    style={styles.discountImage}
-                  />
+                  <View style={styles.discountItemGradient} />
+                  <View style={styles.discountImageContainer}>
+                    <View style={styles.discountImageBorder} />
+                    <Image
+                      source={{ uri: discount.image_url }}
+                      style={styles.discountImage}
+                    />
+                    <View style={styles.discountImageOverlay} />
+                  </View>
                   <View style={styles.discountInfo}>
                     <Text style={styles.discountTitle}>{discount.name}</Text>
-                    <Text style={styles.discountPrice}>
-                      ${discountedPrice.toFixed(2)}{" "}
-                      <Text style={styles.discountOldPrice}>
-                        ${discount.price}
+                    <View style={styles.discountPriceContainer}>
+                      <Text style={styles.discountPrice}>
+                        ${discountedPrice.toFixed(2)}{" "}
+                        <Text style={styles.discountOldPrice}>${discount.price}</Text>
                       </Text>
-                    </Text>
+                    </View>
                     <Text style={styles.discountSavings}>
                       You save: ${savings.toFixed(2)}
-                    </Text>
-                    <Text style={styles.discountPercentage}>
-                      {discount.discount}% OFF
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -393,13 +358,16 @@ const Marketplace = () => {
                     <FontAwesome name="shopping-cart" size={20} color="#fff" />
                     <Text style={styles.discountCartButtonText}>Add</Text>
                   </TouchableOpacity>
+                  <View style={styles.discountPercentage}>
+                    <Text style={styles.discountPercentageText}>{discount.discount}%</Text>
+                  </View>
                 </View>
               );
             })}
 
             <TouchableOpacity
               style={styles.viewAllButton}
-              onPress={() => navigation.navigate("AllDiscountedProducts")}
+              onPress={() => navigation.navigate("AllDiscountedProduct")}
             >
               <Text style={styles.viewAllText}>View All Offers</Text>
             </TouchableOpacity>
@@ -425,239 +393,604 @@ const Marketplace = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: '#F0F7FF',
   },
   mainContainer: {
     flex: 1,
-    flexDirection: "row",
+    backgroundColor: '#F0F7FF',
   },
   contentContainer: {
     flex: 1,
-  },
-  scrollContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
     padding: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
+    overflow: 'hidden',
   },
-  loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+  gradientBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.1,
+    backgroundColor: '#4FA5F5',
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 25,
+    paddingVertical: 15,
+    borderBottomWidth: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.05,
+    backgroundColor: '#FF69B4',
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#4FA5F5',
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(79, 165, 245, 0.15)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    zIndex: 10,
   },
   iconContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
+    backgroundColor: '#F7FAFF',
+    padding: 12,
+    borderRadius: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  iconContainerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.05,
+    backgroundColor: '#FF69B4',
   },
   iconButton: {
-    marginLeft: 15,
-    position: "relative",
+    marginLeft: 20,
+    position: 'relative',
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    transform: [{ scale: 1 }],
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  iconButtonGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.05,
+    backgroundColor: '#FF69B4',
+  },
+  card: {
+    width: 180,
+    marginRight: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 15,
+    alignItems: 'center',
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 4, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    transform: [{ scale: 1 }],
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.08)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cardGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.05,
+    backgroundColor: '#FF69B4',
+  },
+  cardImageContainer: {
+    position: 'relative',
+    width: 150,
+    height: 150,
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.1)',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F7FAFF',
+  },
+  cardImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(79, 165, 245, 0.05)',
+    borderRadius: 16,
+  },
+  cardImageBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 105, 180, 0.2)',
+    borderRadius: 16,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 25,
+    paddingVertical: 15,
+    borderBottomWidth: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#4FA5F5',
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(79, 165, 245, 0.15)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F7FAFF',
+    padding: 12,
+    borderRadius: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  iconButton: {
+    marginLeft: 20,
+    position: 'relative',
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    transform: [{ scale: 1 }],
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
   cartCountContainer: {
     position: "absolute",
     top: -8,
     right: -8,
-    backgroundColor: "#ff3b8f",
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#FF69B4',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#FF69B4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cartCount: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  searchSection: {
-    marginBottom: 20,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginVertical: 15,
-    color: "#333",
+    fontSize: 28,
+    fontWeight: '700',
+    marginVertical: 24,
+    color: '#2C5282',
+    textAlign: 'center',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    textShadowColor: 'rgba(66, 153, 225, 0.12)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   cardContainer: {
-    marginBottom: 20,
+    marginBottom: 30,
+    paddingHorizontal: 8,
   },
   card: {
     width: 180,
     marginRight: 15,
-    backgroundColor: "#ffffff",
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 15,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    alignItems: 'center',
+    shadowColor: '#4299E1',
+    shadowOffset: { width: 4, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    transform: [{ scale: 1 }],
+    borderWidth: 1,
+    borderColor: 'rgba(66, 153, 225, 0.08)',
   },
-  cardImage: {
+  cardImageContainer: {
+    position: 'relative',
     width: 150,
     height: 150,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F7FAFF',
+  },
+  cardImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(49, 130, 206, 0.05)',
+    borderRadius: 16,
+  },
+  cardBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#FF69B4',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    shadowColor: '#FF69B4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    zIndex: 10,
+  },
+  cardBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#2D3748',
     marginVertical: 6,
-    textAlign: "center",
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    lineHeight: 22,
   },
   cardPrice: {
-    color: "#6e3de8",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
+    color: '#4FA5F5',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 10,
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(79, 165, 245, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   cardActions: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
     marginTop: 10,
+    paddingHorizontal: 6,
   },
   cartButton: {
-    backgroundColor: "#6e3de8",
-    borderRadius: 8,
+    backgroundColor: '#4FA5F5',
+    borderRadius: 14,
     padding: 10,
     alignItems: "center",
     justifyContent: "center",
     width: 40,
     height: 40,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    transform: [{ scale: 1 }],
   },
   favoriteButton: {
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     padding: 10,
     alignItems: "center",
     justifyContent: "center",
     width: 40,
     height: 40,
-    borderColor: "#ddd",
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#4299E1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    transform: [{ scale: 1 }],
+  },
+  favoriteButtonActive: {
+    backgroundColor: '#FFF0F7',
+    borderColor: '#FF69B4',
+    shadowColor: '#FF69B4',
+    shadowOpacity: 0.2,
+    transform: [{ scale: 1.05 }],
   },
   discountItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginVertical: 10,
-    backgroundColor: "#ffffff",
-    borderRadius: 10,
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: '#4299E1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(66, 153, 225, 0.08)',
   },
-  discountImage: {
+  discountImageContainer: {
+    position: 'relative',
     width: 80,
     height: 80,
-    borderRadius: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  discountImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  discountImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(49, 130, 206, 0.05)',
+    borderRadius: 12,
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#FF69B4',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    shadowColor: '#FF69B4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  discountBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   discountInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 12,
+    paddingRight: 8,
   },
   discountTitle: {
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: '600',
+    color: '#2D3748',
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  discountPriceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   discountPrice: {
-    color: "#6e3de8",
+    color: '#4FA5F5',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(79, 165, 245, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   discountOldPrice: {
-    textDecorationLine: "line-through",
-    color: "#999",
+    textDecorationLine: 'line-through',
+    color: '#A0AEC0',
     fontSize: 14,
+    marginLeft: 6,
   },
   discountSavings: {
-    color: "#4CAF50",
+    color: '#FF69B4',
     fontSize: 14,
-    marginTop: 2,
+    fontWeight: '600',
+    marginTop: 4,
+    backgroundColor: 'rgba(255, 105, 180, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   discountPercentage: {
-    color: "#ff0000",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginTop: 2,
-  },
-  discountCartButton: {
-    backgroundColor: "#6e3de8",
-    borderRadius: 8,
-    padding: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  discountCartButtonText: {
-    color: "#fff",
-    marginLeft: 5,
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  viewAllButton: {
-    backgroundColor: "#6A5AE0",
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    marginVertical: 20,
-    shadowColor: "#000",
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#FF69B4',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#FF69B4',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+    transform: [{ rotate: '12deg' }],
+  },
+  discountPercentageText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  discountCartButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    minWidth: 80,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.1)',
+  },
+  discountCartButtonText: {
+    color: '#FFFFFF',
+    marginLeft: 6,
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  viewAllButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 30,
+    alignItems: 'center',
+    marginVertical: 25,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   viewAllText: {
-    color: "#FFF",
+    color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   toggleButton: {
-    position: "absolute",
-    top: 10,
-    left: 10,
+    position: 'absolute',
+    top: 20,
+    left: 20,
     zIndex: 10,
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#FFFFFF',
+    padding: 14,
+    borderRadius: 16,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   messageContainer: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "#4CAF50",
-    borderRadius: 10,
-    padding: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(49, 130, 206, 0.95)',
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#2B6CB0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    backdropFilter: 'blur(8px)',
   },
   messageText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(247, 250, 255, 0.95)',
+    backdropFilter: 'blur(12px)',
+  }
 });
 
 export default Marketplace;

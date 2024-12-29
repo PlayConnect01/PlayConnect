@@ -9,7 +9,11 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
+<<<<<<< HEAD
+import { BASE_URL } from "../../../api"; // Fix the import statement for BASE_URL
+=======
 import {BASE_URL} from "../../../Api"
+>>>>>>> 0c99f25d94dbcc0ca8d801efce82d1f3edc953b8
 
 
 

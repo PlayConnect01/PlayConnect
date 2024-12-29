@@ -27,6 +27,8 @@ import TournamentList from './Homepage/TournamentList'
 import TournamentDetail from './Homepage/TournamentDetail'
 import EditProfile from "./profile/EditProfile"
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
+import FavoritesScreen from './marketplace/FavoritesScreen';
+import AllDiscountedProduct from './marketplace/AllDiscountedProduct';
 const Stack = createStackNavigator();
 
 
@@ -158,7 +160,7 @@ export default function App() {
           name="products"
           component={() => (
             <MainLayout>
-              <products />
+              <products/>
             </MainLayout>
           )}
         />
@@ -199,6 +201,22 @@ export default function App() {
           component={() => (
             <MainLayout>
               <PaymentSuccessScreen />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="FavoritesScreen"
+          component={() => (
+            <MainLayout>
+              <FavoritesScreen/>
+            </MainLayout>
+          )}
+        />
+         <Stack.Screen
+          name="AllDiscountedProduct"
+          component={() => (
+            <MainLayout>
+              <AllDiscountedProduct />
             </MainLayout>
           )}
         />

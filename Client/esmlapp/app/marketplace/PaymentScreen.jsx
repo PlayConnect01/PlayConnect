@@ -12,8 +12,9 @@ import { useEffect } from 'react';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; 
-import { BASE_URL } from '../../Api.js';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BASE_URL } from '../../api';
+
 const PaymentScreen = ({ route, navigation }) => {
   const { cartTotal = 0, deliveryFee = 0 } = route.params || {};
   const [selectedMethod, setSelectedMethod] = useState(null);

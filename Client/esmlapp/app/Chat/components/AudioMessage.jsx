@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Audio } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+<<<<<<< HEAD
+import {BASE_URL} from "../../../api"
+=======
 import {BASE_URL} from "../../../Api"
+>>>>>>> 0c99f25d94dbcc0ca8d801efce82d1f3edc953b8
 const AudioMessage = ({ audioUrl, isCurrentUser, sender, timestamp }) => {
     const [sound, setSound] = useState();
     const [isPlaying, setIsPlaying] = useState(false);

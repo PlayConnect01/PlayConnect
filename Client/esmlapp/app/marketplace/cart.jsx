@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
-import { BASE_URL } from '../../Api.js';
+import {BASE_URL} from '../../api';
+
 const CartScreen = ({ navigation }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,20 +83,15 @@ const CartScreen = ({ navigation }) => {
         throw new Error("No item selected for deletion");
       }
 
-      const response = await fetch(
-        `${API.BASE_URL}/cart/cart/item/${itemToDelete}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${BASE_URL}/cart/cart/item/${itemToDelete}`, {
+        method: 'DELETE',
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to delete item. Status: ${response.status}`);
       }
 
-      setCartItems((prevItems) =>
-        prevItems.filter((item) => item.cart_item_id !== itemToDelete)
-      );
+      setCartItems((prevItems) => prevItems.filter((item) => item.cart_item_id !== itemToDelete));
       console.log(`Item with ID ${itemToDelete} deleted successfully.`);
       setItemToDelete(null); // Reset after successful deletion
     } catch (error) {
@@ -192,7 +188,7 @@ const CartScreen = ({ navigation }) => {
           setItemToDelete(null); // Reset itemToDelete if canceled
           setModalVisible(false);
         }}
-        message="Are you sure you want to delete this item? 🗑️🤔"
+        message="Are you sure you want to delete this item?"
       />
     </ScrollView>
   );
@@ -201,115 +197,172 @@ const CartScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyCart: {
-    textAlign: "center",
-    fontSize: 16,
-    marginTop: 20,
-    color: "#666",
-  },
-  deleteButton: {
-    marginLeft: 10,
-    backgroundColor: "#FF6347",
-    borderRadius: 5,
-    padding: 5,
-  },
-  deleteText: {
-    color: "#FFF",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
   },
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: '#F8F9FA',
     padding: 16,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 24,
+    textAlign: 'center',
+    color: '#2D3436',
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  emptyCart: {
+    textAlign: 'center',
+    fontSize: 18,
+    marginTop: 40,
+    color: '#636E72',
+    fontWeight: '500',
   },
   cartItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   itemImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 15,
+    backgroundColor: '#F1F2F6',
   },
   itemDetails: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 16,
   },
   itemName: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2D3436',
+    marginBottom: 6,
   },
   itemPrice: {
-    fontSize: 14,
-    color: "#777",
+    fontSize: 16,
+    color: '#6A5AE0',
+    fontWeight: '600',
   },
   quantityControl: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0EEFF',
+    borderRadius: 25,
+    padding: 4,
   },
   quantityButton: {
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#E0E0E0",
-    borderRadius: 5,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    shadowColor: '#6A5AE0',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   quantityText: {
-    fontSize: 18,
+    fontSize: 20,
+    color: '#6A5AE0',
+    fontWeight: '600',
   },
   quantity: {
-    marginHorizontal: 10,
-    fontSize: 16,
+    marginHorizontal: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2D3436',
+  },
+  deleteButton: {
+    backgroundColor: '#FFE8E8',
+    borderRadius: 12,
+    padding: 10,
+    marginLeft: 12,
+    shadowColor: '#FF6B6B',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  deleteText: {
+    color: '#FF6B6B',
+    fontWeight: '600',
   },
   paymentDetails: {
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 20,
-  },
-  paymentRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    elevation: 8,
   },
   paymentLabel: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2D3436',
   },
   paymentPrice: {
-    fontSize: 16,
-  },
-  paymentTotal: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    paddingTop: 10,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#6A5AE0',
+    textAlign: 'right',
+    marginTop: 8,
   },
   checkoutButton: {
-    backgroundColor: "#6A5AE0",
-    borderRadius: 10,
-    padding: 15,
-    marginTop: 20,
-    alignItems: "center",
+    backgroundColor: '#6A5AE0',
+    borderRadius: 25,
+    padding: 18,
+    marginTop: 24,
+    marginBottom: 32,
+    shadowColor: '#6A5AE0',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    transform: [{ scale: 1 }],
   },
   checkoutText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
 });
 

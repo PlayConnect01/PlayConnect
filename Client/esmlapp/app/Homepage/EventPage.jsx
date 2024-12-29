@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import Navbar from '../navbar/Navbar';
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from '../../api';
 
 const CategoryEvents = () => {
   const navigation = useNavigation();

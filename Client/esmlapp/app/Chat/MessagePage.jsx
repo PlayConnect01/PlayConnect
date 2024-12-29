@@ -5,8 +5,6 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../Api';
-import Navbar from '../navbar/Navbar';
 
 const MessagePage = (props) => {
   const [matches, setMatches] = useState([]);
@@ -49,23 +47,10 @@ const MessagePage = (props) => {
 
   const fetchAcceptedMatches = async (userId) => {
     try {
-      const response = await axios.get(`${BASE_URL}/matches/accepted/${userId}`);
-      // Fetch last messages for each match
-      const matchesWithLastMessage = await Promise.all(
-        response.data.map(async (match) => {
-          try {
-            const lastMessageResponse = await axios.get(`${BASE_URL}/chats/${match.chat_id}/lastMessage`);
-            return {
-              ...match,
-              lastMessage: lastMessageResponse.data
-            };
-          } catch (error) {
-            console.error('Error fetching last message:', error);
-            return match;
-          }
-        })
-      );
-      setMatches(matchesWithLastMessage);
+      const response = await axios.get(`http://192.168.103.14:3000/matches/accepted/${userId}`);
+      console.log("ahmed"  , userId)
+      setMatches(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error('Error fetching accepted matches:', error);
       Alert.alert('Error', 'Failed to load accepted matches.');

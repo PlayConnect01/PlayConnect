@@ -8,17 +8,19 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
+  Image,
 } from 'react-native';
 import axios from 'axios';
-import { BASE_URL } from '../../Api.js';
+import {BASE_URL} from '../../api';
+import { useNavigation } from '@react-navigation/native';
 const SearchBar = ({ onSelectProduct }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState([]);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const navigation = useNavigation();
 
-  // Animation value for search bar focus
   const animatedValue = new Animated.Value(0);
 
   useEffect(() => {
@@ -52,6 +54,7 @@ const SearchBar = ({ onSelectProduct }) => {
       setDropdownVisible(true);
     } catch (error) {
       console.error("Error fetching search results:", error);
+      setResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +66,10 @@ const SearchBar = ({ onSelectProduct }) => {
     setResults([]);
     setDropdownVisible(false);
     setIsFocused(false);
+    navigation.navigate('ProductDetail', { 
+      productId: product.product_id,
+      productName: product.name 
+    });
   };
 
   const animatedStyles = {
@@ -91,7 +98,6 @@ const SearchBar = ({ onSelectProduct }) => {
           onChangeText={setSearchTerm}
           onFocus={() => setIsFocused(true)}
           onBlur={() => {
-            // Delay hiding the dropdown to allow for item selection
             setTimeout(() => {
               if (!isDropdownVisible) {
                 setIsFocused(false);
@@ -139,13 +145,20 @@ const SearchBar = ({ onSelectProduct }) => {
                   style={styles.resultItem}
                   onPress={() => handleSelectProduct(item)}
                 >
+                  <Image
+                    source={{ uri: item.image_url }}
+                    style={styles.resultImage}
+                  />
                   <View style={styles.textContainer}>
                     <Text style={styles.resultText}>{item.name}</Text>
+                    <Text style={styles.priceText}>${item.price}</Text>
                   </View>
                 </TouchableOpacity>
               )}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
               style={styles.resultsList}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
             />
           ) : (
             <View style={styles.noResultsContainer}>
@@ -167,8 +180,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 12,
     marginBottom: 20,
-    zIndex: 1000, // Ensure the container stays above other elements
-    elevation: 1000, // For Android
+    zIndex: 1000,
+    elevation: 1000,
   },
   searchContainer: {
     position: "relative",
@@ -210,8 +223,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 24,
-    elevation: 1002, // Higher than searchContainer
-    zIndex: 1002, // Higher than searchContainer
+    elevation: 1002,
+    zIndex: 1002,
     maxHeight: 350,
     overflow: "hidden",
   },
@@ -219,11 +232,21 @@ const styles = StyleSheet.create({
     maxHeight: 350,
   },
   resultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     backgroundColor: "#FFFFFF",
   },
+  resultImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    marginRight: 12,
+    backgroundColor: '#F3F4F6',
+  },
   textContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   resultText: {
     fontSize: 16,
@@ -256,7 +279,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   noResultsSubText: {
-    marginTop: 8,
     fontSize: 14,
     color: "#9CA3AF",
   },

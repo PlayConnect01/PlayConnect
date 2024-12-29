@@ -1,6 +1,6 @@
 const express = require('express');
-const router = express.Router();
 const notification = require('../controllers/notification');
+const router = express.Router();
 
 // Get all notifications for a user
 router.get('/:userId', async (req, res) => {
