@@ -14,7 +14,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {BASE_URL} from '../../api';
+import {BASE_URL} from '../../Api';
 import { Ionicons } from '@expo/vector-icons';
 
 const ProductDetail = () => {

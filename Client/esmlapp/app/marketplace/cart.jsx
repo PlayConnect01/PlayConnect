@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
-import {BASE_URL} from '../../api';
+import {BASE_URL} from '../../Api';
 
 const CartScreen = () => {
   const navigation = useNavigation();

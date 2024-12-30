@@ -7,11 +7,12 @@ import {
   ScrollView,
   Image,
   Animated,
+  TextInput,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 import { useStripe } from '@stripe/stripe-react-native';
 
 const PaymentScreen = ({ route, navigation }) => {
@@ -21,18 +22,34 @@ const PaymentScreen = ({ route, navigation }) => {
   const [bounceAnim] = useState(new Animated.Value(1));
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
+  // New state for user details
+  const [userDetails, setUserDetails] = useState({
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
+  });
+
   useEffect(() => {
     const fetchPaymentSheetParams = async () => {
-      const response = await axios.get(`${BASE_URL}/payments/config`);
-      const { publishableKey } = response.data;
+      try {
+        const response = await axios.get(`${BASE_URL}/payments/config`);
+        const { clientSecret } = response.data; // Ensure this is the client secret
 
-      const { error } = await initPaymentSheet({
-        merchantDisplayName: 'Your Store',
-        paymentIntentClientSecret: publishableKey,
-      });
+        const { error } = await initPaymentSheet({
+          merchantDisplayName: 'Your Store',
+          paymentIntentClientSecret: clientSecret,
+        });
 
-      if (!error) {
-        console.log('PaymentSheet initialized successfully');
+        if (error) {
+          console.error('Error initializing payment sheet:', error);
+          alert('Failed to initialize payment sheet. Please try again.');
+        } else {
+          console.log('PaymentSheet initialized successfully');
+        }
+      } catch (error) {
+        console.error('Error fetching payment sheet params:', error);
+        alert('Failed to fetch payment configuration. Please try again.');
       }
     };
 
@@ -55,6 +72,10 @@ const PaymentScreen = ({ route, navigation }) => {
       ]).start();
     }
   }, [selectedMethod]);
+
+  const handleUserDetailsChange = (field, value) => {
+    setUserDetails({ ...userDetails, [field]: value });
+  };
 
   const paymentMethods = [
     {
@@ -107,28 +128,40 @@ const PaymentScreen = ({ route, navigation }) => {
       return;
     }
     setIsProcessing(true);
+    console.log('Processing payment for method:', selectedMethod);
     try {
       const userId = await AsyncStorage.getItem('userId');
+      console.log('User ID:', userId);
       if ([1, 2, 3, 4].includes(selectedMethod)) { // Credit Card, PayPal, Apple Pay, Google Pay
         const response = await axios.post(`${BASE_URL}/payments/process`, {
           userId,
           amount: cartTotal + deliveryFee,
           items: cartItems,
+          userDetails, // Include user details in the request
         });
+        console.log('Payment process response:', response.data);
 
-        const { clientSecret, orderId } = response.data;
+        const { clientSecret, error: backendError } = response.data;
+
+        if (backendError) {
+          console.error('Backend error:', backendError);
+          alert('Payment setup failed. Please try again.');
+          return;
+        }
 
         const { error } = await presentPaymentSheet({
           clientSecret,
         });
 
         if (error) {
-          alert(`Error: ${error.message}`);
+          console.error('Payment sheet error:', error);
+          alert(`Payment failed: ${error.message}`);
         } else {
+          console.log('Payment successful, navigating to PaymentSuccess');
           alert('Payment complete, thank you!');
           navigation.navigate('PaymentSuccess', {
             amount: cartTotal + deliveryFee,
-            orderId,
+            orderId: response.data.orderId,
           });
         }
       } else if (selectedMethod === 5) { // Cash on Delivery
@@ -153,6 +186,28 @@ const PaymentScreen = ({ route, navigation }) => {
       alert('Payment failed. Please try again.');
     } finally {
       setIsProcessing(false);
+      console.log('Payment processing completed');
+    }
+  };
+
+  const navigateToNextScreen = () => {
+    if (selectedMethod === 1 || selectedMethod === 2 || selectedMethod === 3 || selectedMethod === 4) {
+      processPayment();
+    } else if (selectedMethod === 5) {
+      navigation.navigate('OrderConfirmation', {
+        amount: cartTotal + deliveryFee,
+        method: 'Cash on Delivery',
+      });
+    } else if (selectedMethod === 6) {
+      navigation.navigate('BankTransferInstructions', {
+        amount: cartTotal + deliveryFee,
+        bankDetails: 'Bank details here',
+      });
+    } else if (selectedMethod === 7) {
+      navigation.navigate('CryptoPayment', {
+        amount: cartTotal + deliveryFee,
+        cryptoAddress: 'Your crypto address here',
+      });
     }
   };
 
@@ -166,6 +221,34 @@ const PaymentScreen = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={24} color="#4FA5F5" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment Details</Text>
+      </View>
+
+      <View style={styles.userDetailsCard}>
+        <Text style={styles.sectionTitle}>Your Details</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Address"
+          value={userDetails.address}
+          onChangeText={(value) => handleUserDetailsChange('address', value)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="City"
+          value={userDetails.city}
+          onChangeText={(value) => handleUserDetailsChange('city', value)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Postal Code"
+          value={userDetails.postalCode}
+          onChangeText={(value) => handleUserDetailsChange('postalCode', value)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Country"
+          value={userDetails.country}
+          onChangeText={(value) => handleUserDetailsChange('country', value)}
+        />
       </View>
 
       <View style={styles.summaryCard}>
@@ -237,13 +320,7 @@ const PaymentScreen = ({ route, navigation }) => {
 
       <TouchableOpacity
         style={styles.nextButton}
-        onPress={() => {
-          if (selectedMethod) {
-            processPayment();
-          } else {
-            alert('Please select a payment method');
-          }
-        }}
+        onPress={navigateToNextScreen}
       >
         <Text style={styles.nextButtonText}>Next Step</Text>
       </TouchableOpacity>
@@ -278,6 +355,28 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     color: "#1F2937",
+  },
+  userDetailsCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#EEF2FF",
+    shadowColor: "#4FA5F5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  input: {
+    height: 40,
+    borderColor: '#4FA5F5',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
   },
   summaryCard: {
     backgroundColor: "#FFFFFF",

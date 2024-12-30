@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 
 const TournamentDetail = ({ route }) => {
   const [tournament, setTournament] = useState(null);

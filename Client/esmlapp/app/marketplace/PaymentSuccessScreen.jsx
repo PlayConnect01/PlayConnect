@@ -16,7 +16,7 @@ const PaymentSuccessScreen = ({ route, navigation }) => {
 
     // Auto navigate back to home after 3 seconds
     const timer = setTimeout(() => {
-      navigation.navigate('MarketplaceHome');
+      navigation.navigate('Home');
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -30,7 +30,7 @@ const PaymentSuccessScreen = ({ route, navigation }) => {
           { transform: [{ scale: checkmarkScale }] },
         ]}
       >
-        <MaterialIcons name="check-circle" size={100} color="#4CAF50" />
+        <MaterialIcons name="check-circle" size={100} color="#4FA5F5" />
       </Animated.View>
       <Text style={styles.title}>Payment Successful!</Text>
       <Text style={styles.amount}>
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#F8FAFF',
     padding: 20,
   },
   checkmarkContainer: {
@@ -60,13 +60,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1F2937',
     marginBottom: 16,
   },
   amount: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: '#4FA5F5',
     marginBottom: 16,
   },
   orderId: {

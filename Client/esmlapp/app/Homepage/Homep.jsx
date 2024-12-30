@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 import Navbar from '../navbar/Navbar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationsModal from '../components/NotificationsModal';
