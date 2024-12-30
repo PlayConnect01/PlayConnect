@@ -65,7 +65,7 @@ const PasswordRecoveryScreen = () => {
       <Image
         source={require('../../assets/images/backgroundforget.png')}
         style={styles.backgroundImage}
-        blurRadius={5}
+        blurRadius={2}
       />
       <SafeAreaView style={styles.container}>
         <Image
