@@ -10,7 +10,7 @@ const OrderConfirmation = ({ route, navigation }) => {
       <Text style={styles.message}>Your order has been placed successfully!</Text>
       <Text style={styles.details}>Amount: ${amount.toFixed(2)}</Text>
       <Text style={styles.details}>Payment Method: {method}</Text>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Homep')}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
         <Text style={styles.buttonText}>Back to Home</Text>
       </TouchableOpacity>
     </View>

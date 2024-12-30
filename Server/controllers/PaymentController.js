@@ -1,7 +1,8 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Ensure you have your Stripe secret key in your environment variables
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Payment Processing
 const processPayment = async (req, res) => {
   try {
     const { userId, amount, items } = req.body;
@@ -46,6 +47,7 @@ const processPayment = async (req, res) => {
   }
 };
 
+// Payment Confirmation
 async function confirmPayment(req, res) {
   try {
     const { paymentIntentId } = req.body;
@@ -53,7 +55,6 @@ async function confirmPayment(req, res) {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     
     if (paymentIntent.status === 'succeeded') {
-      // Update order status
       await prisma.order.update({
         where: { payment_intent_id: paymentIntentId },
         data: { status: 'completed' }
@@ -70,6 +71,7 @@ async function confirmPayment(req, res) {
   }
 }
 
+// Stripe Configuration
 async function getConfig(req, res) {
   try {
     res.json({
@@ -81,8 +83,9 @@ async function getConfig(req, res) {
   }
 }
 
+// Export the functions
 module.exports = {
   processPayment,
   confirmPayment,
   getConfig
-}
+};

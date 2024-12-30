@@ -3,20 +3,19 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const PaymentSuccessScreen = ({ route, navigation }) => {
-  const { amount, orderId } = route.params || {}; // Fallback in case params are undefined
-  const checkmarkScale = React.useRef(new Animated.Value(0)).current; // Use Ref to avoid unnecessary re-creation
+  const { amount, orderId } = route.params || {}; 
+  const checkmarkScale = React.useRef(new Animated.Value(0)).current; 
 
   useEffect(() => {
     Animated.spring(checkmarkScale, {
       toValue: 1,
       friction: 3,
-      tension: 30, // Slightly smoother tension
+      tension: 30, 
       useNativeDriver: true,
     }).start();
 
-    // Auto navigate back to home after 3 seconds
     const timer = setTimeout(() => {
-      navigation.navigate('Home');
+      navigation.navigate('Home'); 
     }, 3000);
 
     return () => clearTimeout(timer);

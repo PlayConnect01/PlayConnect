@@ -19,7 +19,7 @@ import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import ProfilePage from "./profile/ProfilePage";
 import MarketplaceHome from "./marketplace/marketplace";
-import products from "./marketplace/products";
+import Products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
@@ -39,11 +39,14 @@ import PayPalForm from './marketplace/PayPalForm';
 import ApplePayForm from './marketplace/ApplePayForm';
 import GooglePayForm from './marketplace/GooglePayForm';
 
+// Use the publishable key directly for now
+const STRIPE_PUBLISHABLE_KEY = "pk_test_51QacpyJ8nvnIQ3GjGqk3JXubrVqAx9W0BpX7QjJ88rlauDCjsIncznLlzANlIEAXykBHNUK4QwvvagWo2dTnKbNU008BhqZ3Lp";
+
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <StripeProvider publishableKey="your-publishable-key-here">  {/* Replace with your actual publishable key */}
+    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>  
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack.Navigator
           initialRouteName="Landing"
@@ -179,10 +182,10 @@ export default function App() {
             )}
           />
           <Stack.Screen
-            name="products"
+            name="Products"
             component={() => (
               <MainLayout>
-                <products/>
+                <Products />
               </MainLayout>
             )}
           />

@@ -128,10 +128,8 @@ const PaymentScreen = ({ route, navigation }) => {
       return;
     }
     setIsProcessing(true);
-    console.log('Processing payment for method:', selectedMethod);
     try {
       const userId = await AsyncStorage.getItem('userId');
-      console.log('User ID:', userId);
       if ([1, 2, 3, 4].includes(selectedMethod)) { // Credit Card, PayPal, Apple Pay, Google Pay
         const response = await axios.post(`${BASE_URL}/payments/process`, {
           userId,
@@ -139,7 +137,6 @@ const PaymentScreen = ({ route, navigation }) => {
           items: cartItems,
           userDetails, // Include user details in the request
         });
-        console.log('Payment process response:', response.data);
 
         const { clientSecret, error: backendError } = response.data;
 
