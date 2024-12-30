@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
 import {BASE_URL} from '../../api';
 
-const CartScreen = ({ navigation }) => {
+const CartScreen = () => {
+  const navigation = useNavigation();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -106,9 +108,9 @@ const CartScreen = ({ navigation }) => {
     cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const navigateToDeliveryServices = () => {
-    navigation.navigate("delivery", {
+    navigation.navigate("DeliveryServicesScreen", {
       cartTotal: calculateTotal(),
-      cartItems,
+      cartItems: cartItems,
     });
   };
 
