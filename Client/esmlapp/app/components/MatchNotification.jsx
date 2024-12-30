@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Modal, ScrollView, ImageBackground, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BASE_URL } from "../../api";
+import { BASE_URL } from "../../Api";
 
 const MatchNotification = ({ notification, onAccept, onReject }) => {
   const [showModal, setShowModal] = useState(true);

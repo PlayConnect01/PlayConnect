@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 

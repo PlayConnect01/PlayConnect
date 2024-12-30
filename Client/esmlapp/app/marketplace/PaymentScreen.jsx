@@ -11,7 +11,7 @@ import {
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 import { useStripe } from '@stripe/stripe-react-native';
 
 const PaymentScreen = ({ route, navigation }) => {

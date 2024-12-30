@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 
 const TournamentList = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -15,7 +15,7 @@ const TournamentList = () => {
   const fetchTournaments = async () => {
     try {
       const response = await fetch(`${BASE_URL}/competetion/Teams`);
-      const data = await response.json();
+      const data = await response.json();      
       setTournaments(data);
     } catch (error) {
       console.error('Error fetching tournaments:', error);
@@ -26,7 +26,7 @@ const TournamentList = () => {
     <TouchableOpacity 
       key={tournament.tournament_id}
       style={styles.card}
-      onPress={() => navigation.navigate('TournamentDetail', { id: tournament.tournament_id })}
+      onPress={() => navigation.navigate('Homepage/TournamentDetail', { id: tournament.tournament_id })}
     >
       <View style={styles.cardHeader}>
         <Text style={styles.tournamentName}>{tournament.tournament_name}</Text>
@@ -63,6 +63,9 @@ const TournamentList = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Tournaments</Text>
       </View>
       <ScrollView style={styles.container}>
@@ -86,11 +89,14 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
+    marginLeft: 16,
   },
   card: {
     backgroundColor: '#fff',

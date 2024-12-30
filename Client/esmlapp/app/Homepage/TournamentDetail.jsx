@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { BASE_URL } from '../../api';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../Api';
 
-const TournamentDetail = ({ route }) => {
+const TournamentDetail = () => {
   const [tournament, setTournament] = useState(null);
+  const route = useRoute();
+  const navigation = useNavigation();
   const { id } = route.params;
 
   useEffect(() => {
@@ -16,9 +19,15 @@ const TournamentDetail = ({ route }) => {
       const response = await fetch(`${BASE_URL}/competetion/${tournamentId}`);
       const tournamentData = await response.json();
       setTournament(tournamentData);
+      navigation.setOptions({ title: tournamentData.tournament_name }); // Set the page title
     } catch (error) {
       console.error('Error fetching tournament details:', error);
     }
+  };
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   if (!tournament) {
@@ -27,19 +36,27 @@ const TournamentDetail = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate("Homepage/TournamentList")}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{tournament.tournament_name}</Text>
+      </View>
       <ScrollView style={styles.container}>
         <View style={styles.tournamentHeader}>
           <Text style={styles.tournamentTitle}>{tournament.tournament_name}</Text>
-          <View style={styles.sportBadge}>
-            <Text style={styles.sportName}>{tournament.sport.name}</Text>
-          </View>
+          {tournament.sport && (
+            <View style={styles.sportBadge}>
+              <Text style={styles.sportName}>{tournament.sport.name}</Text>
+            </View>
+          )}
           
           <View style={styles.infoRow}>
             <View style={styles.dateContainer}>
               <MaterialCommunityIcons name="calendar" size={20} color="#0095FF" />
               <Text style={styles.dateRange}>
-                {new Date(tournament.start_date).toLocaleDateString()} - 
-                {new Date(tournament.end_date).toLocaleDateString()}
+                {formatDate(tournament.start_date)} - 
+                {formatDate(tournament.end_date)}
               </Text>
             </View>
           </View>
@@ -92,6 +109,17 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
   },
   container: {
     flex: 1,

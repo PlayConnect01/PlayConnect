@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { BASE_URL } from '../../api';
+import { BASE_URL } from '../../Api';
 import Navbar from '../navbar/Navbar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationsModal from '../components/NotificationsModal';
@@ -244,7 +244,7 @@ const App = () => {
                   >
                     {categories.map((category) => (
                       <TouchableOpacity
-                        key={category.id}
+                        key={category.id}  // Add unique key prop
                         onPress={() => navigation.navigate("Homepage/CategoryEvents", { categoryName: category.name })}
                         style={styles.categoryItemWrapper}
                       >
@@ -266,9 +266,10 @@ const App = () => {
                     style={styles.competitions}
                   >
                     {competitions.map((competition) => (
-                      <View
-                        key={competition.tournament_id}
+                      <TouchableOpacity
+                        key={competition.tournament_id}  // Add unique key prop
                         style={styles.competitionItemWrapper}
+                        onPress={() => navigation.navigate('Homepage/TournamentDetail', { id: competition.tournament_id })}
                       >
                         <View style={styles.competitionItem}>
                           <Image
@@ -279,7 +280,7 @@ const App = () => {
                             {competition.tournament_name}
                           </Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     ))}
                   </ScrollView>
                 </>
@@ -299,7 +300,7 @@ const App = () => {
                 >
                   {eventCategories.map((category) => (
                     <TouchableOpacity
-                      key={category.id}
+                      key={category.id}  // Add unique key prop
                       style={[
                         styles.categoryButton,
                         selectedCategory === category.name && styles.selectedCategory,
@@ -320,7 +321,7 @@ const App = () => {
               <ScrollView contentContainerStyle={searchQuery ? styles.singleEventGrid : styles.eventsGrid}>
                 {filteredEvents.map((event) => (
                   <TouchableOpacity
-                    key={event.id}
+                    key={event.id}  // Add unique key prop
                     style={searchQuery ? styles.fullWidthEventItem : styles.eventItem}
                     onPress={() =>
                       navigation.navigate("Homepage/EventDetails", {

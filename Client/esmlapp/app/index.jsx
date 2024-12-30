@@ -19,7 +19,7 @@ import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import ProfilePage from "./profile/ProfilePage";
 import MarketplaceHome from "./marketplace/marketplace";
-import products from "./marketplace/products";
+import Products from "./marketplace/products"; // Corrected import
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
@@ -181,7 +181,7 @@ export default function App() {
           name="products"
           component={() => (
             <MainLayout>
-              <products/>
+              <Products/>
             </MainLayout>
           )}
         />
