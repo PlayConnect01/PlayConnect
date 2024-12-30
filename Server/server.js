@@ -81,7 +81,7 @@ app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
 // Mount Chat Router
-app.use('/payments',paymentRoutes);
+app.use('/payment',paymentRoutes);
 app.use('/leaderboard', leaderboardRoutes);
 // Mount Chat Router
 app.use('/chats', chatRoutes);

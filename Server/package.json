@@ -33,6 +33,7 @@
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
     "stream-chat": "^8.47.0",
+    "stripe": "^17.5.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

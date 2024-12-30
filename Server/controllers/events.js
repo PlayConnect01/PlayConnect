@@ -66,12 +66,10 @@ const addParticipantWithQR = async (req, res) => {
       return res.status(404).json({ error: "Event or User not found" });
     }
 
-    // Generate QR code data
+    // Generate QR code data with essential information
     const qrData = {
-      eventName: event.event_name,
-      eventDate: event.date,
-      userName: user.username,
-      userProfilePicture: user.profile_picture,
+      eventId: event.event_id,
+      userId: user.user_id,
     };
 
     // Generate QR code

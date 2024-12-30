@@ -1,11 +1,11 @@
 const express = require('express');
-const {     processPayment,confirmPayment} = require('../controllers/PaymentController');// Adjust path as needed
 const router = express.Router();
+const { processPayment, confirmPayment , getConfig } = require('../controllers/PaymentController');
 
-// Route to process payment
+// Payment routes
 router.post('/process', processPayment);
-
-// Route to confirm payment
 router.post('/confirm', confirmPayment);
+router.get('/config', getConfig);
+
 
 module.exports = router;

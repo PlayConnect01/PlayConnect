@@ -110,7 +110,12 @@ const AddNewEvent = () => {
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      setDate(selectedDate);
+      const currentDate = new Date();
+      if (selectedDate < currentDate.setHours(0, 0, 0, 0)) {
+        Alert.alert('Invalid Date', 'You cannot select a past date.');
+      } else {
+        setDate(selectedDate);
+      }
     }
   };
 
@@ -118,13 +123,20 @@ const AddNewEvent = () => {
     setShowStartTimePicker(false);
     if (selectedTime) {
       setStartTime(selectedTime);
+      if (endTime && selectedTime > endTime) {
+        setEndTime(selectedTime);
+      }
     }
   };
 
   const onEndTimeChange = (event, selectedTime) => {
     setShowEndTimePicker(false);
     if (selectedTime) {
-      setEndTime(selectedTime);
+      if (selectedTime < startTime) {
+        Alert.alert('Invalid Time', 'End time cannot be earlier than start time.');
+      } else {
+        setEndTime(selectedTime);
+      }
     }
   };
 
@@ -188,9 +200,9 @@ const AddNewEvent = () => {
         location: mapLocation.address,
         category,
         participants: parseInt(participants, 10),
-        price: parseFloat(price),
+        price: parseFloat(price),  
         creator_id: parseInt(userId),
-        image: imageUrl,
+        image: imageUrl, 
         latitude: mapLocation.latitude,
         longitude: mapLocation.longitude,
       };
@@ -374,12 +386,22 @@ const AddNewEvent = () => {
                   <View style={styles.inlineInput}>
                     <Icon name="people-outline" size={24} color="#8D8D8D" style={styles.inputIcon} />
                     <Text style={styles.label}>Participants:</Text>
-                    <TextInput
-                      style={[styles.numberInput, styles.smallInput]}
-                      keyboardType="numeric"
-                      value={participants}
-                      onChangeText={setParticipants}
-                    />
+                    <View style={styles.participantsInputContainer}>
+                      <TextInput
+                        style={[styles.numberInput, styles.smallInput, styles.participantsInput]}
+                        keyboardType="numeric"
+                        value={participants}
+                        onChangeText={setParticipants}
+                      />
+                      <View style={styles.arrowContainer}>
+                        <TouchableOpacity onPress={() => setParticipants((prev) => (parseInt(prev) + 1).toString())}>
+                          <Icon name="caret-up-outline" size={20} color="#8D8D8D" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setParticipants((prev) => (parseInt(prev) - 1).toString())}>
+                          <Icon name="caret-down-outline" size={20} color="#8D8D8D" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -396,6 +418,7 @@ const AddNewEvent = () => {
                       onChangeText={setPrice}
                     />
                   </View>
+                  <Text style={styles.feeNote}>Please note: The app will take a 10% fee from each participant.</Text>
                 </View>
               </View>
               <View style={styles.inputSection}>
@@ -609,6 +632,25 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     borderRadius: 5,
     marginTop:10
+  },
+  feeNote: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+  },
+  participantsInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+     position: 'relative',
+  },
+  arrowContainer: {
+    position: 'absolute',
+    right: 5,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  participantsInput: {
+    paddingRight: 30, // Add padding to make space for the arrows
   },
 });
 

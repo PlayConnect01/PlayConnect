@@ -63,6 +63,9 @@ const TournamentList = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate("Homepage/TournamentList")}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Tournaments</Text>
       </View>
       <ScrollView style={styles.container}>
@@ -86,11 +89,14 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
+    marginLeft: 16,
   },
   card: {
     backgroundColor: '#fff',

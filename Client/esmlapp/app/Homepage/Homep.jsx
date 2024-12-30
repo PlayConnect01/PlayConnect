@@ -202,9 +202,10 @@ const App = () => {
                     style={styles.competitions}
                   >
                     {competitions.map((competition) => (
-                      <View
+                      <TouchableOpacity
                         key={competition.tournament_id}
                         style={styles.competitionItemWrapper}
+                        onPress={() => navigation.navigate('Homepage/TournamentDetail', { id: competition.tournament_id })}
                       >
                         <View style={styles.competitionItem}>
                           <Image
@@ -215,7 +216,7 @@ const App = () => {
                             {competition.tournament_name}
                           </Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     ))}
                   </ScrollView>
                 </>
