@@ -90,9 +90,9 @@ model User {
   initiated_chats     Chat[]         @relation("ChatInitiator")
   initiated_calls     VideoCall[]    @relation("CallInitiator")
   received_calls      VideoCall[]    @relation("CallParticipant")
-  orders              Order[]
 
-  // New relationships for video calls
+  // New relation for orders
+  orders              Order[]
 }
 
 model Sport {
@@ -201,9 +201,9 @@ model Event {
 
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())
-  event_id            Int
-  user_id             Int
-  qr_code              String?
+  event_id             Int
+  user_id              Int
+  qr_code              String? // New field to store QR code data
 
   event Event @relation(fields: [event_id], references: [event_id])
   user  User  @relation(fields: [user_id], references: [user_id])

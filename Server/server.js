@@ -82,6 +82,7 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
+// Mount Chat Router
 app.use('/payments',paymentRoutes);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);

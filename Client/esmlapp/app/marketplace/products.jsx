@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
-const HomeScreen = () => {
+const products  = () => {
   const navigation = useNavigation(); // Initialize navigation
 
   // Sample product data (you can replace this with your actual data)
@@ -188,4 +188,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default products ;

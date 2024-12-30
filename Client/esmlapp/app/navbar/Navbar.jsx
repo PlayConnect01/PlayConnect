@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import io from "socket.io-client";
-import { BASE_URL } from '../../Api.js';
+import { BASE_URL } from "../../Api";
 
 const Navbar = () => {
   const navigation = useNavigation();
@@ -12,8 +12,8 @@ const Navbar = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    console.log('Initializing socket connection in Navbar');
-    
+    console.log("Initializing socket connection in Navbar");
+
     if (!socketRef.current) {
       socketRef.current = io(BASE_URL, {
         transports: ["websocket"],
@@ -22,27 +22,27 @@ const Navbar = () => {
 
       const socket = socketRef.current;
 
-      socket.on('connect', () => {
-        console.log('Navbar socket connected successfully');
+      socket.on("connect", () => {
+        console.log("Navbar socket connected successfully");
       });
 
-      socket.on('newNotification', (data) => {
-        console.log('New notification received:', data);
-        if (route.name !== 'Chat/MessagePage') {
-          console.log('Incrementing unread count');
-          setUnreadCount(prev => prev + 1);
+      socket.on("newNotification", (data) => {
+        console.log("New notification received:", data);
+        if (route.name !== "Chat/MessagePage") {
+          console.log("Incrementing unread count");
+          setUnreadCount((prev) => prev + 1);
         }
       });
 
-      socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
+      socket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
       });
     }
 
     return () => {
       if (socketRef.current) {
-        console.log('Disconnecting socket in Navbar cleanup');
-        socketRef.current.off('newNotification');
+        console.log("Disconnecting socket in Navbar cleanup");
+        socketRef.current.off("newNotification");
         socketRef.current.disconnect();
         socketRef.current = null;
       }
@@ -51,18 +51,26 @@ const Navbar = () => {
 
   // Reset unread count when entering MessagePage
   useEffect(() => {
-    if (route.name === 'Chat/MessagePage') {
-      console.log('Resetting unread count');
+    if (route.name === "Chat/MessagePage") {
+      console.log("Resetting unread count");
       setUnreadCount(0);
     }
   }, [route.name]);
 
   const isActive = (screenName) => {
     const currentRoute = route.name;
-    if (screenName === "Homep" && currentRoute === "Homepage/Homep") return true;
-    if (screenName === "Profile" && currentRoute === "profile/ProfilePage") return true;
-    if (screenName === "MarketplaceHome" && currentRoute === "marketplace/marketplace") return true;
-    if (screenName === "MessagePage" && currentRoute === "Chat/MessagePage") return true;
+    if (screenName === "Homep" && currentRoute === "Homepage/Homep")
+      return true;
+    if (screenName === "Profile" && currentRoute === "profile/ProfilePage")
+      return true;
+    if (
+      screenName === "MarketplaceHome" &&
+      currentRoute === "marketplace/marketplace"
+    )
+      return true;
+    if (screenName === "MessagePage" && currentRoute === "Chat/MessagePage")
+      return true;
+
     return currentRoute === screenName;
   };
 
@@ -78,18 +86,16 @@ const Navbar = () => {
             size={24}
             color={isActive("Homep") ? "#0095FF" : "#9CA3AF"}
           />
-          <Text style={isActive("Homep") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={isActive("Homep") ? styles.navTextActive : styles.navText}
+          >
             Home
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => {
-            console.log('Navigating to MessagePage');
-            setUnreadCount(0);
-            navigation.navigate("Chat/MessagePage");
-          }}
+          onPress={() => navigation.navigate("Chat/MessagePage")}
         >
           <View style={styles.iconContainer}>
             <Icon
@@ -113,21 +119,20 @@ const Navbar = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
+          style={[
+            styles.centerButton,
+            isActive("Match") && styles.activeCenterButton,
+          ]}
           onPress={() => navigation.navigate("Match/Firstpagematch")}
         >
           <View style={styles.centerButtonInner}>
-            <Icon
-              name="flame"
-              size={28}
-              color="#FFFFFF"
-            />
+            <Icon name="flame" size={28} color="#FFFFFF" />
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("marketplace/marketplace")}
+          onPress={() => navigation.navigate("marketplace/MarketplaceHome")}
         >
           <Icon
             name="cart"
@@ -136,7 +141,9 @@ const Navbar = () => {
           />
           <Text
             style={
-              isActive("MarketplaceHome") ? styles.navTextActive : styles.navText
+              isActive("MarketplaceHome")
+                ? styles.navTextActive
+                : styles.navText
             }
           >
             Market
@@ -165,27 +172,34 @@ const Navbar = () => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: "#F3F4F6",
+    elevation: 4,
   },
   navbar: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
     height: 65,
+    backgroundColor: "#FFFFFF",
+    paddingBottom: 10,
     paddingBottom: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   navItem: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 8,
     minWidth: 60,
+  },
+  activeItem: {
+    backgroundColor: "#E0E0E0",
+    borderRadius: 10,
   },
   navText: {
     color: "#9CA3AF",
@@ -219,30 +233,44 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 6,
   },
+  activeCenterButton: {},
   activeCenterButton: {
     // Add any specific active states for the center button if needed
   },
   iconContainer: {
-    position: 'relative',
+    position: "relative",
     width: 24,
     height: 24,
   },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     right: -8,
     top: -8,
-    backgroundColor: 'red',
+    backgroundColor: "red",
     borderRadius: 10,
     minWidth: 18,
     height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1,
   },
   badgeText: {
-    color: 'white',
+    color: "white",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    top: -8,
+    backgroundColor: "red",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
 });
 

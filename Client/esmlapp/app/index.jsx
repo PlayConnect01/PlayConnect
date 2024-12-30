@@ -2,6 +2,7 @@ import * as React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MainLayout from "../(Taps)/MainLayout";
+import { PaymentConfiguration } from '@stripe/stripe-react-native';
 
 // Screens
 import EventDetails from "./Homepage/EventDetails";
@@ -18,7 +19,7 @@ import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import ProfilePage from "./profile/ProfilePage";
 import MarketplaceHome from "./marketplace/marketplace";
-import products from "./marketplace/products";
+import Products from "./marketplace/products"; // Corrected import
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
@@ -160,7 +161,7 @@ export default function App() {
           name="products"
           component={() => (
             <MainLayout>
-              <products />
+              <Products/>
             </MainLayout>
           )}
         />
@@ -181,15 +182,15 @@ export default function App() {
           )}
         />
         <Stack.Screen
-          name="Payment"
-          component={() => (
+          name="PaymentScreen"
+          component={({ route, navigation }) => (
             <MainLayout>
-              <PaymentScreen />
+              <PaymentScreen route={route} navigation={navigation} />
             </MainLayout>
           )}
         />
         <Stack.Screen
-          name="delivery"
+          name="DeliveryServicesScreen"
           component={() => (
             <MainLayout>
               <DeliveryServicesScreen />
@@ -201,6 +202,46 @@ export default function App() {
           component={() => (
             <MainLayout>
               <PaymentSuccessScreen />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="FavoritesScreen"
+          component={() => (
+            <MainLayout>
+              <FavoritesScreen/>
+            </MainLayout>
+          )}
+        />
+         <Stack.Screen
+          name="AllDiscountedProduct"
+          component={() => (
+            <MainLayout>
+              <AllDiscountedProduct />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="OrderConfirmation"
+          component={({ route, navigation }) => (
+            <MainLayout>
+              <orderSuccess route={route} navigation={navigation} />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="BankTransferInstructions"
+          component={({ route, navigation }) => (
+            <MainLayout>
+              <BankTransferInstructions route={route} navigation={navigation} />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="CryptoPayment"
+          component={({ route, navigation }) => (
+            <MainLayout>
+              <CryptoPayment route={route} navigation={navigation} />
             </MainLayout>
           )}
         />

@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
-import { BASE_URL } from '../../Api.js';
+import { BASE_URL } from "../../Api";
 
 const { width } = Dimensions.get("window");
 
 const CategoryEvents = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { categoryName } = route.params;  // Receive the category name from navigation params
+  const { categoryName } = route.params; // Receive the category name from navigation params
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +42,9 @@ const CategoryEvents = () => {
     if (categoryName === "All Type") {
       setFilteredEvents(events);
     } else {
-      setFilteredEvents(events.filter((event) => event.category === categoryName));
+      setFilteredEvents(
+        events.filter((event) => event.category === categoryName)
+      );
     }
   }, [categoryName, events]);
 
@@ -48,7 +58,9 @@ const CategoryEvents = () => {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Back Arrow and Title */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Homepage/Homep")}
+          >
             <Ionicons name="arrow-back" size={24} color="#555" />
           </TouchableOpacity>
           <Text style={styles.categoryTitle}>{categoryName} Events</Text>
@@ -56,7 +68,9 @@ const CategoryEvents = () => {
 
         {/* No Events Found Message */}
         <View style={styles.noEventsContainer}>
-          <Text style={styles.noEventsText}>No events found in this category.</Text>
+          <Text style={styles.noEventsText}>
+            No events found in this category.
+          </Text>
         </View>
       </ScrollView>
     );

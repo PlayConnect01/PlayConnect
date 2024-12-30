@@ -1,7 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Modal, ScrollView, ImageBackground, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Modal,
+  ScrollView,
+  ImageBackground,
+  Animated,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { BASE_URL } from "../../Api";
 
 const MatchNotification = ({ notification, onAccept, onReject }) => {
@@ -9,9 +19,16 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
   const likeScale = useRef(new Animated.Value(1)).current;
   const dislikeScale = useRef(new Animated.Value(1)).current;
 
-  const senderName = notification?.senderName || notification?.user?.username || 'Unknown User';
-  const senderImage = notification?.senderImage || notification?.user?.profile_picture || 'default_image_url';
-  const senderLocation = notification?.senderLocation || notification?.user?.location || 'Location not specified';
+  const senderName =
+    notification?.senderName || notification?.user?.username || "Unknown User";
+  const senderImage =
+    notification?.senderImage ||
+    notification?.user?.profile_picture ||
+    "default_image_url";
+  const senderLocation =
+    notification?.senderLocation ||
+    notification?.user?.location ||
+    "Location not specified";
   const senderSports = notification?.user?.interested_sports || [];
 
   const animateButton = (scale) => {
@@ -51,12 +68,12 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
         imageStyle={styles.userImageStyle}
       >
         <LinearGradient
-          colors={['transparent', 'rgba(0, 0, 0, 0.95)']}
+          colors={["transparent", "rgba(0, 0, 0, 0.95)"]}
           style={styles.gradient}
         >
           <View style={styles.userInfoContainer}>
             <Text style={styles.userNameModal}>{senderName}</Text>
-            
+
             <View style={styles.infoSection}>
               <View style={styles.locationInfo}>
                 <Ionicons name="location" size={20} color="#fff" />
@@ -65,10 +82,18 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
 
               <View style={styles.sportsContainer}>
                 <Text style={styles.sportsTitle}>Interested in:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsList}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.sportsList}
+                >
                   {senderSports.map((sport, index) => (
                     <View key={index} style={styles.sportBadge}>
-                      <Ionicons name="football-outline" size={16} color="#fff" />
+                      <Ionicons
+                        name="football-outline"
+                        size={16}
+                        color="#fff"
+                      />
                       <Text style={styles.sportText}>{sport}</Text>
                     </View>
                   ))}
@@ -87,12 +112,17 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#FF0000', '#FF69B4']}
+                  colors={["#FF0000", "#FF69B4"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.gradientButton}
                 >
-                  <Animated.View style={[styles.buttonContent, { transform: [{ scale: dislikeScale }] }]}>
+                  <Animated.View
+                    style={[
+                      styles.buttonContent,
+                      { transform: [{ scale: dislikeScale }] },
+                    ]}
+                  >
                     <Ionicons name="close" size={35} color="#fff" />
                   </Animated.View>
                 </LinearGradient>
@@ -104,12 +134,17 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#4CAF50', '#FFEB3B']}
+                  colors={["#4CAF50", "#FFEB3B"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.gradientButton}
                 >
-                  <Animated.View style={[styles.buttonContent, { transform: [{ scale: likeScale }] }]}>
+                  <Animated.View
+                    style={[
+                      styles.buttonContent,
+                      { transform: [{ scale: likeScale }] },
+                    ]}
+                  >
                     <Ionicons name="heart" size={35} color="#fff" />
                   </Animated.View>
                 </LinearGradient>
@@ -124,12 +159,12 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '90%',
-    height: '80%',
+    width: "90%",
+    height: "80%",
     borderRadius: 30,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    overflow: "hidden",
+    backgroundColor: "#fff",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -139,101 +174,101 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   userImageBackground: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   userImageStyle: {
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   gradient: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   userInfoContainer: {
-    width: '100%',
+    width: "100%",
     padding: 25,
     paddingTop: 40,
   },
   userNameModal: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 15,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
   infoSection: {
-    width: '100%',
+    width: "100%",
     marginBottom: 20,
   },
   locationInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 15,
   },
   locationTextModal: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
     marginLeft: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
   sportsContainer: {
-    width: '100%',
+    width: "100%",
   },
   sportsTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
     opacity: 0.9,
   },
   sportsList: {
     maxHeight: 50,
   },
   sportBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
     marginRight: 8,
   },
   sportText: {
-    color: '#fff',
+    color: "#fff",
     marginLeft: 6,
     fontSize: 14,
   },
   matchText: {
     fontSize: 18,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     opacity: 0.9,
     marginTop: 15,
     marginBottom: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
     paddingHorizontal: 30,
   },
   actionButton: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 3,
@@ -241,19 +276,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4.5,
     elevation: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 2,
   },
   gradientButton: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 28,
   },
   buttonContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

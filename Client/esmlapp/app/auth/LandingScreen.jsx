@@ -1,9 +1,7 @@
-import React, { useState   } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
-import * as Animatable from 'react-native-animatable';
 
 const { width } = Dimensions.get('window');
 
@@ -13,9 +11,9 @@ const Landing = () => {
 
   const pages = [
     {
-      title: "Welcome to SportsMaven",
+      title: "Welcome to PlayConnect",
       description: "Discover partners, explore events, and gear up for your favorite sport!",
-      image:require('../../assets/images/welcome_screen.png.webp')
+      image: require('../../assets/images/welcome_screen.png.webp')
     },
     {
       title: "Find Your Sports Partner",
@@ -47,12 +45,7 @@ const Landing = () => {
   const renderPages = () => {
     return pages.map((page, index) => (
       <View key={index} style={styles.page}>
-        <Animatable.Image
-          animation="fadeIn"
-          duration={1000}
-          source={page.image}
-          style={styles.image}
-        />
+        <Image source={page.image} style={styles.image} />
         <Text style={styles.title}>{page.title}</Text>
         <Text style={styles.description}>{page.description}</Text>
       </View>
@@ -61,7 +54,6 @@ const Landing = () => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={["#00264d", "#004080"]} style={styles.gradientBackground} />
       <ScrollView
         horizontal
         pagingEnabled
@@ -90,97 +82,61 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  gradientBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    backgroundColor: '#fff',
   },
   page: {
     width,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    marginTop: 20,
   },
   image: {
     width: 300,
     height: 300,
     marginBottom: 20,
     borderRadius: 20,
-    borderWidth: 3,
-    borderColor: '#ffcc00',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10, // For Android shadow
   },
   title: {
-    fontSize: 28,
-    color: '#ffcc00',
+    fontSize: 24,
+    color: '#333',
     marginBottom: 10,
     textAlign: 'center',
-    fontFamily: 'Roboto-Bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 5,
   },
   description: {
-    fontSize: 18,
-    color: '#e6f2ff',
+    fontSize: 16,
+    color: '#666',
     textAlign: 'center',
     marginBottom: 30,
     paddingHorizontal: 10,
-    fontFamily: 'Roboto-Regular',
-    lineHeight: 24,
-    opacity: 0.9,
   },
   indicatorContainer: {
     flexDirection: 'row',
     position: 'absolute',
-    bottom: 120,
+    bottom: 100,
   },
   indicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#ccc',
     margin: 5,
-    borderWidth: 1,
-    borderColor: '#000',
-    opacity: 0.8,
   },
   activeIndicator: {
-    backgroundColor: '#ffcc00',
-    transform: [{ scale: 1.2 }],
+    backgroundColor: '#333',
   },
   button: {
-    backgroundColor: '#ff6600',
+    backgroundColor: '#007BFF',
     padding: 15,
     borderRadius: 25,
     position: 'absolute',
     bottom: 40,
     width: '80%',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ffe680',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
 });
 

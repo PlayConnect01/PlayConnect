@@ -1,150 +1,144 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const ConfirmationModal = ({ 
-  visible, 
-  onConfirm, 
-  onCancel, 
-  message, 
-  title, 
-  confirmText = 'Yes', 
-  cancelText = 'No', 
-  onSuccessMessage = '', 
-  onCancelMessage = '' 
-}) => {
-  const handleConfirm = () => {
-    if (onSuccessMessage) {
-      alert(onSuccessMessage);
-    }
-    onConfirm();
-  };
+const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
+  const scaleValue = new Animated.Value(0);
 
-  const handleCancel = () => {
-    if (onCancelMessage) {
-      alert(onCancelMessage);
+  React.useEffect(() => {
+    if (visible) {
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        friction: 7,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      scaleValue.setValue(0);
     }
-    onCancel();
-  };
+  }, [visible]);
 
   return (
-    <Modal visible={visible} transparent={true} animationType="fade">
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          {title && (
-            <View style={styles.titleContainer}>
-              <Icon name="question-circle" size={24} color="#FF4500" style={styles.titleIcon} />
-              <Text style={styles.title}>{title}</Text>
-            </View>
-          )}
+    <Modal
+      transparent
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
+      <View style={styles.modalOverlay}>
+        <Animated.View 
+          style={[
+            styles.modalContainer,
+            { transform: [{ scale: scaleValue }] }
+          ]}
+        >
+          <View style={styles.iconContainer}>
+            <Ionicons name="trash-bin-outline" size={40} color="#FF4B4B" />
+          </View>
+          
+          <Text style={styles.title}>Delete Item</Text>
           <Text style={styles.message}>{message}</Text>
+          
           <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={handleConfirm} style={styles.confirmButton}>
-              <Icon name="check" size={16} color="#FFF" style={styles.buttonIcon} />
-              <Text style={styles.confirmText}>{confirmText}</Text>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onCancel}
+            >
+              <Ionicons name="close-outline" size={20} color="#4FA5F5" />
+              <Text style={[styles.buttonText, styles.cancelText]}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-              <Icon name="times" size={16} color="#333" style={styles.buttonIcon} />
-              <Text style={styles.cancelText}>{cancelText}</Text>
+            
+            <TouchableOpacity
+              style={[styles.button, styles.deleteButton]}
+              onPress={onConfirm}
+            >
+              <Ionicons name="trash-outline" size={20} color="#FFF" />
+              <Text style={[styles.buttonText, styles.deleteText]}>Delete</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modalContainer: {
-    width: '85%',
-    backgroundColor: '#FFF',
-    borderRadius: 15,
-    padding: 30,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    width: Dimensions.get('window').width * 0.85,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowColor: '#4FA5F5',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  titleContainer: {
-    flexDirection: 'row',
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFF5F5',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  titleIcon: {
-    marginRight: 10,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
-    textAlign: 'center',
-    color: '#222',
+    color: '#2D3748',
+    marginBottom: 8,
   },
   message: {
-    fontSize: 18,
-    fontWeight: '400',
-    marginBottom: 30,
+    fontSize: 16,
+    color: '#4A5568',
     textAlign: 'center',
-    color: '#555',
-    lineHeight: 26,
+    marginBottom: 24,
+    lineHeight: 24,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
-  },
-  confirmButton: {
-    backgroundColor: '#FF4500',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 25,
-    flex: 1,
-    alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
-    marginHorizontal: 10,
-    shadowColor: '#FF4500',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 5,
+    gap: 12,
+    width: '100%',
   },
-  confirmText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginLeft: 8,
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flex: 1,
+    gap: 8,
   },
   cancelButton: {
-    backgroundColor: '#CCCCCC',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 25,
-    flex: 1,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginHorizontal: 10,
-    shadowColor: '#999',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    backgroundColor: '#EDF2F7',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  deleteButton: {
+    backgroundColor: '#FF4B4B',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   cancelText: {
-    color: '#333',
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginLeft: 8,
+    color: '#4FA5F5',
   },
-  buttonIcon: {
-    marginRight: 5,
+  deleteText: {
+    color: '#FFFFFF',
   },
 });
 

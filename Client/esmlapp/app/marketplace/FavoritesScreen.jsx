@@ -8,12 +8,13 @@ import {
   ScrollView,
   ActivityIndicator,
   SafeAreaView,
+  Animated,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import { FontAwesome } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URL } from '../../Api';
+import { FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BASE_URL } from "../../Api";
 
 const FavoritesScreen = () => {
   const navigation = useNavigation();
@@ -62,7 +63,7 @@ const FavoritesScreen = () => {
           favorites.filter((fav) => fav.favorite_id !== favorite.favorite_id)
         );
 
-        setShowMessage("Item removed from favorites! 💔");
+        setShowMessage("Item removed from favorites! ");
         setTimeout(() => setShowMessage(""), 2000);
       } catch (error) {
         console.error("Error removing from favorites:", error);
@@ -76,35 +77,115 @@ const FavoritesScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
-        <Text style={styles.headerTitle}>My Favorites</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <FontAwesome
+            name="arrow-left"
+            size={24}
+            style={styles.backButtonIcon}
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>My Collection</Text>
+
         {loading ? (
-          <ActivityIndicator size="large" color="#6e3de8" />
+          <ActivityIndicator size="large" color="#4299e1" />
+        ) : favorites.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Animated.View
+              style={[styles.emptyIcon, { transform: [{ scale: 1.2 }] }]}
+            >
+              <FontAwesome name="heart-o" size={80} color="#4299e1" />
+            </Animated.View>
+            <Text style={styles.emptyText}>
+              Start building your collection by adding favorites from the
+              marketplace
+            </Text>
+          </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            {favorites.map((favorite, index) => (
-              <View key={index} style={styles.card}>
-                <Image
-                  source={{ uri: favorite.product.image_url }}
-                  style={styles.cardImage}
-                />
-                <Text style={styles.cardTitle}>{favorite.product.name}</Text>
-                <Text style={styles.cardPrice}>${favorite.product.price}</Text>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => removeFromFavorites(favorite)}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.cardContainer}>
+              {favorites.map((favorite, index) => (
+                <Animated.View
+                  key={index}
+                  style={[
+                    styles.card,
+                    {
+                      transform: [{ translateY: 0 }, { scale: 1 }],
+                    },
+                  ]}
                 >
-                  <FontAwesome name="trash" size={20} color="#fff" />
-                  <Text style={styles.removeButtonText}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+                  <View style={styles.cardImageWrapper}>
+                    <View style={styles.cardGradientOverlay} />
+                    <Image
+                      source={{ uri: favorite.product.image_url }}
+                      style={styles.cardImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle} numberOfLines={2}>
+                      {favorite.product.name}
+                    </Text>
+                    <View style={styles.ratingContainer}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FontAwesome
+                          key={star}
+                          name={
+                            star <= Math.floor(favorite.product.rating || 0)
+                              ? "star"
+                              : "star-o"
+                          }
+                          size={12}
+                          color="#FBC02D"
+                          style={styles.starIcon}
+                        />
+                      ))}
+                      <Text style={styles.ratingText}>
+                        {Number(favorite.product.rating || 0).toFixed(1)}
+                      </Text>
+                      <Text style={styles.reviewCount}>
+                        ({favorite.product.rating_count || 0})
+                      </Text>
+                    </View>
+                    <Text style={styles.cardPrice}>
+                      ${favorite.product.price}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeFromFavorites(favorite)}
+                  >
+                    <FontAwesome
+                      name="heart"
+                      size={18}
+                      style={styles.removeButtonIcon}
+                    />
+                  </TouchableOpacity>
+                </Animated.View>
+              ))}
+            </View>
           </ScrollView>
         )}
       </View>
+
       {showMessage && (
-        <View style={styles.messageContainer}>
+        <Animated.View
+          style={[
+            styles.messageContainer,
+            {
+              transform: [{ translateY: 0 }],
+            },
+          ]}
+        >
+          <FontAwesome name="check-circle" size={18} color="#ffffff" />
           <Text style={styles.messageText}>{showMessage}</Text>
-        </View>
+        </Animated.View>
       )}
     </SafeAreaView>
   );
@@ -113,80 +194,177 @@ const FavoritesScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#F8FAFF",
   },
   mainContainer: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: "700",
+    color: "#1F2937",
     marginBottom: 20,
+    marginTop: 12,
+    textAlign: "center",
+    letterSpacing: 0.5,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 8,
+  },
+  cardContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
+    width: "48%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#EEF2FF",
+    shadowColor: "#4F46E5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  cardImageWrapper: {
+    width: "100%",
+    height: 160,
+    backgroundColor: "#F8FAFF",
+    position: "relative",
+  },
+  cardGradientOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "100%",
+    backgroundColor: "rgba(79, 70, 229, 0.03)",
+  },
+  cardImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  cardContent: {
+    padding: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  ratingContainer: {
+    flexDirection: "row",
     alignItems: "center",
+    marginBottom: 6,
+  },
+  starIcon: {
+    marginRight: 2,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: "#4B5563",
+    marginLeft: 4,
+    fontWeight: "600",
+  },
+  reviewCount: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginLeft: 4,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1F2937",
+    marginBottom: 6,
+    letterSpacing: 0.2,
+    textAlign: "left",
+  },
+  cardPrice: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#4F46E5",
+    textAlign: "left",
+  },
+  removeButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
+    zIndex: 2,
   },
-  cardImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginVertical: 6,
-    textAlign: "center",
-  },
-  cardPrice: {
-    color: "#6e3de8",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  removeButton: {
-    backgroundColor: "#ff3b8f",
-    borderRadius: 8,
-    padding: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-  },
-  removeButtonText: {
-    color: "#fff",
-    marginLeft: 5,
-    fontSize: 14,
-    fontWeight: "bold",
+  removeButtonIcon: {
+    color: "#DC2626",
   },
   messageContainer: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#6e3de8",
-    padding: 10,
+    bottom: 32,
+    alignSelf: "center",
+    backgroundColor: "#4F46E5",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flexDirection: "row",
     alignItems: "center",
+    shadowColor: "#4F46E5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   messageText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyIcon: {
+    marginBottom: 20,
+    opacity: 0.9,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 22,
+    letterSpacing: 0.2,
+    maxWidth: 260,
+  },
+  backButton: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    zIndex: 10,
+    backgroundColor: "#FFFFFF",
+    padding: 10,
+    borderRadius: 12,
+    shadowColor: "#4F46E5",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  backButtonIcon: {
+    color: "#4F46E5",
   },
 });
 

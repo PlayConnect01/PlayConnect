@@ -1,9 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
-import { BASE_URL } from '../../Api.js';
-const CartScreen = ({ navigation }) => {
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import ConfirmationModal from "./ConfirmationModal"; // Adjust the path as necessary
+import { BASE_URL } from "../../Api";
+
+const CartScreen = () => {
+  const navigation = useNavigation();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -19,7 +30,7 @@ const CartScreen = ({ navigation }) => {
         if (!userId) throw new Error("User ID not found");
 
         const response = await fetch(`${BASE_URL}/cart/cart/user/${userId}`);
-        console.log('Fetch cart response status:', response.status);
+        console.log("Fetch cart response status:", response.status);
 
         if (!response.ok) throw new Error("Failed to fetch cart items");
 
@@ -83,7 +94,7 @@ const CartScreen = ({ navigation }) => {
       }
 
       const response = await fetch(
-        `${API.BASE_URL}/cart/cart/item/${itemToDelete}`,
+        `${BASE_URL}/cart/cart/item/${itemToDelete}`,
         {
           method: "DELETE",
         }
@@ -110,9 +121,9 @@ const CartScreen = ({ navigation }) => {
     cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const navigateToDeliveryServices = () => {
-    navigation.navigate("delivery", {
+    navigation.navigate("DeliveryServicesScreen", {
       cartTotal: calculateTotal(),
-      cartItems,
+      cartItems: cartItems,
     });
   };
 
@@ -134,11 +145,7 @@ const CartScreen = ({ navigation }) => {
         <>
           {cartItems.map((item) => (
             <View key={item.cart_item_id} style={styles.cartItem}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.itemImage}
-                defaultSource={require("../../assets/images/sportscube.png")} // Add placeholder image
-              />
+              <Image source={{ uri: item.image }} style={styles.itemImage} />
               <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
@@ -192,7 +199,7 @@ const CartScreen = ({ navigation }) => {
           setItemToDelete(null); // Reset itemToDelete if canceled
           setModalVisible(false);
         }}
-        message="Are you sure you want to delete this item? 🗑️🤔"
+        message="Are you sure you want to delete this item?"
       />
     </ScrollView>
   );
@@ -203,113 +210,163 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  emptyCart: {
-    textAlign: "center",
-    fontSize: 16,
-    marginTop: 20,
-    color: "#666",
-  },
-  deleteButton: {
-    marginLeft: 10,
-    backgroundColor: "#FF6347",
-    borderRadius: 5,
-    padding: 5,
-  },
-  deleteText: {
-    color: "#FFF",
+    backgroundColor: "#F7FAFF",
   },
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#F7FAFF",
     padding: 16,
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
+    fontWeight: "700",
+    marginBottom: 20,
+    color: "#2D3748",
     textAlign: "center",
+  },
+  emptyCart: {
+    textAlign: "center",
+    fontSize: 16,
+    marginTop: 32,
+    color: "#4A5568",
+    fontWeight: "500",
   },
   cartItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: "#4FA5F5",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   itemImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    backgroundColor: "#F7FAFF",
   },
   itemDetails: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   itemName: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
+    color: "#2D3748",
+    marginBottom: 4,
   },
   itemPrice: {
-    fontSize: 14,
-    color: "#777",
+    fontSize: 16,
+    color: "#48BB78",
+    fontWeight: "700",
   },
   quantityControl: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#F7FAFF",
+    borderRadius: 8,
+    padding: 4,
   },
   quantityButton: {
-    width: 30,
-    height: 30,
+    width: 32,
+    height: 32,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#E0E0E0",
-    borderRadius: 5,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    shadowColor: "#4FA5F5",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   quantityText: {
     fontSize: 18,
+    color: "#4FA5F5",
+    fontWeight: "600",
   },
   quantity: {
-    marginHorizontal: 10,
+    marginHorizontal: 12,
     fontSize: 16,
+    fontWeight: "600",
+    color: "#2D3748",
+  },
+  deleteButton: {
+    backgroundColor: "#FFF5F5",
+    borderRadius: 8,
+    padding: 8,
+    marginLeft: 8,
+    shadowColor: "#FF4B4B",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  deleteText: {
+    color: "#FF4B4B",
+    fontWeight: "600",
+    fontSize: 14,
   },
   paymentDetails: {
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
     marginTop: 20,
-  },
-  paymentRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
+    shadowColor: "#4FA5F5",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   paymentLabel: {
     fontSize: 16,
+    fontWeight: "600",
+    color: "#2D3748",
   },
   paymentPrice: {
-    fontSize: 16,
-  },
-  paymentTotal: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    paddingTop: 10,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#48BB78",
+    textAlign: "right",
+    marginTop: 8,
   },
   checkoutButton: {
-    backgroundColor: "#6A5AE0",
-    borderRadius: 10,
-    padding: 15,
+    backgroundColor: "#4FA5F5",
+    borderRadius: 12,
+    padding: 16,
     marginTop: 20,
-    alignItems: "center",
+    marginBottom: 24,
+    shadowColor: "#4FA5F5",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   checkoutText: {
-    color: "#FFF",
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "700",
+    textAlign: "center",
   },
 });
 

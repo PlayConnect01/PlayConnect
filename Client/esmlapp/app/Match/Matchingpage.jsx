@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../Api.js';
+import { BASE_URL } from '../../Api';
 import { Import } from 'lucide-react';
 import MatchNotification from '../components/MatchNotification';
 import NotificationsModal from '../components/NotificationsModal';
