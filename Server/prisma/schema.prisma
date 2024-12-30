@@ -203,8 +203,9 @@ model Event {
 
 model EventParticipant {
   event_participant_id Int   @id @default(autoincrement())
-  event_id            Int
-  user_id             Int
+  event_id             Int
+  user_id              Int
+  qr_code              String? // New field to store QR code data
 
   event Event @relation(fields: [event_id], references: [event_id])
   user  User  @relation(fields: [user_id], references: [user_id])

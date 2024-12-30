@@ -108,7 +108,7 @@ const CartScreen = () => {
     cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const navigateToDeliveryServices = () => {
-    navigation.navigate("DeliveryServicesScreen", {
+    navigation.navigate("DeliveryServices", {
       cartTotal: calculateTotal(),
       cartItems: cartItems,
     });

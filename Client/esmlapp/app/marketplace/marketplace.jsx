@@ -838,7 +838,7 @@ const Marketplace = () => {
                     <View style={styles.cardRatingContainer}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <FontAwesome
-                          key={star}
+                          key={`star-${star}`}
                           name={star <= currentProduct.rating ? "star" : "star-o"}
                           size={20}
                           color={star <= currentProduct.rating ? "#FFD700" : "#BDC3C7"}
@@ -906,7 +906,7 @@ const Marketplace = () => {
             )}
 
             <Text style={styles.sectionTitle}>Special Offers</Text>
-            {discounts.map((discount, index) => {
+            {discounts.map((discount) => {
               const discountedPrice = calculateDiscountedPrice(
                 discount.price,
                 discount.discount
@@ -914,7 +914,7 @@ const Marketplace = () => {
               const savings = discount.price - discountedPrice;
               return (
                 <TouchableOpacity
-                  key={discount.id}
+                  key={discount.product_id}
                   style={styles.discountItem}
                   onPress={() => navigation.navigate('ProductDetail', {
                     productId: discount.product_id,

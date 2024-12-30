@@ -22,7 +22,7 @@ const competetionRouter = require('./routes/competetion');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
-const paymentRoutes = require('./routes/Paymentrouter.js');
+const paymentRouter = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
 
 
@@ -82,7 +82,7 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
-app.use('/payments',paymentRoutes);
+app.use('/payments', paymentRouter);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
 app.use('/notifications', notificationRoutes);

@@ -22,31 +22,16 @@ import MarketplaceHome from "./marketplace/marketplace";
 import Products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
-import PaymentScreen from './marketplace/PaymentScreen';
-import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
-import TournamentList from './Homepage/TournamentList'
-import TournamentDetail from './Homepage/TournamentDetail'
-import EditProfile from "./profile/EditProfile"
-import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
-import FavoritesScreen from './marketplace/FavoritesScreen';
-import AllDiscountedProduct from './marketplace/AllDiscountedProduct';
-import CryptoPayment from './marketplace/CryptoPayment';
-import BankTransferInstructions from './marketplace/BankTransferInstructions';
-import OrderConfirmation from './marketplace/OrderConfirmation';
-import BankDetailsForm from './marketplace/BankDetailsForm';
-import CreditCardForm from './marketplace/CreditCardForm';
-import PayPalForm from './marketplace/PayPalForm';
-import ApplePayForm from './marketplace/ApplePayForm';
-import GooglePayForm from './marketplace/GooglePayForm';
-
-// Use the publishable key directly for now
-const STRIPE_PUBLISHABLE_KEY = "pk_test_51QacpyJ8nvnIQ3GjGqk3JXubrVqAx9W0BpX7QjJ88rlauDCjsIncznLlzANlIEAXykBHNUK4QwvvagWo2dTnKbNU008BhqZ3Lp";
-
+import PaymentScreen from './marketplace/payment/PaymentScreen';
+import TournamentList from './Homepage/TournamentList';
+import TournamentDetail from './Homepage/TournamentDetail';
+import EditProfile from "./profile/EditProfile";
+import DeliveryServicesScreen from './marketplace/payment/DeliveryServicesScreen';
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>  
+    <StripeProvider>  
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack.Navigator
           initialRouteName="Landing"
@@ -214,73 +199,13 @@ export default function App() {
             )}
           />
           <Stack.Screen
-            name="PaymentSuccess"
+            name="DeliveryServices"
             component={({ route, navigation }) => (
               <MainLayout>
-                <PaymentSuccessScreen route={route} navigation={navigation} />
+                <DeliveryServicesScreen route={route} navigation={navigation} />
               </MainLayout>
             )}
           />
-          <Stack.Screen
-            name="OrderConfirmation"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <OrderConfirmation route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="BankTransferInstructions"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <BankTransferInstructions route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="CryptoPayment"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <CryptoPayment route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="BankDetailsForm"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <BankDetailsForm route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="DeliveryServicesScreen"
-            component={() => (
-              <MainLayout>
-                <DeliveryServicesScreen />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="FavoritesScreen"
-            component={() => (
-              <MainLayout>
-                <FavoritesScreen/>
-              </MainLayout>
-            )}
-          />
-           <Stack.Screen
-            name="AllDiscountedProduct"
-            component={() => (
-              <MainLayout>
-                <AllDiscountedProduct />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen name="CreditCardForm" component={CreditCardForm} />
-          <Stack.Screen name="PayPalForm" component={PayPalForm} />
-          <Stack.Screen name="ApplePayForm" component={ApplePayForm} />
-          <Stack.Screen name="GooglePayForm" component={GooglePayForm} />
 
         </Stack.Navigator>
       </GestureHandlerRootView>

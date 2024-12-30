@@ -71,7 +71,6 @@ async function confirmPayment(req, res) {
   }
 }
 
-// Stripe Configuration
 async function getConfig(req, res) {
   try {
     res.json({
@@ -83,9 +82,52 @@ async function getConfig(req, res) {
   }
 }
 
+
+
+
+      const processMarketplacePayment = async (req, res) => {
+        try {
+          const { userId, amount, items } = req.body;
+      
+          if (!amount || amount <= 0) {
+            return res.status(400).json({ error: 'Invalid payment amount' });
+          }
+      
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount * 100),
+            currency: 'usd',
+            payment_method_types: ['card'],
+            metadata: { 
+              userId,
+              orderItems: JSON.stringify(items.map(item => item.product_id))
+            }
+          });
+      
+          const order = await prisma.order.create({
+            data: {
+              user_id: parseInt(userId),
+              total_amount: amount,
+              status: 'pending',
+              payment_intent_id: paymentIntent.id
+            }
+          });
+      
+          res.json({
+            clientSecret: paymentIntent.client_secret,
+            orderId: order.id
+          });
+        } catch (error) {
+          console.error('Marketplace payment error:', error);
+          res.status(500).json({ error: 'Payment processing failed' });
+        }
+      };
+
 // Export the functions
 module.exports = {
   processPayment,
   confirmPayment,
-  getConfig
+  getConfig     ,
+  processMarketplacePayment,
+  
+  
 };
