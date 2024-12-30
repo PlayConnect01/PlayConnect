@@ -24,6 +24,7 @@
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
     "@shadcn/ui": "^0.0.4",
+    "@stripe/stripe-react-native": "^0.41.0",
     "ansi-regex": "^6.1.0",
     "axios": "^1.7.9",
     "babel-plugin-module-resolver": "^5.0.2",
@@ -59,6 +60,7 @@
     "node-emoji": "^2.2.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pretty-format": "^29.7.0",
     "react": "18.3.1",
     "react-async-hook": "^4.0.0",
     "react-datepicker": "^7.5.0",
@@ -90,8 +92,7 @@
     "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.14.5",
     "tailwind-rn": "^4.2.0",
-    "whatwg-url": "^14.1.0",
-    "@stripe/stripe-react-native": "0.38.6"
+    "whatwg-url": "^14.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

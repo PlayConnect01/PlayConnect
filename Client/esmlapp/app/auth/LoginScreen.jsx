@@ -19,13 +19,10 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
+import { BASE_URL } from '../../Api';
 import { BlurView } from 'expo-blur';
 
-import { BASE_URL } from '../../Api';
-
-
-
-WebBrowser.maybeCompleteAuthSession();
+WebBrowser.maybeCompleteAuthSession()
 
 export default function Login() {
 

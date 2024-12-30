@@ -13,7 +13,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import { BASE_URL } from '../../Api.js';
+import {BASE_URL} from '../../Api';
 
 const SignUpScreen = () => {
   const [username, setUsername] = useState('');

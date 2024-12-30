@@ -46,7 +46,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchStripeKey = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/payment/config`);
+        const response = await axios.get(`${BASE_URL}/payments/config`);
         setStripeKey(response.data.publishableKey);
       } catch (err) {
         console.error('Error fetching Stripe key:', err);
@@ -89,7 +89,7 @@ const EventDetails = () => {
 
 const initializePayment = async (amount, userId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/payment/process`, {
+    const response = await axios.post(`${BASE_URL}/payments/process`, {
       userId,
       amount: amount,
       items: [{

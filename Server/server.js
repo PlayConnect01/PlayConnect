@@ -23,6 +23,8 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
 const paymentRoutes = require('./routes/Paymentrouter.js');
+const notificationRoutes = require('./routes/notification');
+
 
 
 const app = express();
@@ -81,10 +83,10 @@ app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
 // Mount Chat Router
-app.use('/payment',paymentRoutes);
+app.use('/payments',paymentRoutes);
 app.use('/leaderboard', leaderboardRoutes);
-// Mount Chat Router
 app.use('/chats', chatRoutes);
+app.use('/notifications', notificationRoutes);
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

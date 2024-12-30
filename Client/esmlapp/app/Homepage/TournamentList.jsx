@@ -63,7 +63,7 @@ const TournamentList = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate("Homepage/TournamentList")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tournaments</Text>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,35 +8,36 @@ import {
   Image,
   Animated,
 } from 'react-native';
-import { useEffect } from 'react';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialIcons } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; 
-import { BASE_URL } from '../../Api.js';
+import { Ionicons } from '@expo/vector-icons';
+import { BASE_URL } from '../../Api';
+import { useStripe } from '@stripe/stripe-react-native';
+
 const PaymentScreen = ({ route, navigation }) => {
-  const { cartTotal = 0, deliveryFee = 0 } = route.params || {};
+  const { cartTotal = 0, deliveryFee = 0, cartItems } = route.params || {};
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bounceAnim] = useState(new Animated.Value(1));
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
-  const paymentMethods = [
-    {
-      id: 1,
-      name: "Credit Card",
-      icon: "credit-card-outline", // Icon name
-    },
-    {
-      id: 2,
-      name: "PayPal",
-      icon: "paypal", // Icon name
-    },
-    {
-      id: 3,
-      name: "Apple Pay",
-      icon: "apple-pay", // Icon name
-    },
-  ];
+  useEffect(() => {
+    const fetchPaymentSheetParams = async () => {
+      const response = await axios.get(`${BASE_URL}/payments/config`);
+      const { publishableKey } = response.data;
+
+      const { error } = await initPaymentSheet({
+        merchantDisplayName: 'Your Store',
+        paymentIntentClientSecret: publishableKey,
+      });
+
+      if (!error) {
+        console.log('PaymentSheet initialized successfully');
+      }
+    };
+
+    fetchPaymentSheetParams();
+  }, []);
 
   useEffect(() => {
     if (selectedMethod) {
@@ -55,36 +56,101 @@ const PaymentScreen = ({ route, navigation }) => {
     }
   }, [selectedMethod]);
 
+  const paymentMethods = [
+    {
+      id: 1,
+      name: "Credit Card",
+      icon: "card-outline",
+      details: "Visa, Mastercard, American Express",
+    },
+    {
+      id: 2,
+      name: "PayPal",
+      icon: "logo-paypal",
+      details: "Fast and secure payment",
+    },
+    {
+      id: 3,
+      name: "Apple Pay",
+      icon: "logo-apple",
+      details: "Quick tap to pay",
+    },
+    {
+      id: 4,
+      name: "Google Pay",
+      icon: "logo-google",
+      details: "Simple and secure payments",
+    },
+    {
+      id: 5,
+      name: "Cash on Delivery",
+      icon: "cash-outline",
+      details: "Pay when you receive",
+    },
+    {
+      id: 6,
+      name: "Bank Transfer",
+      icon: "business-outline",
+      details: "Direct bank transfer",
+    },
+    {
+      id: 7,
+      name: "Cryptocurrency",
+      icon: "logo-bitcoin",
+      details: "Pay with crypto",
+    }
+  ];
+
   const processPayment = async () => {
     if (!selectedMethod) {
-      alert("Please select a payment method");
+      alert('Please select a payment method');
       return;
     }
-
     setIsProcessing(true);
     try {
-      const userId = await AsyncStorage.getItem("userId");
-
-      // Simulate payment processing
-      const paymentResponse = await axios.post(`${BASE_URL}/payments/process`, {
-        userId,
-        amount: cartTotal + deliveryFee, // Ensure this calculation
-        paymentMethod: selectedMethod,
-        items: route.params.cartItems,
-      });
-
-      if (paymentResponse.data.success) {
-        // Clear cart after successful payment
-        await axios.delete(`${BASE_URL}/cart/cart/clear/${userId}`);
-
-        navigation.navigate("PaymentSuccess", {
+      const userId = await AsyncStorage.getItem('userId');
+      if ([1, 2, 3, 4].includes(selectedMethod)) { // Credit Card, PayPal, Apple Pay, Google Pay
+        const response = await axios.post(`${BASE_URL}/payments/process`, {
+          userId,
           amount: cartTotal + deliveryFee,
-          orderId: paymentResponse.data.orderId,
+          items: cartItems,
+        });
+
+        const { clientSecret, orderId } = response.data;
+
+        const { error } = await presentPaymentSheet({
+          clientSecret,
+        });
+
+        if (error) {
+          alert(`Error: ${error.message}`);
+        } else {
+          alert('Payment complete, thank you!');
+          navigation.navigate('PaymentSuccess', {
+            amount: cartTotal + deliveryFee,
+            orderId,
+          });
+        }
+      } else if (selectedMethod === 5) { // Cash on Delivery
+        alert('Order placed. Pay upon delivery.');
+        navigation.navigate('OrderConfirmation', {
+          amount: cartTotal + deliveryFee,
+          method: 'Cash on Delivery',
+        });
+      } else if (selectedMethod === 6) { // Bank Transfer
+        navigation.navigate('BankTransferInstructions', {
+          amount: cartTotal + deliveryFee,
+          bankDetails: 'Bank details here',
+        });
+      } else if (selectedMethod === 7) { // Cryptocurrency
+        navigation.navigate('CryptoPayment', {
+          amount: cartTotal + deliveryFee,
+          cryptoAddress: 'Your crypto address here',
         });
       }
     } catch (error) {
-      console.error("Payment error:", error);
-      alert("Payment failed. Please try again.");
+      console.error('Payment processing error:', error);
+      alert('Payment failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -93,8 +159,13 @@ const PaymentScreen = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#4FA5F5" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment Details</Text>
-        <MaterialIcons name="payment" size={24} color="#6A5AE0" />
       </View>
 
       <View style={styles.summaryCard}>
@@ -132,14 +203,18 @@ const PaymentScreen = ({ route, navigation }) => {
               onPress={() => setSelectedMethod(method.id)}
               style={styles.methodButton}
             >
-              <MaterialCommunityIcons
+              <Ionicons
                 name={method.icon}
-                size={40}
-                color={selectedMethod === method.id ? "#6A5AE0" : "#666"}
+                size={32}
+                color={selectedMethod === method.id ? "#4FA5F5" : "#6B7280"}
+                style={styles.methodIcon}
               />
-              <Text style={styles.methodName}>{method.name}</Text>
+              <View style={styles.methodInfo}>
+                <Text style={styles.methodName}>{method.name}</Text>
+                <Text style={styles.methodDetails}>{method.details}</Text>
+              </View>
               {selectedMethod === method.id && (
-                <MaterialIcons name="check-circle" size={24} color="#6A5AE0" />
+                <Ionicons name="checkmark-circle" size={24} color="#4FA5F5" />
               )}
             </TouchableOpacity>
           </Animated.View>
@@ -156,8 +231,21 @@ const PaymentScreen = ({ route, navigation }) => {
         disabled={isProcessing || !selectedMethod}
       >
         <Text style={styles.payButtonText}>
-          {isProcessing ? "Processing..." : "Pay Now"}
+          {isProcessing ? 'Processing...' : 'Pay Now'}
         </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.nextButton}
+        onPress={() => {
+          if (selectedMethod) {
+            processPayment();
+          } else {
+            alert('Please select a payment method');
+          }
+        }}
+      >
+        <Text style={styles.nextButtonText}>Next Step</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -166,36 +254,49 @@ const PaymentScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#F8FAFF",
     padding: 16,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 24,
+    marginTop: 8,
+  },
+  backButton: {
+    backgroundColor: '#FFFFFF',
+    padding: 10,
+    borderRadius: 12,
+    marginRight: 16,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1F2937",
   },
   summaryCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 15,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 16,
     marginBottom: 24,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: "#EEF2FF",
+    shadowColor: "#4FA5F5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   summaryTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
     marginBottom: 16,
-    color: "#333",
+    color: "#1F2937",
   },
   summaryRow: {
     flexDirection: "row",
@@ -203,52 +304,56 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   summaryLabel: {
-    fontSize: 16,
-    color: "#666",
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "500",
   },
   summaryValue: {
     fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
+    color: "#1F2937",
+    fontWeight: "600",
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: "#EEE",
+    borderTopColor: "#EEF2FF",
     paddingTop: 12,
     marginTop: 12,
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#6A5AE0",
+    fontWeight: "700",
+    color: "#4FA5F5",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
     marginBottom: 16,
-    color: "#333",
+    color: "#1F2937",
   },
   paymentMethods: {
     marginBottom: 24,
   },
   methodCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: "#EEF2FF",
+    shadowColor: "#4FA5F5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   selectedMethod: {
-    borderColor: "#6A5AE0",
+    borderColor: "#4FA5F5",
     borderWidth: 2,
+    backgroundColor: "#F8FAFF",
   },
   methodButton: {
     flexDirection: "row",
@@ -256,32 +361,62 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   methodIcon: {
-    width: 40,
-    height: 40,
-    marginRight: 16,
+    marginRight: 12,
+  },
+  methodInfo: {
+    flex: 1,
+    marginRight: 8,
   },
   methodName: {
     fontSize: 16,
-    flex: 1,
-    color: "#333",
+    color: "#1F2937",
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  methodDetails: {
+    fontSize: 12,
+    color: "#6B7280",
   },
   payButton: {
-    backgroundColor: "#6A5AE0",
+    backgroundColor: "#4FA5F5",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
     marginBottom: 24,
+    shadowColor: "#4FA5F5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   processingButton: {
-    backgroundColor: "#8F85E8",
+    backgroundColor: "#93C5F8",
   },
   disabledButton: {
-    backgroundColor: "#C5C5C5",
+    backgroundColor: "#E5E7EB",
+    shadowOpacity: 0.1,
   },
   payButtonText: {
-    color: "#FFF",
-    fontSize: 18,
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  nextButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  nextButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

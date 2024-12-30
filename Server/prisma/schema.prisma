@@ -92,6 +92,8 @@ model User {
   // New relationships for video calls
   initiated_calls     VideoCall[]    @relation("CallInitiator")
   received_calls      VideoCall[]    @relation("CallParticipant")
+
+  // New relation for orders
   orders              Order[]
 }
 
