@@ -41,24 +41,49 @@ const sendCode = async (req, res) => {
     // Store the code with the email as key
     recoveryCodes[email] = code;
 
-    const mailOptions = {
+     const mailOptions = {
       from: 'ahmedboukottaya@zohomail.com',
       to: email,
-  
-      subject: '🔒 Password Recovery Code',
-      text: `Hello ${user.username},
+      subject: 'Password Recovery Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="color: #2c3e50;">Hello ${user.username},</h2>
+          <p>We received a request to reset the password associated with your account. To proceed with resetting your password, please use the recovery code below:</p>
+          
+          <div style="display: flex; gap: 8px; justify-content: center; margin: 20px 0;">
+            ${String(code)
+              .split('')
+              .map(
+                (digit) => `
+                  <div style="
+                    display: inline-block;
+                    padding: 10px;
+                    border: 2px solid #2980b9;
+                    text-align: center;
+                    font-size: 24px;
+                    font-weight: bold;
+                    width: 40px;
+                    height: 50px;
+                    line-height: 30px;
+                    background-color: #ecf0f1;
+                    border-radius: 8px;
+                    color: #2c3e50;
+                  ">
+                    ${digit}
+                  </div>
+                `
+              )
+              .join('')}
+          </div>
     
-    We have received a request to reset your password. Please use the following recovery code to proceed with resetting your password:
-    
-    **${code}**
-    
-    If you did not request a password reset, please disregard this email. Your account security is important to us.
-    
-    Thank you for your attention.
-    
-    Best regards,
-    The Support Team`,
+          <p>If you did not request a password reset, you can safely ignore this email. Rest assured, your account remains secure.</p>
+          <p>For further assistance, feel free to contact our support team.</p>
+          
+          <p style="margin-top: 20px;">Thank you,<br><strong>The Support Team</strong></p>
+        </div>
+      `,
     };
+    
 
 
     transporter.sendMail(mailOptions, (error, info) => {

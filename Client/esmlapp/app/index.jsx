@@ -23,21 +23,23 @@ import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
-import TournamentList from './Homepage/TournamentList'
-import TournamentDetail from './Homepage/TournamentDetail'
-import EditProfile from "./profile/EditProfile"
+import TournamentList from './Homepage/TournamentList';
+import TournamentDetail from './Homepage/TournamentDetail';
+import EditProfile from "./profile/EditProfile";
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
-const Stack = createStackNavigator();
+import First from "./FirstPage/First";
 
+const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack.Navigator
-        initialRouteName="Landing"
+        initialRouteName="First"
         screenOptions={{ headerShown: false }}
       >
         {/* Auth Screens */}
+        <Stack.Screen name="First" component={First} />
         <Stack.Screen name="Landing" component={Landing} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="SignUp" component={SignUp} />
