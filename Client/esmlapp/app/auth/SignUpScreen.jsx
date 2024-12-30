@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  ImageBackground, 
-  KeyboardAvoidingView, 
-  Platform 
+  Image, 
+  Animated,
+  Easing
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import axios from 'axios';
 import { BASE_URL } from '../../Api.js';
 
@@ -23,6 +25,25 @@ const SignUpScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigation = useNavigation();
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000,
+        easing: Easing.bounce,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   const handleSignUp = async () => {
     try {
@@ -40,15 +61,21 @@ const SignUpScreen = () => {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/sportscube.png')} 
-      style={styles.background}
-    >
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          style={styles.content}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+    <View style={styles.backgroundImage}>
+      <SafeAreaView style={styles.content}>
+        <View style={styles.topContainer}>
+          <Image
+            style={styles.topImage}
+            source={require('../../assets/images/Loginbackground.jpg')}
+            resizeMode="contain"
+          />
+        </View>
+        <BlurView intensity={80} tint="dark" style={styles.formContainer}>
+          <LinearGradient
+            colors={['rgba(0,0,0,0.4)', 'transparent']}
+            style={styles.formOverlay}
+          />
+          
           <Text style={styles.title}>Welcome</Text>
           <Text style={styles.subtitle}>Join the Team Today!</Text>
 
@@ -112,27 +139,58 @@ const SignUpScreen = () => {
           <TouchableOpacity style={styles.button} onPress={handleSignUp}>
             <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
-        </KeyboardAvoidingView>
+        </BlurView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  background: {
+  backgroundImage: {
     flex: 1,
     resizeMode: 'cover',
-    justifyContent: 'center',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: 20,
+    justifyContent: 'flex-start',
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    padding: 0,
+    justifyContent: 'flex-start',
+  },
+  topContainer: {
+    height: '35%',
+    width: '100%',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    marginTop: 0,
+  },
+  topImage: {
+    width: '100%',
+    height: '100%',
+  },
+  formContainer: {
+    padding: 35,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -3,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    marginTop: -29,
+    marginLeft: 0,
+    marginRight: 0,
+    width: '100%',
+    paddingTop: 25,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    overflow: 'hidden',
+  },
+  formOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    zIndex: 1,
   },
   title: {
     fontSize: 28,

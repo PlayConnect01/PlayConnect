@@ -268,14 +268,16 @@ CREATE TABLE `PointsLog` (
 CREATE TABLE `Notification` (
     `notification_id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
-    `type` VARCHAR(191) NOT NULL,
+    `type` ENUM('MATCH_REQUEST', 'MATCH_ACCEPTED', 'MATCH_REJECTED', 'GENERAL', 'EVENT_INVITATION', 'TOURNAMENT_INVITATION') NOT NULL DEFAULT 'GENERAL',
     `title` VARCHAR(191) NOT NULL,
     `content` VARCHAR(191) NOT NULL,
     `is_read` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `action_url` VARCHAR(191) NULL,
+    `match_id` INTEGER NULL,
 
     INDEX `Notification_user_id_idx`(`user_id`),
+    INDEX `Notification_match_id_idx`(`match_id`),
     PRIMARY KEY (`notification_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -314,6 +316,18 @@ CREATE TABLE `VideoCall` (
     INDEX `VideoCall_initiator_id_idx`(`initiator_id`),
     INDEX `VideoCall_participant_id_idx`(`participant_id`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Order` (
+    `order_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `total_amount` DOUBLE NOT NULL,
+    `status` VARCHAR(191) NOT NULL,
+    `payment_intent_id` VARCHAR(191) NOT NULL,
+
+    INDEX `Order_user_id_idx`(`user_id`),
+    PRIMARY KEY (`order_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
@@ -410,6 +424,9 @@ ALTER TABLE `PointsLog` ADD CONSTRAINT `PointsLog_user_id_fkey` FOREIGN KEY (`us
 ALTER TABLE `Notification` ADD CONSTRAINT `Notification_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_match_id_fkey` FOREIGN KEY (`match_id`) REFERENCES `Match`(`match_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Match` ADD CONSTRAINT `Match_user_id_1_fkey` FOREIGN KEY (`user_id_1`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -429,3 +446,6 @@ ALTER TABLE `VideoCall` ADD CONSTRAINT `VideoCall_initiator_id_fkey` FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE `VideoCall` ADD CONSTRAINT `VideoCall_participant_id_fkey` FOREIGN KEY (`participant_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Order` ADD CONSTRAINT `Order_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

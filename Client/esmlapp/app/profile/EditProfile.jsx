@@ -6,9 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
-import { Picker } from '@react-native-picker/picker'; // Add this import
 import CountryPicker from 'react-native-country-picker-modal';
-import DateTimePickerModal from 'react-native-modal-datetime-picker'; // Import the date picker
 import { BASE_URL } from '../../Api.js';
 import Navbar from '../navbar/Navbar.jsx';
 
@@ -159,78 +157,69 @@ const EditProfile = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
+ // In EditProfile.jsx, modify the handleSubmit function:
+
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    return;
+  }
+
+  setIsSubmitting(true);
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      alert('Please log in again to continue.');
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        alert('Please log in again to continue.');
-        return;
-      }
+    const decodedToken = decodeToken(token);
+    const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
-      const decodedToken = decodeToken(token);
-      if (!decodedToken) {
-        alert('Session expired. Please log in again.');
-        return;
-      }
-
-      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
-
-      console.log(userId);
-      
-      if (!userId) {
-        throw new Error('Invalid user session. Please log in again.');
-      }
-
-      // Construct the birthdate from day, month, and year
-      const { birthdate_day, birthdate_month, birthdate_year } = formData;
-      const birthdate = birthdate_day && birthdate_month && birthdate_year
-        ? `${birthdate_year}-${birthdate_month}-${birthdate_day}`
-        : null;
-
-      const requestData = {
-        username: formData.username.trim(),
-        email: formData.email.trim(),
-        location: formData.location.trim() || null,
-        birthdate, // Send the formatted birthdate
-        phone_number: formData.phone_number,
-        phone_country_code: formData.phone_country_code,
-        ...(formData.profile_picture?.startsWith('data:image') && {
-          profile_picture: formData.profile_picture
-        })
-      };
-
-      console.log(userId);
-      
-      const response = await axios.put(
-        `${BASE_URL}/users/${userId}`,
-        requestData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          }
-        }
-      );
-
-      if (response.data.success) {
-        alert('Profile updated successfully!');
-        navigation.navigate('profile/ProfilePage');
-
-      } else {
-        throw new Error(response.data.error || 'Failed to update profile');
-      }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert(error.response?.data?.error || error.message || 'Failed to update profile. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    // Combine the date fields into a single birthdate if all fields are present
+    let birthdateToSend = null;
+    if (formData.birthdate_day && formData.birthdate_month && formData.birthdate_year) {
+      const formattedMonth = formData.birthdate_month.padStart(2, '0');
+      const formattedDay = formData.birthdate_day.padStart(2, '0');
+      birthdateToSend = `${formData.birthdate_year}-${formattedMonth}-${formattedDay}`;
     }
-  };
+
+    // Format the request data
+    const requestData = {
+      username: formData.username.trim(),
+      email: formData.email.trim(),
+      location: formData.location.trim() || null,
+      phone_number: formData.phone_number,
+      phone_country_code: formData.phone_country_code,
+      birthdate: birthdateToSend, // Send as a single field
+      ...(formData.profile_picture?.startsWith('data:image') && {
+        profile_picture: formData.profile_picture
+      })
+    };
+    
+      const response = await axios.put(
+      `${BASE_URL}/users/${userId}`,
+      requestData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        }
+      }
+    );
+
+    if (response.data.success) {
+      alert('Profile updated successfully!');
+      navigation.navigate('profile/ProfilePage');
+    } else {
+      throw new Error(response.data.error || 'Failed to update profile');
+    }
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    alert(error.response?.data?.error || error.message || 'Failed to update profile. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const renderInput = (field, placeholder, icon, keyboardType = 'default', customStyle = {}) => (
     <View style={styles.inputContainer}>
@@ -635,4 +624,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditProfile; 
+export default EditProfile;

@@ -80,11 +80,11 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
-// Mount Chat Router
+
 app.use('/leaderboard', leaderboardRoutes);
-// Mount Chat Router
+
 app.use('/chats', chatRoutes);
-app.use('/payments', paymentRoutes);
+app.use('/payment', paymentRoutes);
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

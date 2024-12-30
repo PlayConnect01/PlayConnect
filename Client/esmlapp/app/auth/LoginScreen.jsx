@@ -10,7 +10,6 @@ import {
   Animated,
   Easing,
   ActivityIndicator,
-  ImageBackground,
 } from 'react-native';
 import { FontAwesome, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,39 +19,25 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { BlurView } from 'expo-blur';
-
 import { BASE_URL } from '../../Api';
-
-
-
+ 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(-100)).current;
   const navigation = useNavigation();
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 1000,
-        easing: Easing.bounce,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -66,12 +51,8 @@ export default function Login() {
         email,
         password,
       });
-
       const { token } = response.data;
       await AsyncStorage.setItem('userToken', token);
-console.log(token , "tooooken");
-
-      // Navigate to home page after successful login
       navigation.reset({
         index: 0,
         routes: [{ name: 'Homep' }],
@@ -88,57 +69,59 @@ console.log(token , "tooooken");
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/sportscube.png')}
-      style={styles.backgroundImage}
-    >
-      <LinearGradient
-        colors={['rgba(0,0,0,0.9)', 'rgba(0,0,0,0.7)']}
-        style={styles.gradient}
-      />
+    <View style={styles.backgroundImage}>
       <SafeAreaView style={styles.content}>
-        <Animated.Image
-          source={require('../../assets/images/image.png')}
-          style={[styles.logo, {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          }]}
-        />
+        <View style={styles.topContainer}>
+          <Image
+            style={styles.topImage}
+            source={require('../../assets/images/Loginbackground.jpg')}
+            resizeMode="contain"
+          />
+        </View>
         
-        <BlurView intensity={50} style={styles.formContainer}>
-          <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>Welcome Back</Animated.Text>
-          <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>sign in to access your account</Animated.Text>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome name="envelope" size={20} color="rgba(255,255,255,0.5)" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              placeholderTextColor="rgba(255,255,255,0.5)"
-            />
+        <BlurView intensity={60} tint="dark" style={styles.formContainer}>
+          <LinearGradient
+            colors={['rgba(0,128,255,0.2)', 'transparent']}
+            style={styles.formOverlay}
+          />
+          
+          <Text style={styles.title}>Welcome Back</Text>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <View style={styles.inputContainer}>
+              <FontAwesome name="user" size={20} color="rgba(255,255,255,0.7)" />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+              />
+            </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="rgba(255,255,255,0.5)" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!isPasswordVisible}
-              placeholderTextColor="rgba(255,255,255,0.5)"
-            />
-            <TouchableOpacity onPress={togglePasswordVisibility}>
-              <Feather
-                name={isPasswordVisible ? 'eye' : 'eye-off'}
-                size={20}
-                color="rgba(255,255,255,0.5)"
-                style={styles.eyeIcon}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.inputContainer}>
+              <FontAwesome name="key" size={20} color="rgba(255,255,255,0.7)" />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!isPasswordVisible}
+                placeholderTextColor="rgba(255,255,255,0.5)"
               />
-            </TouchableOpacity>
+              <TouchableOpacity onPress={togglePasswordVisibility}>
+                <Feather
+                  name={isPasswordVisible ? 'eye' : 'eye-off'}
+                  size={20}
+                  color="rgba(255,255,255,0.7)"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.links}>
@@ -150,114 +133,118 @@ console.log(token , "tooooken");
             </TouchableOpacity>
           </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
-          <LinearGradient
-            colors={['#3498db', '#2980b9']}
-            style={styles.gradientButton}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Text style={styles.buttonText}>Sign in</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
+            <LinearGradient
+              colors={['#0080FF', '#0066CC']}
+              style={styles.gradientButton}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Text style={styles.buttonText}>Sign in</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        <Text style={styles.socialText}>Sign in With</Text>
-        <View style={styles.socialContainer}>
-          <TouchableOpacity style={styles.socialButton}>
-            <FontAwesome name="facebook" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <FontAwesome name="google" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <FontAwesome name="envelope" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
+          <Text style={styles.socialText}>Sign in With</Text>
+          <View style={styles.socialContainer}>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome name="facebook" size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome name="google" size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome name="envelope" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
 
-          {isLoading && <ActivityIndicator size="large" color="#3498db" style={styles.loader} />}
+          {isLoading && <ActivityIndicator size="large" color="#0080FF" style={styles.loader} />}
         </BlurView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
-  },
-  gradient: {
-    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1a1a1a',
   },
   content: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+    padding: 0,
   },
-  logo: {
-    width: '80%',
-    height: 200,
-    alignSelf: 'center',
-    marginBottom: 30,
-    resizeMode: 'contain',
+  topContainer: {
+    height: '30%',  // Reduced the top image height
+    width: '100%',
+    overflow: 'hidden',
+  },
+  topImage: {
+    width: '100%',
+    height: '100%',
   },
   formContainer: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 20,
+    flex: 1,
+    padding: 20,  // Reduced padding for smaller form content
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    marginTop: -30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+  },
+  formOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 28,  // Slightly reduced font size for the title
+    fontWeight: '700',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    marginBottom: 20,
+    marginTop: 10,
   },
-  subtitle: {
+  inputGroup: {
+    marginBottom: 18,  // Reduced margin to make the form a bit smaller
+  },
+  inputLabel: {
+    color: '#fff',
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
-    marginBottom: 30,
+    fontWeight: '500',
+    marginBottom: 6,
+    marginLeft: 4,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 15,
-    height: 55,
+    paddingHorizontal: 14,  // Reduced padding for smaller input fields
+    height: 50,  // Reduced height to fit better
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   input: {
     flex: 1,
     color: '#fff',
     marginLeft: 10,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 10,
+    fontSize: 16,  // Keep the font size the same for readability
   },
   links: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    marginVertical: 15,
+    marginVertical: 18,  // Reduced space between links
   },
   linkText: {
-    color: '#3498db',
+    color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   button: {
-    width: '100%',
-    height: 55,
+    height: 50,
     borderRadius: 12,
     overflow: 'hidden',
     marginVertical: 20,
@@ -266,43 +253,35 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 15,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontWeight: '600',
   },
   socialText: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 14,
     textAlign: 'center',
-    marginVertical: 20,
+    marginVertical: 18,  // Reduced space before social buttons
   },
   socialContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 25,
+    gap: 20,
   },
   socialButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
   loader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
 });
