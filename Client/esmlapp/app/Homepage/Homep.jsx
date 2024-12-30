@@ -14,27 +14,26 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { BASE_URL } from '../../Api';
-import Navbar from '../navbar/Navbar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NotificationsModal from '../components/NotificationsModal';
-
+import { BASE_URL } from "../../Api";
+import Navbar from "../navbar/Navbar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NotificationsModal from "../components/NotificationsModal";
 const { width } = Dimensions.get("window");
 
 const iconMap = {
-    american_soccer_american_soccer_football_rugby_icon_209383: require('./Icons/american_soccer_american_soccer_football_rugby_icon_209383.png'),
-    controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387: require('./Icons/controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387.png'),
-    court_sports_ball_basketball_icon_209379: require('./Icons/court_sports_ball_basketball_icon_209379.png'),
-    equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384: require('./Icons/equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384.png'),
-    game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374: require('./Icons/game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374.png'),
-    grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370: require('./Icons/grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370.png'),
-    olympic_sport_swim_water_pool_swimming_icon_209368: require('./Icons/olympic_sport_swim_water_pool_swimming_icon_209368.png'),
-    play_ball_sports_sport_baseball_icon_209376: require('./Icons/play_ball_sports_sport_baseball_icon_209376.png'),
-    player_gaming_sports_play_game_sport_table_tennis_icon_209385: require('./Icons/player_gaming_sports_play_game_sport_table_tennis_icon_209385.png'),
-    schedule_alarm_watch_time_timer_stopwatch_icon_209377: require('./Icons/schedule_alarm_watch_time_timer_stopwatch_icon_209377.png'),
-    sports_fitness_sport_gloves_boxing_icon_209382: require('./Icons/sports_fitness_sport_gloves_boxing_icon_209382.png'),
-    sports_game_sport_ball_soccer_football_icon_209369: require('./Icons/sports_game_sport_ball_soccer_football_icon_209369.png'),
-    tennis_ball_play_sport_game_ball_tennis_icon_209375: require('./Icons/tennis_ball_play_sport_game_ball_tennis_icon_209375.png'),
+  american_soccer_american_soccer_football_rugby_icon_209383: require("./Icons/american_soccer_american_soccer_football_rugby_icon_209383.png"),
+  controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387: require("./Icons/controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387.png"),
+  court_sports_ball_basketball_icon_209379: require("./Icons/court_sports_ball_basketball_icon_209379.png"),
+  equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384: require("./Icons/equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384.png"),
+  game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374: require("./Icons/game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374.png"),
+  grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370: require("./Icons/grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370.png"),
+  olympic_sport_swim_water_pool_swimming_icon_209368: require("./Icons/olympic_sport_swim_water_pool_swimming_icon_209368.png"),
+  play_ball_sports_sport_baseball_icon_209376: require("./Icons/play_ball_sports_sport_baseball_icon_209376.png"),
+  player_gaming_sports_play_game_sport_table_tennis_icon_209385: require("./Icons/player_gaming_sports_play_game_sport_table_tennis_icon_209385.png"),
+  schedule_alarm_watch_time_timer_stopwatch_icon_209377: require("./Icons/schedule_alarm_watch_time_timer_stopwatch_icon_209377.png"),
+  sports_fitness_sport_gloves_boxing_icon_209382: require("./Icons/sports_fitness_sport_gloves_boxing_icon_209382.png"),
+  sports_game_sport_ball_soccer_football_icon_209369: require("./Icons/sports_game_sport_ball_soccer_football_icon_209369.png"),
+  tennis_ball_play_sport_game_ball_tennis_icon_209375: require("./Icons/tennis_ball_play_sport_game_ball_tennis_icon_209375.png"),
 };
 
 const App = () => {
@@ -54,19 +53,24 @@ const App = () => {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken');
+        const token = await AsyncStorage.getItem("userToken");
         if (token) {
-          const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          }).join(''));
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map(function (c) {
+                return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+              })
+              .join("")
+          );
           const { userId } = JSON.parse(jsonPayload);
           setCurrentUserId(userId);
           fetchNotifications(userId);
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
+        console.error("Error loading user data:", error);
       }
     };
 
@@ -77,10 +81,10 @@ const App = () => {
     try {
       const response = await axios.get(`${BASE_URL}/notifications/${userId}`);
       if (response.data && Array.isArray(response.data)) {
-        setUnreadNotifications(response.data.filter(n => !n.read).length);
+        setUnreadNotifications(response.data.filter((n) => !n.read).length);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
     }
   };
 
@@ -139,14 +143,17 @@ const App = () => {
 
   useEffect(() => {
     if (selectedCategory === "All Type") {
-      setFilteredEvents(events.filter(event => 
-        event.event_name.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
+      setFilteredEvents(
+        events.filter((event) =>
+          event.event_name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      );
     } else {
       setFilteredEvents(
-        events.filter(event => 
-          event.category === selectedCategory && 
-          event.event_name.toLowerCase().includes(searchQuery.toLowerCase())
+        events.filter(
+          (event) =>
+            event.category === selectedCategory &&
+            event.event_name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
     }
@@ -164,7 +171,7 @@ const App = () => {
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options = { year: "numeric", month: "long", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
@@ -193,25 +200,17 @@ const App = () => {
               <TouchableOpacity
                 onPress={() => navigation.navigate("Homepage/CalendarPage")}
               >
-                <Ionicons 
-                  name="calendar-outline"
-                  size={24}
-                  color="#555"
-                />
+                <Ionicons name="calendar-outline" size={24} color="#555" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.notificationButton}
                 onPress={handleNotificationPress}
               >
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color="#555"
-                />
+                <Ionicons name="notifications-outline" size={24} color="#555" />
                 {unreadNotifications > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
-                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                      {unreadNotifications > 99 ? "99+" : unreadNotifications}
                     </Text>
                   </View>
                 )}
@@ -220,7 +219,11 @@ const App = () => {
           </View>
 
           {loading ? (
-            <ActivityIndicator size="large" color="#0095FF" style={styles.loader} />
+            <ActivityIndicator
+              size="large"
+              color="#0095FF"
+              style={styles.loader}
+            />
           ) : (
             <>
               <View style={styles.searchBarContainer}>
@@ -244,12 +247,19 @@ const App = () => {
                   >
                     {categories.map((category) => (
                       <TouchableOpacity
-                        key={category.id}  // Add unique key prop
-                        onPress={() => navigation.navigate("Homepage/CategoryEvents", { categoryName: category.name })}
+                        key={category.id} // Add unique key prop
+                        onPress={() =>
+                          navigation.navigate("Homepage/CategoryEvents", {
+                            categoryName: category.name,
+                          })
+                        }
                         style={styles.categoryItemWrapper}
                       >
                         <View style={styles.categoryItem}>
-                          <Image source={iconMap[category.icon]} style={styles.categoryIcon} /> 
+                          <Image
+                            source={iconMap[category.icon]}
+                            style={styles.categoryIcon}
+                          />
                         </View>
                         <Text style={styles.categoryName}>{category.name}</Text>
                       </TouchableOpacity>
@@ -257,8 +267,17 @@ const App = () => {
                   </ScrollView>
 
                   <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Competition of the Week</Text>
-                    <Text style={styles.seeAll} onPress={() => navigation.navigate("Homepage/TournamentList")}>See All</Text>
+                    <Text style={styles.sectionTitle}>
+                      Competition of the Week
+                    </Text>
+                    <Text
+                      style={styles.seeAll}
+                      onPress={() =>
+                        navigation.navigate("Homepage/TournamentList")
+                      }
+                    >
+                      See All
+                    </Text>
                   </View>
                   <ScrollView
                     horizontal
@@ -267,9 +286,13 @@ const App = () => {
                   >
                     {competitions.map((competition) => (
                       <TouchableOpacity
-                        key={competition.tournament_id}  // Add unique key prop
+                        key={competition.tournament_id} // Add unique key prop
                         style={styles.competitionItemWrapper}
-                        onPress={() => navigation.navigate('Homepage/TournamentDetail', { id: competition.tournament_id })}
+                        onPress={() =>
+                          navigation.navigate("Homepage/TournamentDetail", {
+                            id: competition.tournament_id,
+                          })
+                        }
                       >
                         <View style={styles.competitionItem}>
                           <Image
@@ -300,17 +323,22 @@ const App = () => {
                 >
                   {eventCategories.map((category) => (
                     <TouchableOpacity
-                      key={category.id}  // Add unique key prop
+                      key={category.id} // Add unique key prop
                       style={[
                         styles.categoryButton,
-                        selectedCategory === category.name && styles.selectedCategory,
+                        selectedCategory === category.name &&
+                          styles.selectedCategory,
                       ]}
                       onPress={() => setSelectedCategory(category.name)}
                     >
-                      <Text style={[
-                        styles.categoryText,
-                        selectedCategory === category.name && { color: "#fff" }
-                      ]}>
+                      <Text
+                        style={[
+                          styles.categoryText,
+                          selectedCategory === category.name && {
+                            color: "#fff",
+                          },
+                        ]}
+                      >
                         {category.name}
                       </Text>
                     </TouchableOpacity>
@@ -318,18 +346,27 @@ const App = () => {
                 </ScrollView>
               )}
 
-              <ScrollView contentContainerStyle={searchQuery ? styles.singleEventGrid : styles.eventsGrid}>
+              <ScrollView
+                contentContainerStyle={
+                  searchQuery ? styles.singleEventGrid : styles.eventsGrid
+                }
+              >
                 {filteredEvents.map((event) => (
                   <TouchableOpacity
-                    key={event.id}  // Add unique key prop
-                    style={searchQuery ? styles.fullWidthEventItem : styles.eventItem}
+                    key={event.id} // Add unique key prop
+                    style={
+                      searchQuery ? styles.fullWidthEventItem : styles.eventItem
+                    }
                     onPress={() =>
                       navigation.navigate("Homepage/EventDetails", {
                         eventId: event.event_id,
                       })
                     }
                   >
-                    <Image source={{ uri: event.image }} style={styles.eventImage} />
+                    <Image
+                      source={{ uri: event.image }}
+                      style={styles.eventImage}
+                    />
                     <View style={styles.eventDetails}>
                       <Text style={styles.eventText}>{event.event_name}</Text>
                       <View style={styles.eventRow}>
@@ -338,7 +375,9 @@ const App = () => {
                           size={16}
                           color="#0095FF"
                         />
-                        <Text style={styles.eventDetailText}>{event.location}</Text>
+                        <Text style={styles.eventDetailText}>
+                          {event.location}
+                        </Text>
                       </View>
                       <View style={styles.eventRow}>
                         <MaterialCommunityIcons
@@ -346,7 +385,9 @@ const App = () => {
                           size={16}
                           color="#0095FF"
                         />
-                        <Text style={styles.eventDetailText}>{formatDate(event.start_time)}</Text>
+                        <Text style={styles.eventDetailText}>
+                          {formatDate(event.start_time)}
+                        </Text>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -363,7 +404,7 @@ const App = () => {
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
       <Navbar />
-      
+
       {/* Notifications Modal */}
       {showNotifications && currentUserId && (
         <NotificationsModal
@@ -380,7 +421,7 @@ const App = () => {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   scrollView: {
     flex: 1,
@@ -412,7 +453,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 40,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 10,
@@ -588,25 +629,25 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   notificationButton: {
-    position: 'relative',
+    position: "relative",
     marginLeft: 15,
     padding: 5,
   },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     right: 0,
-    backgroundColor: '#ff4444',
+    backgroundColor: "#ff4444",
     borderRadius: 10,
     minWidth: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   badgeText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

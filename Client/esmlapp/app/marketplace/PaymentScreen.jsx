@@ -7,12 +7,12 @@ import {
   ScrollView,
   Image,
   Animated,
-} from 'react-native';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../../Api';
-import { useStripe } from '@stripe/stripe-react-native';
+} from "react-native";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { BASE_URL } from "../../Api";
+import { useStripe } from "@stripe/stripe-react-native";
 
 const PaymentScreen = ({ route, navigation }) => {
   const { cartTotal = 0, deliveryFee = 0, cartItems } = route.params || {};
@@ -27,12 +27,12 @@ const PaymentScreen = ({ route, navigation }) => {
       const { publishableKey } = response.data;
 
       const { error } = await initPaymentSheet({
-        merchantDisplayName: 'Your Store',
+        merchantDisplayName: "Your Store",
         paymentIntentClientSecret: publishableKey,
       });
 
       if (!error) {
-        console.log('PaymentSheet initialized successfully');
+        console.log("PaymentSheet initialized successfully");
       }
     };
 
@@ -98,18 +98,19 @@ const PaymentScreen = ({ route, navigation }) => {
       name: "Cryptocurrency",
       icon: "logo-bitcoin",
       details: "Pay with crypto",
-    }
+    },
   ];
 
   const processPayment = async () => {
     if (!selectedMethod) {
-      alert('Please select a payment method');
+      alert("Please select a payment method");
       return;
     }
     setIsProcessing(true);
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      if ([1, 2, 3, 4].includes(selectedMethod)) { // Credit Card, PayPal, Apple Pay, Google Pay
+      const userId = await AsyncStorage.getItem("userId");
+      if ([1, 2, 3, 4].includes(selectedMethod)) {
+        // Credit Card, PayPal, Apple Pay, Google Pay
         const response = await axios.post(`${BASE_URL}/payments/process`, {
           userId,
           amount: cartTotal + deliveryFee,
@@ -125,32 +126,35 @@ const PaymentScreen = ({ route, navigation }) => {
         if (error) {
           alert(`Error: ${error.message}`);
         } else {
-          alert('Payment complete, thank you!');
-          navigation.navigate('PaymentSuccess', {
+          alert("Payment complete, thank you!");
+          navigation.navigate("PaymentSuccess", {
             amount: cartTotal + deliveryFee,
             orderId,
           });
         }
-      } else if (selectedMethod === 5) { // Cash on Delivery
-        alert('Order placed. Pay upon delivery.');
-        navigation.navigate('OrderConfirmation', {
+      } else if (selectedMethod === 5) {
+        // Cash on Delivery
+        alert("Order placed. Pay upon delivery.");
+        navigation.navigate("OrderConfirmation", {
           amount: cartTotal + deliveryFee,
-          method: 'Cash on Delivery',
+          method: "Cash on Delivery",
         });
-      } else if (selectedMethod === 6) { // Bank Transfer
-        navigation.navigate('BankTransferInstructions', {
+      } else if (selectedMethod === 6) {
+        // Bank Transfer
+        navigation.navigate("BankTransferInstructions", {
           amount: cartTotal + deliveryFee,
-          bankDetails: 'Bank details here',
+          bankDetails: "Bank details here",
         });
-      } else if (selectedMethod === 7) { // Cryptocurrency
-        navigation.navigate('CryptoPayment', {
+      } else if (selectedMethod === 7) {
+        // Cryptocurrency
+        navigation.navigate("CryptoPayment", {
           amount: cartTotal + deliveryFee,
-          cryptoAddress: 'Your crypto address here',
+          cryptoAddress: "Your crypto address here",
         });
       }
     } catch (error) {
-      console.error('Payment processing error:', error);
-      alert('Payment failed. Please try again.');
+      console.error("Payment processing error:", error);
+      alert("Payment failed. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -159,7 +163,7 @@ const PaymentScreen = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -231,7 +235,7 @@ const PaymentScreen = ({ route, navigation }) => {
         disabled={isProcessing || !selectedMethod}
       >
         <Text style={styles.payButtonText}>
-          {isProcessing ? 'Processing...' : 'Pay Now'}
+          {isProcessing ? "Processing..." : "Pay Now"}
         </Text>
       </TouchableOpacity>
 
@@ -241,7 +245,7 @@ const PaymentScreen = ({ route, navigation }) => {
           if (selectedMethod) {
             processPayment();
           } else {
-            alert('Please select a payment method');
+            alert("Please select a payment method");
           }
         }}
       >
@@ -264,11 +268,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   backButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     padding: 10,
     borderRadius: 12,
     marginRight: 16,
-    shadowColor: '#4FA5F5',
+    shadowColor: "#4FA5F5",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -402,21 +406,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   nextButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
-    shadowColor: '#4FA5F5',
+    shadowColor: "#4FA5F5",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   nextButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

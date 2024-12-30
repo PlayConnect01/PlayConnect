@@ -24,20 +24,11 @@ import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
-import TournamentList from './Homepage/TournamentList'
-import TournamentDetail from './Homepage/TournamentDetail'
-import EditProfile from "./profile/EditProfile"
+import TournamentList from './Homepage/TournamentList';
+import TournamentDetail from './Homepage/TournamentDetail';
+import EditProfile from "./profile/EditProfile";
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
-import FavoritesScreen from './marketplace/FavoritesScreen';
-import AllDiscountedProduct from './marketplace/AllDiscountedProduct';
-import CryptoPayment from './marketplace/CryptoPayment';
-import BankTransferInstructions from './marketplace/BankTransferInstructions';
-import orderSuccess from './marketplace/OrderConfirmation';
-
-// Initialize Stripe
-PaymentConfiguration.init({
-  publishableKey: 'your-publishable-key-here', // Replace with your actual publishable key
-});
+import First from "./FirstPage/First";
 
 const Stack = createStackNavigator();
 
@@ -45,22 +36,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack.Navigator
-        initialRouteName="Landing"
-        screenOptions={{
-          headerShown: false,
-          cardStyle: { backgroundColor: '#F8FAFF' },
-          headerStyle: {
-            backgroundColor: '#4FA5F5',
-            shadowColor: 'transparent',
-          },
-          headerTintColor: '#FFFFFF',
-          headerTitleStyle: {
-            fontWeight: '700',
-            fontSize: 18,
-          },
-        }}
+        initialRouteName="First"
+        screenOptions={{ headerShown: false }}
       >
         {/* Auth Screens */}
+        <Stack.Screen name="First" component={First} />
         <Stack.Screen name="Landing" component={Landing} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="SignUp" component={SignUp} />

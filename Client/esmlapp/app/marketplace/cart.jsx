@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
-import {BASE_URL} from '../../Api';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import ConfirmationModal from "./ConfirmationModal"; // Adjust the path as necessary
+import { BASE_URL } from "../../Api";
 
 const CartScreen = () => {
   const navigation = useNavigation();
@@ -22,7 +30,7 @@ const CartScreen = () => {
         if (!userId) throw new Error("User ID not found");
 
         const response = await fetch(`${BASE_URL}/cart/cart/user/${userId}`);
-        console.log('Fetch cart response status:', response.status);
+        console.log("Fetch cart response status:", response.status);
 
         if (!response.ok) throw new Error("Failed to fetch cart items");
 
@@ -85,15 +93,20 @@ const CartScreen = () => {
         throw new Error("No item selected for deletion");
       }
 
-      const response = await fetch(`${BASE_URL}/cart/cart/item/${itemToDelete}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `${BASE_URL}/cart/cart/item/${itemToDelete}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to delete item. Status: ${response.status}`);
       }
 
-      setCartItems((prevItems) => prevItems.filter((item) => item.cart_item_id !== itemToDelete));
+      setCartItems((prevItems) =>
+        prevItems.filter((item) => item.cart_item_id !== itemToDelete)
+      );
       console.log(`Item with ID ${itemToDelete} deleted successfully.`);
       setItemToDelete(null); // Reset after successful deletion
     } catch (error) {
@@ -132,11 +145,7 @@ const CartScreen = () => {
         <>
           {cartItems.map((item) => (
             <View key={item.cart_item_id} style={styles.cartItem}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.itemImage}
-              
-              />
+              <Image source={{ uri: item.image }} style={styles.itemImage} />
               <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
@@ -199,37 +208,37 @@ const CartScreen = () => {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F7FAFF',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F7FAFF",
   },
   container: {
     flex: 1,
-    backgroundColor: '#F7FAFF',
+    backgroundColor: "#F7FAFF",
     padding: 16,
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 20,
-    color: '#2D3748',
-    textAlign: 'center',
+    color: "#2D3748",
+    textAlign: "center",
   },
   emptyCart: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
     marginTop: 32,
-    color: '#4A5568',
-    fontWeight: '500',
+    color: "#4A5568",
+    fontWeight: "500",
   },
   cartItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
-    shadowColor: '#4FA5F5',
+    shadowColor: "#4FA5F5",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -242,7 +251,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 12,
-    backgroundColor: '#F7FAFF',
+    backgroundColor: "#F7FAFF",
   },
   itemDetails: {
     flex: 1,
@@ -250,30 +259,30 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3748',
+    fontWeight: "600",
+    color: "#2D3748",
     marginBottom: 4,
   },
   itemPrice: {
     fontSize: 16,
-    color: '#48BB78',
-    fontWeight: '700',
+    color: "#48BB78",
+    fontWeight: "700",
   },
   quantityControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F7FAFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F7FAFF",
     borderRadius: 8,
     padding: 4,
   },
   quantityButton: {
     width: 32,
     height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    shadowColor: '#4FA5F5',
+    shadowColor: "#4FA5F5",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -284,21 +293,21 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontSize: 18,
-    color: '#4FA5F5',
-    fontWeight: '600',
+    color: "#4FA5F5",
+    fontWeight: "600",
   },
   quantity: {
     marginHorizontal: 12,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3748',
+    fontWeight: "600",
+    color: "#2D3748",
   },
   deleteButton: {
-    backgroundColor: '#FFF5F5',
+    backgroundColor: "#FFF5F5",
     borderRadius: 8,
     padding: 8,
     marginLeft: 8,
-    shadowColor: '#FF4B4B',
+    shadowColor: "#FF4B4B",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -308,16 +317,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   deleteText: {
-    color: '#FF4B4B',
-    fontWeight: '600',
+    color: "#FF4B4B",
+    fontWeight: "600",
     fontSize: 14,
   },
   paymentDetails: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
     marginTop: 20,
-    shadowColor: '#4FA5F5',
+    shadowColor: "#4FA5F5",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -328,23 +337,23 @@ const styles = StyleSheet.create({
   },
   paymentLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3748',
+    fontWeight: "600",
+    color: "#2D3748",
   },
   paymentPrice: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#48BB78',
-    textAlign: 'right',
+    fontWeight: "700",
+    color: "#48BB78",
+    textAlign: "right",
     marginTop: 8,
   },
   checkoutButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     borderRadius: 12,
     padding: 16,
     marginTop: 20,
     marginBottom: 24,
-    shadowColor: '#4FA5F5',
+    shadowColor: "#4FA5F5",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -354,10 +363,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   checkoutText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
   },
 });
 
