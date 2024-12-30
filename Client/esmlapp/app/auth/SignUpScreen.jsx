@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import axios from 'axios';
-import { BASE_URL } from '../../Api.js';
+import {BASE_URL} from '../../Api';
 
 const SignUpScreen = () => {
   const [username, setUsername] = useState('');

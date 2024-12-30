@@ -6,7 +6,7 @@ import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from '../navbar/Navbar';
-import { BASE_URL } from '../../Api.js';
+import { BASE_URL } from '../../Api';
 
 // Function to decode the token
 const decodeToken = (token) => {
@@ -273,7 +273,7 @@ const ProfilePage = () => {
           </View>
         )}
       </ScrollView>
-      <Navbar />
+  
     </View>
   );
 };

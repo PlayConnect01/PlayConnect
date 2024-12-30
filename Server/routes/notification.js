@@ -14,19 +14,19 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
-// Get unread notifications count
+// Get unread notification count
 router.get('/:userId/unread/count', async (req, res) => {
   try {
     const { userId } = req.params;
     const count = await notification.getUnreadCount(userId);
     res.json({ count });
   } catch (error) {
-    console.error('Error counting unread notifications:', error);
+    console.error('Error getting unread count:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Mark notification as read
+// Mark a single notification as read
 router.put('/:notificationId/read', async (req, res) => {
   try {
     const { notificationId } = req.params;
@@ -46,6 +46,18 @@ router.put('/:userId/read/all', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a notification
+router.delete('/:notificationId', async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    await notification.deleteNotification(parseInt(notificationId));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
     res.status(500).json({ error: error.message });
   }
 });
