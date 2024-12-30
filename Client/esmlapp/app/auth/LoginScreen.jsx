@@ -11,6 +11,7 @@ import {
   Dimensions,
   Animated,
   Easing,
+  Platform,
 } from 'react-native';
 import { FontAwesome, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { BASE_URL } from '../../Api';
 import { BlurView } from 'expo-blur';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -93,87 +95,87 @@ console.log(token , "tooooken");
         style={styles.backgroundImage}
         resizeMode="cover"
       />
-      <Animated.View 
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }
-        ]}
-      >
-        <Text style={styles.title}>Welcome Back!</Text>
-        
-        <View style={styles.inputContainer}>
-          <View style={styles.inputIconContainer}>
-            <FontAwesome name="user" size={20} color="#ffffff80" />
-          </View>
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            placeholderTextColor="#ffffff80"
-            value={email}
-            onChangeText={setEmail}
-          />
-        </View>
+      <View style={styles.overlay}>
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>Welcome Back!</Text>
 
-        <View style={styles.inputContainer}>
-          <View style={styles.inputIconContainer}>
+          <View style={styles.inputContainer}>
+            <FontAwesome name="envelope" size={20} color="#ffffff80" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholderTextColor="#ffffff80"
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
             <FontAwesome name="lock" size={20} color="#ffffff80" />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!isPasswordVisible}
+              placeholderTextColor="#ffffff80"
+              autoCapitalize="none"
+            />
+            <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+              <FontAwesome name={isPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
+            </TouchableOpacity>
           </View>
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#ffffff80"
-            secureTextEntry={!isPasswordVisible}
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-            <Feather name={isPasswordVisible ? 'eye' : 'eye-off'} size={20} color="#ffffff80" />
+
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleLogin} style={styles.buttonContainer}>
+            <LinearGradient
+              colors={['#0080FF', '#0A66C2', '#0080FF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradient}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <View style={styles.dividerContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>Or continue with</Text>
+            <View style={styles.divider} />
+          </View>
+
+          <View style={styles.socialButtonsContainer}>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome name="google" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome name="apple" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome name="facebook" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={styles.createAccountButton}
+            onPress={() => navigation.navigate('SignUp')}
+          >
+            <Text style={styles.createAccountText}>Create An Account</Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity 
-          style={styles.forgotPassword}
-          onPress={() => navigation.navigate('ForgotPassword')}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.signInText}>Sign in</Text>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.dividerContainer}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>Or continue with</Text>
-          <View style={styles.divider} />
-        </View>
-
-        <View style={styles.socialButtonsContainer}>
-          <TouchableOpacity style={styles.socialButton}>
-            <FontAwesome name="google" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <FontAwesome name="apple" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <FontAwesome name="facebook" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={styles.createAccountButton}
-          onPress={() => navigation.navigate('SignUp')}
-        >
-          <Text style={styles.createAccountText}>Create An Account</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -189,18 +191,21 @@ const styles = StyleSheet.create({
     height: windowHeight,
     opacity: 0.9,
   },
-  content: {
+  overlay: {
+    flex: 1,
+  },
+  contentContainer: {
     flex: 1,
     padding: windowWidth * 0.05,
-    paddingTop: windowHeight * 0.25,
+    paddingTop: windowHeight * 0.15,
     alignItems: 'center',
   },
   title: {
-    fontSize: Math.min(windowWidth * 0.08, 32),
+    fontSize: windowWidth * 0.1,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginTop: windowHeight * 0.08,
-    marginBottom: windowHeight * 0.06,
+    marginTop: windowHeight * 0.2,
+    marginBottom: windowHeight * 0.07,
     textAlign: 'center',
     letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -211,57 +216,64 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: Math.min(windowWidth * 0.03, 15),
+    borderRadius: windowWidth * 0.03,
     marginBottom: windowHeight * 0.02,
-    height: Math.min(windowHeight * 0.06, 50),
+    height: windowHeight * 0.06,
     paddingHorizontal: windowWidth * 0.04,
-    width: '90%',
-    maxWidth: 400,
-  },
-  inputIconContainer: {
-    marginRight: windowWidth * 0.02,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
   input: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: Math.min(windowWidth * 0.04, 16),
+    fontSize: windowWidth * 0.04,
     marginLeft: windowWidth * 0.02,
   },
   eyeIcon: {
-    padding: Math.min(windowWidth * 0.02, 10),
+    padding: windowWidth * 0.02,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
     marginBottom: windowHeight * 0.04,
     marginTop: windowHeight * 0.01,
-    width: '90%',
-    maxWidth: 400,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
   forgotPasswordText: {
     color: '#FFFFFF',
-    fontSize: Math.min(windowWidth * 0.035, 14),
+    fontSize: windowWidth * 0.03,
   },
-  signInButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: Math.min(windowWidth * 0.03, 15),
-    height: Math.min(windowHeight * 0.06, 50),
-    justifyContent: 'center',
+  buttonContainer: {
+    width: '100%',
+    borderRadius: 25,
+    overflow: 'hidden',
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  gradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
     alignItems: 'center',
-    marginBottom: windowHeight * 0.04,
-    width: '90%',
-    maxWidth: 400,
   },
-  signInText: {
-    color: '#FFFFFF',
-    fontSize: Math.min(windowWidth * 0.04, 18),
-    fontWeight: '600',
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: windowHeight * 0.03,
-    width: '90%',
-    maxWidth: 400,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
   divider: {
     flex: 1,
@@ -271,32 +283,33 @@ const styles = StyleSheet.create({
   dividerText: {
     color: '#FFFFFF',
     marginHorizontal: windowWidth * 0.04,
-    fontSize: Math.min(windowWidth * 0.035, 14),
+    fontSize: windowWidth * 0.03,
   },
   socialButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: windowWidth * 0.05,
     marginBottom: windowHeight * 0.05,
-    width: '90%',
-    maxWidth: 400,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
   socialButton: {
-    width: Math.min(windowWidth * 0.12, 50),
-    height: Math.min(windowWidth * 0.12, 50),
+    width: windowWidth * 0.12,
+    height: windowWidth * 0.12,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: Math.min(windowWidth * 0.06, 25),
+    borderRadius: windowWidth * 0.03,
     justifyContent: 'center',
     alignItems: 'center',
   },
   createAccountButton: {
-    marginBottom: windowHeight * 0.05,
+    marginBottom: windowHeight * 0.12,
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: windowHeight * -0.02,
   },
   createAccountText: {
     color: '#FFFFFF',
-    fontSize: Math.min(windowWidth * 0.035, 14),
+    fontSize: windowWidth * 0.035,
     textDecorationLine: 'underline',
   },
 });

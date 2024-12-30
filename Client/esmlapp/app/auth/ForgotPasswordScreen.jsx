@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +17,13 @@ const PasswordRecoveryScreen = () => {
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const navigation = useNavigation();
+
+  const inputRefs = [
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null)
+  ];
 
   const showCustomAlert = (title, message) => {
     setAlertTitle(title);
@@ -100,12 +107,26 @@ const PasswordRecoveryScreen = () => {
               {[0, 1, 2, 3].map((_, index) => (
                 <TextInput
                   key={index}
+                  ref={inputRefs[index]}
                   style={styles.codeBox}
                   value={code[index] || ''}
                   onChangeText={(text) => {
-                    const newCode = code.split('');
-                    newCode[index] = text;
-                    setCode(newCode.join(''));
+                    if (text.length <= 1) {
+                      const newCode = code.split('');
+                      newCode[index] = text;
+                      setCode(newCode.join(''));
+                      
+                      // Move to next input if there's a value and not the last input
+                      if (text.length === 1 && index < 3) {
+                        inputRefs[index + 1].current.focus();
+                      }
+                    }
+                  }}
+                  onKeyPress={({ nativeEvent }) => {
+                    // Move to previous input on backspace if current input is empty
+                    if (nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
+                      inputRefs[index - 1].current.focus();
+                    }
                   }}
                   keyboardType="number-pad"
                   maxLength={1}

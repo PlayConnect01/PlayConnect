@@ -10,6 +10,7 @@ import {
   Dimensions,
   Animated,
   Easing,
+  Platform,
 } from 'react-native';
 import { FontAwesome, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../Api';
 import { useState, useEffect } from 'react';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -74,81 +76,92 @@ const SignUpScreen = () => {
         style={styles.backgroundImage}
         resizeMode="cover"
       />
-      <Animated.View 
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }
-        ]}
-      >
-        <Text style={styles.title}>Join the Team Today!</Text>
+      <View style={styles.overlay}>
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>Join the Team Today!</Text>
 
-        <View style={styles.inputContainer}>
-          <FontAwesome name="user" size={20} color="#ffffff80" />
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-            placeholderTextColor="#ffffff80"
-          />
-        </View>
+          <View style={styles.inputContainer}>
+            <FontAwesome name="user" size={20} color="#ffffff80" />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+              placeholderTextColor="#ffffff80"
+              autoCapitalize="none"
+            />
+          </View>
 
-        <View style={styles.inputContainer}>
-          <FontAwesome name="envelope" size={20} color="#ffffff80" />
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            placeholderTextColor="#ffffff80"
-          />
-        </View>
+          <View style={styles.inputContainer}>
+            <FontAwesome name="envelope" size={20} color="#ffffff80" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              placeholderTextColor="#ffffff80"
+              autoCapitalize="none"
+            />
+          </View>
 
-        <View style={styles.inputContainer}>
-          <FontAwesome name="lock" size={20} color="#ffffff80" />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!isPasswordVisible}
-            placeholderTextColor="#ffffff80"
-          />
-          <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
-            <FontAwesome name={isPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
+          <View style={styles.inputContainer}>
+            <FontAwesome name="lock" size={20} color="#ffffff80" />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!isPasswordVisible}
+              placeholderTextColor="#ffffff80"
+              autoCapitalize="none"
+            />
+            <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
+              <FontAwesome name={isPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <FontAwesome name="lock" size={20} color="#ffffff80" />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!isConfirmPasswordVisible}
+              placeholderTextColor="#ffffff80"
+              autoCapitalize="none"
+            />
+            <TouchableOpacity onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)} style={styles.eyeIcon}>
+              <FontAwesome name={isConfirmPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity onPress={handleSignUp} style={styles.buttonContainer}>
+            <LinearGradient
+              colors={['#0080FF', '#0A66C2', '#0080FF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradient}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Sign Up</Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
+
+          <View style={styles.loginTextContainer}>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.loginText}>Already have an account? Login</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <View style={styles.inputContainer}>
-          <FontAwesome name="lock" size={20} color="#ffffff80" />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry={!isConfirmPasswordVisible}
-            placeholderTextColor="#ffffff80"
-          />
-          <TouchableOpacity onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)} style={styles.eyeIcon}>
-            <FontAwesome name={isConfirmPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-          <Text style={styles.signUpText}>Sign up</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.loginText}>Already Have An Account?</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      </View>
     </View>
   );
 };
@@ -164,18 +177,21 @@ const styles = StyleSheet.create({
     height: windowHeight,
     opacity: 0.9,
   },
-  content: {
+  overlay: {
+    flex: 1,
+  },
+  contentContainer: {
     flex: 1,
     padding: windowWidth * 0.05,
-    paddingTop: windowHeight * 0.25,
+    paddingTop: windowHeight * 0.15,
     alignItems: 'center',
   },
   title: {
-    fontSize: Math.min(windowWidth * 0.08, 32),
+    fontSize: windowWidth * 0.1,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginTop: windowHeight * 0.08,
-    marginBottom: windowHeight * 0.06,
+    marginTop: windowHeight * 0.2,
+    marginBottom: windowHeight * 0.07,
     textAlign: 'center',
     letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -186,55 +202,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: Math.min(windowWidth * 0.03, 15),
+    borderRadius: windowWidth * 0.03,
     marginBottom: windowHeight * 0.02,
-    height: Math.min(windowHeight * 0.06, 50),
+    height: windowHeight * 0.06,
     paddingHorizontal: windowWidth * 0.04,
-    width: '90%',
-    maxWidth: 400,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
   input: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: Math.min(windowWidth * 0.04, 16),
+    fontSize: windowWidth * 0.04,
     marginLeft: windowWidth * 0.02,
   },
   eyeIcon: {
-    padding: Math.min(windowWidth * 0.02, 10),
+    padding: windowWidth * 0.02,
   },
-  signUpButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: Math.min(windowWidth * 0.03, 15),
-    height: Math.min(windowHeight * 0.06, 50),
-    justifyContent: 'center',
+  buttonContainer: {
+    width: '100%',
+    borderRadius: 25,
+    overflow: 'hidden',
+    marginVertical: 10,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  gradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
     alignItems: 'center',
-    marginTop: windowHeight * 0.02,
-    marginBottom: windowHeight * 0.03,
-    width: '90%',
-    maxWidth: 400,
   },
-  signUpText: {
-    color: '#FFFFFF',
-    fontSize: Math.min(windowWidth * 0.04, 18),
-    fontWeight: '600',
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  loginTextContainer: {
+    marginTop: -15,
   },
   loginButton: {
-    marginBottom: windowHeight * 0.05,
     flexDirection: 'row',
     alignItems: 'center',
   },
   loginText: {
     color: '#FFFFFF',
-    fontSize: Math.min(windowWidth * 0.035, 14),
-    textDecorationLine: 'underline',
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: Math.min(windowWidth * 0.035, 14),
-    marginBottom: windowHeight * 0.02,
+    fontSize: 16,
     textAlign: 'center',
-    width: '90%',
-    maxWidth: 400,
+    textDecorationLine: 'underline',
   },
 });
 
