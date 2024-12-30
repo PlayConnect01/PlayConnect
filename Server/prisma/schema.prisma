@@ -92,6 +92,9 @@ model User {
   // New relationships for video calls
   initiated_calls     VideoCall[]    @relation("CallInitiator")
   received_calls      VideoCall[]    @relation("CallParticipant")
+
+  // New relation for orders
+  orders              Order[]
 }
 
 model Sport {
@@ -431,4 +434,16 @@ model VideoCall {
   @@index([chat_id])
   @@index([initiator_id])
   @@index([participant_id])
+}
+
+model Order {
+  order_id          Int      @id @default(autoincrement())
+  user_id           Int
+  total_amount      Float
+  status            String
+  payment_intent_id String
+
+  user              User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([user_id])
 }

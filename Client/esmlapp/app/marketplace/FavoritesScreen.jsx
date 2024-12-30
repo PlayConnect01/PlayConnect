@@ -63,7 +63,7 @@ const FavoritesScreen = () => {
           favorites.filter((fav) => fav.favorite_id !== favorite.favorite_id)
         );
 
-        setShowMessage("Item removed from favorites! 💔");
+        setShowMessage("Item removed from favorites! ");
         setTimeout(() => setShowMessage(""), 2000);
       } catch (error) {
         console.error("Error removing from favorites:", error);
@@ -90,7 +90,7 @@ const FavoritesScreen = () => {
           <ActivityIndicator size="large" color="#4299e1" />
         ) : favorites.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Animated.View style={[styles.emptyIcon, { transform: [{ scale: 1.2 }] }]}>
+            <Animated.View style={[styles.emptyIcon, { transform: [{ scale: 1.2 }] }]} >
               <FontAwesome name="heart-o" size={80} color="#4299e1" />
             </Animated.View>
             <Text style={styles.emptyText}>
@@ -128,6 +128,23 @@ const FavoritesScreen = () => {
                     <Text style={styles.cardTitle} numberOfLines={2}>
                       {favorite.product.name}
                     </Text>
+                    <View style={styles.ratingContainer}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FontAwesome
+                          key={star}
+                          name={star <= Math.floor(favorite.product.rating || 0) ? "star" : "star-o"}
+                          size={12}
+                          color="#FBC02D"
+                          style={styles.starIcon}
+                        />
+                      ))}
+                      <Text style={styles.ratingText}>
+                        {Number(favorite.product.rating || 0).toFixed(1)}
+                      </Text>
+                      <Text style={styles.reviewCount}>
+                        ({favorite.product.rating_count || 0})
+                      </Text>
+                    </View>
                     <Text style={styles.cardPrice}>
                       ${favorite.product.price}
                     </Text>
@@ -165,23 +182,20 @@ const FavoritesScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8faff',
+    backgroundColor: '#F8FAFF',
   },
   mainContainer: {
     flex: 1,
     padding: 16,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#1a1f36',
-    marginBottom: 24,
+    color: '#1F2937',
+    marginBottom: 20,
     marginTop: 12,
     textAlign: 'center',
-    letterSpacing: 0.8,
-    textShadowColor: 'rgba(66, 153, 225, 0.15)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    letterSpacing: 0.5,
   },
   scrollContent: {
     paddingBottom: 24,
@@ -195,23 +209,22 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '48%',
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    marginBottom: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(66, 153, 225, 0.1)',
-    shadowColor: '#4299e1',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.1,
+    borderColor: '#EEF2FF',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
     shadowRadius: 12,
-    elevation: 8,
-    transform: [{ translateY: 0 }],
+    elevation: 3,
   },
   cardImageWrapper: {
     width: '100%',
     height: 160,
-    backgroundColor: '#f0f5ff',
+    backgroundColor: '#F8FAFF',
     position: 'relative',
   },
   cardGradientOverlay: {
@@ -220,9 +233,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '100%',
-    backgroundColor: 'rgba(66, 153, 225, 0.05)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: 'rgba(79, 70, 229, 0.03)',
   },
   cardImage: {
     width: '100%',
@@ -230,70 +241,83 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   cardContent: {
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  starIcon: {
+    marginRight: 2,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: '#4B5563',
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  reviewCount: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 4,
   },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#2d3748',
-    marginBottom: 8,
-    letterSpacing: 0.3,
-    textAlign: 'center',
+    color: '#1F2937',
+    marginBottom: 6,
+    letterSpacing: 0.2,
+    textAlign: 'left',
   },
   cardPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#4299e1',
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    color: '#4F46E5',
+    textAlign: 'left',
   },
   removeButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 30,
-    width: 36,
-    height: 36,
+    top: 8,
+    right: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
     zIndex: 2,
-    transform: [{ scale: 1 }],
   },
   removeButtonIcon: {
-    color: '#e53e3e',
+    color: '#DC2626',
   },
   messageContainer: {
     position: 'absolute',
     bottom: 32,
     alignSelf: 'center',
-    backgroundColor: 'rgba(66, 153, 225, 0.95)',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    backgroundColor: '#4F46E5',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#4299e1',
+    shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 6,
-    backdropFilter: 'blur(10px)',
+    elevation: 4,
   },
   messageText: {
-    color: '#ffffff',
-    fontSize: 15,
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
-    letterSpacing: 0.3,
   },
   emptyContainer: {
     flex: 1,
@@ -302,35 +326,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyIcon: {
-    marginBottom: 24,
+    marginBottom: 20,
     opacity: 0.9,
-    transform: [{ scale: 1.2 }],
   },
   emptyText: {
-    fontSize: 17,
-    color: '#4a5568',
+    fontSize: 15,
+    color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 24,
-    letterSpacing: 0.3,
-    maxWidth: 280,
+    lineHeight: 22,
+    letterSpacing: 0.2,
+    maxWidth: 260,
   },
   backButton: {
     position: 'absolute',
     top: 16,
     left: 16,
     zIndex: 10,
-    backgroundColor: '#ffffff',
-    padding: 12,
-    borderRadius: 14,
-    shadowColor: '#4299e1',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.1,
+    backgroundColor: '#FFFFFF',
+    padding: 10,
+    borderRadius: 12,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 4,
-    transform: [{ scale: 1 }],
+    elevation: 2,
   },
   backButtonIcon: {
-    color: '#4299e1',
+    color: '#4F46E5',
   }
 });
 
