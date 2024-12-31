@@ -14,16 +14,205 @@ import { CardField } from '@stripe/stripe-react-native';
 import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { BASE_URL } from '../../../Api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PaymentScreen = ({ route, navigation }) => {
-  const { cartTotal = 0, deliveryFee = 0, cartItems = [], userDetails = {} } = route.params || {};
-  console.log('Cart Items:', cartItems); // Debugging log for cart items
-  console.log('User Details:', userDetails); // Debugging log for user details
-  const { confirmPayment } = useStripe();
+  const { cartTotal = 0, deliveryFee = 0, cartItems = [], userDetails: routeUserDetails = {} } = route.params || {};
   const [loading, setLoading] = useState(false);
   const [cardDetails, setCardDetails] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [saveCard, setSaveCard] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const { confirmPayment } = useStripe();
+
+  // Get user details from both route params and AsyncStorage
+  useEffect(() => {
+    const getUserDetails = async () => {
+      try {
+        // First check route params
+        if (routeUserDetails && routeUserDetails.user_id) {
+          console.log('Using user ID from route params:', routeUserDetails.user_id);
+          setUserId(routeUserDetails.user_id);
+          return;
+        }
+
+        // Fallback to AsyncStorage
+        const userDataString = await AsyncStorage.getItem('userData');
+        console.log('AsyncStorage userData:', userDataString);
+        
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          console.log('Parsed user data:', userData);
+          
+          // Check for either user_id or id
+          const id = userData.user_id || userData.id;
+          if (id) {
+            console.log('Setting user ID from AsyncStorage:', id);
+            setUserId(id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+
+    getUserDetails();
+  }, [routeUserDetails]);
+
+  const handlePayment = async () => {
+    try {
+      setLoading(true);
+
+      // Validate cart items
+      if (!cartItems || cartItems.length === 0) {
+        Alert.alert('Error', 'Your cart is empty');
+        return;
+      }
+
+      console.log('Cart validation passed:', cartItems);
+      console.log('Current userId:', userId);
+
+      // Validate user ID
+      if (!userId) {
+        // Try to get user ID one more time
+        const userDataString = await AsyncStorage.getItem('userData');
+        const userData = userDataString ? JSON.parse(userDataString) : null;
+        const id = userData?.user_id || userData?.id || routeUserDetails?.user_id;
+
+        if (!id) {
+          Alert.alert('Error', 'Please log in to continue');
+          return;
+        }
+        setUserId(id);
+      }
+
+      console.log('Processing payment with details:', {
+        userId,
+        cartTotal,
+        deliveryFee,
+        itemCount: cartItems.length
+      });
+
+      // Show order summary before proceeding
+      const proceed = await new Promise((resolve) => {
+        Alert.alert(
+          'Confirm Order',
+          `Total Amount: $${(cartTotal + deliveryFee).toFixed(2)}\nNumber of Items: ${cartItems.length}\n\nProceed with payment?`,
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Proceed', onPress: () => resolve(true) }
+          ]
+        );
+      });
+
+      if (!proceed) {
+        setLoading(false);
+        return;
+      }
+
+      // First get Stripe config
+      const configResponse = await axios.get(`${BASE_URL}/payments/config`);
+      const { publishableKey } = configResponse.data;
+
+      if (!publishableKey) {
+        throw new Error('Stripe configuration not available');
+      }
+
+      // Prepare items for backend
+      const items = cartItems.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+        discount: 0
+      }));
+
+      console.log('Sending payment request:', {
+        userId,
+        amount: cartTotal + deliveryFee,
+        items
+      });
+
+      // Create payment intent
+      const response = await axios.post(`${BASE_URL}/payments/marketplace/process`, {
+        userId,
+        amount: cartTotal + deliveryFee,
+        items
+      });
+
+      console.log('Payment intent response:', response.data);
+
+      const { clientSecret, paymentIntentId, orderId, status } = response.data;
+
+      if (!clientSecret || !paymentIntentId) {
+        throw new Error('Payment initialization failed');
+      }
+
+      // If payment needs confirmation
+      if (status !== 'succeeded') {
+        console.log('Confirming payment with Stripe...');
+        
+        // Confirm payment with Stripe
+        const { paymentIntent, error } = await confirmPayment(clientSecret, {
+          paymentMethodType: 'Card'
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        console.log('Payment confirmed with Stripe, confirming with backend...');
+
+        // Confirm on backend
+        const confirmResponse = await axios.post(`${BASE_URL}/payments/confirm`, {
+          paymentIntentId: paymentIntent.id
+        });
+
+        if (!confirmResponse.data.success) {
+          throw new Error('Payment confirmation failed');
+        }
+
+        console.log('Payment fully confirmed:', confirmResponse.data);
+
+        // Clear cart and navigate to success
+        navigation.reset({
+          index: 0,
+          routes: [
+            { 
+              name: 'PaymentSuccess',
+              params: {
+                amount: cartTotal + deliveryFee,
+                orderId
+              }
+            }
+          ],
+        });
+
+      } else {
+        // Clear cart and navigate to success
+        navigation.reset({
+          index: 0,
+          routes: [
+            { 
+              name: 'PaymentSuccess',
+              params: {
+                amount: cartTotal + deliveryFee,
+                orderId
+              }
+            }
+          ],
+        });
+      }
+
+    } catch (error) {
+      console.error('Payment error:', error);
+      Alert.alert(
+        'Payment Failed',
+        error.message || 'Something went wrong with your payment'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const paymentMethods = [
     {
@@ -47,98 +236,6 @@ const PaymentScreen = ({ route, navigation }) => {
       disabled: true
     }
   ];
-
-  const handlePayment = async () => {
-    try {
-      setLoading(true);
-
-      console.log('Pay button clicked'); // Log when pay button is clicked
-      if (selectedMethod === 'card' && !cardDetails?.complete) {
-        Alert.alert('Error', 'Please enter complete card details');
-        return;
-      }
-
-      if (!userDetails || Object.keys(userDetails).length === 0) {
-        Alert.alert('Error', 'User details are missing. Please log in again.');
-        setLoading(false);
-        return;
-      }
-
-      // Show order summary before proceeding
-      const proceed = await new Promise((resolve) => {
-        Alert.alert(
-          'Confirm Order',
-          `Total Amount: $${(cartTotal + deliveryFee).toFixed(2)}\n\nProceed with payment?`,
-          [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Proceed', onPress: () => resolve(true) }
-          ]
-        );
-      });
-
-      if (!proceed) {
-        setLoading(false);
-        return;
-      }
-
-      console.log('Cart Total:', cartTotal);
-      console.log('Delivery Fee:', deliveryFee);
-      console.log('Cart Items:', cartItems);
-      console.log('User Details:', userDetails);
-
-      // Create payment intent
-      const response = await axios.post(`${BASE_URL}/payments/processMarketplacePayment`, {
-        amount: cartTotal + deliveryFee,
-        userId: userDetails?.id || 1, // Use dynamic user ID
-        items: cartItems.map(item => ({
-          product_id: item.product_id,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          quantity: item.quantity,
-          subtotal: item.subtotal
-        })),
-        userDetails,
-        paymentMethod: selectedMethod,
-        saveCard,
-        orderStatus: 'pending' // Set initial order status
-      });
-
-      const { clientSecret, orderId } = response.data;
-
-      // Confirm payment with Stripe
-      const { paymentIntent, error } = await confirmPayment(clientSecret, {
-        paymentMethodType: selectedMethod === 'card' ? 'Card' : selectedMethod,
-        setupFutureUsage: saveCard ? 'OffSession' : undefined
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Confirm on backend
-      await axios.post(`${BASE_URL}/payments/confirm`, {
-        paymentIntentId: paymentIntent.id,
-        orderId,
-        orderStatus: 'completed' // Update order status after payment
-      });
-
-      // Navigate to success
-      navigation.navigate('PaymentSuccess', {
-        amount: cartTotal + deliveryFee,
-        orderId
-      });
-
-    } catch (error) {
-      console.error('Payment error:', error);
-      Alert.alert(
-        'Payment Failed',
-        error.message || 'Something went wrong with your payment'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const renderPaymentMethod = (method) => (
     <TouchableOpacity

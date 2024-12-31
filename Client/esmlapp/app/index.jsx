@@ -23,10 +23,13 @@ import Products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/payment/PaymentScreen';
+import PaymentSuccess from './marketplace/payment/PaymentSuccess';
 import TournamentList from './Homepage/TournamentList';
 import TournamentDetail from './Homepage/TournamentDetail';
 import EditProfile from "./profile/EditProfile";
 import DeliveryServicesScreen from './marketplace/payment/DeliveryServicesScreen';
+import OrdersScreen from './marketplace/orders/OrdersScreen';
+import OrderDetails from './marketplace/orders/OrderDetails';
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -199,10 +202,34 @@ export default function App() {
             )}
           />
           <Stack.Screen
+            name="PaymentSuccess"
+            component={({ route, navigation }) => (
+              <MainLayout>
+                <PaymentSuccess route={route} navigation={navigation} />
+              </MainLayout>
+            )}
+          />
+          <Stack.Screen
             name="DeliveryServices"
             component={({ route, navigation }) => (
               <MainLayout>
                 <DeliveryServicesScreen route={route} navigation={navigation} />
+              </MainLayout>
+            )}
+          />
+          <Stack.Screen
+            name="Orders"
+            component={({ route, navigation }) => (
+              <MainLayout>
+                <OrdersScreen route={route} navigation={navigation} />
+              </MainLayout>
+            )}
+          />
+          <Stack.Screen
+            name="OrderDetails"
+            component={({ route, navigation }) => (
+              <MainLayout>
+                <OrderDetails route={route} navigation={navigation} />
               </MainLayout>
             )}
           />

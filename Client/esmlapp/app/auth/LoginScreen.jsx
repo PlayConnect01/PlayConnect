@@ -64,9 +64,16 @@ export default function Login() {
         password,
       });
 
-      const { token } = response.data;
-      await AsyncStorage.setItem('userToken', token);
-console.log(token , "tooooken");
+      const { token, user } = response.data;
+      
+      // Save both token and user data
+      await Promise.all([
+        AsyncStorage.setItem('userToken', token),
+        AsyncStorage.setItem('userData', JSON.stringify(user))
+      ]);
+
+      console.log('Saved user data:', user);
+      console.log('Saved token:', token);
 
       // Navigate to home page after successful login
       navigation.reset({
