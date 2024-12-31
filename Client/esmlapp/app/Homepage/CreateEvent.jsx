@@ -107,7 +107,7 @@ const AddNewEvent = () => {
   };
 
 
-  const onDateChange = (selectedDate) => {
+  const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
       const currentDate = new Date();
@@ -119,7 +119,7 @@ const AddNewEvent = () => {
     }
   };
 
-  const onStartTimeChange = (selectedTime) => {
+  const onStartTimeChange = (event, selectedTime) => {
     setShowStartTimePicker(false);
     if (selectedTime) {
       setStartTime(selectedTime);
@@ -129,7 +129,7 @@ const AddNewEvent = () => {
     }
   };
 
-  const onEndTimeChange = (selectedTime) => {
+  const onEndTimeChange = (event, selectedTime) => {
     setShowEndTimePicker(false);
     if (selectedTime) {
       if (selectedTime < startTime) {
