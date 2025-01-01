@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../Api.js';
+import { BASE_URL } from "../../Api";
 import MapView, { Marker } from 'react-native-maps';
 import { Camera } from 'expo-camera';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';

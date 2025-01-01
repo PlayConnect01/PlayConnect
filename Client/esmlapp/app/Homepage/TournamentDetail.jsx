@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { BASE_URL } from "../../Api";
+import { BASE_URL } from "../../Api"
 
 const TournamentDetail = () => {
   const [tournament, setTournament] = useState(null);

@@ -15,25 +15,26 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { BASE_URL } from "../../Api";
-import Navbar from "../navbar/Navbar";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import NotificationsModal from "../components/NotificationsModal";
+import Navbar from '../navbar/Navbar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NotificationsModal from '../components/NotificationsModal';
+
 const { width } = Dimensions.get("window");
 
 const iconMap = {
-  american_soccer_american_soccer_football_rugby_icon_209383: require("./Icons/american_soccer_american_soccer_football_rugby_icon_209383.png"),
-  controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387: require("./Icons/controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387.png"),
-  court_sports_ball_basketball_icon_209379: require("./Icons/court_sports_ball_basketball_icon_209379.png"),
-  equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384: require("./Icons/equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384.png"),
-  game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374: require("./Icons/game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374.png"),
-  grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370: require("./Icons/grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370.png"),
-  olympic_sport_swim_water_pool_swimming_icon_209368: require("./Icons/olympic_sport_swim_water_pool_swimming_icon_209368.png"),
-  play_ball_sports_sport_baseball_icon_209376: require("./Icons/play_ball_sports_sport_baseball_icon_209376.png"),
-  player_gaming_sports_play_game_sport_table_tennis_icon_209385: require("./Icons/player_gaming_sports_play_game_sport_table_tennis_icon_209385.png"),
-  schedule_alarm_watch_time_timer_stopwatch_icon_209377: require("./Icons/schedule_alarm_watch_time_timer_stopwatch_icon_209377.png"),
-  sports_fitness_sport_gloves_boxing_icon_209382: require("./Icons/sports_fitness_sport_gloves_boxing_icon_209382.png"),
-  sports_game_sport_ball_soccer_football_icon_209369: require("./Icons/sports_game_sport_ball_soccer_football_icon_209369.png"),
-  tennis_ball_play_sport_game_ball_tennis_icon_209375: require("./Icons/tennis_ball_play_sport_game_ball_tennis_icon_209375.png"),
+    american_soccer_american_soccer_football_rugby_icon_209383: require('./Icons/american_soccer_american_soccer_football_rugby_icon_209383.png'),
+    controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387: require('./Icons/controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387.png'),
+    court_sports_ball_basketball_icon_209379: require('./Icons/court_sports_ball_basketball_icon_209379.png'),
+    equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384: require('./Icons/equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384.png'),
+    game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374: require('./Icons/game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374.png'),
+    grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370: require('./Icons/grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370.png'),
+    olympic_sport_swim_water_pool_swimming_icon_209368: require('./Icons/olympic_sport_swim_water_pool_swimming_icon_209368.png'),
+    play_ball_sports_sport_baseball_icon_209376: require('./Icons/play_ball_sports_sport_baseball_icon_209376.png'),
+    player_gaming_sports_play_game_sport_table_tennis_icon_209385: require('./Icons/player_gaming_sports_play_game_sport_table_tennis_icon_209385.png'),
+    schedule_alarm_watch_time_timer_stopwatch_icon_209377: require('./Icons/schedule_alarm_watch_time_timer_stopwatch_icon_209377.png'),
+    sports_fitness_sport_gloves_boxing_icon_209382: require('./Icons/sports_fitness_sport_gloves_boxing_icon_209382.png'),
+    sports_game_sport_ball_soccer_football_icon_209369: require('./Icons/sports_game_sport_ball_soccer_football_icon_209369.png'),
+    tennis_ball_play_sport_game_ball_tennis_icon_209375: require('./Icons/tennis_ball_play_sport_game_ball_tennis_icon_209375.png'),
 };
 
 const App = () => {
@@ -181,6 +182,15 @@ const App = () => {
     setUnreadNotifications(0);
   };
 
+  const handlePaymentPress = async () => {
+    // Fetch user details using the userId
+    const userDetailsResponse = await axios.get(`${BASE_URL}/users/${currentUserId}`);
+    const userDetails = userDetailsResponse.data;
+    navigation.navigate('PaymentScreen', {
+      userDetails: userDetails // Pass fetched user details
+    });
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -226,6 +236,7 @@ const App = () => {
             />
           ) : (
             <>
+
               <View style={styles.searchBarContainer}>
                 <TextInput
                   style={styles.searchInput}
@@ -237,6 +248,7 @@ const App = () => {
 
               {searchQuery === "" && (
                 <>
+
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Category</Text>
                   </View>
@@ -307,6 +319,7 @@ const App = () => {
                     ))}
                   </ScrollView>
                 </>
+
               )}
 
               {searchQuery === "" && (
@@ -323,22 +336,17 @@ const App = () => {
                 >
                   {eventCategories.map((category) => (
                     <TouchableOpacity
-                      key={category.id} // Add unique key prop
+                      key={category.id}
                       style={[
                         styles.categoryButton,
-                        selectedCategory === category.name &&
-                          styles.selectedCategory,
+                        selectedCategory === category.name && styles.selectedCategory,
                       ]}
                       onPress={() => setSelectedCategory(category.name)}
                     >
-                      <Text
-                        style={[
-                          styles.categoryText,
-                          selectedCategory === category.name && {
-                            color: "#fff",
-                          },
-                        ]}
-                      >
+                      <Text style={[
+                        styles.categoryText,
+                        selectedCategory === category.name && { color: "#fff" }
+                      ]}>
                         {category.name}
                       </Text>
                     </TouchableOpacity>
@@ -394,12 +402,13 @@ const App = () => {
                 ))}
               </ScrollView>
             </>
+
           )}
         </View>
       </ScrollView>
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={() => navigation.navigate("Homepage/CreateEvent")}
+        onPress={handlePaymentPress}
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>

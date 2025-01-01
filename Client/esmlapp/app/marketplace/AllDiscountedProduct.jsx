@@ -1,5 +1,5 @@
 // AllDiscountedProducts.jsx
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,15 +11,15 @@ import {
   RefreshControl,
   Animated,
   Dimensions,
-  Platform,
-} from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
-import axios from "axios";
+  Platform
+} from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
+import axios from 'axios';
 import { BASE_URL } from "../../Api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window');
 const cardWidth = width / 2 - 24;
 
 const AllDiscountedProducts = () => {
@@ -29,24 +29,24 @@ const AllDiscountedProducts = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [addingToCartId, setAddingToCartId] = useState(null);
-  const [notification, setNotification] = useState({ message: "", type: "" });
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [sortBy, setSortBy] = useState("discount");
+  const [notification, setNotification] = useState({ message: '', type: '' });
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('discount');
   const [cartProducts, setCartProducts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const animationValues = useRef({
     scale: new Animated.Value(1),
-    success: new Animated.Value(0),
+    success: new Animated.Value(0)
   }).current;
   const notificationTimeout = useRef(null);
 
-  const showNotification = (message, type = "info", duration = 2000) => {
+  const showNotification = (message, type = 'info', duration = 2000) => {
     if (notificationTimeout.current) {
       clearTimeout(notificationTimeout.current);
     }
     setNotification({ message, type });
     notificationTimeout.current = setTimeout(() => {
-      setNotification({ message: "", type: "" });
+      setNotification({ message: '', type: '' });
     }, duration);
   };
 
@@ -56,25 +56,25 @@ const AllDiscountedProducts = () => {
       Animated.spring(animationValues.scale, {
         toValue: 0.8,
         useNativeDriver: true,
-        duration: 100,
+        duration: 100
       }),
       Animated.spring(animationValues.scale, {
         toValue: 1,
         useNativeDriver: true,
-        duration: 100,
+        duration: 100
       }),
       Animated.timing(animationValues.success, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
-      }),
+        useNativeDriver: true
+      })
     ]).start();
 
     setTimeout(() => {
       Animated.timing(animationValues.success, {
         toValue: 0,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: true
       }).start(() => {
         setAddingToCartId(null);
       });
@@ -83,19 +83,21 @@ const AllDiscountedProducts = () => {
 
   const addToCart = async (product) => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const userId = await AsyncStorage.getItem("userId");
-      const existingCart = await AsyncStorage.getItem("cartProducts");
+      const token = await AsyncStorage.getItem('userToken');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+      const existingCart = await AsyncStorage.getItem('cartProducts');
       const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
 
       if (!token || !userId || !product?.product_id) {
-        showNotification("Please login to add items to cart", "warning");
+        showNotification("Please log in to add items to cart", "warning");
         return;
       }
 
-      if (cartProducts.some((item) => item.product_id === product.product_id)) {
+      if (cartProducts.some(item => item.product_id === product.product_id)) {
         showNotification("Product already in cart!", "warning");
-        navigation.navigate("ProductDetail", { productId: product.product_id });
+        navigation.navigate('ProductDetail', { productId: product.product_id });
         return;
       }
 
@@ -109,46 +111,42 @@ const AllDiscountedProducts = () => {
           quantity: 1,
           price: product.price,
         },
-        {
-          headers: {
+        { 
+          headers: { 
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+            'Content-Type': 'application/json'
+          } 
         }
       );
 
       if (response.status === 201) {
         const productWithQuantity = {
           ...product,
-          quantity: 1,
+          quantity: 1
         };
         cartProductsList.push(productWithQuantity);
-        await AsyncStorage.setItem(
-          "cartProducts",
-          JSON.stringify(cartProductsList)
-        );
+        await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
         setCartProducts(cartProductsList);
-        setCartCount((prevCount) => prevCount + 1);
+        setCartCount(prevCount => prevCount + 1);
         showNotification(`${product.name} added to cart! 🛒`, "success");
-        navigation.navigate("ProductDetail", { productId: product.product_id });
+        navigation.navigate('ProductDetail', { productId: product.product_id });
       }
     } catch (error) {
       console.error("Error adding product to cart:", error);
-      showNotification(
-        error.response?.data?.message || "Error adding to cart",
-        "error"
-      );
+      showNotification(error.response?.data?.message || "Error adding to cart", "error");
       setAddingToCartId(null);
     }
   };
 
   const toggleFavorite = async (productId) => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const userId = await AsyncStorage.getItem("userId");
+      const token = await AsyncStorage.getItem('userToken');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
 
       if (!token || !userId) {
-        showNotification("Please login to manage favorites", "warning");
+        showNotification("Please log in to manage favorites", "warning");
         return;
       }
 
@@ -156,36 +154,30 @@ const AllDiscountedProducts = () => {
       const isFavorite = updatedFavorites.includes(productId);
 
       if (isFavorite) {
-        updatedFavorites = updatedFavorites.filter((id) => id !== productId);
-        await AsyncStorage.setItem(
-          "favoriteProducts",
-          JSON.stringify(updatedFavorites)
-        );
+        updatedFavorites = updatedFavorites.filter(id => id !== productId);
+        await AsyncStorage.setItem('favoriteProducts', JSON.stringify(updatedFavorites));
         setFavorites(updatedFavorites);
-        showNotification("Removed from favorites", "info");
+        showNotification('Removed from favorites', 'info');
       } else {
         updatedFavorites.push(productId);
-        await AsyncStorage.setItem(
-          "favoriteProducts",
-          JSON.stringify(updatedFavorites)
-        );
+        await AsyncStorage.setItem('favoriteProducts', JSON.stringify(updatedFavorites));
         setFavorites(updatedFavorites);
-        showNotification("Added to favorites", "success");
+        showNotification('Added to favorites', 'success');
       }
 
       // Update favorites in the backend
-      const endpoint = isFavorite ? "remove" : "add";
+      const endpoint = isFavorite ? 'remove' : 'add';
       await axios.post(
         `${BASE_URL}/favorites/${endpoint}`,
         {
           userId: parseInt(userId),
-          productId: productId,
+          productId: productId
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
     } catch (error) {
@@ -195,7 +187,7 @@ const AllDiscountedProducts = () => {
   };
 
   const navigateToProductDetail = (productId) => {
-    navigation.navigate("ProductDetail", { productId });
+    navigation.navigate('ProductDetail', { productId });
   };
 
   const fetchDiscountedProducts = async () => {
@@ -203,23 +195,21 @@ const AllDiscountedProducts = () => {
       setLoading(true);
       const [productsResponse, favoritesResponse] = await Promise.all([
         axios.get(`${BASE_URL}/product/discounted`),
-        AsyncStorage.getItem("favoriteProducts"),
+        AsyncStorage.getItem('favoriteProducts')
       ]);
 
       const products = productsResponse.data;
-      const userFavorites = favoritesResponse
-        ? JSON.parse(favoritesResponse)
-        : [];
+      const userFavorites = favoritesResponse ? JSON.parse(favoritesResponse) : [];
       setFavorites(userFavorites);
 
       // Sort products
       const sortedProducts = products.sort((a, b) => {
         switch (sortBy) {
-          case "discount":
+          case 'discount':
             return b.discount - a.discount;
-          case "price":
+          case 'price':
             return a.price - b.price;
-          case "rating":
+          case 'rating':
             return (b.rating || 0) - (a.rating || 0);
           default:
             return 0;
@@ -228,7 +218,7 @@ const AllDiscountedProducts = () => {
 
       // Categorize products
       const categorized = sortedProducts.reduce((acc, product) => {
-        const category = product.category || "Other";
+        const category = product.category || 'Other';
         if (!acc[category]) {
           acc[category] = [];
         }
@@ -239,7 +229,7 @@ const AllDiscountedProducts = () => {
       setCategorizedProducts(categorized);
     } catch (error) {
       console.error("Error fetching discounted products:", error);
-      showNotification("Error loading products", "error");
+      showNotification('Error loading products', 'error');
     } finally {
       setLoading(false);
     }
@@ -259,50 +249,26 @@ const AllDiscountedProducts = () => {
       <Text style={styles.sortingTitle}>Sort by:</Text>
       <View style={styles.sortingButtons}>
         <TouchableOpacity
-          style={[
-            styles.sortButton,
-            sortBy === "discount" && styles.sortButtonActive,
-          ]}
-          onPress={() => setSortBy("discount")}
+          style={[styles.sortButton, sortBy === 'discount' && styles.sortButtonActive]}
+          onPress={() => setSortBy('discount')}
         >
-          <Text
-            style={[
-              styles.sortButtonText,
-              sortBy === "discount" && styles.sortButtonTextActive,
-            ]}
-          >
+          <Text style={[styles.sortButtonText, sortBy === 'discount' && styles.sortButtonTextActive]}>
             Highest Discount
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.sortButton,
-            sortBy === "price" && styles.sortButtonActive,
-          ]}
-          onPress={() => setSortBy("price")}
+          style={[styles.sortButton, sortBy === 'price' && styles.sortButtonActive]}
+          onPress={() => setSortBy('price')}
         >
-          <Text
-            style={[
-              styles.sortButtonText,
-              sortBy === "price" && styles.sortButtonTextActive,
-            ]}
-          >
+          <Text style={[styles.sortButtonText, sortBy === 'price' && styles.sortButtonTextActive]}>
             Lowest Price
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.sortButton,
-            sortBy === "rating" && styles.sortButtonActive,
-          ]}
-          onPress={() => setSortBy("rating")}
+          style={[styles.sortButton, sortBy === 'rating' && styles.sortButtonActive]}
+          onPress={() => setSortBy('rating')}
         >
-          <Text
-            style={[
-              styles.sortButtonText,
-              sortBy === "rating" && styles.sortButtonTextActive,
-            ]}
-          >
+          <Text style={[styles.sortButtonText, sortBy === 'rating' && styles.sortButtonTextActive]}>
             Best Rating
           </Text>
         </TouchableOpacity>
@@ -317,17 +283,11 @@ const AllDiscountedProducts = () => {
 
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
-        stars.push(
-          <FontAwesome key={i} name="star" size={12} color="#FFD700" />
-        );
+        stars.push(<FontAwesome key={i} name="star" size={12} color="#FFD700" />);
       } else if (i === fullStars + 1 && hasHalfStar) {
-        stars.push(
-          <FontAwesome key={i} name="star-half-o" size={12} color="#FFD700" />
-        );
+        stars.push(<FontAwesome key={i} name="star-half-o" size={12} color="#FFD700" />);
       } else {
-        stars.push(
-          <FontAwesome key={i} name="star-o" size={12} color="#FFD700" />
-        );
+        stars.push(<FontAwesome key={i} name="star-o" size={12} color="#FFD700" />);
       }
     }
     return stars;
@@ -347,15 +307,15 @@ const AllDiscountedProducts = () => {
         <View style={styles.discountBadge}>
           <Text style={styles.discountText}>-{product.discount}%</Text>
         </View>
-
+        
         <TouchableOpacity
           style={styles.favoriteButton}
           onPress={() => toggleFavorite(product.product_id)}
         >
           <FontAwesome
-            name={isFavorite ? "heart" : "heart-o"}
+            name={isFavorite ? 'heart' : 'heart-o'}
             size={24}
-            color={isFavorite ? "#FF4B4B" : "#FFF"}
+            color={isFavorite ? '#FF4B4B' : '#FFF'}
           />
         </TouchableOpacity>
 
@@ -369,7 +329,7 @@ const AllDiscountedProducts = () => {
           <Text style={styles.productName} numberOfLines={2}>
             {product.name}
           </Text>
-
+          
           <View style={styles.ratingContainer}>
             {renderStars(product.rating || 0)}
             <Text style={styles.ratingText}>({product.ratingCount || 0})</Text>
@@ -390,16 +350,18 @@ const AllDiscountedProducts = () => {
               {
                 transform: [
                   {
-                    scale: isAddingToCart ? animationValues.scale : 1,
-                  },
-                ],
-              },
+                    scale: isAddingToCart
+                      ? animationValues.scale
+                      : 1
+                  }
+                ]
+              }
             ]}
           >
             <TouchableOpacity
               style={[
                 styles.addToCartButton,
-                isAddingToCart && styles.addingToCart,
+                isAddingToCart && styles.addingToCart
               ]}
               onPress={() => addToCart(product)}
               disabled={isAddingToCart}
@@ -450,21 +412,14 @@ const AllDiscountedProducts = () => {
         <Animated.View
           style={[
             styles.notification,
-            styles[
-              `notification${
-                notification.type.charAt(0).toUpperCase() +
-                notification.type.slice(1)
-              }`
-            ],
+            styles[`notification${notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}`]
           ]}
         >
           <FontAwesome
             name={
-              notification.type === "success"
-                ? "check-circle"
-                : notification.type === "error"
-                ? "times-circle"
-                : "exclamation-circle"
+              notification.type === 'success' ? 'check-circle' :
+              notification.type === 'error' ? 'times-circle' :
+              'exclamation-circle'
             }
             size={24}
             color="#FFF"
@@ -480,7 +435,7 @@ const AllDiscountedProducts = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F7FAFF",
+    backgroundColor: '#F7FAFF',
     padding: 16,
   },
   header: {
@@ -488,177 +443,177 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#1A365D",
+    fontWeight: 'bold',
+    color: '#1A365D',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#4A5568",
+    color: '#4A5568',
     marginBottom: 16,
   },
   sortingContainer: {
     padding: 16,
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.1)",
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   sortingTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: 8,
-    color: "#2D3748",
+    color: '#2D3748',
   },
   sortingButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   sortButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#F0F4F8",
+    backgroundColor: '#F0F4F8',
   },
   sortButtonActive: {
-    backgroundColor: "#4FA5F5",
+    backgroundColor: '#4FA5F5',
   },
   sortButtonText: {
     fontSize: 14,
-    color: "#4A5568",
+    color: '#4A5568',
   },
   sortButtonTextActive: {
-    color: "#FFF",
+    color: '#FFF',
   },
   categoriesContainer: {
     marginBottom: 16,
   },
   categoryTitle: {
     fontSize: 20,
-    fontWeight: "600",
-    color: "#2D3748",
+    fontWeight: '600',
+    color: '#2D3748',
     marginBottom: 12,
   },
   productsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   productCard: {
     width: cardWidth,
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     borderRadius: 16,
     marginBottom: 16,
-    shadowColor: "#4FA5F5",
+    shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   discountBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: "#FF4B4B",
+    backgroundColor: '#FF4B4B',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     zIndex: 1,
   },
   discountText: {
-    color: "#FFF",
+    color: '#FFF',
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   favoriteButton: {
-    position: "absolute",
+    position: 'absolute',
     top: 12,
     left: 12,
     zIndex: 1,
   },
   productImage: {
-    width: "100%",
+    width: '100%',
     height: 180,
-    backgroundColor: "#F7FAFF",
+    backgroundColor: '#F7FAFF',
   },
   productInfo: {
     padding: 12,
   },
   productName: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#2D3748",
+    fontWeight: '600',
+    color: '#2D3748',
     marginBottom: 4,
   },
   ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   ratingText: {
     marginLeft: 4,
     fontSize: 12,
-    color: "#718096",
+    color: '#718096',
   },
   priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   discountedPrice: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#48BB78",
+    fontWeight: '700',
+    color: '#48BB78',
     marginRight: 8,
   },
   originalPrice: {
     fontSize: 14,
-    color: "#A0AEC0",
-    textDecorationLine: "line-through",
+    color: '#A0AEC0',
+    textDecorationLine: 'line-through',
   },
   addToCartContainer: {
-    width: "100%",
+    width: '100%',
   },
   addToCartButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#4FA5F5",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4FA5F5',
     paddingVertical: 8,
     borderRadius: 8,
     gap: 8,
   },
   addingToCart: {
-    backgroundColor: "#48BB78",
+    backgroundColor: '#48BB78',
   },
   buttonText: {
-    color: "#FFF",
+    color: '#FFF',
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   notification: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: "#000000CC",
+    backgroundColor: '#000000CC',
     padding: 16,
     borderRadius: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   notificationText: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });
 
 export default AllDiscountedProducts;

@@ -1,16 +1,8 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import ConfirmationModal from "./ConfirmationModal"; // Adjust the path as necessary
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
 import { BASE_URL } from "../../Api";
 
 const CartScreen = () => {
@@ -19,38 +11,56 @@ const CartScreen = () => {
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch cart items
+  const fetchCartItems = async () => {
+    try {
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+      console.log("Fetched User Data:", userData);
+
+      if (!userId) throw new Error("Please log in to view your cart");
+
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await fetch(`${BASE_URL}/cart/cart/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Fetch cart response status:', response.status);
+
+      if (!response.ok) throw new Error("Failed to fetch cart items");
+
+      const data = await response.json();
+      setCartItems(data);
+    } catch (error) {
+      Alert.alert("Error", error.message || "Failed to fetch cart items.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const userId = await AsyncStorage.getItem("userId");
-        console.log("Fetched User ID:", userId);
+    fetchCartItems();
+  }, []);
 
-        if (!userId) throw new Error("User ID not found");
-
-        const response = await fetch(`${BASE_URL}/cart/cart/user/${userId}`);
-        console.log("Fetch cart response status:", response.status);
-
-        if (!response.ok) throw new Error("Failed to fetch cart items");
-
-        const data = await response.json();
-        setCartItems(data);
-      } catch (error) {
-        Alert.alert("Error", error.message || "Failed to fetch cart items.");
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
     fetchCartItems();
   }, []);
 
   const updateQuantity = async (cartItemId, increment) => {
     try {
-      const userId = await AsyncStorage.getItem("userId");
-      if (!userId) throw new Error("User ID not found");
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+      const token = await AsyncStorage.getItem('userToken');
+
+      if (!userId) throw new Error("Please log in to update your cart");
 
       const updatedItem = cartItems.find(
         (item) => item.cart_item_id === cartItemId
@@ -59,7 +69,10 @@ const CartScreen = () => {
 
       const response = await fetch(`${BASE_URL}/cart/items/${cartItemId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ userId, quantity: newQuantity }),
       });
 
@@ -93,20 +106,15 @@ const CartScreen = () => {
         throw new Error("No item selected for deletion");
       }
 
-      const response = await fetch(
-        `${BASE_URL}/cart/cart/item/${itemToDelete}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${BASE_URL}/cart/cart/item/${itemToDelete}`, {
+        method: 'DELETE',
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to delete item. Status: ${response.status}`);
       }
 
-      setCartItems((prevItems) =>
-        prevItems.filter((item) => item.cart_item_id !== itemToDelete)
-      );
+      setCartItems((prevItems) => prevItems.filter((item) => item.cart_item_id !== itemToDelete));
       console.log(`Item with ID ${itemToDelete} deleted successfully.`);
       setItemToDelete(null); // Reset after successful deletion
     } catch (error) {
@@ -121,7 +129,7 @@ const CartScreen = () => {
     cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const navigateToDeliveryServices = () => {
-    navigation.navigate("DeliveryServicesScreen", {
+    navigation.navigate("DeliveryServices", {
       cartTotal: calculateTotal(),
       cartItems: cartItems,
     });
@@ -136,109 +144,123 @@ const CartScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Cart</Text>
+    <View style={styles.container}>
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <Text style={styles.title}>Cart</Text>
 
-      {cartItems.length === 0 ? (
-        <Text style={styles.emptyCart}>Your cart is empty</Text>
-      ) : (
-        <>
-          {cartItems.map((item) => (
-            <View key={item.cart_item_id} style={styles.cartItem}>
-              <Image source={{ uri: item.image }} style={styles.itemImage} />
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
-              </View>
-              <View style={styles.quantityControl}>
+        {cartItems.length === 0 ? (
+          <Text style={styles.emptyCart}>Your cart is empty</Text>
+        ) : (
+          <>
+            {cartItems.map((item) => (
+              <View key={item.cart_item_id} style={styles.cartItem}>
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.itemImage}
+                
+                />
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                </View>
+                <View style={styles.quantityControl}>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.cart_item_id, -1)}
+                  >
+                    <Text style={styles.quantityText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.quantity}>{item.quantity}</Text>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.cart_item_id, 1)}
+                  >
+                    <Text style={styles.quantityText}>+</Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.cart_item_id, -1)}
+                  onPress={() => deleteProduct(item.cart_item_id)}
+                  style={styles.deleteButton}
                 >
-                  <Text style={styles.quantityText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.quantity}>{item.quantity}</Text>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.cart_item_id, 1)}
-                >
-                  <Text style={styles.quantityText}>+</Text>
+                  <Text style={styles.deleteText}>Delete</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => deleteProduct(item.cart_item_id)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteText}>Delete</Text>
-              </TouchableOpacity>
+            ))}
+
+            <View style={styles.paymentDetails}>
+              <Text style={styles.paymentLabel}>
+                Total ({cartItems.length} items)
+              </Text>
+              <Text style={styles.paymentPrice}>
+                ${calculateTotal().toFixed(2)}
+              </Text>
             </View>
-          ))}
 
-          <View style={styles.paymentDetails}>
-            <Text style={styles.paymentLabel}>
-              Total ({cartItems.length} items)
-            </Text>
-            <Text style={styles.paymentPrice}>
-              ${calculateTotal().toFixed(2)}
-            </Text>
-          </View>
+            <TouchableOpacity
+              style={styles.checkoutButton}
+              onPress={navigateToDeliveryServices}
+            >
+              <Text style={styles.checkoutText}>Choose Delivery Services</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
-          <TouchableOpacity
-            style={styles.checkoutButton}
-            onPress={navigateToDeliveryServices}
-          >
-            <Text style={styles.checkoutText}>Choose Delivery Services</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      <ConfirmationModal
-        visible={isModalVisible}
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setItemToDelete(null); // Reset itemToDelete if canceled
-          setModalVisible(false);
-        }}
-        message="Are you sure you want to delete this item?"
-      />
-    </ScrollView>
+        <ConfirmationModal
+          visible={isModalVisible}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setItemToDelete(null); // Reset itemToDelete if canceled
+            setModalVisible(false);
+          }}
+          message="Are you sure you want to delete this item?"
+        />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F7FAFF",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F7FAFF',
   },
   container: {
     flex: 1,
-    backgroundColor: "#F7FAFF",
+    backgroundColor: '#F7FAFF',
     padding: 16,
+  },
+  scrollView: {
+    flex: 1,
   },
   title: {
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: '700',
     marginBottom: 20,
-    color: "#2D3748",
-    textAlign: "center",
+    color: '#2D3748',
+    textAlign: 'center',
   },
   emptyCart: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 16,
     marginTop: 32,
-    color: "#4A5568",
-    fontWeight: "500",
+    color: '#4A5568',
+    fontWeight: '500',
   },
   cartItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
-    shadowColor: "#4FA5F5",
+    shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -251,7 +273,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 12,
-    backgroundColor: "#F7FAFF",
+    backgroundColor: '#F7FAFF',
   },
   itemDetails: {
     flex: 1,
@@ -259,30 +281,30 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#2D3748",
+    fontWeight: '600',
+    color: '#2D3748',
     marginBottom: 4,
   },
   itemPrice: {
     fontSize: 16,
-    color: "#48BB78",
-    fontWeight: "700",
+    color: '#48BB78',
+    fontWeight: '700',
   },
   quantityControl: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F7FAFF",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7FAFF',
     borderRadius: 8,
     padding: 4,
   },
   quantityButton: {
     width: 32,
     height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    shadowColor: "#4FA5F5",
+    shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -293,21 +315,21 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontSize: 18,
-    color: "#4FA5F5",
-    fontWeight: "600",
+    color: '#4FA5F5',
+    fontWeight: '600',
   },
   quantity: {
     marginHorizontal: 12,
     fontSize: 16,
-    fontWeight: "600",
-    color: "#2D3748",
+    fontWeight: '600',
+    color: '#2D3748',
   },
   deleteButton: {
-    backgroundColor: "#FFF5F5",
+    backgroundColor: '#FFF5F5',
     borderRadius: 8,
     padding: 8,
     marginLeft: 8,
-    shadowColor: "#FF4B4B",
+    shadowColor: '#FF4B4B',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -317,16 +339,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   deleteText: {
-    color: "#FF4B4B",
-    fontWeight: "600",
+    color: '#FF4B4B',
+    fontWeight: '600',
     fontSize: 14,
   },
   paymentDetails: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginTop: 20,
-    shadowColor: "#4FA5F5",
+    shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -337,23 +359,23 @@ const styles = StyleSheet.create({
   },
   paymentLabel: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#2D3748",
+    fontWeight: '600',
+    color: '#2D3748',
   },
   paymentPrice: {
     fontSize: 20,
-    fontWeight: "700",
-    color: "#48BB78",
-    textAlign: "right",
+    fontWeight: '700',
+    color: '#48BB78',
+    textAlign: 'right',
     marginTop: 8,
   },
   checkoutButton: {
-    backgroundColor: "#4FA5F5",
+    backgroundColor: '#4FA5F5',
     borderRadius: 12,
     padding: 16,
     marginTop: 20,
     marginBottom: 24,
-    shadowColor: "#4FA5F5",
+    shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -363,10 +385,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   checkoutText: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });
 
