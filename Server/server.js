@@ -25,6 +25,7 @@ const favorites = require('./routes/favoriteRoutes');
 const paymentRouter = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
 const orderRoutes = require('./routes/orderRoutes');
+const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 
 const app = express();
 
@@ -84,8 +85,9 @@ app.use('/favorites', favorites);
 app.use('/payments', paymentRouter);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
-app.use('/notifications', notificationRoutes);
-app.use('/orders', orderRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/orderHistory', orderHistoryRoutes);
 
 // Start the Server
 const PORT = process.env.PORT || 3000;
