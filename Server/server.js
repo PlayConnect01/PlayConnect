@@ -24,6 +24,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
 const paymentRouter = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
+const adminRoutes = require('./routes/admin'); 
 const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
@@ -86,6 +87,9 @@ app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/orders', orderRoutes);
+
+// Admin routes with prefix
+app.use('/admin', adminRoutes); 
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

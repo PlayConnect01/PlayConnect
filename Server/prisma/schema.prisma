@@ -53,6 +53,18 @@ enum NotificationType {
   TOURNAMENT_INVITATION
 }
 
+model Admin {
+  admin_id    Int      @id @default(autoincrement())
+  username    String
+  email       String   @unique
+  password    String
+  role        String   @default("ADMIN")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  handled_reports Report[] @relation("AdminHandledReports")
+}
+
 model User {
   user_id         Int       @id @default(autoincrement())
   username        String
@@ -68,7 +80,15 @@ model User {
   birthdate       DateTime? 
   phone_number    String?
   phone_country_code String?
+<<<<<<< HEAD
+  is_banned       Boolean   @default(false)
+  is_blocked      Boolean   @default(false)
+  ban_reason      String?
+  block_reason    String?
+  
+=======
 
+>>>>>>> fde2ebc4dbb2aeb969ab34fbc1418fb468541fde
   created_teams      Team[]          @relation("TeamCreator")
   team_memberships   TeamMember[]
   created_tournaments Tournament[]    @relation("TournamentCreator")
@@ -355,14 +375,18 @@ model Report {
   reported_user_id Int
   reported_by      Int
   reason           String
-  report_date      DateTime @default(now())
-  status           String   // Pending, Resolved
+  status          String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  handled_by      Int?
+  handled_at      DateTime?
+  action_taken    String?
 
   reported_user    User     @relation("ReportsReceived", fields: [reported_user_id], references: [user_id])
   reporter         User     @relation("ReportsSent", fields: [reported_by], references: [user_id])
+  admin           Admin?   @relation("AdminHandledReports", fields: [handled_by], references: [admin_id])
 
   @@index([reported_user_id])
   @@index([reported_by])
+  @@index([handled_by])
 }
 
 model PointsLog {
