@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome5 } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URL } from '../../../Api';
+import { BASE_URL } from "../../../Api";
 
 const OrdersScreen = ({ route, navigation }) => {
   const [orders, setOrders] = useState([]);

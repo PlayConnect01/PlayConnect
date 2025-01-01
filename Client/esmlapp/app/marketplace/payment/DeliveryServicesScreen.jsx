@@ -76,7 +76,7 @@ const DeliveryServicesScreen = () => {
       (service) => service.id === selectedService
     );
   
-    navigation.navigate('PaymentScreen', {
+    navigation.navigate('Payment', {
       cartTotal,
       deliveryFee: selectedDelivery.price,
       cartItems,

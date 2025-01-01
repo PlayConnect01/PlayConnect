@@ -19,7 +19,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
-import {BASE_URL} from '../../Api';
+import { BASE_URL } from "../../Api";
 import { Ionicons } from '@expo/vector-icons';
 
 const getStyles = (isSidebarVisible) => StyleSheet.create({
@@ -228,6 +228,9 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
+  },
+  favoriteButtonActive: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
   cartButton: {
     width: 50,
@@ -557,7 +560,9 @@ const Marketplace = () => {
   const fetchCartCount = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
 
       if (token && userId) {
         const response = await axios.get(`${BASE_URL}/cart/count/${userId}`, {
@@ -566,7 +571,7 @@ const Marketplace = () => {
         setCartCount(response.data.count);
         setCartProducts(response.data.products || []);
       } else {
-        setNotification({ message: "User not logged in.", type: 'warning' });
+        console.log('No user data found:', { token, userData });
       }
     } catch (error) {
       console.error("Error fetching cart count:", error);
@@ -585,6 +590,30 @@ const Marketplace = () => {
         clearTimeout(notificationTimeout.current);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const userDataStr = await AsyncStorage.getItem('userData');
+        const userData = userDataStr ? JSON.parse(userDataStr) : null;
+        const userId = userData?.user_id;
+
+        if (token && userId) {
+          const response = await axios.get(`${BASE_URL}/favorites/favorites/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const favoriteIds = response.data.map(fav => fav.product_id);
+          setFavoriteProducts(favoriteIds);
+        }
+      } catch (error) {
+        console.error("Error loading favorites:", error);
+      }
+    };
+
+    loadFavorites();
   }, []);
 
   const onRefresh = useCallback(() => {
@@ -640,12 +669,18 @@ const Marketplace = () => {
   const addToCart = useCallback(async (product) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
-      const existingCart = await AsyncStorage.getItem('cartProducts');
-      const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
-
-      if (!token || !userId || !product?.product_id) {
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+      
+      if (!token || !userId) {
         showNotification("Please login to add items to cart", "warning");
+        navigation.navigate('Login');
+        return;
+      }
+
+      if (!product?.product_id) {
+        showNotification("Invalid product", "error");
         return;
       }
 
@@ -678,19 +713,22 @@ const Marketplace = () => {
           ...product,
           quantity: 1
         };
-        cartProductsList.push(productWithQuantity);
-        await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
-        setCartProducts(cartProductsList);
+        setCartProducts(prev => [...prev, productWithQuantity]);
         setCartCount(prevCount => prevCount + 1);
         showNotification(`${product.name} added to cart! 🛒`, "success");
-        navigation.navigate('ProductDetail', { productId: product.product_id });
+        
+        // Update local storage
+        const existingCart = await AsyncStorage.getItem('cartProducts');
+        const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
+        cartProductsList.push(productWithQuantity);
+        await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
       }
     } catch (error) {
       console.error("Error adding product to cart:", error);
       showNotification(error.response?.data?.message || "Error adding to cart", "error");
       setAddingToCartId(null);
     }
-  }, [cartProducts, navigation]);
+  }, [cartProducts, navigation, showNotification]);
 
   const calculateDiscountedPrice = useCallback((price, discount) => {
     const originalPrice = parseFloat(price);
@@ -711,54 +749,79 @@ const Marketplace = () => {
   const toggleFavorite = useCallback(async (product) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
-  
-      if (!token || !userId || !product?.product_id) {
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+
+      if (!token || !userId) {
         showNotification("Please login to manage favorites", "warning");
+        navigation.navigate('Login');
         return;
       }
-  
+
       const isAlreadyFavorite = favoriteProducts.includes(product.product_id);
-  
+
       if (isAlreadyFavorite) {
-        const response = await axios.delete(
-         `${BASE_URL}/favorites/favorites/item/${product.product_id}`,
+        // First get the favorite_id
+        const favoritesResponse = await axios.get(
+          `${BASE_URL}/favorites/favorites/user/${userId}`,
           {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }
         );
-  
-        if (response.status === 200) {
-          setFavoriteProducts((prevFavorites) =>
-            prevFavorites.filter((id) => id !== product.product_id)
-          );
-          showNotification("Removed from favorites ❌", "success");
+        
+        const favorite = favoritesResponse.data.find(fav => fav.product_id === product.product_id);
+        
+        if (!favorite) {
+          showNotification("Could not find favorite to remove", "error");
+          return;
         }
+
+        // Remove from favorites using favorite_id
+        await axios.delete(
+          `${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`,
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        setFavoriteProducts(prev => prev.filter(id => id !== product.product_id));
+        showNotification("Removed from favorites ❌", "success");
       } else {
-        const response = await axios.post(
+        // Add to favorites
+        await axios.post(
           `${BASE_URL}/favorites/favorites/add`,
           {
             userId: parseInt(userId),
-            productId: product.product_id,
+            productId: product.product_id
           },
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
+              'Content-Type': 'application/json'
+            }
           }
         );
-  
-        if (response.status === 201) {
-          setFavoriteProducts((prevFavorites) => [...prevFavorites, product.product_id]);
-          showNotification("Added to favorites ❤️", "success");
-        }
+
+        setFavoriteProducts(prev => [...prev, product.product_id]);
+        showNotification("Added to favorites ❤️", "success");
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      showNotification("Something went wrong! Please try again.", "error");
+      if (error.response?.status === 401) {
+        showNotification("Please login to manage favorites", "warning");
+        navigation.navigate('Login');
+      } else {
+        showNotification(error.response?.data?.message || "Failed to update favorites", "error");
+      }
     }
-  }, [favoriteProducts]);
+  }, [favoriteProducts, navigation, showNotification]);
 
   const showNextProduct = () => {
     setCurrentProductIndex((prevIndex) =>
@@ -789,7 +852,7 @@ const Marketplace = () => {
               <Text style={styles.headerTitle}>Marketplace</Text>
               <View style={styles.headerIcons}>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('CartScreen')}
+                  onPress={() => navigation.navigate('Cart')}
                   style={styles.iconButton}
                 >
                   <FontAwesome name="shopping-cart" size={20} color="#333" />
@@ -801,7 +864,7 @@ const Marketplace = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.iconButton}
-                  onPress={() => navigation.navigate('FavoritesScreen')}
+                  onPress={() => navigation.navigate('Favorites')}
                 >
                   <FontAwesome name="heart-o" size={20} color="#333" />
                 </TouchableOpacity>
@@ -851,18 +914,21 @@ const Marketplace = () => {
                     <Text style={styles.cardPrice}>${currentProduct.price}</Text>
                     
                     <View style={styles.cardActions}>
-                      <TouchableOpacity 
-                        style={styles.favoriteButton} 
+                      <TouchableOpacity
+                        style={[
+                          styles.favoriteButton,
+                          favoriteProducts.includes(currentProduct.product_id) && styles.favoriteButtonActive
+                        ]}
                         onPress={() => toggleFavorite(currentProduct)}
                       >
-                        <FontAwesome 
+                        <FontAwesome
                           name={favoriteProducts.includes(currentProduct.product_id) ? "heart" : "heart-o"} 
                           size={24} 
-                          color="#FFFFFF" 
+                          color={favoriteProducts.includes(currentProduct.product_id) ? "#FF4B4B" : "#FFFFFF"} 
                         />
                       </TouchableOpacity>
                       
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={[
                           styles.cartButton,
                           addingToCartId === currentProduct.product_id && styles.cartButtonSuccess
@@ -885,9 +951,9 @@ const Marketplace = () => {
                         >
                           {addingToCartId === currentProduct.product_id ? (
                             <ActivityIndicator color="#FFFFFF" />
-                          ) : (
+                        ) : (
                             <FontAwesome name="shopping-cart" size={24} color="#FFFFFF" />
-                          )}
+                        )}
                         </Animated.View>
                       </TouchableOpacity>
                     </View>
@@ -1009,29 +1075,29 @@ const Marketplace = () => {
           {loading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#6e3de8" />
-            </View>
+      </View>
           )}
 
-          {notification.message && (
+      {notification.message && (
             <Animated.View style={[
               styles.notificationContainer,
               notification.type === 'success' && styles.notificationSuccess,
               notification.type === 'error' && styles.notificationError,
               notification.type === 'warning' && styles.notificationWarning,
             ]}>
-              <View style={styles.notificationContent}>
-                <FontAwesome
-                  name={
-                    notification.type === 'success' ? 'check-circle' :
-                    notification.type === 'error' ? 'times-circle' :
-                    notification.type === 'warning' ? 'exclamation-circle' : 'info-circle'
-                  }
-                  size={24}
-                  color="#FFFFFF"
-                  style={styles.notificationIcon}
-                />
-                <Text style={styles.notificationText}>{notification.message}</Text>
-              </View>
+          <View style={styles.notificationContent}>
+            <FontAwesome
+              name={
+                notification.type === 'success' ? 'check-circle' :
+                notification.type === 'error' ? 'times-circle' :
+                notification.type === 'warning' ? 'exclamation-circle' : 'info-circle'
+              }
+              size={24}
+              color="#FFFFFF"
+              style={styles.notificationIcon}
+            />
+            <Text style={styles.notificationText}>{notification.message}</Text>
+          </View>
             </Animated.View>
           )}
         </View>

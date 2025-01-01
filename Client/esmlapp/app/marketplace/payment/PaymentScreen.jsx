@@ -13,7 +13,7 @@ import { useStripe } from '@stripe/stripe-react-native';
 import { CardField } from '@stripe/stripe-react-native';
 import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-import { BASE_URL } from '../../../Api';
+import { BASE_URL } from "../../../Api";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PaymentScreen = ({ route, navigation }) => {
@@ -25,39 +25,40 @@ const PaymentScreen = ({ route, navigation }) => {
   const [userId, setUserId] = useState(null);
   const { confirmPayment } = useStripe();
 
-  // Get user details from both route params and AsyncStorage
+  // Get user details from AsyncStorage
   useEffect(() => {
     const getUserDetails = async () => {
       try {
-        // First check route params
-        if (routeUserDetails && routeUserDetails.user_id) {
-          console.log('Using user ID from route params:', routeUserDetails.user_id);
-          setUserId(routeUserDetails.user_id);
-          return;
-        }
-
-        // Fallback to AsyncStorage
-        const userDataString = await AsyncStorage.getItem('userData');
-        console.log('AsyncStorage userData:', userDataString);
+        const userDataStr = await AsyncStorage.getItem('userData');
+        console.log('AsyncStorage userData:', userDataStr);
         
-        if (userDataString) {
-          const userData = JSON.parse(userDataString);
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
           console.log('Parsed user data:', userData);
           
-          // Check for either user_id or id
-          const id = userData.user_id || userData.id;
+          const id = userData.user_id;
           if (id) {
             console.log('Setting user ID from AsyncStorage:', id);
             setUserId(id);
+          } else {
+            console.error('No user_id found in userData');
+            Alert.alert('Error', 'Please log in to continue with payment');
+            navigation.navigate('Login');
           }
+        } else {
+          console.error('No userData found in AsyncStorage');
+          Alert.alert('Error', 'Please log in to continue with payment');
+          navigation.navigate('Login');
         }
       } catch (error) {
         console.error('Error loading user data:', error);
+        Alert.alert('Error', 'Failed to load user data. Please try logging in again.');
+        navigation.navigate('Login');
       }
     };
 
     getUserDetails();
-  }, [routeUserDetails]);
+  }, [navigation]);
 
   const handlePayment = async () => {
     try {
@@ -72,22 +73,21 @@ const PaymentScreen = ({ route, navigation }) => {
       console.log('Cart validation passed:', cartItems);
       console.log('Current userId:', userId);
 
-      // Validate user ID
-      if (!userId) {
-        // Try to get user ID one more time
-        const userDataString = await AsyncStorage.getItem('userData');
-        const userData = userDataString ? JSON.parse(userDataString) : null;
-        const id = userData?.user_id || userData?.id || routeUserDetails?.user_id;
+      // Validate user ID and token
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const token = await AsyncStorage.getItem('userToken');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const id = userData?.user_id;
 
-        if (!id) {
-          Alert.alert('Error', 'Please log in to continue');
-          return;
-        }
-        setUserId(id);
+      if (!id || !token) {
+        Alert.alert('Error', 'Please log in to continue');
+        navigation.navigate('Login');
+        return;
       }
+      setUserId(id);
 
       console.log('Processing payment with details:', {
-        userId,
+        userId: id,
         cartTotal,
         deliveryFee,
         itemCount: cartItems.length
@@ -99,8 +99,15 @@ const PaymentScreen = ({ route, navigation }) => {
           'Confirm Order',
           `Total Amount: $${(cartTotal + deliveryFee).toFixed(2)}\nNumber of Items: ${cartItems.length}\n\nProceed with payment?`,
           [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Proceed', onPress: () => resolve(true) }
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => resolve(false)
+            },
+            {
+              text: 'Proceed',
+              onPress: () => resolve(true)
+            }
           ]
         );
       });
@@ -443,8 +450,16 @@ const PaymentScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: '#F9FAFB',
+  },
+  content: {
     padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 24,
   },
   summaryContainer: {
     backgroundColor: '#fff',
@@ -770,11 +785,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#93C5F8',
   },
   payButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-    marginRight: 12,
-    letterSpacing: 0.5,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   securityNotice: {
     flexDirection: 'row',

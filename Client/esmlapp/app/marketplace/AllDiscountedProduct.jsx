@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from "../../Api";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -84,12 +84,14 @@ const AllDiscountedProducts = () => {
   const addToCart = async (product) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
       const existingCart = await AsyncStorage.getItem('cartProducts');
       const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
 
       if (!token || !userId || !product?.product_id) {
-        showNotification("Please login to add items to cart", "warning");
+        showNotification("Please log in to add items to cart", "warning");
         return;
       }
 
@@ -139,10 +141,12 @@ const AllDiscountedProducts = () => {
   const toggleFavorite = async (productId) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
 
       if (!token || !userId) {
-        showNotification("Please login to manage favorites", "warning");
+        showNotification("Please log in to manage favorites", "warning");
         return;
       }
 

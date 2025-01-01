@@ -1,348 +1,659 @@
-// import React, { useEffect, useState } from 'react';
-// import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
-// import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-// import axios from 'axios';
-// import { useRoute, useNavigation } from '@react-navigation/native';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// import { Buffer } from 'buffer';
-// import { BASE_URL } from '../../Api.js';
-// import MapView, { Marker } from 'react-native-maps';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Modal } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
+import { BASE_URL } from "../../Api";
+import MapView, { Marker } from 'react-native-maps';
+import { Camera } from 'expo-camera';
+import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace('-', '+').replace('_', '/');
+    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+  } catch (error) {
+    console.error('Token decoding error:', error);
+    return null;
+  }
+};
 
-// const decodeToken = (token) => {
-//   try {
-//     const base64Url = token.split('.')[1];
-//     const base64 = base64Url.replace('-', '+').replace('_', '/');
-//     return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
-//   } catch (error) {
-//     console.error('Token decoding error:', error);
-//     return null;
-//   }
-// };
+global.Buffer = Buffer;
 
-// global.Buffer = Buffer;
+const EventDetails = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { eventId } = route.params;
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
-// const EventDetails = () => {
-//   const route = useRoute();
-//   const navigation = useNavigation();
-//   const { eventId } = route.params;
+  const [event, setEvent] = useState(null);
+  const [userJoined, setUserJoined] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [qrCode, setQrCode] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const [scannedData, setScannedData] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [stripeKey, setStripeKey] = useState(null);
 
-//   const [event, setEvent] = useState(null);
-//   const [userJoined, setUserJoined] = useState(false);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
+  // Fetch Stripe key from backend
+  useEffect(() => {
+    const fetchStripeKey = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/payments/config`);
+        setStripeKey(response.data.publishableKey);
+      } catch (err) {
+        console.error('Error fetching Stripe key:', err);
+        Alert.alert('Error', 'Failed to initialize payment system');
+      }
+    };
+    fetchStripeKey();
+  }, []);
 
-//   useEffect(() => {
-//     const fetchEvent = async () => {
-//       try { 
-//         const response = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
-//         setEvent(response.data);
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
+        setEvent(response.data);
         
-//         const token = await AsyncStorage.getItem('userToken');
-//         if (token) {
-//           const decodedToken = decodeToken(token);
-//           setUserJoined(response.data.event_participants.some(participant => participant.user_id === decodedToken.id));
-//         }
-//         setLoading(false);
-//       } catch (err) {
-//         setError(err.response ? err.response.data : err.message);
-//         setLoading(false);
-//       }
-//     };
+        const token = await AsyncStorage.getItem('userToken');
+        if (token) {
+          const decodedToken = decodeToken(token);
+          const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+          setIsCreator(response.data.creator_id === userId);
+          
+          const participantResponse = await axios.get(`${BASE_URL}/events/isUserParticipant/${eventId}/${userId}`);
+          setUserJoined(participantResponse.data.isParticipant);
 
-//     fetchEvent();
-//   }, [eventId]);
+          if (participantResponse.data.isParticipant) {
+            const qrResponse = await axios.get(`${BASE_URL}/events/getParticipantQR/${eventId}/${userId}`);
+            setQrCode(qrResponse.data.qrCode);
+          }
+        }
+        setLoading(false);
+      } catch (err) {
+        setError(err.response ? err.response.data : err.message);
+        setLoading(false);
+      }
+    };
 
-//   const handleAddParticipant = async () => {
-//     try {
-//       const token = await AsyncStorage.getItem('userToken');
-//       if (!token) {
-//         console.error("Token not found in AsyncStorage");
-//         Alert.alert('Error', 'You are not logged in. Please log in to join the event.');
-//         return;
-//       }
+    fetchEvent();
+  }, [eventId]);
 
-//       const decodedToken = decodeToken(token);
-//       if (!decodedToken) {
-//         Alert.alert('Error', 'Invalid token. Please log in again.');
-//         return;
-//       }
 
-//       const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
-//       if (!userId) {
-//         Alert.alert('Error', 'Failed to retrieve user information.');
-//         return;
-//       }
+const initializePayment = async (amount, userId) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/payments/process`, {
+      userId,
+      amount: amount,
+      items: [{
+        eventId: event.event_id,
+        eventName: event.event_name,
+        price: amount
+      }]
+    });
 
-//       await axios.post(
-//         `${BASE_URL}/events/addParticipant`,
-//         { eventId, userId },
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
+    const { clientSecret } = response.data;
 
-//       Alert.alert('Success', 'You have been added to the event!');
-//       const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
-//       setEvent(updatedEvent.data);
-//       setUserJoined(true);
-//     } catch (error) {
-//       if (error.response && error.response.status === 400 && error.response.data.error) {
-//         Alert.alert('Notice', error.response.data.error);
-//       } else {
-//         Alert.alert('Error', 'Failed to join the event. Please try again.');
-//       }
-//     }
-//   };
+    const { error: initError } = await initPaymentSheet({
+      paymentIntentClientSecret: clientSecret,
+      merchantDisplayName: 'PlayConnect',
+      style: 'automatic',
+      appearance: {
+        colors: {
+          primary: '#0095FF',
+          background: '#ffffff',
+          componentBackground: '#ffffff',
+          componentBorder: '#000000',
+          componentDivider: '#000000',
+          primaryText: '#000000',
+          secondaryText: '#333333',
+          componentText: '#000000',
+          placeholderText: '#999999'
+        },
+        shapes: {
+          borderRadius: 12,
+          borderWidth: 1
+        },
+        primaryButton: {
+          colors: {
+            background: '#0095FF',
+            text: '#ffffff'
+          }
+        }
+      }
+    });
 
-//   const handleRemoveParticipant = async () => {
-//     try {
-//       const token = await AsyncStorage.getItem('userToken');
-//       if (!token) {
-//         console.error("Token not found in AsyncStorage");
-//         Alert.alert('Error', 'You are not logged in. Please log in to leave the event.');
-//         return;
-//       }
+    if (initError) {
+      throw new Error(initError.message);
+    }
 
-//       const decodedToken = decodeToken(token);
-//       if (!decodedToken) {
-//         Alert.alert('Error', 'Invalid token. Please log in again.');
-//         return;
-//       }
+    const { error: presentError } = await presentPaymentSheet();
+    
+    if (presentError) {
+      if (presentError.code === 'Canceled') {
+        return false;
+      }
+      throw new Error(presentError.message);
+    }
 
-//       const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
-//       if (!userId) {
-//         Alert.alert('Error', 'Failed to retrieve user information.');
-//         return;
-//       }
+    return true;
+  } catch (error) {
+    console.error('Payment initialization error:', error);
+    throw error;
+  }
+};
 
-//       await axios.post(
-//         `${BASE_URL}/events/removeParticipant`,
-//         { eventId, userId },
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
+  const handleAddParticipant = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        throw new Error('You are not logged in. Please log in to join the event.');
+      }
 
-//       Alert.alert('Success', 'You have successfully left the event!');
-//       const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
-//       setEvent(updatedEvent.data);
-//       setUserJoined(false);
-//     } catch (error) {
-//       Alert.alert('Error', 'Failed to leave the event. Please try again.');
-//     }
-//   };
+      const decodedToken = decodeToken(token);
+      if (!decodedToken) {
+        throw new Error('Invalid token. Please log in again.');
+      }
 
-//   const handleGoBack = () => {
-//     navigation.navigate("Homepage/Homep");
-//   };
+      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
-//   if (loading) {
-//     return (
-//       <View style={styles.container}>
-//         <Text style={styles.loadingText}>Loading...</Text>
-//       </View>
-//     );
-//   }
+      const response = await axios.post(
+        `${BASE_URL}/events/addParticipant`,
+        { eventId, userId },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
-//   if (error) {
-//     return (
-//       <View style={styles.container}>
-//         <Text style={styles.errorText}>Error: {JSON.stringify(error)}</Text>
-//       </View>
-//     );
-//   }
+      if (response.data.qrCode) {
+        setQrCode(response.data.qrCode);
+        setModalVisible(true);
+      }
 
-//   if (!event) {
-//     return (
-//       <View style={styles.container}>
-//         <Text style={styles.errorText}>No event found.</Text>
-//       </View>
-//     );
-//   }
+      const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
+      setEvent(updatedEvent.data);
+      setUserJoined(true);
+      return true;
+    } catch (error) {
+      console.error('Add participant error:', error);
+      throw error;
+    }
+  };
 
-//   return (
-//     <View style={styles.container}>
-//       <View style={styles.header}>
-//         <TouchableOpacity onPress={handleGoBack}>
-//           <Ionicons name="arrow-back" size={24} color="black" />
-//         </TouchableOpacity>
-//       </View>
+  const handleRemoveParticipant = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.error("Token not found in AsyncStorage");
+        Alert.alert('Error', 'You are not logged in. Please log in to leave the event.');
+        return;
+      }
 
-//       <ScrollView>
-//         <View style={styles.eventNameContainer}>
-//           <Text style={styles.eventName}>{event.event_name}</Text>
-//         </View>
+      const decodedToken = decodeToken(token);
+      if (!decodedToken) {
+        Alert.alert('Error', 'Invalid token. Please log in again.');
+        return;
+      }
 
-//         <View style={styles.descriptionContainer}>
-//           <Text style={styles.descriptionText}>{event.description}</Text>
-//         </View>
+      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
-//         <View style={styles.detailsContainer}>
-//           <View style={styles.detailRow}>
-//             <Ionicons name="person" size={20} color="#0095FF" style={styles.detailIcon} />
-//             <Text style={styles.boldLabel}>Event Creator:</Text>
-//             <Text style={styles.boldContent}>{event.creator ? event.creator.username : 'Unknown'}</Text>
-//           </View>
+      Alert.alert(
+        '⚠️ Warning!',
+        'Are you sure you want to leave this event? If you leave, you will not be able to get your money back.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Leave',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await axios.post(
+                  `${BASE_URL}/events/removeParticipant`,
+                  { eventId, userId },
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
 
-//           <View style={styles.detailRow}>
-//             <Ionicons name="calendar" size={20} color="#0095FF" style={styles.detailIcon} />
-//             <Text style={styles.boldLabel}>Date:</Text>
-//             <Text style={styles.boldContent}>{new Date(event.date).toLocaleString()}</Text>
-//           </View>
+                Alert.alert('Success', 'You have successfully left the event!');
+                const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
+                setEvent(updatedEvent.data);
+                setUserJoined(false);
+                setQrCode(null);
+              } catch (error) {
+                Alert.alert('Error', 'Failed to leave the event. Please try again.');
+              }
+            },
+          },
+        ],
+        { 
+          cancelable: false,
+          titleStyle: { color: 'red' }
+        }
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to leave the event. Please try again.');
+    }
+  };
 
-//           <View style={styles.detailRow}>
-//             <Ionicons name="location" size={20} color="#0095FF" style={styles.detailIcon} />
-//             <Text style={styles.boldLabel}>Location:</Text>
-//             <Text style={styles.boldContent}>{event.location}</Text>
-//           </View>
-//         </View>
+  const handleJoinEvent = async () => {
+    try {
+      setIsProcessingPayment(true);
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert('Error', 'Please login to join events');
+        return;
+      }
 
-//         <View style={styles.imageContainer}>
-//           {event.latitude && event.longitude ? (
-//             <MapView
-//               style={styles.eventImage}
-//               scrollEnabled={false}
-//               zoomEnabled={false}
-//               rotateEnabled={false}
-//               pitchEnabled={false}
-//               initialRegion={{
-//                 latitude: event.latitude,
-//                 longitude: event.longitude,
-//                 latitudeDelta: 0.01,
-//                 longitudeDelta: 0.01,
-//               }}
-//             >
-//               <Marker
-//                 coordinate={{
-//                   latitude: event.latitude,
-//                   longitude: event.longitude,
-//                 }}
-//               />
-//             </MapView>
-//           ) : (
-//             <Image
-//               source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
-//               style={styles.eventImage}
-//             />
-//           )}
-//         </View>
+      const decodedToken = decodeToken(token);
+      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
-//         <View style={styles.participantsContainer}>
-//           <Text style={styles.sectionTitle}>
-//             Participants: {event.event_participants?.length || 0} / {event.participants}
-//           </Text>
-//           <View style={styles.participantGrid}>
-//             {event.event_participants?.map((participant) => (
-//               <View key={participant.user_id} style={styles.participantItem}>
-//                 <Ionicons name="person-circle" size={40} color="black" />
-//                 <Text style={styles.participantName}>{participant.user.username}</Text>
-//               </View>
-//             ))}
+      if (event.price && event.price > 0) {
+        try {
+          const paymentSuccess = await initializePayment(event.price, userId);
+          if (!paymentSuccess) {
+            Alert.alert('Notice', 'Payment was cancelled');
+            return;
+          }
+          
+          await handleAddParticipant();
+          Alert.alert('Success', 'Payment successful and you have joined the event!');
+        } catch (error) {
+          Alert.alert('Error', error.message || 'Payment failed. Please try again.');
+          return;
+        }
+      } else {
+        await handleAddParticipant();
+        Alert.alert('Success', 'You have joined the event!');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to join event. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
-//             {event.event_participants?.length < event.participants && (
-//               <TouchableOpacity
-//                 style={[styles.addButton, { backgroundColor: userJoined ? 'red' : '#0095FF' }]}
-//                 onPress={() => {
-//                   if (userJoined) {
-//                     Alert.alert(
-//                       'Confirmation',
-//                       'Are you sure you want to quit this event?',
-//                       [
-//                         { text: 'Cancel', style: 'cancel' },
-//                         { text: 'Yes', onPress: handleRemoveParticipant },
-//                       ]
-//                     );
-//                   } else {
-//                     Alert.alert(
-//                       'Confirmation',
-//                       'Are you sure you want to join this event?',
-//                       [
-//                         { text: 'Cancel', style: 'cancel' },
-//                         { text: 'Yes', onPress: handleAddParticipant },
-//                       ]
-//                     );
-//                   }
-//                 }}
-//               >
-//                 <MaterialCommunityIcons name={userJoined ? 'account-remove' : 'account-plus'} size={27} color="white" />
-//               </TouchableOpacity>
-//             )}
-//           </View>
-//         </View>
+  const handleBarCodeScanned = ({ type, data }) => {
+    console.log('QR code scanned:', data);
+    setScanned(true);
+    const participantData = JSON.parse(data);
+    setScannedData(participantData);
+    setModalVisible(false);
+  };
 
-//       </ScrollView>
-//     </View>
-//   );
-// };
+  const requestCameraPermission = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    console.log('Camera permission status:', status);
+    setHasPermission(status === 'granted');
+  };
 
-// const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: 'white' },
-//   header: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
-//   eventNameContainer: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16 },
-//   iconSpacing: { marginRight: 8 },
-//   eventName: { fontSize: 22, fontWeight: 'bold' },
-//   description: { fontSize: 14, color: 'gray', margin: 16 },
-//   detailsContainer: { marginHorizontal: 16, marginBottom: 16 },
-//   detailRow: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     justifyContent: 'space-between',
-//     marginBottom: 20,
-//   },
-//   boldLabel: { fontSize: 16, fontWeight: 'bold', flex: 2 },
-//   boldContent: { fontSize: 16, textAlign: 'right', flex: 3 },
-//   imageContainer: {
-//     alignItems: 'center',
-//     marginVertical: 10,
-//     marginBottom: 50,
-//     height: 220,
-//     width: '100%',
-//   },
-//   eventImage: {
-//     width: '90%',
-//     height: 220,
-//     borderRadius: 10,
-//   },
-//   participantsContainer: { marginHorizontal: 16, marginBottom: 16 },
-//   sectionTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-//   participantGrid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
-//   participantItem: { alignItems: 'center', width: '45%', margin: 8 },
-//   participantName: { fontSize: 14, textAlign: 'center', marginTop: 4 },
-//   addButton: {
-//     width: 50,
-//     height: 50,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     borderRadius: 25,
-//     margin: 8,
-//     marginLeft: 60,
-//   },
-//   detailIcon: {
-//     marginRight: 10,
-//   },
-//   loadingText: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: 50 },
-//   errorText: { fontSize: 16, color: 'red', textAlign: 'center', marginTop: 50 },
-//   descriptionContainer: { 
-//     margin: 16, 
-//     padding: 15, 
-//     backgroundColor: '#ffffff', 
-//     borderRadius: 10, 
-//     shadowColor: '#000', 
-//     shadowOffset: { width: 0, height: 2 }, 
-//     shadowOpacity: 0.5, 
-//     shadowRadius: 4, 
-//     elevation: 3,
-//   },
-//   descriptionText: { 
-//     fontSize: 16, 
-//     color: '#333',
-//     lineHeight: 24,
-//   },
-// });
+  useEffect(() => {
+    requestCameraPermission();
+  }, []);
 
-// export default EventDetails;
+  const handleGoBack = () => {
+    navigation.navigate("Homepage/Homep");
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error: {JSON.stringify(error)}</Text>
+      </View>
+    );
+  }
+
+  if (!event) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>No event found.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <StripeProvider publishableKey={stripeKey}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+          {isCreator ? (
+            <TouchableOpacity onPress={() => {
+              console.log('QR code scan icon clicked');
+              if (hasPermission) {
+                setModalVisible(true);
+              } else {
+                Alert.alert('Error', 'Camera permission is not granted.');
+              }
+            }}>
+              <MaterialCommunityIcons name="qrcode-scan" size={30} color="black" />
+            </TouchableOpacity>
+          ) : (
+            userJoined && qrCode && (
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <MaterialCommunityIcons name="qrcode" size={30} color="black" />
+              </TouchableOpacity>
+            )
+          )}
+        </View>
+
+        <ScrollView>
+          <View style={styles.eventNameContainer}>
+            <Text style={styles.eventName}>{event.event_name}</Text>
+          </View>
+
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionText}>{event.description}</Text>
+          </View>
+
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailRow}>
+              <Ionicons name="person" size={20} color="#0095FF" style={styles.detailIcon} />
+              <Text style={styles.boldLabel}>Event Creator:</Text>
+              <Text style={styles.boldContent}>{event.creator ? event.creator.username : 'Unknown'}</Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Ionicons name="calendar" size={20} color="#0095FF" style={styles.detailIcon} />
+              <Text style={styles.boldLabel}>Date:</Text>
+              <Text style={styles.boldContent}>{new Date(event.date).toLocaleString()}</Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Ionicons name="location" size={20} color="#0095FF" style={styles.detailIcon} />
+              <Text style={styles.boldLabel}>Location:</Text>
+              <Text style={styles.boldContent}>{event.location}</Text>
+            </View>
+          </View>
+
+          <View style={styles.imageContainer}>
+            {event.latitude && event.longitude ? (
+              <MapView
+                style={styles.eventImage}
+                scrollEnabled={false}
+                zoomEnabled={false}
+                rotateEnabled={false}
+                pitchEnabled={false}
+                initialRegion={{
+                  latitude: event.latitude,
+                  longitude: event.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+              >
+                <Marker
+                  coordinate={{
+                    latitude: event.latitude,
+                    longitude: event.longitude,
+                  }}
+                />
+              </MapView>
+            ) : (
+              <Image
+                source={{ uri: event.image || 'https://via.placeholder.com/300x150' }}
+                style={styles.eventImage}
+              />
+            )}
+          </View>
+
+          <View style={styles.participantsContainer}>
+            <Text style={styles.sectionTitle}>
+              Participants: {event.event_participants?.length || 0} / {event.participants}
+            </Text>
+            <View style={styles.participantGrid}>
+              {event.event_participants?.map((participant) => (
+                <View key={participant.user_id} style={styles.participantItem}>
+                  <Ionicons name="person-circle" size={40} color="black" />
+                  <Text style={styles.participantName}>{participant.user.username}</Text>
+                </View>
+              ))}
+
+              {event.event_participants?.length < event.participants && (
+                <TouchableOpacity
+                  style={[styles.addButton, { backgroundColor: userJoined ? 'red' : '#0095FF' }]}
+                  onPress={() => {
+                    if (userJoined) {
+                      handleRemoveParticipant();
+                    } else {
+                      handleJoinEvent();
+                    }
+                  }}
+                >
+                  <MaterialCommunityIcons 
+                  name={userJoined ? 'account-remove' : 'account-plus'} 
+                  size={27} 
+                  color="white" 
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Payment Processing Modal */}
+      <Modal
+        visible={isProcessingPayment}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.paymentModalContent}>
+            <Text style={styles.paymentModalTitle}>Processing Payment</Text>
+            <View style={styles.paymentProcessing}>
+              <Text style={styles.processingText}>Please wait...</Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* QR Code Scanner Modal for Creator */}
+      {isCreator && hasPermission && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+            setScanned(false);
+          }}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <Camera
+              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+              style={{ width: '100%', height: '100%' }}
+            />
+            {scanned && (
+              <TouchableOpacity onPress={() => setScanned(false)} style={{ position: 'absolute', bottom: 50 }}>
+                <Text style={{ fontSize: 18, color: 'white' }}>Tap to Scan Again</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Modal>
+      )}
+
+      {/* Scanned Data Modal */}
+      {scannedData && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+            setScannedData(null);
+          }}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View style={{ width: 300, height: 400, backgroundColor: 'white', padding: 20, alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Participant Approved</Text>
+              <Image source={{ uri: scannedData.userProfilePicture }} style={{ width: 100, height: 100, borderRadius: 50, marginVertical: 20 }} />
+              <Text style={{ fontSize: 16 }}>{scannedData.userName}</Text>
+              <Text style={{ fontSize: 16, marginTop: 10 }}>{scannedData.eventName}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={{ marginTop: 20, color: 'blue' }}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* QR Code Display Modal for Participants */}
+      {qrCode && !isCreator && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View style={{ width: 300, height: 300, backgroundColor: 'white', padding: 20, alignItems: 'center' }}>
+              <Text>Your QR Code</Text>
+              {qrCode && <Image source={{ uri: qrCode }} style={{ width: 200, height: 200 }} />}
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={{ marginTop: 20, color: 'blue' }}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
+  </StripeProvider>
+);
+};
+
+const styles = StyleSheet.create({
+container: { flex: 1, backgroundColor: 'white' },
+header: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
+eventNameContainer: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16 },
+iconSpacing: { marginRight: 8 },
+eventName: { fontSize: 22, fontWeight: 'bold' },
+description: { fontSize: 14, color: 'gray', margin: 16 },
+detailsContainer: { marginHorizontal: 16, marginBottom: 16 },
+detailRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 20,
+},
+boldLabel: { fontSize: 16, fontWeight: 'bold', flex: 2 },
+boldContent: { fontSize: 16, textAlign: 'right', flex: 3 },
+imageContainer: {
+  alignItems: 'center',
+  marginVertical: 10,
+  marginBottom: 50,
+  height: 220,
+  width: '100%',
+},
+eventImage: {
+  width: '90%',
+  height: 220,
+  borderRadius: 10,
+},
+participantsContainer: { marginHorizontal: 16, marginBottom: 16 },
+sectionTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+participantGrid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+participantItem: { alignItems: 'center', width: '45%', margin: 8 },
+participantName: { fontSize: 14, textAlign: 'center', marginTop: 4 },
+addButton: {
+  width: 50,
+  height: 50,
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 25,
+  margin: 8,
+  marginLeft: 60,
+},
+detailIcon: {
+  marginRight: 10,
+},
+loadingText: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginTop: 50 },
+errorText: { fontSize: 16, color: 'red', textAlign: 'center', marginTop: 50 },
+descriptionContainer: { 
+  margin: 16, 
+  padding: 15, 
+  backgroundColor: '#ffffff', 
+  borderRadius: 10, 
+  shadowColor: '#000', 
+  shadowOffset: { width: 0, height: 2 }, 
+  shadowOpacity: 0.5, 
+  shadowRadius: 4, 
+  elevation: 3,
+},
+descriptionText: { 
+  fontSize: 16, 
+  color: '#333',
+  lineHeight: 24,
+},
+modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+paymentModalContent: {
+  backgroundColor: 'white',
+  padding: 20,
+  borderRadius: 10,
+  width: '80%',
+  alignItems: 'center',
+},
+paymentModalTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 20,
+},
+paymentProcessing: {
+  marginVertical: 20,
+},
+processingText: {
+  fontSize: 16,
+  color: '#666',
+},
+closeButton: {
+  marginTop: 20,
+  padding: 10,
+  backgroundColor: '#ddd',
+  borderRadius: 5,
+},
+closeButtonText: {
+  color: '#333',
+  fontSize: 16,
+},
+joinButton: {
+  position: 'absolute',
+  bottom: 20,
+  right: 20,
+  padding: 15,
+  borderRadius: 10,
+  elevation: 3,
+},
+joinButtonText: {
+  color: 'white',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+});
+
+export default EventDetails;

@@ -8,83 +8,130 @@ import {
   ScrollView,
   ActivityIndicator,
   SafeAreaView,
-  Animated
+  Animated,
+  RefreshControl
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {BASE_URL} from '../../Api';
+import { BASE_URL } from "../../Api";
 
 const FavoritesScreen = () => {
   const navigation = useNavigation();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showMessage, setShowMessage] = useState("");
 
   const fetchFavorites = useCallback(async () => {
     try {
       setLoading(true);
-      const userId = await AsyncStorage.getItem("userId");
-      if (userId) {
-        const response = await axios.get(
-          `${BASE_URL}/favorites/favorites/user/${userId}`
-        );
-        setFavorites(response.data);
+      const token = await AsyncStorage.getItem('userToken');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+
+      if (!token || !userId) {
+        setShowMessage("Please login to view favorites");
+        navigation.navigate('Login');
+        return;
       }
+
+      const response = await axios.get(
+        `${BASE_URL}/favorites/favorites/user/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      setFavorites(response.data);
     } catch (error) {
       console.error("Error fetching favorites:", error);
+      setShowMessage("Failed to load favorites");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigation]);
 
   useEffect(() => {
     fetchFavorites();
   }, [fetchFavorites]);
 
-  const removeFromFavorites = useCallback(
-    async (favorite) => {
-      try {
-        const token = await AsyncStorage.getItem("userToken");
-        if (!token) return;
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchFavorites().finally(() => setRefreshing(false));
+  }, [fetchFavorites]);
 
-        await axios.delete(
-          `${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+  const removeFromFavorites = useCallback(async (favorite) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
 
-        setFavorites(
-          favorites.filter((fav) => fav.favorite_id !== favorite.favorite_id)
-        );
-
-        setShowMessage("Item removed from favorites! ");
-        setTimeout(() => setShowMessage(""), 2000);
-      } catch (error) {
-        console.error("Error removing from favorites:", error);
-        setShowMessage("Failed to remove from favorites");
-        setTimeout(() => setShowMessage(""), 2000);
+      if (!token || !userId) {
+        setShowMessage("Please login to manage favorites");
+        navigation.navigate('Login');
+        return;
       }
-    },
-    [favorites]
-  );
+
+      await axios.delete(
+        `${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      setFavorites(prevFavorites => 
+        prevFavorites.filter(fav => fav.favorite_id !== favorite.favorite_id)
+      );
+      setShowMessage("Removed from favorites!");
+      setTimeout(() => setShowMessage(""), 2000);
+    } catch (error) {
+      console.error("Error removing from favorites:", error);
+      setShowMessage("Failed to remove from favorites");
+      setTimeout(() => setShowMessage(""), 2000);
+    }
+  }, [navigation]);
+
+  const navigateToProduct = useCallback((product) => {
+    if (product && product.product_id) {
+      navigation.navigate('ProductDetail', {
+        productId: product.product_id,
+        product: product
+      });
+    }
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <FontAwesome name="arrow-left" size={24} style={styles.backButtonIcon} />
-        </TouchableOpacity>
-        
-        <Text style={styles.headerTitle}>My Collection</Text>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <FontAwesome name="arrow-left" size={24} style={styles.backButtonIcon} />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle}>My Collection</Text>
+
+          <TouchableOpacity 
+            style={styles.infoButton}
+            onPress={() => {
+              // Your info button logic here
+            }}
+          >
+            <FontAwesome name="info-circle" size={24} style={styles.infoIcon} />
+          </TouchableOpacity>
+        </View>
         
         {loading ? (
           <ActivityIndicator size="large" color="#4299e1" />
@@ -96,66 +143,79 @@ const FavoritesScreen = () => {
             <Text style={styles.emptyText}>
               Start building your collection by adding favorites from the marketplace
             </Text>
+            <TouchableOpacity 
+              style={styles.exploreButton}
+              onPress={() => navigation.navigate('Marketplace')}
+            >
+              <Text style={styles.exploreButtonText}>Explore Marketplace</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <ScrollView 
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           >
             <View style={styles.cardContainer}>
-              {favorites.map((favorite, index) => (
-                <Animated.View 
-                  key={index} 
-                  style={[
-                    styles.card,
-                    {
-                      transform: [
-                        { translateY: 0 },
-                        { scale: 1 }
-                      ]
-                    }
-                  ]}
+              {favorites.map((favorite) => (
+                <TouchableOpacity
+                  key={favorite.favorite_id}
+                  onPress={() => navigateToProduct(favorite.product)}
                 >
-                  <View style={styles.cardImageWrapper}>
-                    <View style={styles.cardGradientOverlay} />
-                    <Image
-                      source={{ uri: favorite.product.image_url }}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                  </View>
-                  <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle} numberOfLines={2}>
-                      {favorite.product.name}
-                    </Text>
-                    <View style={styles.ratingContainer}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <FontAwesome
-                          key={star}
-                          name={star <= Math.floor(favorite.product.rating || 0) ? "star" : "star-o"}
-                          size={12}
-                          color="#FBC02D"
-                          style={styles.starIcon}
-                        />
-                      ))}
-                      <Text style={styles.ratingText}>
-                        {Number(favorite.product.rating || 0).toFixed(1)}
+                  <Animated.View 
+                    style={[
+                      styles.card,
+                      {
+                        transform: [
+                          { translateY: 0 },
+                          { scale: 1 }
+                        ]
+                      }
+                    ]}
+                  >
+                    <View style={styles.cardImageWrapper}>
+                      <View style={styles.cardGradientOverlay} />
+                      <Image
+                        source={{ uri: favorite.product?.image_url }}
+                        style={styles.cardImage}
+                        resizeMode="cover"
+                      />
+                    </View>
+                    <View style={styles.cardContent}>
+                      <Text style={styles.cardTitle} numberOfLines={2}>
+                        {favorite.product?.name}
                       </Text>
-                      <Text style={styles.reviewCount}>
-                        ({favorite.product.rating_count || 0})
+                      <View style={styles.ratingContainer}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <FontAwesome
+                            key={star}
+                            name={star <= Math.floor(favorite.product?.rating || 0) ? "star" : "star-o"}
+                            size={12}
+                            color="#FBC02D"
+                            style={styles.starIcon}
+                          />
+                        ))}
+                        <Text style={styles.ratingText}>
+                          {Number(favorite.product?.rating || 0).toFixed(1)}
+                        </Text>
+                        <Text style={styles.reviewCount}>
+                          ({favorite.product?.rating_count || 0})
+                        </Text>
+                      </View>
+                      <Text style={styles.cardPrice}>
+                        ${favorite.product?.price}
                       </Text>
                     </View>
-                    <Text style={styles.cardPrice}>
-                      ${favorite.product.price}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => removeFromFavorites(favorite)}
-                  >
-                    <FontAwesome name="heart" size={18} style={styles.removeButtonIcon} />
-                  </TouchableOpacity>
-                </Animated.View>
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => removeFromFavorites(favorite)}
+                    >
+                      <FontAwesome name="heart" size={18} style={styles.removeButtonIcon} />
+                    </TouchableOpacity>
+                  </Animated.View>
+                </TouchableOpacity>
               ))}
             </View>
           </ScrollView>
@@ -186,16 +246,60 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF2FF',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  backButtonIcon: {
+    color: '#4F46E5',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 20,
-    marginTop: 12,
+    flex: 1,
     textAlign: 'center',
-    letterSpacing: 0.5,
+    marginHorizontal: 16,
+  },
+  infoButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  infoIcon: {
+    color: '#4F46E5',
   },
   scrollContent: {
     paddingBottom: 24,
@@ -206,9 +310,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    padding: 16,
   },
   card: {
-    width: '48%',
+    width: 160,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 16,
@@ -337,23 +442,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     maxWidth: 260,
   },
-  backButton: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    zIndex: 10,
-    backgroundColor: '#FFFFFF',
-    padding: 10,
+  exploreButton: {
+    marginTop: 24,
+    backgroundColor: '#4299e1',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 12,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#4299e1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  backButtonIcon: {
-    color: '#4F46E5',
-  }
+  exploreButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default FavoritesScreen;

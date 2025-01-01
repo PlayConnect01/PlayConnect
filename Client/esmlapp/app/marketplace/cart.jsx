@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
-import {BASE_URL} from '../../Api';
+import { BASE_URL } from "../../Api";
 
 const CartScreen = () => {
   const navigation = useNavigation();
@@ -11,38 +11,56 @@ const CartScreen = () => {
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch cart items
+  const fetchCartItems = async () => {
+    try {
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+      console.log("Fetched User Data:", userData);
+
+      if (!userId) throw new Error("Please log in to view your cart");
+
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await fetch(`${BASE_URL}/cart/cart/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Fetch cart response status:', response.status);
+
+      if (!response.ok) throw new Error("Failed to fetch cart items");
+
+      const data = await response.json();
+      setCartItems(data);
+    } catch (error) {
+      Alert.alert("Error", error.message || "Failed to fetch cart items.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const userId = await AsyncStorage.getItem("userId");
-        console.log("Fetched User ID:", userId);
+    fetchCartItems();
+  }, []);
 
-        if (!userId) throw new Error("User ID not found");
-
-        const response = await fetch(`${BASE_URL}/cart/cart/user/${userId}`);
-        console.log('Fetch cart response status:', response.status);
-
-        if (!response.ok) throw new Error("Failed to fetch cart items");
-
-        const data = await response.json();
-        setCartItems(data);
-      } catch (error) {
-        Alert.alert("Error", error.message || "Failed to fetch cart items.");
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
     fetchCartItems();
   }, []);
 
   const updateQuantity = async (cartItemId, increment) => {
     try {
-      const userId = await AsyncStorage.getItem("userId");
-      if (!userId) throw new Error("User ID not found");
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
+      const token = await AsyncStorage.getItem('userToken');
+
+      if (!userId) throw new Error("Please log in to update your cart");
 
       const updatedItem = cartItems.find(
         (item) => item.cart_item_id === cartItemId
@@ -51,7 +69,10 @@ const CartScreen = () => {
 
       const response = await fetch(`${BASE_URL}/cart/items/${cartItemId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ userId, quantity: newQuantity }),
       });
 
@@ -123,76 +144,83 @@ const CartScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Cart</Text>
+    <View style={styles.container}>
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <Text style={styles.title}>Cart</Text>
 
-      {cartItems.length === 0 ? (
-        <Text style={styles.emptyCart}>Your cart is empty</Text>
-      ) : (
-        <>
-          {cartItems.map((item) => (
-            <View key={item.cart_item_id} style={styles.cartItem}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.itemImage}
-              
-              />
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
-              </View>
-              <View style={styles.quantityControl}>
+        {cartItems.length === 0 ? (
+          <Text style={styles.emptyCart}>Your cart is empty</Text>
+        ) : (
+          <>
+            {cartItems.map((item) => (
+              <View key={item.cart_item_id} style={styles.cartItem}>
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.itemImage}
+                
+                />
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                </View>
+                <View style={styles.quantityControl}>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.cart_item_id, -1)}
+                  >
+                    <Text style={styles.quantityText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.quantity}>{item.quantity}</Text>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.cart_item_id, 1)}
+                  >
+                    <Text style={styles.quantityText}>+</Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.cart_item_id, -1)}
+                  onPress={() => deleteProduct(item.cart_item_id)}
+                  style={styles.deleteButton}
                 >
-                  <Text style={styles.quantityText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.quantity}>{item.quantity}</Text>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.cart_item_id, 1)}
-                >
-                  <Text style={styles.quantityText}>+</Text>
+                  <Text style={styles.deleteText}>Delete</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => deleteProduct(item.cart_item_id)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteText}>Delete</Text>
-              </TouchableOpacity>
+            ))}
+
+            <View style={styles.paymentDetails}>
+              <Text style={styles.paymentLabel}>
+                Total ({cartItems.length} items)
+              </Text>
+              <Text style={styles.paymentPrice}>
+                ${calculateTotal().toFixed(2)}
+              </Text>
             </View>
-          ))}
 
-          <View style={styles.paymentDetails}>
-            <Text style={styles.paymentLabel}>
-              Total ({cartItems.length} items)
-            </Text>
-            <Text style={styles.paymentPrice}>
-              ${calculateTotal().toFixed(2)}
-            </Text>
-          </View>
+            <TouchableOpacity
+              style={styles.checkoutButton}
+              onPress={navigateToDeliveryServices}
+            >
+              <Text style={styles.checkoutText}>Choose Delivery Services</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
-          <TouchableOpacity
-            style={styles.checkoutButton}
-            onPress={navigateToDeliveryServices}
-          >
-            <Text style={styles.checkoutText}>Choose Delivery Services</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      <ConfirmationModal
-        visible={isModalVisible}
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setItemToDelete(null); // Reset itemToDelete if canceled
-          setModalVisible(false);
-        }}
-        message="Are you sure you want to delete this item?"
-      />
-    </ScrollView>
+        <ConfirmationModal
+          visible={isModalVisible}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setItemToDelete(null); // Reset itemToDelete if canceled
+            setModalVisible(false);
+          }}
+          message="Are you sure you want to delete this item?"
+        />
+      </ScrollView>
+    </View>
   );
 };
 
@@ -207,6 +235,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7FAFF',
     padding: 16,
+  },
+  scrollView: {
+    flex: 1,
   },
   title: {
     fontSize: 24,

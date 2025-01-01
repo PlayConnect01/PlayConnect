@@ -14,11 +14,12 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from "../../Api";
 import { Import } from 'lucide-react';
 import MatchNotification from '../components/MatchNotification';
 import NotificationsModal from '../components/NotificationsModal';
 import { LinearGradient } from 'expo-linear-gradient';
+import CustomAlert from '../../Alerts/CustomAlert';
 
 axios.defaults.timeout = 5000;
 
@@ -35,10 +36,19 @@ const Match = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const position = useRef(new Animated.ValueXY()).current;
   const likeScale = useRef(new Animated.Value(1)).current;
   const dislikeScale = useRef(new Animated.Value(1)).current;
   const navigation = useNavigation();
+
+  const showCustomAlert = (title, message) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
 
   useEffect(() => {
     const loadToken = async () => {
@@ -58,7 +68,7 @@ const Match = () => {
         }
       } catch (error) {
         console.error('Error loading token:', error);
-        Alert.alert('Error', 'Please login again');
+        showCustomAlert('Error', 'Please login again');
         navigation.navigate('Login');
       }
     };
@@ -78,11 +88,11 @@ const Match = () => {
             setUsers(response.data);
             console.log('Données récupérées:', response.data);
           } else {
-            Alert.alert('No Matches', 'No users with common sports found.');
+            showCustomAlert('No Matches', 'No users with common sports found.');
           }
         } catch (error) {
           console.error('Error fetching users:', error.message);
-          Alert.alert('Error', 'Failed to load potential matches.');
+          showCustomAlert('Error', 'Failed to load potential matches.');
         }
       };
 
@@ -149,7 +159,7 @@ const Match = () => {
     if (currentUserIndex < users.length - 1) {
       setCurrentUserIndex((prev) => prev + 1);
     } else {
-      Alert.alert('Finished', 'You have viewed all available users.');
+      showCustomAlert('Finished', 'You have viewed all available users.');
     }
     position.setValue({ x: 0, y: 0 });
   };
@@ -189,7 +199,7 @@ const Match = () => {
       }).start(() => handleNextUser());
     } catch (error) {
       console.error('Error creating match:', error.message);
-      Alert.alert('Error', `Failed to create the match. ${error.message}`);
+      showCustomAlert('Error', `Failed to create the match. ${error.message}`);
     }
   };
 
@@ -353,6 +363,12 @@ const Match = () => {
         onAccept={handleAcceptMatch}
         onReject={handleRejectMatch}
         currentUserId={currentUserId}
+      />
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
       />
     </View>
   );

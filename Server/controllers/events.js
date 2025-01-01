@@ -1,10 +1,20 @@
 const { PrismaClient } = require("@prisma/client");
+const QRCode = require('qrcode');
 
 const prisma = new PrismaClient();
 
 const getAllEvents = async (req, res) => {
   try {
-    const events = await prisma.event.findMany();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+
+    const events = await prisma.event.findMany({
+      where: {
+        date: {
+          gte: today,
+        },
+      },
+    });
     res.json(events);
   } catch (error) {
     res.status(500).json({ error: "Error fetching events", details: error.message });
@@ -35,31 +45,52 @@ const getEventById = async (req, res) => {
   }
 };
 
-const addParticipant = async (req, res) => {
-  const { eventId } = req.body;
-  const userId = req.body.userId;
+const addParticipantWithQR = async (req, res) => {
+  const { eventId, userId } = req.body;
 
   try {
+    // Check if the user is already a participant in the event
     const existingParticipation = await prisma.eventParticipant.findFirst({
       where: { event_id: parseInt(eventId), user_id: parseInt(userId) },
     });
 
     if (existingParticipation) {
-      return res.status(400).json({ error: "You already joined This event" });
+      return res.status(400).json({ error: "You already joined this event" });
     }
 
+    // Fetch event and user details
+    const event = await prisma.event.findUnique({ where: { event_id: parseInt(eventId) } });
+    const user = await prisma.user.findUnique({ where: { user_id: parseInt(userId) } });
+
+    if (!event || !user) {
+      return res.status(404).json({ error: "Event or User not found" });
+    }
+
+    // Generate QR code data with essential information
+    const qrData = {
+      eventId: event.event_id,
+      userId: user.user_id,
+    };
+
+    // Generate QR code
+    const qrCode = await QRCode.toDataURL(JSON.stringify(qrData));
+
+    // Store participant with QR code
     const participant = await prisma.eventParticipant.create({
       data: {
         event_id: parseInt(eventId),
         user_id: parseInt(userId),
+        qr_code: qrCode,
       },
     });
 
-    res.status(201).json(participant);
+    res.status(201).json({ message: "Participant added and QR code generated", qrCode, participant });
   } catch (error) {
-    res.status(500).json({ error: "Error adding participant", details: error.message });
+    console.error("Error adding participant:", error);
+    res.status(500).json({ error: "Internal server error", details: error.message });
   }
 };
+
 const removeParticipant = async (req, res) => {
   const { eventId, userId } = req.body;
 
@@ -175,7 +206,6 @@ const updateEvent = async (req, res) => {
       category,
       participants,
       price,
-      is_free,
     } = req.body;
 
     const updatedEvent = await prisma.event.update({
@@ -190,7 +220,6 @@ const updateEvent = async (req, res) => {
         category,
         participants: parseInt(participants),
         price: parseFloat(price),
-        is_free,
       },
     });
 
@@ -222,17 +251,24 @@ const deleteEvent = async (req, res) => {
 };
 
 const getEventsByDate = async (req, res) => {
-   try {
-     const { date } = req.params;
-     const events = await prisma.event.findMany({
-       where: {
-         date: new Date(date),
-       },
-     });
+  try {
+    const { date } = req.params;
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-     res.json(events);
-   } catch (error) {
-     res.status(500).json({ error: "Error fetching events by date", details: error.message });
+    const events = await prisma.event.findMany({
+      where: {
+        date: {
+          gte: today,
+          equals: selectedDate,
+        },
+      },
+    });
+
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching events by date", details: error.message });
   }
 };
 
@@ -251,4 +287,53 @@ const getParticipatedEvents = async (req, res) => {
   }
 };
 
-module.exports = { EventWithCreator, getAllEvents, getEventById, createEvent, updateEvent, deleteEvent, getEventsByDate, addParticipant, getParticipatedEvents, removeParticipant };
+const isUserParticipant = async (req, res) => {
+  const { eventId, userId } = req.params;
+
+  try {
+    const existingParticipation = await prisma.eventParticipant.findFirst({
+      where: { event_id: parseInt(eventId), user_id: parseInt(userId) },
+    });
+
+    if (existingParticipation) {
+      return res.status(200).json({ isParticipant: true });
+    } else {
+      return res.status(200).json({ isParticipant: false });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Error checking participation", details: error.message });
+  }
+};
+
+const getParticipantQR = async (req, res) => {
+  const { eventId, userId } = req.params;
+
+  try {
+    const participant = await prisma.eventParticipant.findFirst({
+      where: { event_id: parseInt(eventId), user_id: parseInt(userId) },
+    });
+
+    if (!participant) {
+      return res.status(404).json({ error: "Participant not found" });
+    }
+
+    res.status(200).json({ qrCode: participant.qr_code });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching QR code", details: error.message });
+  }
+};
+
+module.exports = { 
+  EventWithCreator, 
+  getAllEvents, 
+  getEventById, 
+  createEvent, 
+  updateEvent, 
+  deleteEvent, 
+  getEventsByDate, 
+  addParticipantWithQR, 
+  getParticipatedEvents, 
+  removeParticipant, 
+  isUserParticipant,
+  getParticipantQR // Add this line
+};

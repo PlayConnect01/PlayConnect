@@ -8,6 +8,8 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import EventDetails from "./Homepage/EventDetails";
 import AddNewEvent from "./Homepage/CreateEvent";
 import Homep from "./Homepage/Homep";
+import CompetitionPage from "./Homepage/CompetitionPage";
+import TournamentDetail from "./Homepage/TournamentDetail";
 import CategoryEvents from "./Homepage/CategoryEvents";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
@@ -18,23 +20,59 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import ProfilePage from "./profile/ProfilePage";
-import MarketplaceHome from "./marketplace/marketplace";
+import Marketplace from "./marketplace/marketplace";
 import Products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/payment/PaymentScreen';
 import PaymentSuccess from './marketplace/payment/PaymentSuccess';
 import TournamentList from './Homepage/TournamentList';
-import TournamentDetail from './Homepage/TournamentDetail';
 import EditProfile from "./profile/EditProfile";
 import DeliveryServicesScreen from './marketplace/payment/DeliveryServicesScreen';
 import OrdersScreen from './marketplace/orders/OrdersScreen';
 import OrderDetails from './marketplace/orders/OrderDetails';
+import First from "./FirstPage/First";
+import FavoritesScreen from "./marketplace/FavoritesScreen";
+
 const Stack = createStackNavigator();
+
+// Wrap components with MainLayout
+const withMainLayout = (Component) => {
+  return function WrappedComponent(props) {
+    return (
+      <MainLayout>
+        <Component {...props} />
+      </MainLayout>
+    );
+  };
+};
+
+// Create wrapped versions of components that need MainLayout
+const WrappedHomep = withMainLayout(Homep);
+const WrappedCompetitionPage = withMainLayout(CompetitionPage);
+const WrappedTournamentList = withMainLayout(TournamentList);
+const WrappedTournamentDetail = withMainLayout(TournamentDetail);
+const WrappedCategoryEvents = withMainLayout(CategoryEvents);
+const WrappedCalendarPage = withMainLayout(CalendarPage);
+const WrappedMatch = withMainLayout(Match);
+const WrappedMessagePage = withMainLayout(MessagePage);
+const WrappedChatDetails = withMainLayout(ChatDetails);
+const WrappedProfilePage = withMainLayout(ProfilePage);
+const WrappedEditProfile = withMainLayout(EditProfile);
+const WrappedMarketplace = withMainLayout(Marketplace);
+const WrappedProducts = withMainLayout(Products);
+const WrappedProductDetail = withMainLayout(ProductDetail);
+const WrappedCartScreen = withMainLayout(CartScreen);
+const WrappedPaymentScreen = withMainLayout(PaymentScreen);
+const WrappedPaymentSuccess = withMainLayout(PaymentSuccess);
+const WrappedDeliveryServices = withMainLayout(DeliveryServicesScreen);
+const WrappedOrdersScreen = withMainLayout(OrdersScreen);
+const WrappedOrderDetails = withMainLayout(OrderDetails);
+const WrappedFavoritesScreen = withMainLayout(FavoritesScreen);
 
 export default function App() {
   return (
-    <StripeProvider>  
+    <StripeProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack.Navigator
           initialRouteName="Landing"
@@ -53,187 +91,38 @@ export default function App() {
           }}
         >
           {/* Auth Screens */}
+          <Stack.Screen name="First" component={First} />
           <Stack.Screen name="Landing" component={Landing} />
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="SignUp" component={SignUp} />
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
 
           {/* Main Flow */}
-          <Stack.Screen
-            name="Homep"
-            component={() => (
-              <MainLayout>
-                <Homep />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="TournamentList"
-            component={() => (
-              <MainLayout>
-                <TournamentList />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="TournamentDetail"
-            component={() => (
-              <MainLayout>
-                <TournamentDetail />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="CategoryEvents"
-            component={() => (
-              <MainLayout>
-                <CategoryEvents />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="CalendarPage"
-            component={() => (
-              <MainLayout>
-                <CalendarPage />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="EventDetails"
-            component={() => (
-              <MainLayout>
-                <EventDetails />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="AddNewEvent"
-            component={() => (
-              <MainLayout>
-                <AddNewEvent />
-              </MainLayout>
-            )}
-          />
-
-          {/* Match */}
-          <Stack.Screen
-            name="Match"
-            component={() => (
-              <MainLayout>
-                <Match />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="MessagePage"
-            component={() => (
-              <MainLayout>
-                <MessagePage />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="ChatDetails"
-            component={() => (
-              <MainLayout>
-                <ChatDetails />
-              </MainLayout>
-            )}
-          />
-
-          {/* Profile */}
-          <Stack.Screen
-            name="Profile"
-            component={() => (
-              <MainLayout>
-                <ProfilePage />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="EditProfile"
-            component={() => (
-              <MainLayout>
-                <EditProfile />
-              </MainLayout>
-            )}
-          />
-
-          {/* Marketplace */}
-          <Stack.Screen
-            name="MarketplaceHome"
-            component={() => (
-              <MainLayout>
-                <MarketplaceHome />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="Products"
-            component={() => (
-              <MainLayout>
-                <Products />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="ProductDetail"
-            component={() => (
-              <MainLayout>
-                <ProductDetail />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="CartScreen"
-            component={() => (
-              <MainLayout>
-                <CartScreen />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="PaymentScreen"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <PaymentScreen route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="PaymentSuccess"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <PaymentSuccess route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="DeliveryServices"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <DeliveryServicesScreen route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="Orders"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <OrdersScreen route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-          <Stack.Screen
-            name="OrderDetails"
-            component={({ route, navigation }) => (
-              <MainLayout>
-                <OrderDetails route={route} navigation={navigation} />
-              </MainLayout>
-            )}
-          />
-
+          <Stack.Screen name="Home" component={WrappedHomep} />
+          <Stack.Screen name="CompetitionPage" component={WrappedCompetitionPage} />
+          <Stack.Screen name="TournamentList" component={WrappedTournamentList} />
+          <Stack.Screen name="TournamentDetail" component={WrappedTournamentDetail} />
+          <Stack.Screen name="CategoryEvents" component={WrappedCategoryEvents} />
+          <Stack.Screen name="CalendarPage" component={WrappedCalendarPage} />
+          <Stack.Screen name="EventDetails" component={EventDetails} />
+          <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
+          <Stack.Screen name="Match" component={WrappedMatch} />
+          <Stack.Screen name="Messages" component={WrappedMessagePage} />
+          <Stack.Screen name="ChatDetails" component={WrappedChatDetails} />
+          <Stack.Screen name="Profile" component={WrappedProfilePage} />
+          <Stack.Screen name="EditProfile" component={WrappedEditProfile} />
+          
+          {/* Marketplace Flow */}
+          <Stack.Screen name="Marketplace" component={WrappedMarketplace} />
+          <Stack.Screen name="Products" component={WrappedProducts} />
+          <Stack.Screen name="ProductDetail" component={WrappedProductDetail} />
+          <Stack.Screen name="Cart" component={WrappedCartScreen} />
+          <Stack.Screen name="Favorites" component={WrappedFavoritesScreen} />
+          <Stack.Screen name="Payment" component={WrappedPaymentScreen} />
+          <Stack.Screen name="PaymentSuccess" component={WrappedPaymentSuccess} />
+          <Stack.Screen name="DeliveryServices" component={WrappedDeliveryServices} />
+          <Stack.Screen name="Orders" component={WrappedOrdersScreen} />
+          <Stack.Screen name="OrderDetails" component={WrappedOrderDetails} />
         </Stack.Navigator>
       </GestureHandlerRootView>
     </StripeProvider>

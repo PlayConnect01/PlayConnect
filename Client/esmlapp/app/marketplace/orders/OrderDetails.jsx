@@ -11,7 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome5 } from '@expo/vector-icons';
 import axios from 'axios';
-import { BASE_URL } from '../../../Api';
+import { BASE_URL } from "../../../Api";
 
 const OrderDetails = ({ route, navigation }) => {
   const { orderId } = route.params;

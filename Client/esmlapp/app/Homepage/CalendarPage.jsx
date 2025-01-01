@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import { Calendar } from "react-native-calendars";
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from "../../Api";
 
 const CalendarPage = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [events, setEvents] = useState([]);
   const navigation = useNavigation();
 
@@ -33,7 +42,8 @@ const CalendarPage = () => {
 
     setSelectedDate(selectedDate); // Set the selected date for display purposes
 
-    if (selectedDate < today) { // Check if the selected date is in the past
+    if (selectedDate < today) {
+      // Check if the selected date is in the past
       setEvents([]); // Clear events for past dates
     } else {
       fetchEvents(selectedDate); // Fetch events only for today or future dates
@@ -42,23 +52,29 @@ const CalendarPage = () => {
 
   const formatTime = (timeString) => {
     const date = new Date(timeString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   const getMarkedDates = () => {
     const marked = {};
     const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
 
-    // Mark past dates as disabled
-    for (let i = 0; i < 30; i++) { // Adjust the range as needed
+    for (let i = 0; i < 30; i++) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateString = date.toISOString().split("T")[0];
-      marked[dateString] = { disabled: true, color: "#d3d3d3" }; // Grey out past dates
+      if (dateString !== today) {
+        // Skip greying out the current day date
+        marked[dateString] = { disabled: true, color: "#d3d3d3" }; // Grey out past dates
+      }
     }
 
     // Mark the selected date
-    marked[selectedDate] = { selected: true, marked: true, selectedColor: "#0095FF" };
+    marked[selectedDate] = {
+      selected: true,
+      marked: true,
+      selectedColor: "#0095FF",
+    };
 
     return marked;
   };
@@ -108,13 +124,27 @@ const CalendarPage = () => {
               >
                 <Text style={styles.eventTitle}>{item.event_name}</Text>
                 <View style={styles.eventTimeContainer}>
-                  <MaterialCommunityIcons name="timer" size={16} color="#0095FF" />
-                  <Text style={styles.eventTime}>{`${formatTime(item.start_time)} - ${formatTime(item.end_time)}`}</Text>
-                  <MaterialCommunityIcons name="map-marker-outline" size={16} color="#0095FF" />
+                  <MaterialCommunityIcons
+                    name="timer"
+                    size={16}
+                    color="#0095FF"
+                  />
+                  <Text style={styles.eventTime}>{`${formatTime(
+                    item.start_time
+                  )} - ${formatTime(item.end_time)}`}</Text>
+                  <MaterialCommunityIcons
+                    name="map-marker-outline"
+                    size={16}
+                    color="#0095FF"
+                  />
                   <Text style={styles.eventLocation}>{item.location}</Text>
                 </View>
                 <Text style={styles.eventParticipants}>
-                  <MaterialCommunityIcons name="account-multiple" size={16} color="#555" />
+                  <MaterialCommunityIcons
+                    name="account-multiple"
+                    size={16}
+                    color="#555"
+                  />
                   {` Participants: ${item.participants}`}
                 </Text>
               </TouchableOpacity>
@@ -133,9 +163,10 @@ const CalendarPage = () => {
       </TouchableOpacity>
 
       {/* Display message for past dates */}
-      {events.length === 0 && selectedDate < new Date().toISOString().split("T")[0] && (
-        <Text style={styles.noEventsText}>No events for this day.</Text>
-      )}
+      {events.length === 0 &&
+        selectedDate < new Date().toISOString().split("T")[0] && (
+          <Text style={styles.noEventsText}>No events for this day.</Text>
+        )}
     </View>
   );
 };
