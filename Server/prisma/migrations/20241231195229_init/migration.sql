@@ -326,9 +326,26 @@ CREATE TABLE `Order` (
     `total_amount` DOUBLE NOT NULL,
     `status` VARCHAR(191) NOT NULL,
     `payment_intent_id` VARCHAR(191) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `completed_at` DATETIME(3) NULL,
 
     INDEX `Order_user_id_idx`(`user_id`),
+    INDEX `Order_payment_intent_id_idx`(`payment_intent_id`),
     PRIMARY KEY (`order_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `OrderItem` (
+    `order_item_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `order_id` INTEGER NOT NULL,
+    `product_id` INTEGER NOT NULL,
+    `quantity` INTEGER NOT NULL,
+    `price_at_time` DOUBLE NOT NULL,
+    `discount_at_time` DOUBLE NOT NULL DEFAULT 0,
+
+    INDEX `OrderItem_order_id_idx`(`order_id`),
+    INDEX `OrderItem_product_id_idx`(`product_id`),
+    PRIMARY KEY (`order_item_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
@@ -450,3 +467,9 @@ ALTER TABLE `VideoCall` ADD CONSTRAINT `VideoCall_participant_id_fkey` FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `Order`(`order_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `MarketplaceProduct`(`product_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

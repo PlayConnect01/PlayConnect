@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { BASE_URL } from "../../Api";
+
 
 const MatchNotification = ({ notification, onAccept, onReject }) => {
   const [showModal, setShowModal] = useState(true);
