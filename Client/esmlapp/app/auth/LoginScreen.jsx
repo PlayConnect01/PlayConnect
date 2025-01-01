@@ -5,11 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ImageBackground,
   Image,
-  Alert,
+  ActivityIndicator,
+  Dimensions,
   Animated,
   Easing,
-  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { FontAwesome, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,26 +20,39 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import { BlurView } from 'expo-blur';
 import { BASE_URL } from '../../Api';
- 
-WebBrowser.maybeCompleteAuthSession();
+import { BlurView } from 'expo-blur';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
+WebBrowser.maybeCompleteAuthSession()
+
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
+
+  const fadeAnim = new Animated.Value(0);
+  const slideAnim = new Animated.Value(50);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 1000,
+      duration: 800,
+      easing: Easing.ease,
       useNativeDriver: true,
     }).start();
-  }, [fadeAnim]);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 1000,
+      easing: Easing.ease,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -69,35 +84,28 @@ export default function Login() {
   };
 
   return (
-    <View style={styles.backgroundImage}>
-      <SafeAreaView style={styles.content}>
-        <View style={styles.topContainer}>
-          <Image
-            style={styles.topImage}
-            source={require('../../assets/images/Loginbackground.jpg')}
-            resizeMode="contain"
-          />
-        </View>
-        
-        <BlurView intensity={60} tint="dark" style={styles.formContainer}>
-          <LinearGradient
-            colors={['rgba(0,128,255,0.2)', 'transparent']}
-            style={styles.formOverlay}
-          />
-          
-          <Text style={styles.title}>Welcome Back</Text>
-          
+    <View style={styles.container}>
+      <ImageBackground
+        source={require('../../assets/images/signin.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      <View style={styles.overlay}>
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>Welcome Back!</Text>
+
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Email</Text>
             <View style={styles.inputContainer}>
-              <FontAwesome name="user" size={20} color="rgba(255,255,255,0.7)" />
+              <FontAwesome name="envelope" size={20} color="#ffffff80" />
               <TextInput
                 style={styles.input}
                 placeholder="Enter Email"
                 value={email}
                 onChangeText={setEmail}
+                placeholderTextColor="#ffffff80"
+                autoCapitalize="none"
                 keyboardType="email-address"
-                placeholderTextColor="rgba(255,255,255,0.5)"
               />
             </View>
           </View>
@@ -105,183 +113,210 @@ export default function Login() {
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputContainer}>
-              <FontAwesome name="key" size={20} color="rgba(255,255,255,0.7)" />
+              <FontAwesome name="key" size={20} color="#ffffff80" />
               <TextInput
                 style={styles.input}
-                placeholder="Enter Password"
+                placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!isPasswordVisible}
-                placeholderTextColor="rgba(255,255,255,0.5)"
+                placeholderTextColor="#ffffff80"
+                autoCapitalize="none"
               />
-              <TouchableOpacity onPress={togglePasswordVisibility}>
-                <Feather
-                  name={isPasswordVisible ? 'eye' : 'eye-off'}
-                  size={20}
-                  color="rgba(255,255,255,0.7)"
-                />
+              <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+                <FontAwesome name={isPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
               </TouchableOpacity>
             </View>
           </View>
 
-          <View style={styles.links}>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.linkText}>Create An Account</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-              <Text style={styles.linkText}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={isLoading}>
+          <TouchableOpacity onPress={handleLogin} style={styles.buttonContainer}>
             <LinearGradient
-              colors={['#0080FF', '#0066CC']}
-              style={styles.gradientButton}
+              colors={['#0080FF', '#0A66C2', '#0080FF']}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradient}
             >
-              <Text style={styles.buttonText}>Sign in</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
             </LinearGradient>
           </TouchableOpacity>
 
-          <Text style={styles.socialText}>Sign in With</Text>
-          <View style={styles.socialContainer}>
+          <View style={styles.dividerContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>Or continue with</Text>
+            <View style={styles.divider} />
+          </View>
+
+          <View style={styles.socialButtonsContainer}>
             <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="facebook" size={24} color="#fff" />
+              <FontAwesome name="google" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="google" size={24} color="#fff" />
+              <FontAwesome name="apple" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="envelope" size={24} color="#fff" />
+              <FontAwesome name="facebook" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
-          {isLoading && <ActivityIndicator size="large" color="#0080FF" style={styles.loader} />}
-        </BlurView>
-      </SafeAreaView>
+          <View style={styles.createAccountContainer}>
+            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+              <Text style={styles.createAccountText}>Create An Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1E1E1E',
+  },
   backgroundImage: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-  },
-  content: {
-    flex: 1,
-    padding: 0,
-  },
-  topContainer: {
-    height: '30%',  // Reduced the top image height
-    width: '100%',
-    overflow: 'hidden',
-  },
-  topImage: {
-    width: '100%',
-    height: '100%',
-  },
-  formContainer: {
-    flex: 1,
-    padding: 20,  // Reduced padding for smaller form content
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    marginTop: -30,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-  },
-  formOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 200,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    width: windowWidth,
+    height: windowHeight,
+    opacity: 0.9,
+  },
+  overlay: {
+    flex: 1,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: windowWidth * 0.05,
+    paddingTop: windowHeight * 0.15,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 28,  // Slightly reduced font size for the title
+    fontSize: windowWidth * 0.1,
     fontWeight: '700',
-    color: '#fff',
+    color: '#FFFFFF',
+    marginTop: windowHeight * 0.2,
+    marginBottom: windowHeight * 0.07,
     textAlign: 'center',
-    marginBottom: 20,
-    marginTop: 10,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   inputGroup: {
-    marginBottom: 18,  // Reduced margin to make the form a bit smaller
-  },
-  inputLabel: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 6,
-    marginLeft: 4,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
+    marginBottom: windowHeight * 0.02,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 14,  // Reduced padding for smaller input fields
-    height: 50,  // Reduced height to fit better
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: windowWidth * 0.03,
+    height: windowHeight * 0.06,
+    paddingHorizontal: windowWidth * 0.04,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
   input: {
     flex: 1,
-    color: '#fff',
-    marginLeft: 10,
-    fontSize: 16,  // Keep the font size the same for readability
+    color: '#FFFFFF',
+    fontSize: windowWidth * 0.04,
+    marginLeft: windowWidth * 0.02,
   },
-  links: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 18,  // Reduced space between links
+  eyeIcon: {
+    padding: windowWidth * 0.02,
   },
-  linkText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: windowHeight * 0.04,
+    marginTop: windowHeight * 0.01,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
-  button: {
-    height: 50,
-    borderRadius: 12,
+  forgotPasswordText: {
+    color: '#FFFFFF',
+    fontSize: windowWidth * 0.03,
+  },
+  buttonContainer: {
+    width: '100%',
+    borderRadius: 25,
     overflow: 'hidden',
-    marginVertical: 20,
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  gradientButton: {
-    flex: 1,
-    justifyContent: 'center',
+  gradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  socialText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
+    fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 18,  // Reduced space before social buttons
   },
-  socialContainer: {
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: windowHeight * 0.03,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  dividerText: {
+    color: '#FFFFFF',
+    marginHorizontal: windowWidth * 0.04,
+    fontSize: windowWidth * 0.03,
+  },
+  socialButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
+    gap: windowWidth * 0.05,
+    marginBottom: windowHeight * 0.05,
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
   },
   socialButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    width: windowWidth * 0.12,
+    height: windowWidth * 0.12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: windowWidth * 0.03,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
-  loader: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  createAccountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
+    marginBottom: windowHeight * 0.12,
+    marginTop: windowHeight * -0.02,
+  },
+  inputLabel: {
+    color: '#FFFFFF',
+    fontSize: windowWidth * 0.035,
+    marginBottom: windowHeight * 0.01,
+  },
+  createAccountText: {
+    color: '#FFFFFF',
+    fontSize: windowWidth * 0.035,
+    textDecorationLine: 'underline',
   },
 });

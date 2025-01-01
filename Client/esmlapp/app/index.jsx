@@ -18,15 +18,17 @@ import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import ProfilePage from "./profile/ProfilePage";
 import MarketplaceHome from "./marketplace/marketplace";
-import products from "./marketplace/products";
+import Products from "./marketplace/products"; // Corrected import
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
 import PaymentScreen from './marketplace/PaymentScreen';
 import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
-import TournamentList from './Homepage/TournamentList'
-import TournamentDetail from './Homepage/TournamentDetail'
-import EditProfile from "./profile/EditProfile"
+import TournamentList from './Homepage/TournamentList';
+import TournamentDetail from './Homepage/TournamentDetail';
+import EditProfile from "./profile/EditProfile";
 import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
+import First from "./FirstPage/First";
+
 const Stack = createStackNavigator();
 
 
@@ -34,10 +36,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack.Navigator
-        initialRouteName="Login"
+        initialRouteName="First"
         screenOptions={{ headerShown: false }}
       >
         {/* Auth Screens */}
+        <Stack.Screen name="First" component={First} />
         <Stack.Screen name="Landing" component={Landing} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="SignUp" component={SignUp} />
@@ -158,7 +161,7 @@ export default function App() {
           name="products"
           component={() => (
             <MainLayout>
-              <products />
+              <Products/>
             </MainLayout>
           )}
         />

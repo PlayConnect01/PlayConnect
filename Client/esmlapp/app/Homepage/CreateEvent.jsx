@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal, Image, ScrollView, ImageBackground } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal, Image, ScrollView, ImageBackground, ActivityIndicator } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from 'axios';
@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
 import { BASE_URL } from '../../Api.js';
+import LottieView from 'lottie-react-native';
 
 const decodeToken = (token) => {
   try {
@@ -43,6 +44,8 @@ const AddNewEvent = () => {
   const [mapLocation, setMapLocation] = useState({ latitude: 36.85749, longitude: 10.16440 });
   const [sports, setSports] = useState([]);
   const [image, setImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -160,7 +163,10 @@ const AddNewEvent = () => {
       );
       return;
     }
-  
+
+    setIsProcessing(true); // Show processing modal
+    setIsLoading(true); // Start loading animation
+
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
@@ -240,6 +246,9 @@ const AddNewEvent = () => {
         'There was an issue creating the event. Please check the console for details.',
         [{ text: 'Okay' }]
       );
+    } finally {
+      setIsLoading(false); // Stop loading animation
+      setIsProcessing(false); // Hide processing modal
     }
   };
 
@@ -438,13 +447,37 @@ const AddNewEvent = () => {
               <TouchableOpacity
                 style={styles.createButton}
                 onPress={createEvent}
+                disabled={isLoading} // Disable button when loading
               >
-                <Text style={styles.createButtonText}>Create Event</Text>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.createButtonText}>Create Event</Text>
+                )}
               </TouchableOpacity>
             </View>
           </ScrollView>
         </View>
       </ImageBackground>
+      <Modal
+        visible={isProcessing}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.processingContainer}>
+          <View style={styles.processingContent}>
+            <LottieView
+              source={require('../../assets/loading.json')}
+              autoPlay
+              loop
+              style={styles.lottieAnimation}
+            />
+              <Text style={styles.processingText}>Creating Your Event</Text>
+              <Text style={styles.processingText}>   please wait...</Text>
+            
+          </View>
+        </View>
+      </Modal>
       <Navbar />
     </View>
   );
@@ -651,6 +684,31 @@ const styles = StyleSheet.create({
   },
   participantsInput: {
     paddingRight: 30, // Add padding to make space for the arrows
+  },
+  processingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  processingContent: {
+    width: 200,
+    height: 200,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  lottieAnimation: {
+    width: 100,
+    height: 100,
+  },
+  processingText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
   },
 });
 

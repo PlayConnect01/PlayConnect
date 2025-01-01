@@ -15,11 +15,11 @@ global.Buffer = Buffer;
 
 const decodeToken = (token) => {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace('-', '+').replace('_', '/');
-    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace("-", "+").replace("_", "/");
+    return JSON.parse(Buffer.from(base64, "base64").toString("utf-8"));
   } catch (error) {
-    console.error('Token decoding error:', error);
+    console.error("Token decoding error:", error);
     return null;
   }
 };
@@ -28,44 +28,45 @@ const EditProfile = () => {
   const navigation = useNavigation();
   const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    location: '',
-    profile_picture: '',
-    phone_number: '',
-    birthdate_day: '',
-    birthdate_month: '',
-    birthdate_year: '',
-    phone_country_code: '+1',
+    username: "",
+    email: "",
+    location: "",
+    profile_picture: "",
+    phone_number: "",
+    birthdate_day: "",
+    birthdate_month: "",
+    birthdate_year: "",
+    phone_country_code: "+1",
   });
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken');
+        const token = await AsyncStorage.getItem("userToken");
         if (!token) return;
 
         // Decode the token to get user ID
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace('-', '+').replace('_', '/');
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace("-", "+").replace("_", "/");
         const decodedToken = JSON.parse(atob(base64));
-        const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+        const userId =
+          decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
         const response = await axios.get(`${BASE_URL}/users/${userId}`);
         setUserData(response.data.user);
 
         // Set the form data with existing user data
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          username: response.data.user.username || '',
-          email: response.data.user.email || '',
-          profile_picture: response.data.user.profile_picture || '',
-          phone_number: response.data.user.phone_number || '',
-          phone_country_code: response.data.user.phone_country_code || '+1',
-          location: response.data.user.location || '',
+          username: response.data.user.username || "",
+          email: response.data.user.email || "",
+          profile_picture: response.data.user.profile_picture || "",
+          phone_number: response.data.user.phone_number || "",
+          phone_country_code: response.data.user.phone_country_code || "+1",
+          location: response.data.user.location || "",
         }));
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
       }
     };
 
@@ -81,61 +82,72 @@ const EditProfile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Generate date options
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
-  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+  const days = Array.from({ length: 31 }, (_, i) =>
+    String(i + 1).padStart(2, "0")
+  );
+  const months = Array.from({ length: 12 }, (_, i) =>
+    String(i + 1).padStart(2, "0")
+  );
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 100 }, (_, i) => String(currentYear - i));
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.username?.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = "Username is required";
     }
-    
+
     if (!formData.email?.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = "Invalid email format";
     }
-    
+
     if (!formData.phone_number?.trim()) {
-      newErrors.phone_number = 'Phone number is required';
+      newErrors.phone_number = "Phone number is required";
     }
-    
+
     // Validate birthdate if all fields are filled
-    if (formData.birthdate_day && formData.birthdate_month && formData.birthdate_year) {
+    if (
+      formData.birthdate_day &&
+      formData.birthdate_month &&
+      formData.birthdate_year
+    ) {
       const date = new Date(
         parseInt(formData.birthdate_year),
         parseInt(formData.birthdate_month) - 1,
         parseInt(formData.birthdate_day)
       );
-      
+
       if (isNaN(date.getTime()) || date > new Date()) {
-        newErrors.birthdate = 'Invalid birthdate';
+        newErrors.birthdate = "Invalid birthdate";
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
   const handleImagePick = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Sorry, we need camera roll permissions to change your profile picture.');
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert(
+          "Sorry, we need camera roll permissions to change your profile picture."
+        );
         return;
       }
 
@@ -149,11 +161,11 @@ const EditProfile = () => {
 
       if (!result.canceled && result.assets[0]) {
         const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
-        setFormData(prev => ({ ...prev, profile_picture: base64Image }));
+        setFormData((prev) => ({ ...prev, profile_picture: base64Image }));
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
-      alert('Error selecting image. Please try again.');
+      console.error("Error selecting image:", error);
+      alert("Error selecting image. Please try again.");
     }
   };
 
@@ -221,24 +233,28 @@ const handleSubmit = async () => {
   }
 };
 
-  const renderInput = (field, placeholder, icon, keyboardType = 'default', customStyle = {}) => (
+  const renderInput = (
+    field,
+    placeholder,
+    icon,
+    keyboardType = "default",
+    customStyle = {}
+  ) => (
     <View style={styles.inputContainer}>
       <Ionicons name={icon} size={20} color="#666" style={styles.inputIcon} />
       <TextInput
-        style={[ 
-          styles.input, 
+        style={[
+          styles.input,
           { paddingLeft: 40 },
           errors[field] && styles.inputError,
-          customStyle
+          customStyle,
         ]}
         placeholder={placeholder}
         value={formData[field]}
         onChangeText={(value) => handleInputChange(field, value)}
         keyboardType={keyboardType}
       />
-      {errors[field] && (
-        <Text style={styles.errorText}>{errors[field]}</Text>
-      )}
+      {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
     </View>
   );
 
@@ -258,7 +274,7 @@ const handleSubmit = async () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#000" />
@@ -270,12 +286,16 @@ const handleSubmit = async () => {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity onPress={handleImagePick} style={styles.imagePickerContainer}>
-          <Image 
-            source={{ 
-              uri: formData.profile_picture || 'https://via.placeholder.com/150'
-            }} 
-            style={styles.profileImage} 
+        <TouchableOpacity
+          onPress={handleImagePick}
+          style={styles.imagePickerContainer}
+        >
+          <Image
+            source={{
+              uri:
+                formData.profile_picture || "https://via.placeholder.com/150",
+            }}
+            style={styles.profileImage}
           />
           <View style={styles.changePhotoButton}>
             <Ionicons name="camera" size={20} color="#6F61E8" />
@@ -284,39 +304,51 @@ const handleSubmit = async () => {
         </TouchableOpacity>
 
         <View style={styles.inputContainer}>
-          <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+          <Ionicons
+            name="person-outline"
+            size={20}
+            color="#666"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.inputWithIcon}
             placeholder={userData?.username || "Name"}
             value={formData.username}
-            onChangeText={(value) => handleInputChange('username', value)}
+            onChangeText={(value) => handleInputChange("username", value)}
           />
         </View>
 
         <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+          <Ionicons
+            name="mail-outline"
+            size={20}
+            color="#666"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.inputWithIcon}
             placeholder={userData?.email || "Email"}
             value={formData.email}
-            onChangeText={(value) => handleInputChange('email', value)}
+            onChangeText={(value) => handleInputChange("email", value)}
             keyboardType="email-address"
           />
         </View>
 
         <View style={styles.phoneContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.countryCodeContainer}
             onPress={() => setShowCountryPicker(true)}
           >
-            <Text style={styles.countryCodeLabel}>{formData.phone_country_code}</Text>
+            <Text style={styles.countryCodeLabel}>
+              {formData.phone_country_code}
+            </Text>
             <Ionicons name="chevron-down" size={20} color="#666" />
           </TouchableOpacity>
           <TextInput
             style={styles.phoneInput}
             placeholder="(308) 555-0121"
             value={formData.phone_number}
-            onChangeText={(value) => handleInputChange('phone_number', value)}
+            onChangeText={(value) => handleInputChange("phone_number", value)}
             keyboardType="phone-pad"
           />
         </View>
@@ -326,7 +358,10 @@ const handleSubmit = async () => {
             visible={showCountryPicker}
             onClose={() => setShowCountryPicker(false)}
             onSelect={(country) => {
-              handleInputChange('phone_country_code', `+${country.callingCode[0]}`);
+              handleInputChange(
+                "phone_country_code",
+                `+${country.callingCode[0]}`
+              );
               setShowCountryPicker(false);
             }}
             withFilter
@@ -341,13 +376,16 @@ const handleSubmit = async () => {
             style={styles.input}
             placeholder="Address"
             value={formData.location}
-            onChangeText={(value) => handleInputChange('location', value)}
+            onChangeText={(value) => handleInputChange("location", value)}
           />
         </View>
 
         <Text style={styles.birthdayLabel}>When's your birthday?</Text>
         <View style={styles.birthdateContainer}>
-          <TouchableOpacity onPress={() => setShowDayPicker(true)} style={styles.dateInputContainer}>
+          <TouchableOpacity
+            onPress={() => setShowDayPicker(true)}
+            style={styles.dateInputContainer}
+          >
             <TextInput
               style={styles.dateInput}
               placeholder="Day"
@@ -357,7 +395,10 @@ const handleSubmit = async () => {
             <Ionicons name="chevron-down" size={20} color="#666" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => setShowMonthPicker(true)} style={styles.dateInputContainer}>
+          <TouchableOpacity
+            onPress={() => setShowMonthPicker(true)}
+            style={styles.dateInputContainer}
+          >
             <TextInput
               style={styles.dateInput}
               placeholder="Month"
@@ -367,7 +408,10 @@ const handleSubmit = async () => {
             <Ionicons name="chevron-down" size={20} color="#666" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => setShowYearPicker(true)} style={styles.dateInputContainer}>
+          <TouchableOpacity
+            onPress={() => setShowYearPicker(true)}
+            style={styles.dateInputContainer}
+          >
             <TextInput
               style={styles.dateInput}
               placeholder="Year"
@@ -391,7 +435,10 @@ const handleSubmit = async () => {
                 data={days}
                 keyExtractor={(item) => item}
                 renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleSelectDay(item)} style={styles.pickerItem}>
+                  <TouchableOpacity
+                    onPress={() => handleSelectDay(item)}
+                    style={styles.pickerItem}
+                  >
                     <Text style={styles.pickerText}>{item}</Text>
                   </TouchableOpacity>
                 )}
@@ -413,7 +460,10 @@ const handleSubmit = async () => {
                 data={months}
                 keyExtractor={(item) => item}
                 renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleSelectMonth(item)} style={styles.pickerItem}>
+                  <TouchableOpacity
+                    onPress={() => handleSelectMonth(item)}
+                    style={styles.pickerItem}
+                  >
                     <Text style={styles.pickerText}>{item}</Text>
                   </TouchableOpacity>
                 )}
@@ -435,7 +485,10 @@ const handleSubmit = async () => {
                 data={years}
                 keyExtractor={(item) => item}
                 renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleSelectYear(item)} style={styles.pickerItem}>
+                  <TouchableOpacity
+                    onPress={() => handleSelectYear(item)}
+                    style={styles.pickerItem}
+                  >
                     <Text style={styles.pickerText}>{item}</Text>
                   </TouchableOpacity>
                 )}
@@ -463,25 +516,25 @@ const handleSubmit = async () => {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingTop: 48,
     paddingBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 16,
   },
   container: {
     flexGrow: 1,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   imagePickerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 24,
   },
   profileImage: {
@@ -491,42 +544,42 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   changePhotoButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0EEFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0EEFF",
     padding: 8,
     borderRadius: 20,
   },
   changePhotoText: {
-    color: '#6F61E8',
+    color: "#6F61E8",
     fontSize: 14,
     marginLeft: 5,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 56,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: "#E8E8E8",
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
     marginBottom: 16,
   },
   phoneContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
     gap: 12,
   },
   countryCodeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     height: 56,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: "#E8E8E8",
     borderRadius: 12,
-    width: '30%',
+    width: "30%",
   },
   countryCodeLabel: {
     fontSize: 16,
@@ -535,29 +588,29 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: "#E8E8E8",
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
   },
   birthdayLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 12,
     marginTop: 16,
   },
   birthdateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
   dateInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '31%',
+    flexDirection: "row",
+    alignItems: "center",
+    width: "31%",
     height: 56,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: "#E8E8E8",
     borderRadius: 12,
     paddingHorizontal: 16,
   },
@@ -566,7 +619,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: '#6F61E8',
+    backgroundColor: "#6F61E8",
     height: 56,
     borderRadius: 12,
     justifyContent: 'center',
@@ -574,18 +627,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   buttonDisabled: {
-    backgroundColor: '#bbb',
+    backgroundColor: "#bbb",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: "#E8E8E8",
     borderRadius: 12,
     marginBottom: 16,
     height: 56,
@@ -596,16 +649,16 @@ const styles = StyleSheet.create({
   },
   inputWithIcon: {
     flex: 1,
-    height: '100%',
+    height: "100%",
     fontSize: 16,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
   pickerContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 16,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,

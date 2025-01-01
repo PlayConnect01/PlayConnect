@@ -10,7 +10,7 @@ import {
 import { Audio } from "expo-av";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
-import {BASE_URL} from "../../../Api"
+import { BASE_URL } from "../../../Api";
 
 const VoiceMessageHandler = ({ onAudioMessage, chatId, currentUserId }) => {
   const recordingRef = useRef(null);

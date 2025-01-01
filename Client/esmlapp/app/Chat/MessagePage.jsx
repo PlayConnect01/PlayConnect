@@ -5,6 +5,8 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
+import Navbar from '../navbar/Navbar';
+import { BASE_URL } from '../../Api';
 
 const MessagePage = (props) => {
   const [matches, setMatches] = useState([]);
@@ -47,7 +49,7 @@ const MessagePage = (props) => {
 
   const fetchAcceptedMatches = async (userId) => {
     try {
-      const response = await axios.get(`http://192.168.103.14:3000/matches/accepted/${userId}`);
+      const response = await axios.get(`${BASE_URL}/matches/accepted/${userId}`);
       console.log("ahmed"  , userId)
       setMatches(response.data);
       console.log(response.data);

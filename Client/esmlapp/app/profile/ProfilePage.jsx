@@ -11,11 +11,11 @@ import { BASE_URL } from '../../Api';
 // Function to decode the token
 const decodeToken = (token) => {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace('-', '+').replace('_', '/');
-    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace("-", "+").replace("_", "/");
+    return JSON.parse(Buffer.from(base64, "base64").toString("utf-8"));
   } catch (error) {
-    console.error('Token decoding error:', error); 
+    console.error("Token decoding error:", error);
     return null;
   }
 };
@@ -25,30 +25,38 @@ const ProfilePage = () => {
   const [events, setEvents] = useState([]);
   const [rank, setRank] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('achievement');
+  const [activeTab, setActiveTab] = useState("achievement");
   const [participatedEvents, setParticipatedEvents] = useState([]);
   const [showLogout, setShowLogout] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [eventsOnSelectedDate, setEventsOnSelectedDate] = useState([]);
 
-  const navigation = useNavigation(); 
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken');
+        const token = await AsyncStorage.getItem("userToken");
         if (!token) {
-          Alert.alert('Error', 'No authentication token found. Please log in again.');
+          Alert.alert(
+            "Error",
+            "No authentication token found. Please log in again."
+          );
           return;
         }
 
         const decodedToken = decodeToken(token);
         if (!decodedToken) {
-          throw new Error('Failed to decode token');
+          throw new Error("Failed to decode token");
         }
 
-        const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+        const userId =
+          decodedToken.id || decodedToken.user_id || decodedToken.userId;
         if (!userId) {
-          throw new Error('Could not find user ID in token');
+          throw new Error("Could not find user ID in token");
         }
 
         const userResponse = await axios.get(`${BASE_URL}/users/${userId}`);
@@ -57,22 +65,26 @@ const ProfilePage = () => {
         const leaderboardResponse = await axios.get(`${BASE_URL}/leaderboard`);
         const leaderboard = leaderboardResponse.data;
 
-        const userRank = leaderboard.findIndex(user => user.id === userId) + 1; 
+        const userRank =
+          leaderboard.findIndex((user) => user.id === userId) + 1;
         setRank(userRank);
 
         const eventsResponse = await axios.get(`${BASE_URL}/events/getAll`);
-        const userEvents = eventsResponse.data.filter(event => event.creator_id === userId);
+        const userEvents = eventsResponse.data.filter(
+          (event) => event.creator_id === userId
+        );
         setEvents(userEvents);
 
-        const participatedEventsResponse = await axios.get(`${BASE_URL}/events/getParticipated/${userId}`);
+        const participatedEventsResponse = await axios.get(
+          `${BASE_URL}/events/getParticipated/${userId}`
+        );
         setParticipatedEvents(participatedEventsResponse.data);
-
       } catch (error) {
-        console.error('Error fetching data:', error);
-        Alert.alert('Error', 'Failed to load user data.');
+        console.error("Error fetching data:", error);
+        Alert.alert("Error", "Failed to load user data.");
       } finally {
         setLoading(false);
-      }  
+      }
     };
 
     fetchUserData();
@@ -86,23 +98,46 @@ const ProfilePage = () => {
     return 5;
   };
 
-  const markedDates = participatedEvents.reduce((acc, event) => {
-    const date = new Date(event.date).toISOString().split('T')[0];
-    acc[date] = { marked: true, dotColor: '#6F61E8', onPress: () => handleEventPress(event) };
-    return acc;
-  }, {});
+  const fetchEventsByDate = async (date) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/events/getByDate/${date}`);
+      setEventsOnSelectedDate(response.data);
+    } catch (error) {
+      console.error("Error fetching events by date:", error);
+      Alert.alert("Error", "Failed to load events. Please try again later.");
+    }
+  };
+
+  const handleDayPress = (day) => {
+    const selectedDate = day.dateString;
+    setSelectedDate(selectedDate);
+    fetchEventsByDate(selectedDate);
+  };
+
+  const markedDates = [...events, ...participatedEvents].reduce(
+    (acc, event) => {
+      const date = new Date(event.date).toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
+      if (date >= today) {
+        // Mark only upcoming events
+        acc[date] = { marked: true, dotColor: "#6F61E8" };
+      }
+      return acc;
+    },
+    {}
+  );
 
   const handleEventPress = (event) => {
-    navigation.navigate('EventDetails', { eventId: event.event_id }); 
+    navigation.navigate("Homepage/EventDetails", { eventId: event.event_id });
   };
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('userToken');
-      navigation.navigate('auth/LoginScreen');
+      await AsyncStorage.removeItem("userToken");
+      navigation.navigate("auth/LoginScreen");
     } catch (error) {
-      console.error('Error logging out:', error);
-      Alert.alert('Error', 'Failed to logout');
+      console.error("Error logging out:", error);
+      Alert.alert("Error", "Failed to logout");
     }
   };
 
@@ -137,20 +172,20 @@ const ProfilePage = () => {
           <Ionicons name="settings-outline" size={24} color="black" />
         </TouchableOpacity>
       </View>
-      
+
       {showSettings && (
         <View style={styles.settingsMenu}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.settingsOption}
             onPress={() => {
               setShowSettings(false);
-              navigation.navigate('profile/EditProfile');
+              navigation.navigate("profile/EditProfile");
               // Add your edit profile navigation/function here
             }}
           >
             <Text style={styles.settingsOptionText}>Edit Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.settingsOption, styles.logoutOption]}
             onPress={handleLogout}
           >
@@ -159,37 +194,43 @@ const ProfilePage = () => {
         </View>
       )}
 
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.profileContainer}>
-          <Image 
-            source={{ uri: userData.profile_picture || 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541' }} 
-            style={styles.profileImage} 
+          <Image
+            source={{
+              uri:
+                userData.profile_picture ||
+                "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541",
+            }}
+            style={styles.profileImage}
           />
           <Text style={styles.profileName}>{userData.username}</Text>
-          <Text style={styles.email}>
-            {userData.email} <MaterialIcons name="verified" size={20} color="green" />
-          </Text>
+          <Text style={styles.email}>{userData.email}</Text>
         </View>
 
         <View style={styles.tabsContainer}>
-          {['achievement', 'events', 'calendar'].map((tab) => (
+          {["achievement", "events", "calendar"].map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[styles.tab, activeTab === tab && styles.activeTab]}
               onPress={() => setActiveTab(tab)}
             >
-              <Text style={activeTab === tab ? styles.tabTextActive : styles.tabText}>
+              <Text
+                style={
+                  activeTab === tab ? styles.tabTextActive : styles.tabText
+                }
+              >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {activeTab === 'achievement' && (
+        {activeTab === "achievement" && (
           <View style={styles.achievementContainer}>
             <View style={styles.statsContainer}>
               <View style={styles.statBox}>
@@ -197,7 +238,7 @@ const ProfilePage = () => {
                   <MaterialIcons name="leaderboard" size={24} color="#6F61E8" />
                 </View>
                 <View style={styles.statTextContainer}>
-                  <Text style={styles.statNumber}>#{rank || 'N/A'}</Text>
+                  <Text style={styles.statNumber}>#{rank || "N/A"}</Text>
                   <Text style={styles.statLabel}>Leaderboard</Text>
                 </View>
               </View>
@@ -219,13 +260,17 @@ const ProfilePage = () => {
                 </View>
                 <View style={styles.levelTextContainer}>
                   <Text style={styles.levelTitle}>Level {userLevel}</Text>
-                  <Text style={styles.pointsToNext}>{pointsToNextLevel} Points to next level</Text>
+                  <Text style={styles.pointsToNext}>
+                    {pointsToNextLevel} Points to next level
+                  </Text>
                 </View>
               </View>
               <View style={styles.progressBarContainer}>
                 <View style={styles.progressBar} />
                 <View style={styles.pointsIndicator}>
-                  <Text style={styles.currentPoints}>{userData.points || 0}</Text>
+                  <Text style={styles.currentPoints}>
+                    {userData.points || 0}
+                  </Text>
                   <Text style={styles.maxPoints}>{1000 * userLevel}</Text>
                 </View>
               </View>
@@ -233,28 +278,34 @@ const ProfilePage = () => {
           </View>
         )}
 
-        {activeTab === 'events' && (
+        {activeTab === "events" && (
           <View style={styles.eventsContainer}>
             {events.length > 0 ? (
               events.map((event, index) => (
-                <TouchableOpacity 
-                  key={index} 
+                <TouchableOpacity
+                  key={index}
                   style={styles.eventCard}
                   onPress={() => handleEventPress(event)}
                 >
-                  <Image 
-                    source={{ uri: event.image }} 
-                    style={styles.eventImage} 
+                  <Image
+                    source={{ uri: event.image }}
+                    style={styles.eventImage}
                   />
                   <View style={styles.eventInfo}>
                     <Text style={styles.eventName}>{event.event_name}</Text>
                     <View style={styles.locationContainer}>
-                      <MaterialIcons name="location-on" size={16} color="#666" />
+                      <MaterialIcons
+                        name="location-on"
+                        size={16}
+                        color="#666"
+                      />
                       <Text style={styles.locationText}>{event.location}</Text>
                     </View>
                     <View style={styles.ratingContainer}>
                       <MaterialIcons name="star" size={16} color="#FFD700" />
-                      <Text style={styles.ratingText}>{event.rating || '4.5'}</Text>
+                      <Text style={styles.ratingText}>
+                        {event.rating || "4.5"}
+                      </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -265,15 +316,49 @@ const ProfilePage = () => {
           </View>
         )}
 
-        {activeTab === 'calendar' && (
+        {activeTab === "calendar" && (
           <View style={styles.calendarContainer}>
-            <Calendar
-              markedDates={markedDates}
-            />
+            <Calendar markedDates={markedDates} onDayPress={handleDayPress} />
+            <View style={styles.eventsContainer}>
+              {eventsOnSelectedDate.length > 0 ? (
+                eventsOnSelectedDate.map((event, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.eventCard}
+                    onPress={() => handleEventPress(event)}
+                  >
+                    <Image
+                      source={{ uri: event.image }}
+                      style={styles.eventImage}
+                    />
+                    <View style={styles.eventInfo}>
+                      <Text style={styles.eventName}>{event.event_name}</Text>
+                      <View style={styles.locationContainer}>
+                        <MaterialIcons
+                          name="location-on"
+                          size={16}
+                          color="#666"
+                        />
+                        <Text style={styles.locationText}>
+                          {event.location}
+                        </Text>
+                      </View>
+                      <View style={styles.ratingContainer}>
+                        <MaterialIcons name="star" size={16} color="#FFD700" />
+                        <Text style={styles.ratingText}>
+                          {event.rating || "4.5"}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noEventsText}>No events for this day.</Text>
+              )}
+            </View>
           </View>
         )}
       </ScrollView>
-  
     </View>
   );
 };
@@ -281,7 +366,7 @@ const ProfilePage = () => {
 const styles = StyleSheet.create({
   fullPage: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: 16,
   },
   scrollView: {
@@ -292,11 +377,11 @@ const styles = StyleSheet.create({
   },
   loader: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   profileContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 10,
     paddingHorizontal: 16,
   },
@@ -308,19 +393,19 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   email: {
     fontSize: 16,
-    color: 'gray',
+    color: "gray",
     marginBottom: 16,
   },
   tabsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginVertical: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderRadius: 15,
     padding: 4,
     marginHorizontal: 0,
@@ -332,35 +417,35 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   activeTab: {
-    backgroundColor: '#6F61E8',
+    backgroundColor: "#6F61E8",
   },
   tabText: {
-    color: '#666',
+    color: "#666",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   tabTextActive: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
     paddingHorizontal: 0,
-    width: '100%',
+    width: "100%",
   },
   statBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 20,
     padding: 16,
-    width: '48%',
+    width: "48%",
     height: 70,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -371,9 +456,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   statTextContainer: {
@@ -381,84 +466,84 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   levelBox: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
     marginHorizontal: 0,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
   levelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   levelCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#1A1A1A',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#1A1A1A",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
   },
   levelNumberGold: {
-    color: '#FFD700',
+    color: "#FFD700",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   levelTextContainer: {
     flex: 1,
   },
   levelTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   pointsToNext: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   progressBarContainer: {
     height: 12,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: "#F0F0F0",
     borderRadius: 6,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBar: {
-    height: '100%',
-    width: '75%', // Adjust based on actual progress
-    backgroundColor: '#FFD700',
+    height: "100%",
+    width: "75%", // Adjust based on actual progress
+    backgroundColor: "#FFD700",
     borderRadius: 6,
   },
   pointsIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 8,
   },
   currentPoints: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   maxPoints: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   eventContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginVertical: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderRadius: 8,
     padding: 10,
   },
@@ -473,43 +558,43 @@ const styles = StyleSheet.create({
   },
   eventName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   eventDate: {
-    color: 'gray',
+    color: "gray",
     fontSize: 14,
   },
   eventDescription: {
     fontSize: 14,
-    color: 'gray',
+    color: "gray",
   },
   noEventsText: {
-    color: 'gray',
-    textAlign: 'center',
+    color: "gray",
+    textAlign: "center",
     marginTop: 20,
   },
   calendarContainer: {
     marginTop: 10,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingTop: 48,
     paddingBottom: 16,
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   settingsMenu: {
-    position: 'absolute',
+    position: "absolute",
     top: 90,
     right: 16,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -520,20 +605,20 @@ const styles = StyleSheet.create({
   settingsOption: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   settingsOptionText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: "#333",
+    fontWeight: "500",
   },
   logoutOption: {
     borderBottomWidth: 0, // Remove border from last item
   },
   logoutText: {
     fontSize: 16,
-    color: 'red',
-    fontWeight: '500',
+    color: "red",
+    fontWeight: "500",
   },
   achievementContainer: {
     paddingHorizontal: 0,
@@ -543,52 +628,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   eventCard: {
-    marginBottom: 20,
-    backgroundColor: '#fff',
+    marginBottom: 80,
+    backgroundColor: "#fff",
     borderRadius: 15,
-    overflow: 'hidden', // This ensures the image respects the border radius
-    shadowColor: '#000',
+    overflow: "hidden", // This ensures the image respects the border radius
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   eventImage: {
-    width: '100%',
+    width: "100%",
     height: 200, // Increased height
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   eventInfo: {
     padding: 16,
   },
   eventName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
-    color: '#333',
+    color: "#333",
   },
   locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 4,
   },
   locationText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginLeft: 4,
   },
   ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   ratingText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginLeft: 4,
   },
   noEventsText: {
-    textAlign: 'center',
-    color: '#666',
+    textAlign: "center",
+    color: "#666",
     marginTop: 20,
     fontSize: 16,
   },

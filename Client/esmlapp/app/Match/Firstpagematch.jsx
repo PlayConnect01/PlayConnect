@@ -2,46 +2,61 @@ import React from 'react';
 import { 
   StyleSheet, 
   View, 
-  Text, 
-  Image, 
+  Text,
   TouchableOpacity, 
-  SafeAreaView 
+  SafeAreaView,
+  Image 
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const GradientButton = ({ onPress, title, style }) => (
+  <TouchableOpacity 
+    onPress={onPress}
+    style={[styles.buttonContainer, style]}
+  >
+    <LinearGradient
+      colors={['#0080FF', '#0A66C2', '#0080FF']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.gradient}
+    >
+      <Text style={styles.buttonText}>{title}</Text>
+    </LinearGradient>
+  </TouchableOpacity>
+);
 
 const App = () => {
   const navigation = useNavigation();
-  
-  const handleChatNow = () => {
+
+  const handleMatchNow = () => {
     navigation.navigate('Match/Matchingpage');
+  };
+
+  const handleHome = () => {
+    navigation.navigate('Homepage/Homep');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Image 
-        source={require('../../assets/images/sportscube.png')} 
+        source={require('../../assets/images/find people with same interest.png')} 
         style={styles.backgroundImage}
       />
 
-      <View style={styles.matchCard}>
-        <Image 
-          source={require('../../assets/images/matchimage.jpg')} 
-          style={styles.matchImage}
-        />
-        
-        <Text style={styles.matchTitle}>Match</Text>
-        
-        <Text style={styles.matchDescription}>
-          Matches are with online users who share interests and are nearby.
-        </Text>
-        
-        <TouchableOpacity style={styles.chatButton} onPress={handleChatNow}>
-          <Text style={styles.chatButtonText}>Chat now</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity>
-          <Text style={styles.keepSwipingText}>Keep swiping</Text>
-        </TouchableOpacity>
+      <View style={styles.content}>
+        <View style={styles.buttonsWrapper}>
+          <GradientButton
+            title="Match Now"
+            onPress={handleMatchNow}
+            style={styles.matchButton}
+          />
+          <GradientButton
+            title="Go to home page"
+            onPress={handleHome}
+            style={styles.homeButton}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -50,60 +65,54 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
   },
   backgroundImage: {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    opacity: 0.7,
+    resizeMode: 'cover',
   },
-  matchCard: {
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    width:'100%',
-    height:'100%',
+  content: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+    paddingBottom: 50,
+  },
+  buttonsWrapper: {
+    width: '100%',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  matchImage: {
-    width: 250,
-    height: 250,
-    marginTop: 100,
-    borderRadius: 15,
-    marginBottom: 20,
+  buttonContainer: {
+    width: '100%',
+    borderRadius: 25,
+    overflow: 'hidden',
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  matchTitle: {
-    color: '#4F3DDC',
-    fontSize: 50,
-    fontWeight: 'bold',
-    marginBottom:-15,
-  },
-  matchDescription: {
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 60,
-    margin:30,
-    fontWeight: 'bold',
-
-    fontSize: 20,
-  },
-  chatButton: {
-    backgroundColor: '#4F3DDC',
+  gradient: {
     paddingVertical: 12,
     paddingHorizontal: 30,
-    borderRadius: 25,
-    marginBottom: 15,
-    width: '80%',
+    alignItems: 'center',
   },
-  chatButtonText: {
+  buttonText: {
     color: '#fff',
-    textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
-  keepSwipingText: {
-    color: '#CCCCCC',
-    fontSize: 14,
-    textDecorationLine: 'underline',
+  matchButton: {
+    marginBottom: 15,
+  },
+  homeButton: {
+    marginBottom: 80,
   },
 });
 

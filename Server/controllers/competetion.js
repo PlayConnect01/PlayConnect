@@ -11,7 +11,11 @@ const getAllTournamentsAndTeams = async (req, res) => {
         },
         teams: {
           include: {
-            members: true 
+            team: {
+              include: {
+                members: true
+              }
+            }
           }
         }
       }
