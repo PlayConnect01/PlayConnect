@@ -22,16 +22,9 @@ const competetionRouter = require('./routes/competetion');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
-<<<<<<< HEAD
-const notificationRoutes = require('./routes/notification');
-const paymentRoutes = require('./routes/Paymentrouter');
-
-
-=======
 const paymentRouter = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
 const orderRoutes = require('./routes/orderRoutes');
->>>>>>> fde2ebc4dbb2aeb969ab34fbc1418fb468541fde
 
 const app = express();
 
