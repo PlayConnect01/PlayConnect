@@ -85,9 +85,9 @@ app.use('/favorites', favorites);
 app.use('/payments', paymentRouter);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/orders', orderRoutes);
 app.use('/orderHistory', orderHistoryRoutes);
+app.use('orders', orderRoutes);
+app.use('notifications', notificationRoutes);
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
+import ConfirmationModal from './ConfirmationModal'; 
 import OrderHistory from './orders/OrderHistory';
 import { BASE_URL } from "../../Api";
+import PageContainer from '../components/PageContainer';
 
 const CartScreen = () => {
   const navigation = useNavigation();
@@ -139,132 +140,135 @@ const CartScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading cart...</Text>
-      </View>
+      <PageContainer>
+        <View style={styles.loadingContainer}>
+          <Text>Loading cart...</Text>
+        </View>
+      </PageContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'cart' && styles.activeTab]}
-          onPress={() => setActiveTab('cart')}
-        >
-          <Text style={[styles.tabText, activeTab === 'cart' && styles.activeTabText]}>
-            Cart
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'history' && styles.activeTab]}
-          onPress={() => setActiveTab('history')}
-        >
-          <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>
-            Order History
-          </Text>
-        </TouchableOpacity>
-      </View>
+    <PageContainer>
+      <View style={styles.mainContainer}>
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'cart' && styles.activeTab]}
+            onPress={() => setActiveTab('cart')}
+          >
+            <Text style={[styles.tabText, activeTab === 'cart' && styles.activeTabText]}>
+              Cart
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'history' && styles.activeTab]}
+            onPress={() => setActiveTab('history')}
+          >
+            <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>
+              Order History
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {activeTab === 'cart' ? (
-        <ScrollView 
-          style={styles.scrollView}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          <Text style={styles.title}>Cart</Text>
+        {activeTab === 'cart' ? (
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            <Text style={styles.title}>Cart</Text>
 
-          {cartItems.length === 0 ? (
-            <Text style={styles.emptyCart}>Your cart is empty</Text>
-          ) : (
-            <>
-              {cartItems.map((item) => (
-                <View key={item.cart_item_id} style={styles.cartItem}>
-                  <Image
-                    source={{ uri: item.image }}
-                    style={styles.itemImage}
-                  />
-                  <View style={styles.itemDetails}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
-                  </View>
-                  <View style={styles.quantityControl}>
+            {cartItems.length === 0 ? (
+              <Text style={styles.emptyCart}>Your cart is empty</Text>
+            ) : (
+              <>
+                {cartItems.map((item) => (
+                  <View key={item.cart_item_id} style={styles.cartItem}>
+                    <Image
+                      source={{ uri: item.image }}
+                      style={styles.itemImage}
+                    />
+                    <View style={styles.itemDetails}>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                      <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.quantityControl}>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => updateQuantity(item.cart_item_id, -1)}
+                      >
+                        <Text style={styles.quantityText}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.quantity}>{item.quantity}</Text>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => updateQuantity(item.cart_item_id, 1)}
+                      >
+                        <Text style={styles.quantityText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
                     <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => updateQuantity(item.cart_item_id, -1)}
+                      onPress={() => deleteProduct(item.cart_item_id)}
+                      style={styles.deleteButton}
                     >
-                      <Text style={styles.quantityText}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.quantity}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => updateQuantity(item.cart_item_id, 1)}
-                    >
-                      <Text style={styles.quantityText}>+</Text>
+                      <Text style={styles.deleteText}>Delete</Text>
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => deleteProduct(item.cart_item_id)}
-                    style={styles.deleteButton}
-                  >
-                    <Text style={styles.deleteText}>Delete</Text>
-                  </TouchableOpacity>
+                ))}
+
+                <View style={styles.paymentDetails}>
+                  <Text style={styles.paymentLabel}>
+                    Total ({cartItems.length} items)
+                  </Text>
+                  <Text style={styles.paymentPrice}>
+                    ${calculateTotal().toFixed(2)}
+                  </Text>
                 </View>
-              ))}
 
-              <View style={styles.paymentDetails}>
-                <Text style={styles.paymentLabel}>
-                  Total ({cartItems.length} items)
-                </Text>
-                <Text style={styles.paymentPrice}>
-                  ${calculateTotal().toFixed(2)}
-                </Text>
-              </View>
+                <TouchableOpacity
+                  style={styles.checkoutButton}
+                  onPress={navigateToDeliveryServices}
+                >
+                  <Text style={styles.checkoutText}>Choose Delivery Services</Text>
+                </TouchableOpacity>
+              </>
+            )}
 
-              <TouchableOpacity
-                style={styles.checkoutButton}
-                onPress={navigateToDeliveryServices}
-              >
-                <Text style={styles.checkoutText}>Choose Delivery Services</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          <ConfirmationModal
-            visible={isModalVisible}
-            onConfirm={confirmDelete}
-            onCancel={() => {
-              setItemToDelete(null);
-              setModalVisible(false);
-            }}
-            message="Are you sure you want to delete this item?"
-          />
-        </ScrollView>
-      ) : (
-        <OrderHistory />
-      )}
-    </View>
+            <ConfirmationModal
+              visible={isModalVisible}
+              onConfirm={confirmDelete}
+              onCancel={() => {
+                setItemToDelete(null);
+                setModalVisible(false);
+              }}
+              message="Are you sure you want to delete this item?"
+            />
+          </ScrollView>
+        ) : (
+          <OrderHistory />
+        )}
+      </View>
+    </PageContainer>
   );
 };
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F7FAFF',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F7FAFF',
-    padding: 16,
   },
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     padding: 8,
-    marginBottom: 8,
+    marginBottom: 16,
+    borderRadius: 12,
     shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
@@ -293,6 +297,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // Add extra padding at the bottom for navbar
   },
   title: {
     fontSize: 24,

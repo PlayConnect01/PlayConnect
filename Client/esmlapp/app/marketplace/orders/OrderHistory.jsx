@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  Platform,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../../../Api";
+import PageContainer from '../../components/PageContainer';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -160,9 +162,11 @@ const OrderHistory = () => {
 
   if (loading || updating) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4FA5F5" />
-      </View>
+      <PageContainer>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4FA5F5" />
+        </View>
+      </PageContainer>
     );
   }
 
@@ -196,113 +200,115 @@ const OrderHistory = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Order History</Text>
-      {orders.length === 0 ? (
-        <Text style={styles.emptyText}>No orders found</Text>
-      ) : (
-        orders.map((order) => (
-          <TouchableOpacity
-            key={order.order_id}
-            style={styles.orderCard}
-            onPress={() => setExpandedOrder(
-              expandedOrder === order.order_id ? null : order.order_id
-            )}
-          >
-            <View style={styles.orderHeader}>
-              <View style={styles.orderInfo}>
-                <Text style={styles.orderId}>Order #{order.order_id}</Text>
-                <Text style={styles.orderDate}>
-                  {formatDate(order.created_at)}
-                </Text>
-              </View>
-              <View style={styles.statusContainer}>
-                <FontAwesome
-                  name={getStatusIcon(order.status)}
-                  size={16}
-                  color={getStatusColor(order.status)}
-                  style={styles.statusIcon}
-                />
-                <Text
-                  style={[
-                    styles.statusText,
-                    { color: getStatusColor(order.status) }
-                  ]}
-                >
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </Text>
-              </View>
-            </View>
-
-            {expandedOrder === order.order_id && (
-              <View style={styles.orderDetails}>
-                {renderStatusOptions(order)}
-                <View style={styles.divider} />
-                {order.items.map((item) => (
-                  <View key={item.order_item_id} style={styles.itemContainer}>
-                    <View style={styles.itemInfo}>
-                      <Text style={styles.itemName}>{item.product.name}</Text>
-                      <Text style={styles.itemDescription}>{item.product.description}</Text>
-                    </View>
-                    <View style={styles.itemDetails}>
-                      {order.status !== 'completed' && order.status !== 'cancelled' && (
-                        <View style={styles.quantityControls}>
-                          <TouchableOpacity
-                            onPress={() => updateItemQuantity(
-                              order.order_id,
-                              item.order_item_id,
-                              Math.max(1, item.quantity - 1)
-                            )}
-                            style={styles.quantityButton}
-                          >
-                            <Text>-</Text>
-                          </TouchableOpacity>
-                          <Text style={styles.itemQuantity}>{item.quantity}</Text>
-                          <TouchableOpacity
-                            onPress={() => updateItemQuantity(
-                              order.order_id,
-                              item.order_item_id,
-                              item.quantity + 1
-                            )}
-                            style={styles.quantityButton}
-                          >
-                            <Text>+</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                      <Text style={styles.itemPrice}>
-                        ${item.subtotal.toFixed(2)}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-                <View style={styles.divider} />
-                <View style={styles.totalContainer}>
-                  <Text style={styles.totalLabel}>Total Amount</Text>
-                  <Text style={styles.totalAmount}>
-                    ${order.total_amount.toFixed(2)}
+    <PageContainer>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.title}>Order History</Text>
+        {orders.length === 0 ? (
+          <Text style={styles.emptyText}>No orders found</Text>
+        ) : (
+          orders.map((order) => (
+            <TouchableOpacity
+              key={order.order_id}
+              style={styles.orderCard}
+              onPress={() => setExpandedOrder(
+                expandedOrder === order.order_id ? null : order.order_id
+              )}
+            >
+              <View style={styles.orderHeader}>
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderId}>Order #{order.order_id}</Text>
+                  <Text style={styles.orderDate}>
+                    {formatDate(order.created_at)}
+                  </Text>
+                </View>
+                <View style={styles.statusContainer}>
+                  <FontAwesome
+                    name={getStatusIcon(order.status)}
+                    size={16}
+                    color={getStatusColor(order.status)}
+                    style={styles.statusIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(order.status) }
+                    ]}
+                  >
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </Text>
                 </View>
               </View>
-            )}
-          </TouchableOpacity>
-        ))
-      )}
-    </ScrollView>
+
+              {expandedOrder === order.order_id && (
+                <View style={styles.orderDetails}>
+                  {renderStatusOptions(order)}
+                  <View style={styles.divider} />
+                  {order.items.map((item) => (
+                    <View key={item.order_item_id} style={styles.itemContainer}>
+                      <View style={styles.itemInfo}>
+                        <Text style={styles.itemName}>{item.product.name}</Text>
+                        <Text style={styles.itemDescription}>{item.product.description}</Text>
+                      </View>
+                      <View style={styles.itemDetails}>
+                        {order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <View style={styles.quantityControls}>
+                            <TouchableOpacity
+                              onPress={() => updateItemQuantity(
+                                order.order_id,
+                                item.order_item_id,
+                                Math.max(1, item.quantity - 1)
+                              )}
+                              style={styles.quantityButton}
+                            >
+                              <Text>-</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.itemQuantity}>{item.quantity}</Text>
+                            <TouchableOpacity
+                              onPress={() => updateItemQuantity(
+                                order.order_id,
+                                item.order_item_id,
+                                item.quantity + 1
+                              )}
+                              style={styles.quantityButton}
+                            >
+                              <Text>+</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                        <Text style={styles.itemPrice}>
+                          ${item.subtotal.toFixed(2)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                  <View style={styles.divider} />
+                  <View style={styles.totalContainer}>
+                    <Text style={styles.totalLabel}>Total Amount</Text>
+                    <Text style={styles.totalAmount}>
+                      ${order.total_amount.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))
+        )}
+      </ScrollView>
+    </PageContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7FAFF',
-    padding: 16,
+  },
+  contentContainer: {
+    paddingBottom: 20,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F7FAFF',
   },
   title: {
     fontSize: 24,
