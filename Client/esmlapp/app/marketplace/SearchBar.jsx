@@ -11,12 +11,12 @@ import {
   Image,
   ScrollView,
   TouchableWithoutFeedback,
-} from "react-native";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+} from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../../Api";
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
@@ -89,7 +89,10 @@ const SearchBar = ({ onSelectProduct }) => {
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchTerm.trim().length > 0) {
-        Promise.all([fetchSearchResults(), fetchCategoryResults()]);
+        Promise.all([
+          fetchSearchResults(),
+          fetchCategoryResults(),
+        ]);
       } else {
         setResults([]);
         setCategoryResults([]);
@@ -102,31 +105,31 @@ const SearchBar = ({ onSelectProduct }) => {
 
   const loadRecentSearches = async () => {
     try {
-      const searches = await AsyncStorage.getItem("recentSearches");
+      const searches = await AsyncStorage.getItem('recentSearches');
       if (searches) {
         setRecentSearches(JSON.parse(searches));
       }
     } catch (error) {
-      console.error("Error loading recent searches:", error);
+      console.error('Error loading recent searches:', error);
     }
   };
 
   const saveRecentSearch = async (term) => {
     try {
-      let searches = await AsyncStorage.getItem("recentSearches");
+      let searches = await AsyncStorage.getItem('recentSearches');
       searches = searches ? JSON.parse(searches) : [];
-
+      
       // Remove if exists and add to front
-      searches = searches.filter((s) => s !== term);
+      searches = searches.filter(s => s !== term);
       searches.unshift(term);
-
+      
       // Keep only last 5 searches
       searches = searches.slice(0, 5);
-
-      await AsyncStorage.setItem("recentSearches", JSON.stringify(searches));
+      
+      await AsyncStorage.setItem('recentSearches', JSON.stringify(searches));
       setRecentSearches(searches);
     } catch (error) {
-      console.error("Error saving recent search:", error);
+      console.error('Error saving recent search:', error);
     }
   };
 
@@ -174,9 +177,9 @@ const SearchBar = ({ onSelectProduct }) => {
     setResults([]);
     setDropdownVisible(false);
     setIsFocused(false);
-    navigation.navigate("ProductDetail", {
+    navigation.navigate('ProductDetail', { 
       productId: product.product_id,
-      productName: product.name,
+      productName: product.name 
     });
   };
 
@@ -191,10 +194,10 @@ const SearchBar = ({ onSelectProduct }) => {
     </View>
   );
 
-  const renderRecentSearches = () =>
+  const renderRecentSearches = () => (
     recentSearches.length > 0 && (
       <View style={styles.section}>
-        {renderSectionTitle("Recent Searches")}
+        {renderSectionTitle('Recent Searches')}
         {recentSearches.map((term, index) => (
           <TouchableOpacity
             key={index}
@@ -206,60 +209,48 @@ const SearchBar = ({ onSelectProduct }) => {
           </TouchableOpacity>
         ))}
       </View>
-    );
+    )
+  );
 
-  const renderTrendingProducts = () =>
+  const renderTrendingProducts = () => (
     trendingProducts.length > 0 && (
       <View style={styles.section}>
-        {renderSectionTitle("Trending Products")}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.trendingScroll}
-        >
+        {renderSectionTitle('Trending Products')}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
           {trendingProducts.map((product) => (
             <TouchableOpacity
               key={product.product_id}
               style={styles.trendingItem}
               onPress={() => handleSelectProduct(product)}
             >
-              <Image
-                source={{ uri: product.image_url }}
-                style={styles.trendingImage}
-              />
-              <Text style={styles.trendingName} numberOfLines={1}>
-                {product.name}
-              </Text>
+              <Image source={{ uri: product.image_url }} style={styles.trendingImage} />
+              <Text style={styles.trendingName} numberOfLines={1}>{product.name}</Text>
               <Text style={styles.trendingPrice}>${product.price}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
-    );
+    )
+  );
 
-  const renderCategoryResults = () =>
+  const renderCategoryResults = () => (
     categoryResults.length > 0 && (
       <View style={styles.section}>
-        {renderSectionTitle("Categories")}
+        {renderSectionTitle('Categories')}
         {categoryResults.map((category) => (
           <TouchableOpacity
             key={category.id}
             style={styles.categoryItem}
-            onPress={() =>
-              navigation.navigate("CategoryProducts", {
-                categoryId: category.id,
-              })
-            }
+            onPress={() => navigation.navigate('CategoryProducts', { categoryId: category.id })}
           >
             <Ionicons name="folder-outline" size={20} color="#6B7280" />
             <Text style={styles.categoryText}>{category.name}</Text>
-            <Text style={styles.categoryCount}>
-              {category.productCount} items
-            </Text>
+            <Text style={styles.categoryCount}>{category.productCount} items</Text>
           </TouchableOpacity>
         ))}
       </View>
-    );
+    )
+  );
 
   const animatedStyles = {
     transform: [
@@ -308,7 +299,7 @@ const SearchBar = ({ onSelectProduct }) => {
 
       {isDropdownVisible && (
         <View style={styles.dropdownWrapper}>
-          <ScrollView
+          <ScrollView 
             style={styles.dropdown}
             nestedScrollEnabled={true}
             showsVerticalScrollIndicator={true}
@@ -324,7 +315,7 @@ const SearchBar = ({ onSelectProduct }) => {
                 {renderCategoryResults()}
                 {results.length > 0 ? (
                   <View>
-                    {renderSectionTitle("Products")}
+                    {renderSectionTitle('Products')}
                     {results.map((item, index) => (
                       <Animated.View
                         key={item.product_id.toString()}
@@ -332,12 +323,8 @@ const SearchBar = ({ onSelectProduct }) => {
                           styles.resultItemContainer,
                           {
                             opacity: getAnimatedValues(index).fadeAnim,
-                            transform: [
-                              {
-                                translateY: getAnimatedValues(index).translateY,
-                              },
-                            ],
-                          },
+                            transform: [{ translateY: getAnimatedValues(index).translateY }]
+                          }
                         ]}
                       >
                         <TouchableOpacity
@@ -359,19 +346,9 @@ const SearchBar = ({ onSelectProduct }) => {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <Ionicons
                                       key={star}
-                                      name={
-                                        star <=
-                                        Math.floor(Number(item.rating || 0))
-                                          ? "star"
-                                          : "star-outline"
-                                      }
+                                      name={star <= Math.floor(Number(item.rating || 0)) ? "star" : "star-outline"}
                                       size={16}
-                                      color={
-                                        star <=
-                                        Math.floor(Number(item.rating || 0))
-                                          ? "#FBC02D"
-                                          : "#CBD5E0"
-                                      }
+                                      color={star <= Math.floor(Number(item.rating || 0)) ? "#FBC02D" : "#CBD5E0"}
                                       style={styles.starIcon}
                                     />
                                   ))}
@@ -385,56 +362,33 @@ const SearchBar = ({ onSelectProduct }) => {
                               </View>
                               <View style={styles.priceSection}>
                                 <View style={styles.priceContainer}>
-                                  {item.original_price &&
-                                    Number(item.original_price) >
-                                      Number(item.price) && (
-                                      <Text style={styles.originalPrice}>
-                                        $
-                                        {Number(
-                                          item.original_price || 0
-                                        ).toFixed(2)}
-                                      </Text>
-                                    )}
+                                  {item.original_price && Number(item.original_price) > Number(item.price) && (
+                                    <Text style={styles.originalPrice}>
+                                      ${Number(item.original_price || 0).toFixed(2)}
+                                    </Text>
+                                  )}
                                   <Text style={styles.priceText}>
                                     ${Number(item.price || 0).toFixed(2)}
                                   </Text>
                                 </View>
-                                {item.original_price &&
-                                  Number(item.original_price) >
-                                    Number(item.price) && (
-                                    <View style={styles.discountBadge}>
-                                      <Text style={styles.discountText}>
-                                        {Math.round(
-                                          ((Number(item.original_price) -
-                                            Number(item.price)) /
-                                            Number(item.original_price)) *
-                                            100
-                                        )}
-                                        % OFF
-                                      </Text>
-                                    </View>
-                                  )}
+                                {item.original_price && Number(item.original_price) > Number(item.price) && (
+                                  <View style={styles.discountBadge}>
+                                    <Text style={styles.discountText}>
+                                      {Math.round(((Number(item.original_price) - Number(item.price)) / Number(item.original_price)) * 100)}% OFF
+                                    </Text>
+                                  </View>
+                                )}
                               </View>
                               {item.stock_status && (
-                                <Text
-                                  style={[
-                                    styles.stockStatus,
-                                    {
-                                      color:
-                                        item.stock_status === "In Stock"
-                                          ? "#059669"
-                                          : "#DC2626",
-                                    },
-                                  ]}
-                                >
+                                <Text style={[
+                                  styles.stockStatus,
+                                  { color: item.stock_status === 'In Stock' ? '#059669' : '#DC2626' }
+                                ]}>
                                   {item.stock_status}
                                 </Text>
                               )}
                               {item.description && (
-                                <Text
-                                  style={styles.description}
-                                  numberOfLines={2}
-                                >
+                                <Text style={styles.description} numberOfLines={2}>
                                   {item.description}
                                 </Text>
                               )}
@@ -447,9 +401,7 @@ const SearchBar = ({ onSelectProduct }) => {
                 ) : (
                   <View style={styles.noResultsContainer}>
                     <Text style={styles.noResultsText}>No results found</Text>
-                    <Text style={styles.noResultsSubText}>
-                      Try a different search term
-                    </Text>
+                    <Text style={styles.noResultsSubText}>Try a different search term</Text>
                   </View>
                 )}
               </View>
@@ -505,7 +457,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.01 }],
   },
   dropdownWrapper: {
-    position: "absolute",
+    position: 'absolute',
     top: 65,
     left: 0,
     right: 0,
@@ -553,8 +505,8 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   resultItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 12,
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -569,7 +521,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 12,
-    backgroundColor: "#F8FAFF",
+    backgroundColor: '#F8FAFF',
   },
   textContainer: {
     flex: 1,
@@ -578,22 +530,22 @@ const styles = StyleSheet.create({
   },
   resultText: {
     fontSize: 15,
-    fontWeight: "600",
-    color: "#1F2937",
+    fontWeight: '600',
+    color: '#1F2937',
     lineHeight: 20,
   },
   detailsContainer: {
     gap: 6,
   },
   ratingAndReviewContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F8FAFF",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -603,60 +555,60 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 13,
-    fontWeight: "600",
-    color: "#4F46E5",
+    fontWeight: '600',
+    color: '#4F46E5',
   },
   reviewCount: {
     fontSize: 13,
-    color: "#6B7280",
+    color: '#6B7280',
   },
   priceSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 4,
   },
   priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   originalPrice: {
     fontSize: 13,
-    color: "#9CA3AF",
-    textDecorationLine: "line-through",
+    color: '#9CA3AF',
+    textDecorationLine: 'line-through',
   },
   priceText: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#4F46E5",
+    fontWeight: '700',
+    color: '#4F46E5',
   },
   discountBadge: {
-    backgroundColor: "#FDF2F8",
+    backgroundColor: '#FDF2F8',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#FBCFE8",
+    borderColor: '#FBCFE8',
   },
   discountText: {
     fontSize: 12,
-    fontWeight: "600",
-    color: "#EC4899",
+    fontWeight: '600',
+    color: '#EC4899',
   },
   stockStatus: {
     fontSize: 13,
-    fontWeight: "500",
-    backgroundColor: "#F0FDF4",
+    fontWeight: '500',
+    backgroundColor: '#F0FDF4',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    overflow: "hidden",
-    alignSelf: "flex-start",
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   description: {
     fontSize: 13,
-    color: "#6B7280",
+    color: '#6B7280',
     marginTop: 6,
     lineHeight: 18,
   },
@@ -685,7 +637,7 @@ const styles = StyleSheet.create({
   noResultsSubText: {
     fontSize: 14,
     color: "#6B7280",
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 20,
   },
   clearButton: {
@@ -716,8 +668,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   recentSearchItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -740,7 +692,7 @@ const styles = StyleSheet.create({
     width: 140,
     marginHorizontal: 6,
     padding: 12,
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     borderWidth: 1,
@@ -755,13 +707,13 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 12,
     marginBottom: 12,
-    backgroundColor: "#F8FAFF",
+    backgroundColor: '#F8FAFF',
   },
   trendingName: {
     fontSize: 14,
     fontWeight: "600",
     color: "#1F2937",
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: 6,
   },
   trendingPrice: {
@@ -770,8 +722,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   categoryItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,

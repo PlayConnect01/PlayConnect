@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { BASE_URL } from '../../Api';
-const TournamentList = () => {
+import { BASE_URL } from "../../Api";
+
+const CompetitionPage = () => {
   const [tournaments, setTournaments] = useState([]);
   const navigation = useNavigation();
 
@@ -50,10 +51,11 @@ const TournamentList = () => {
           <Text style={styles.statValue}>{tournament.teams?.length || 0}</Text>
           <Text style={styles.statLabel}>Teams</Text>
         </View>
+        
         <View style={styles.statItem}>
           <MaterialCommunityIcons name="trophy" size={24} color="#0095FF" />
-          <Text style={styles.statValue}>{tournament.point_reward}</Text>
-          <Text style={styles.statLabel}>Points</Text>
+          <Text style={styles.statValue}>{tournament.matches?.length || 0}</Text>
+          <Text style={styles.statLabel}>Matches</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -61,95 +63,20 @@ const TournamentList = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Tournaments</Text>
-      </View>
       <ScrollView style={styles.container}>
-        {tournaments.map(renderTournamentCard)}
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
-const TournamentDetail = ({ route }) => {
-  const [tournament, setTournament] = useState(null);
-  const { id } = route.params;
-
-  useEffect(() => {
-    fetchTournamentDetails(id);
-  }, [id]);
-
-  const fetchTournamentDetails = async (tournamentId) => {
-    try {
-      const response = await fetch(`${BASE_URL}/competetion/${tournamentId}`);
-      const tournamentData = await response.json();
-      setTournament(tournamentData);
-    } catch (error) {
-      console.error('Error fetching tournament details:', error);
-    }
-  };
-
-  if (!tournament) {
-    return <Text style={styles.loading}>Loading...</Text>;
-  }
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <View style={styles.tournamentHeader}>
-          <Text style={styles.tournamentTitle}>{tournament.tournament_name}</Text>
-          <View style={styles.sportBadge}>
-            <Text style={styles.sportName}>{tournament.sport.name}</Text>
-          </View>
-          
-          <View style={styles.infoRow}>
-            <View style={styles.dateContainer}>
-              <MaterialCommunityIcons name="calendar" size={20} color="#0095FF" />
-              <Text style={styles.dateRange}>
-                {new Date(tournament.start_date).toLocaleDateString()} - 
-                {new Date(tournament.end_date).toLocaleDateString()}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons name="trophy" size={24} color="#0095FF" />
-              <Text style={styles.statValue}>{tournament.point_reward}</Text>
-              <Text style={styles.statLabel}>Points Reward</Text>
-            </View>
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons name="account-group" size={24} color="#0095FF" />
-              <Text style={styles.statValue}>{tournament.teams?.length || 0}</Text>
-              <Text style={styles.statLabel}>Teams</Text>
-            </View>
-          </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>Tournaments</Text>
+          <TouchableOpacity 
+            style={styles.createButton}
+            onPress={() => navigation.navigate('CreateTournament')}
+          >
+            <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+            <Text style={styles.createButtonText}>Create</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Participating Teams</Text>
-          {tournament.teams?.map(team => (
-            <TouchableOpacity key={team.team_id} style={styles.teamItem}>
-              <View style={styles.teamContent}>
-                <View style={styles.teamHeader}>
-                  <Text style={styles.teamName}>{team.team_name}</Text>
-                  <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
-                </View>
-                <View style={styles.teamInfo}>
-                  <View style={styles.infoItem}>
-                    <MaterialCommunityIcons name="account-group" size={16} color="#666" />
-                    <Text style={styles.infoText}>{team.members?.length || 0} Members</Text>
-                  </View>
-                  {team.creator && (
-                    <View style={styles.infoItem}>
-                      <MaterialCommunityIcons name="account" size={16} color="#666" />
-                      <Text style={styles.infoText}>Captain: {team.creator.username}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+        
+        <View style={styles.content}>
+          {tournaments.map(renderTournamentCard)}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -163,29 +90,45 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#fff',
   },
-  headerTitle: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#1F2937',
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0095FF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  createButtonText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  content: {
+    padding: 16,
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    margin: 16,
+    marginBottom: 16,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -193,37 +136,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  tournamentHeader: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  tournamentTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
   tournamentName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#1F2937',
     flex: 1,
   },
   sportBadge: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#E5F2FF',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderRadius: 16,
-    alignSelf: 'flex-start',
-    marginBottom: 16,
   },
   sportName: {
     color: '#0095FF',
-    fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   infoRow: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   dateContainer: {
     flexDirection: 'row',
@@ -231,85 +161,28 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     marginLeft: 8,
-    color: '#666',
-    fontSize: 14,
-  },
-  dateRange: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#666',
+    color: '#4B5563',
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#E5E7EB',
+    paddingTop: 12,
   },
   statItem: {
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
     marginTop: 4,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  section: {
-    backgroundColor: '#fff',
-    marginTop: 16,
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  teamItem: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  teamContent: {
-    flex: 1,
-  },
-  teamHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  teamName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  teamInfo: {
-    gap: 8,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  infoText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  loading: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
+    color: '#6B7280',
+    marginTop: 2,
   },
 });
 
-export { TournamentList, TournamentDetail };
+export default CompetitionPage;

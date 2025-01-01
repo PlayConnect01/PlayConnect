@@ -10,8 +10,12 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
+<<<<<<< HEAD
 import { BASE_URL } from '../../Api.js';
 import LottieView from 'lottie-react-native';
+=======
+import { BASE_URL } from "../../Api";
+>>>>>>> fde2ebc4dbb2aeb969ab34fbc1418fb468541fde
 
 const decodeToken = (token) => {
   try {

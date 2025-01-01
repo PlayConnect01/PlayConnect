@@ -28,7 +28,7 @@ const Navbar = () => {
 
       socket.on("newNotification", (data) => {
         console.log("New notification received:", data);
-        if (route.name !== "Chat/MessagePage") {
+        if (route.name !== "Messages") {
           console.log("Incrementing unread count");
           setUnreadCount((prev) => prev + 1);
         }
@@ -51,7 +51,7 @@ const Navbar = () => {
 
   // Reset unread count when entering MessagePage
   useEffect(() => {
-    if (route.name === "Chat/MessagePage") {
+    if (route.name === "Messages") {
       console.log("Resetting unread count");
       setUnreadCount(0);
     }
@@ -59,18 +59,11 @@ const Navbar = () => {
 
   const isActive = (screenName) => {
     const currentRoute = route.name;
-    if (screenName === "Homep" && currentRoute === "Homepage/Homep")
-      return true;
-    if (screenName === "Profile" && currentRoute === "profile/ProfilePage")
-      return true;
-    if (
-      screenName === "MarketplaceHome" &&
-      currentRoute === "marketplace/marketplace"
-    )
-      return true;
-    if (screenName === "MessagePage" && currentRoute === "Chat/MessagePage")
-      return true;
-
+    if (screenName === "Home" && currentRoute === "Home") return true;
+    if (screenName === "Profile" && currentRoute === "Profile") return true;
+    if (screenName === "Marketplace" && currentRoute === "Marketplace") return true;
+    if (screenName === "Messages" && currentRoute === "Messages") return true;
+    if (screenName === "Match" && currentRoute === "Match") return true;
     return currentRoute === screenName;
   };
 
@@ -79,29 +72,27 @@ const Navbar = () => {
       <View style={styles.navbar}>
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Homepage/Homep")}
+          onPress={() => navigation.navigate("Home")}
         >
           <Icon
             name="home"
             size={24}
-            color={isActive("Homep") ? "#0095FF" : "#9CA3AF"}
+            color={isActive("Home") ? "#0095FF" : "#9CA3AF"}
           />
-          <Text
-            style={isActive("Homep") ? styles.navTextActive : styles.navText}
-          >
+          <Text style={isActive("Home") ? styles.navTextActive : styles.navText}>
             Home
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Chat/MessagePage")}
+          onPress={() => navigation.navigate("Messages")}
         >
           <View style={styles.iconContainer}>
             <Icon
               name="chatbubble"
               size={24}
-              color={isActive("MessagePage") ? "#0095FF" : "#9CA3AF"}
+              color={isActive("Messages") ? "#0095FF" : "#9CA3AF"}
             />
             {unreadCount > 0 && (
               <View style={styles.badge}>
@@ -109,21 +100,14 @@ const Navbar = () => {
               </View>
             )}
           </View>
-          <Text
-            style={
-              isActive("MessagePage") ? styles.navTextActive : styles.navText
-            }
-          >
+          <Text style={isActive("Messages") ? styles.navTextActive : styles.navText}>
             Message
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.centerButton,
-            isActive("Match") && styles.activeCenterButton,
-          ]}
-          onPress={() => navigation.navigate("Match/Firstpagematch")}
+          style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
+          onPress={() => navigation.navigate("Match")}
         >
           <View style={styles.centerButtonInner}>
             <Icon name="flame" size={28} color="#FFFFFF" />
@@ -132,36 +116,28 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("marketplace/MarketplaceHome")}
+          onPress={() => navigation.navigate("Marketplace")}
         >
           <Icon
             name="cart"
             size={24}
-            color={isActive("MarketplaceHome") ? "#0095FF" : "#9CA3AF"}
+            color={isActive("Marketplace") ? "#0095FF" : "#9CA3AF"}
           />
-          <Text
-            style={
-              isActive("MarketplaceHome")
-                ? styles.navTextActive
-                : styles.navText
-            }
-          >
+          <Text style={isActive("Marketplace") ? styles.navTextActive : styles.navText}>
             Market
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("profile/ProfilePage")}
+          onPress={() => navigation.navigate("Profile")}
         >
           <Icon
             name="person"
             size={24}
             color={isActive("Profile") ? "#0095FF" : "#9CA3AF"}
           />
-          <Text
-            style={isActive("Profile") ? styles.navTextActive : styles.navText}
-          >
+          <Text style={isActive("Profile") ? styles.navTextActive : styles.navText}>
             Profile
           </Text>
         </TouchableOpacity>
@@ -245,19 +221,6 @@ const styles = StyleSheet.create({
   badge: {
     position: "absolute",
     right: -8,
-    top: -8,
-    backgroundColor: "red",
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1,
-  },
-  badgeText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "bold",
     top: -8,
     backgroundColor: "red",
     borderRadius: 10,

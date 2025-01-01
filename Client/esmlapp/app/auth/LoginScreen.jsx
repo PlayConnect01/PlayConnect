@@ -20,7 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import { BASE_URL } from '../../Api';
+import { BASE_URL } from "../../Api";
 import { BlurView } from 'expo-blur';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
@@ -66,11 +66,27 @@ export default function Login() {
         email,
         password,
       });
+<<<<<<< HEAD
       const { token } = response.data;
       await AsyncStorage.setItem('userToken', token);
+=======
+
+      const { token, user } = response.data;
+      
+      // Save both token and user data
+      await Promise.all([
+        AsyncStorage.setItem('userToken', token),
+        AsyncStorage.setItem('userData', JSON.stringify(user))
+      ]);
+
+      console.log('Saved user data:', user);
+      console.log('Saved token:', token);
+
+      // Navigate to home page after successful login
+>>>>>>> fde2ebc4dbb2aeb969ab34fbc1418fb468541fde
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Homep' }],
+        routes: [{ name: 'Home' }],
       });
     } catch (error) {
       Alert.alert('Error', 'Invalid login credentials!');

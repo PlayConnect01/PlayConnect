@@ -2,11 +2,14 @@ import * as React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MainLayout from "../(Taps)/MainLayout";
+import { PaymentConfiguration } from '@stripe/stripe-react-native';
 
 // Screens
 import EventDetails from "./Homepage/EventDetails";
 import AddNewEvent from "./Homepage/CreateEvent";
 import Homep from "./Homepage/Homep";
+import CompetitionPage from "./Homepage/CompetitionPage";
+import TournamentDetail from "./Homepage/TournamentDetail";
 import CategoryEvents from "./Homepage/CategoryEvents";
 import Landing from "./auth/LandingScreen";
 import Login from "./auth/LoginScreen";
@@ -17,34 +20,48 @@ import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
 import ProfilePage from "./profile/ProfilePage";
-import MarketplaceHome from "./marketplace/marketplace";
-import Products from "./marketplace/products"; // Corrected import
+import Marketplace from "./marketplace/marketplace";
+import Products from "./marketplace/products";
 import ProductDetail from "./marketplace/ProductDetail";
 import CartScreen from "./marketplace/cart";
-import PaymentScreen from './marketplace/PaymentScreen';
-import PaymentSuccessScreen from './marketplace/PaymentSuccessScreen';
+import PaymentScreen from './marketplace/payment/PaymentScreen';
+import PaymentSuccess from './marketplace/payment/PaymentSuccess';
 import TournamentList from './Homepage/TournamentList';
-import TournamentDetail from './Homepage/TournamentDetail';
 import EditProfile from "./profile/EditProfile";
-import DeliveryServicesScreen from './marketplace/DeliveryServicesScreen';
+import DeliveryServicesScreen from './marketplace/payment/DeliveryServicesScreen';
+import OrdersScreen from './marketplace/orders/OrdersScreen';
+import OrderDetails from './marketplace/orders/OrderDetails';
 import First from "./FirstPage/First";
+import FavoritesScreen from "./marketplace/FavoritesScreen";
 
 const Stack = createStackNavigator();
 
-
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack.Navigator
-        initialRouteName="First"
-        screenOptions={{ headerShown: false }}
-      >
-        {/* Auth Screens */}
-        <Stack.Screen name="First" component={First} />
-        <Stack.Screen name="Landing" component={Landing} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="SignUp" component={SignUp} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+    <StripeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Stack.Navigator
+          initialRouteName="Landing"
+          screenOptions={{
+            headerShown: false,
+            cardStyle: { backgroundColor: '#F8FAFF' },
+            headerStyle: {
+              backgroundColor: '#4FA5F5',
+              shadowColor: 'transparent',
+            },
+            headerTintColor: '#FFFFFF',
+            headerTitleStyle: {
+              fontWeight: '700',
+              fontSize: 18,
+            },
+          }}
+        >
+          {/* Auth Screens */}
+          <Stack.Screen name="First" component={First} />
+          <Stack.Screen name="Landing" component={Landing} />
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="SignUp" component={SignUp} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
 
         {/* Main Flow */}
         <Stack.Screen
@@ -182,15 +199,15 @@ export default function App() {
           )}
         />
         <Stack.Screen
-          name="Payment"
-          component={() => (
+          name="PaymentScreen"
+          component={({ route, navigation }) => (
             <MainLayout>
-              <PaymentScreen />
+              <PaymentScreen route={route} navigation={navigation} />
             </MainLayout>
           )}
         />
         <Stack.Screen
-          name="delivery"
+          name="DeliveryServicesScreen"
           component={() => (
             <MainLayout>
               <DeliveryServicesScreen />
@@ -202,6 +219,46 @@ export default function App() {
           component={() => (
             <MainLayout>
               <PaymentSuccessScreen />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="FavoritesScreen"
+          component={() => (
+            <MainLayout>
+              <FavoritesScreen/>
+            </MainLayout>
+          )}
+        />
+         <Stack.Screen
+          name="AllDiscountedProduct"
+          component={() => (
+            <MainLayout>
+              <AllDiscountedProduct />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="OrderConfirmation"
+          component={({ route, navigation }) => (
+            <MainLayout>
+              <orderSuccess route={route} navigation={navigation} />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="BankTransferInstructions"
+          component={({ route, navigation }) => (
+            <MainLayout>
+              <BankTransferInstructions route={route} navigation={navigation} />
+            </MainLayout>
+          )}
+        />
+        <Stack.Screen
+          name="CryptoPayment"
+          component={({ route, navigation }) => (
+            <MainLayout>
+              <CryptoPayment route={route} navigation={navigation} />
             </MainLayout>
           )}
         />

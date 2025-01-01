@@ -1,9 +1,16 @@
-module.exports = function(api) {
+module.exports = function (api) {
   api.cache(true);
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Ensure there are no references to expo-barcode-scanner here
+      ['module:react-native-dotenv', {
+        moduleName: '@env',
+        path: '.env',
+        blacklist: null,
+        whitelist: null,
+        safe: false,
+        allowUndefined: true,
+      }],
     ],
   };
 };
