@@ -25,6 +25,7 @@ const favorites = require('./routes/favoriteRoutes');
 const paymentRoutes
  = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
+const adminRoutes = require('./routes/admin'); 
 const orderRoutes = require('./routes/orderRoutes');
 const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 
@@ -89,6 +90,9 @@ app.use('/chats', chatRoutes);
 app.use('/orderHistory', orderHistoryRoutes);
 app.use('orders', orderRoutes);
 app.use('notifications', notificationRoutes);
+
+// Admin routes with prefix
+app.use('/admin', adminRoutes); 
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

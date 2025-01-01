@@ -16,6 +16,7 @@ import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
 import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
+import Matchingpage from "./Match/Matchingpage";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
@@ -69,6 +70,7 @@ const WrappedTournamentDetail = withMainLayout(TournamentDetail);
 const WrappedCategoryEvents = withMainLayout(CategoryEvents);
 const WrappedCalendarPage = withMainLayout(CalendarPage);
 const WrappedMatch = withMainLayout(Match);
+const WrappedMatchingpage = withMainLayout(Matchingpage);
 const WrappedMessagePage = withMainLayout(MessagePage);
 const WrappedChatDetails = withMainLayout(ChatDetails);
 const WrappedProfilePage = withMainLayout(ProfilePage);
@@ -89,7 +91,7 @@ export default function App() {
     <StripeProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack.Navigator
-          initialRouteName="Landing"
+          initialRouteName="First"
           screenOptions={{
             headerShown: false,
             cardStyle: { backgroundColor: '#F8FAFF' },
@@ -121,6 +123,7 @@ export default function App() {
           <Stack.Screen name="EventDetails" component={EventDetails} />
           <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
           <Stack.Screen name="Match" component={WrappedMatch} />
+          <Stack.Screen name="Matchingpage" component={WrappedMatchingpage} />
           <Stack.Screen name="Messages" component={WrappedMessagePage} />
           <Stack.Screen name="ChatDetails" component={WrappedChatDetails} />
           <Stack.Screen name="Profile" component={WrappedProfilePage} />

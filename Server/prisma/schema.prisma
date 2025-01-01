@@ -53,6 +53,18 @@ enum NotificationType {
   TOURNAMENT_INVITATION
 }
 
+model Admin {
+  admin_id    Int      @id @default(autoincrement())
+  username    String
+  email       String   @unique
+  password    String
+  role        String   @default("ADMIN")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  handled_reports Report[] @relation("AdminHandledReports")
+}
+
 model User {
   user_id         Int       @id @default(autoincrement())
   username        String
@@ -68,7 +80,11 @@ model User {
   birthdate       DateTime? 
   phone_number    String?
   phone_country_code String?
-
+  is_banned       Boolean   @default(false)
+  is_blocked      Boolean   @default(false)
+  ban_reason      String?
+  block_reason    String?
+  
   created_teams      Team[]          @relation("TeamCreator")
   team_memberships   TeamMember[]
   created_tournaments Tournament[]    @relation("TournamentCreator")
