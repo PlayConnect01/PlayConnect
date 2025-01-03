@@ -66,10 +66,6 @@ export default function Login() {
         email,
         password,
       });
-<<<<<<< HEAD
-      const { token } = response.data;
-      await AsyncStorage.setItem('userToken', token);
-=======
 
       const { token, user } = response.data;
       
@@ -83,7 +79,6 @@ export default function Login() {
       console.log('Saved token:', token);
 
       // Navigate to home page after successful login
->>>>>>> fde2ebc4dbb2aeb969ab34fbc1418fb468541fde
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],

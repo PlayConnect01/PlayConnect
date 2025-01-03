@@ -16,6 +16,7 @@ import Login from "./auth/LoginScreen";
 import SignUp from "./auth/SignUpScreen";
 import ForgotPassword from "./auth/ForgotPasswordScreen";
 import Match from "./Match/Firstpagematch";
+import Matchingpage from "./Match/Matchingpage";
 import MessagePage from "./Chat/MessagePage";
 import ChatDetails from "./Chat/ChatDetails";
 import CalendarPage from "./Homepage/CalendarPage";
@@ -34,19 +35,19 @@ import OrderDetails from './marketplace/orders/OrderDetails';
 import First from "./FirstPage/First";
 import FavoritesScreen from "./marketplace/FavoritesScreen";
 import  AllDiscountedProducts from "./marketplace/AllDiscountedProduct";
-import GymProducts from "./marketplace/categories/GymProducts";
-import CricketProducts from "./marketplace/categories/CricketProducts";
-import RowingProducts from "./marketplace/categories/RowingProducts";
-import SkatingProducts from "./marketplace/categories/SkatingProducts";
-import ESportsProducts from "./marketplace/categories/ESportsProducts";
-import FootballProducts from "./marketplace/categories/FootballProducts";
-import BasketballProducts from "./marketplace/categories/BasketballProducts";
-import TrophiesProducts from "./marketplace/categories/TrophiesProducts";
-import WalkingProducts from "./marketplace/categories/WalkingProducts";
-import BaseballProducts from "./marketplace/categories/BaseballProducts";
-import HockeyProducts from "./marketplace/categories/HockeyProducts";
-import MMAProducts from "./marketplace/categories/MMAProducts";
-import TennisProducts from "./marketplace/categories/TennisProducts";
+// import GymProducts from "./marketplace/categories/GymProducts";
+// import CricketProducts from "./marketplace/categories/CricketProducts";
+// import RowingProducts from "./marketplace/categories/RowingProducts";
+// import SkatingProducts from "./marketplace/categories/SkatingProducts";
+// import ESportsProducts from "./marketplace/categories/ESportsProducts";
+// import FootballProducts from "./marketplace/categories/FootballProducts";
+// import BasketballProducts from "./marketplace/categories/BasketballProducts";
+// import TrophiesProducts from "./marketplace/categories/TrophiesProducts";
+// import WalkingProducts from "./marketplace/categories/WalkingProducts";
+// import BaseballProducts from "./marketplace/categories/BaseballProducts";
+// import HockeyProducts from "./marketplace/categories/HockeyProducts";
+// import MMAProducts from "./marketplace/categories/MMAProducts";
+// import TennisProducts from "./marketplace/categories/TennisProducts";
 
 const Stack = createStackNavigator();
 
@@ -69,6 +70,7 @@ const WrappedTournamentDetail = withMainLayout(TournamentDetail);
 const WrappedCategoryEvents = withMainLayout(CategoryEvents);
 const WrappedCalendarPage = withMainLayout(CalendarPage);
 const WrappedMatch = withMainLayout(Match);
+const WrappedMatchingpage = withMainLayout(Matchingpage);
 const WrappedMessagePage = withMainLayout(MessagePage);
 const WrappedChatDetails = withMainLayout(ChatDetails);
 const WrappedProfilePage = withMainLayout(ProfilePage);
@@ -89,7 +91,7 @@ export default function App() {
     <StripeProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Stack.Navigator
-          initialRouteName="Landing"
+          initialRouteName="First"
           screenOptions={{
             headerShown: false,
             cardStyle: { backgroundColor: '#F8FAFF' },
@@ -121,6 +123,7 @@ export default function App() {
           <Stack.Screen name="EventDetails" component={EventDetails} />
           <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
           <Stack.Screen name="Match" component={WrappedMatch} />
+          <Stack.Screen name="Matchingpage" component={WrappedMatchingpage} />
           <Stack.Screen name="Messages" component={WrappedMessagePage} />
           <Stack.Screen name="ChatDetails" component={WrappedChatDetails} />
           <Stack.Screen name="Profile" component={WrappedProfilePage} />
@@ -138,7 +141,7 @@ export default function App() {
           <Stack.Screen name="Orders" component={WrappedOrdersScreen} />
           <Stack.Screen name="OrderDetails" component={WrappedOrderDetails} />
           <Stack.Screen name="AllDiscountedProduct" component={AllDiscountedProducts} />
-          <Stack.Screen name="GymProducts" component={GymProducts} options={{ headerShown: true, title: 'Gym Equipment' }} />
+          {/* <Stack.Screen name="GymProducts" component={GymProducts} options={{ headerShown: true, title: 'Gym Equipment' }} />
           <Stack.Screen name="CricketProducts" component={CricketProducts} options={{ headerShown: true, title: 'Cricket Equipment' }} />
           <Stack.Screen name="RowingProducts" component={RowingProducts} options={{ headerShown: true, title: 'Rowing Equipment' }} />
           <Stack.Screen name="SkatingProducts" component={SkatingProducts} options={{ headerShown: true, title: 'Skating Equipment' }} />
@@ -150,7 +153,7 @@ export default function App() {
           <Stack.Screen name="BaseballProducts" component={BaseballProducts} options={{ headerShown: true, title: 'Baseball Equipment' }} />
           <Stack.Screen name="HockeyProducts" component={HockeyProducts} options={{ headerShown: true, title: 'Hockey Equipment' }} />
           <Stack.Screen name="MMAProducts" component={MMAProducts} options={{ headerShown: true, title: 'MMA Equipment' }} />
-          <Stack.Screen name="TennisProducts" component={TennisProducts} options={{ headerShown: true, title: 'Tennis Equipment' }} />
+          <Stack.Screen name="TennisProducts" component={TennisProducts} options={{ headerShown: true, title: 'Tennis Equipment' }} /> */}
         </Stack.Navigator>
       </GestureHandlerRootView>
     </StripeProvider>

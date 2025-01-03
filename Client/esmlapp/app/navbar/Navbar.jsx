@@ -116,7 +116,7 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Marketplace")}
+          onPress={() => navigation.navigate("marketplace/marketplace")}
         >
           <Icon
             name="cart"
@@ -130,7 +130,7 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Profile")}
+          onPress={() => navigation.navigate("profile/ProfilePage")}
         >
           <Icon
             name="person"

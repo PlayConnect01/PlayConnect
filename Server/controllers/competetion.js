@@ -44,11 +44,21 @@ const getTournamentById = async (req, res) => {
       include: {
         sport: true,
         creator: {
-          select: { username: true }
+          select: {
+            username: true
+          }
         },
         teams: {
           include: {
-            members: true // Include members for each team
+            team: {
+              include: {
+                members: {
+                  include: {
+                    user: true
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -117,11 +127,22 @@ const deleteTournament = async (req, res) => {
   }
 };
 
+// Add this new function
+const getTotalTournaments = async (req, res) => {
+  try {
+    const count = await prisma.tournament.count();
+    res.json({ total: count });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching tournament count" });
+  }
+};
+
 module.exports = {
   getAllTournaments,
   getTournamentById,
   createTournament,
   updateTournament,
   deleteTournament,
-  getAllTournamentsAndTeams
+  getAllTournamentsAndTeams,
+  getTotalTournaments
 };

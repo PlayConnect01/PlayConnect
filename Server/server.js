@@ -87,6 +87,8 @@ app.use('/chats', chatRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/orders', orderRoutes);
 
+// Admin routes with prefix
+
 // Start the Server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
