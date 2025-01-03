@@ -1,5 +1,4 @@
-// AllDiscountedProducts.jsx
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,25 +14,22 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
-import { BASE_URL } from "../../Api";
+import { BASE_URL } from "../../../Api";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const cardWidth = width / 2 - 24;
 
-const AllDiscountedProducts = () => {
+const SportCategoryTemplate = ({ category, icon }) => {
   const navigation = useNavigation();
-  const [categorizedProducts, setCategorizedProducts] = useState({});
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [addingToCartId, setAddingToCartId] = useState(null);
   const [notification, setNotification] = useState({ message: '', type: '' });
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('discount');
-  const [cartProducts, setCartProducts] = useState([]);
-  const [cartCount, setCartCount] = useState(0);
+  const [sortBy, setSortBy] = useState('price');
   const animationValues = useRef({
     scale: new Animated.Value(1),
     success: new Animated.Value(0)
@@ -50,92 +46,41 @@ const AllDiscountedProducts = () => {
     }, duration);
   };
 
-  const animateCartButton = (productId) => {
-    setAddingToCartId(productId);
-    Animated.sequence([
-      Animated.spring(animationValues.scale, {
-        toValue: 0.8,
-        useNativeDriver: true,
-        duration: 100
-      }),
-      Animated.spring(animationValues.scale, {
-        toValue: 1,
-        useNativeDriver: true,
-        duration: 100
-      }),
-      Animated.timing(animationValues.success, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true
-      })
-    ]).start();
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const [productsResponse, favoritesResponse] = await Promise.all([
+        axios.get(`${BASE_URL}/product/category/${category.toLowerCase()}`),
+        AsyncStorage.getItem('favoriteProducts')
+      ]);
 
-    setTimeout(() => {
-      Animated.timing(animationValues.success, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true
-      }).start(() => {
-        setAddingToCartId(null);
-      });
-    }, 1500);
+      const userFavorites = favoritesResponse ? JSON.parse(favoritesResponse) : [];
+      setFavorites(userFavorites);
+
+      let sortedProducts = productsResponse.data;
+      sortProducts(sortedProducts);
+      setProducts(sortedProducts);
+    } catch (error) {
+      console.error(`Error fetching ${category} products:`, error);
+      showNotification(`Error loading ${category} products`, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addToCart = async (product) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userDataStr = await AsyncStorage.getItem('userData');
-      const userData = userDataStr ? JSON.parse(userDataStr) : null;
-      const userId = userData?.user_id;
-      const existingCart = await AsyncStorage.getItem('cartProducts');
-      const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
-
-      if (!token || !userId || !product?.product_id) {
-        showNotification("Please log in to add items to cart", "warning");
-        return;
+  const sortProducts = (products) => {
+    return products.sort((a, b) => {
+      switch (sortBy) {
+        case 'price':
+          return a.price - b.price;
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'newest':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        default:
+          return 0;
       }
-
-      if (cartProducts.some(item => item.product_id === product.product_id)) {
-        showNotification("Product already in cart!", "warning");
-        navigation.navigate('ProductDetail', { productId: product.product_id });
-        return;
-      }
-
-      animateCartButton(product.product_id);
-
-      const response = await axios.post(
-        `${BASE_URL}/cart/cart/add`,
-        {
-          userId: parseInt(userId),
-          productId: product.product_id,
-          quantity: 1,
-          price: product.price,
-        },
-        { 
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          } 
-        }
-      );
-
-      if (response.status === 201) {
-        const productWithQuantity = {
-          ...product,
-          quantity: 1
-        };
-        cartProductsList.push(productWithQuantity);
-        await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
-        setCartProducts(cartProductsList);
-        setCartCount(prevCount => prevCount + 1);
-        showNotification(`${product.name} added to cart! 🛒`, "success");
-        navigation.navigate('ProductDetail', { productId: product.product_id });
-      }
-    } catch (error) {
-      console.error("Error adding product to cart:", error);
-      showNotification(error.response?.data?.message || "Error adding to cart", "error");
-      setAddingToCartId(null);
-    }
+    });
   };
 
   const toggleFavorite = useCallback(async (product) => {
@@ -154,7 +99,6 @@ const AllDiscountedProducts = () => {
       const isAlreadyFavorite = favorites.includes(product.product_id);
 
       if (isAlreadyFavorite) {
-        // First get the favorite_id
         const favoritesResponse = await axios.get(
           `${BASE_URL}/favorites/favorites/user/${userId}`,
           {
@@ -172,7 +116,6 @@ const AllDiscountedProducts = () => {
           return;
         }
 
-        // Remove from favorites using favorite_id
         await axios.delete(
           `${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`,
           {
@@ -186,7 +129,6 @@ const AllDiscountedProducts = () => {
         setFavorites(prev => prev.filter(id => id !== product.product_id));
         showNotification("Removed from favorites ❌", "success");
       } else {
-        // Add to favorites
         await axios.post(
           `${BASE_URL}/favorites/favorites/add`,
           {
@@ -215,95 +157,48 @@ const AllDiscountedProducts = () => {
     }
   }, [favorites, navigation, showNotification]);
 
-  const navigateToProductDetail = (productId) => {
-    navigation.navigate('ProductDetail', { productId });
-  };
-
-  const fetchDiscountedProducts = async () => {
+  const addToCart = async (product) => {
     try {
-      setLoading(true);
-      const [productsResponse, favoritesResponse] = await Promise.all([
-        axios.get(`${BASE_URL}/product/discounted`),
-        AsyncStorage.getItem('favoriteProducts')
-      ]);
+      const token = await AsyncStorage.getItem('userToken');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
 
-      const products = productsResponse.data;
-      const userFavorites = favoritesResponse ? JSON.parse(favoritesResponse) : [];
-      setFavorites(userFavorites);
+      if (!token || !userId) {
+        showNotification("Please login to add items to cart", "warning");
+        navigation.navigate('Login');
+        return;
+      }
 
-      // Sort products
-      const sortedProducts = products.sort((a, b) => {
-        switch (sortBy) {
-          case 'discount':
-            return b.discount - a.discount;
-          case 'price':
-            return a.price - b.price;
-          case 'rating':
-            return (b.rating || 0) - (a.rating || 0);
-          default:
-            return 0;
+      setAddingToCartId(product.product_id);
+      
+      const response = await axios.post(
+        `${BASE_URL}/cart/cart/add`,
+        {
+          userId: parseInt(userId),
+          productId: product.product_id,
+          quantity: 1,
+          price: product.price,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
-      // Categorize products
-      const categorized = sortedProducts.reduce((acc, product) => {
-        const category = product.category || 'Other';
-        if (!acc[category]) {
-          acc[category] = [];
-        }
-        acc[category].push(product);
-        return acc;
-      }, {});
-
-      setCategorizedProducts(categorized);
+      if (response.status === 201) {
+        showNotification(`${product.name} added to cart! 🛒`, "success");
+        navigation.navigate('ProductDetail', { productId: product.product_id });
+      }
     } catch (error) {
-      console.error("Error fetching discounted products:", error);
-      showNotification('Error loading products', 'error');
+      console.error("Error adding to cart:", error);
+      showNotification(error.response?.data?.message || "Failed to add to cart", "error");
     } finally {
-      setLoading(false);
+      setAddingToCartId(null);
     }
   };
-
-  useEffect(() => {
-    fetchDiscountedProducts();
-  }, [sortBy]);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchDiscountedProducts().finally(() => setRefreshing(false));
-  }, []);
-
-  const renderSortingOptions = () => (
-    <View style={styles.sortingContainer}>
-      <Text style={styles.sortingTitle}>Sort by:</Text>
-      <View style={styles.sortingButtons}>
-        <TouchableOpacity
-          style={[styles.sortButton, sortBy === 'discount' && styles.sortButtonActive]}
-          onPress={() => setSortBy('discount')}
-        >
-          <Text style={[styles.sortButtonText, sortBy === 'discount' && styles.sortButtonTextActive]}>
-            Highest Discount
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sortButton, sortBy === 'price' && styles.sortButtonActive]}
-          onPress={() => setSortBy('price')}
-        >
-          <Text style={[styles.sortButtonText, sortBy === 'price' && styles.sortButtonTextActive]}>
-            Lowest Price
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sortButton, sortBy === 'rating' && styles.sortButtonActive]}
-          onPress={() => setSortBy('rating')}
-        >
-          <Text style={[styles.sortButtonText, sortBy === 'rating' && styles.sortButtonTextActive]}>
-            Best Rating
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
 
   const renderStars = (rating) => {
     const stars = [];
@@ -322,8 +217,39 @@ const AllDiscountedProducts = () => {
     return stars;
   };
 
+  const renderSortingOptions = () => (
+    <View style={styles.sortingContainer}>
+      <Text style={styles.sortingTitle}>Sort by:</Text>
+      <View style={styles.sortingButtons}>
+        <TouchableOpacity
+          style={[styles.sortButton, sortBy === 'price' && styles.sortButtonActive]}
+          onPress={() => setSortBy('price')}
+        >
+          <Text style={[styles.sortButtonText, sortBy === 'price' && styles.sortButtonTextActive]}>
+            Price
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sortButton, sortBy === 'rating' && styles.sortButtonActive]}
+          onPress={() => setSortBy('rating')}
+        >
+          <Text style={[styles.sortButtonText, sortBy === 'rating' && styles.sortButtonTextActive]}>
+            Rating
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sortButton, sortBy === 'newest' && styles.sortButtonActive]}
+          onPress={() => setSortBy('newest')}
+        >
+          <Text style={[styles.sortButtonText, sortBy === 'newest' && styles.sortButtonTextActive]}>
+            Newest
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   const renderProductCard = (product) => {
-    const discountedPrice = product.price * (1 - product.discount / 100);
     const isFavorite = favorites.includes(product.product_id);
     const isAddingToCart = addingToCartId === product.product_id;
 
@@ -331,11 +257,13 @@ const AllDiscountedProducts = () => {
       <TouchableOpacity
         key={product.product_id}
         style={styles.productCard}
-        onPress={() => navigateToProductDetail(product.product_id)}
+        onPress={() => navigation.navigate('ProductDetail', { productId: product.product_id })}
       >
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>-{product.discount}%</Text>
-        </View>
+        {product.discount > 0 && (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>-{product.discount}%</Text>
+          </View>
+        )}
         
         <TouchableOpacity
           style={styles.favoriteButton}
@@ -365,50 +293,38 @@ const AllDiscountedProducts = () => {
           </View>
 
           <View style={styles.priceContainer}>
-            <Text style={styles.discountedPrice}>
-              ${discountedPrice.toFixed(2)}
-            </Text>
-            <Text style={styles.originalPrice}>
+            <Text style={styles.price}>
               ${product.price.toFixed(2)}
             </Text>
           </View>
 
-          <Animated.View
-            style={[
-              styles.addToCartContainer,
-              {
-                transform: [
-                  {
-                    scale: isAddingToCart
-                      ? animationValues.scale
-                      : 1
-                  }
-                ]
-              }
-            ]}
+          <TouchableOpacity
+            style={[styles.addToCartButton, isAddingToCart && styles.addingToCart]}
+            onPress={() => addToCart(product)}
+            disabled={isAddingToCart}
           >
-            <TouchableOpacity
-              style={[
-                styles.addToCartButton,
-                isAddingToCart && styles.addingToCart
-              ]}
-              onPress={() => addToCart(product)}
-              disabled={isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <ActivityIndicator color="#FFF" size="small" />
-              ) : (
-                <>
-                  <FontAwesome name="shopping-cart" size={16} color="#FFF" />
-                  <Text style={styles.buttonText}>Add to Cart</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </Animated.View>
+            {isAddingToCart ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <>
+                <FontAwesome name="shopping-cart" size={16} color="#FFF" />
+                <Text style={styles.buttonText}>Add to Cart</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     );
   };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [category, sortBy]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchProducts().finally(() => setRefreshing(false));
+  }, []);
 
   if (loading && !refreshing) {
     return (
@@ -420,21 +336,21 @@ const AllDiscountedProducts = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <FontAwesome name={icon} size={24} color="#6e3de8" />
+        <Text style={styles.headerTitle}>{category} Products</Text>
+      </View>
+
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {renderSortingOptions()}
-
-        {Object.entries(categorizedProducts).map(([category, products]) => (
-          <View key={category} style={styles.categoriesContainer}>
-            <Text style={styles.categoryTitle}>{category}</Text>
-            <View style={styles.productsContainer}>
-              {products.map(renderProductCard)}
-            </View>
-          </View>
-        ))}
+        
+        <View style={styles.productsContainer}>
+          {products.map(renderProductCard)}
+        </View>
       </ScrollView>
 
       {notification.message && (
@@ -465,6 +381,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7FAFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2D3748',
+    marginLeft: 12,
   },
   loadingContainer: {
     flex: 1,
@@ -515,20 +445,11 @@ const styles = StyleSheet.create({
   sortButtonTextActive: {
     color: '#FFFFFF',
   },
-  categoriesContainer: {
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
-  categoryTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 16,
-  },
   productsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    padding: 16,
     gap: 16,
   },
   productCard: {
@@ -541,31 +462,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-    marginBottom: 16,
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: '#FF4B4B',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    zIndex: 1,
-  },
-  discountText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    zIndex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    padding: 8,
-    borderRadius: 20,
   },
   productImage: {
     width: '100%',
@@ -593,23 +489,36 @@ const styles = StyleSheet.create({
     color: '#718096',
   },
   priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 8,
   },
-  discountedPrice: {
+  price: {
     fontSize: 16,
     fontWeight: '700',
     color: '#48BB78',
-    marginRight: 8,
   },
-  originalPrice: {
+  discountBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#FF4B4B',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 1,
+  },
+  discountText: {
+    color: '#FFFFFF',
     fontSize: 12,
-    color: '#A0AEC0',
-    textDecorationLine: 'line-through',
+    fontWeight: '700',
   },
-  addToCartContainer: {
-    width: '100%',
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: 8,
+    borderRadius: 20,
   },
   addToCartButton: {
     flexDirection: 'row',
@@ -661,7 +570,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '500',
-  }
+  },
 });
 
-export default AllDiscountedProducts;
+export default SportCategoryTemplate;

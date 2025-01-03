@@ -1,14 +1,18 @@
 const express = require('express');
-const {     getProductsBySportId, getLimitedProductsBySport,
-    getLowestPriceProduct,
-    getTwoLowestPriceProducts,
-    getAllProductsBySport,
-    getTopTwoRatedProductsBySport,   
-    getAllDiscountedProducts,
-    getTopThreeDiscountedProducts,
-    getProductsByDiscount,
-    getProductById,
-    searchProductByName} = require('../controllers/MarketplaceProduct');
+const {
+  getProductsBySportId, getLimitedProductsBySport,
+  getLowestPriceProduct,
+  getTwoLowestPriceProducts,
+  getAllProductsBySport,
+  getTopTwoRatedProductsBySport,   
+  getAllDiscountedProducts,
+  getTopThreeDiscountedProducts,
+  getProductsByDiscount,
+  getProductById,
+  searchProductByName,
+  
+} = require('../controllers/MarketplaceProduct');
+
 
 const router = express.Router();
 // Route to search products

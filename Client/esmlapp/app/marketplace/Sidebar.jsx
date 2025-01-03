@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const categories = [
   { name: 'Gym', icon: 'fitness-center' },
@@ -18,21 +19,62 @@ const categories = [
   { name: 'Tennis', icon: 'sports-tennis' },
 ];
 
-const Sidebar = ({ onSelectCategory }) => {
+const Sidebar = () => {
+  const navigation = useNavigation();
+
+  const navigateToCategory = (category) => {
+    const routeMap = {
+      'Gym': 'GymProducts',
+      'Cricket': 'CricketProducts',
+      'Rowing': 'RowingProducts',
+      'Skating': 'SkatingProducts',
+      'E-Sports': 'ESportsProducts',
+      'Trophies': 'TrophiesProducts',
+      'Walking': 'WalkingProducts',
+      'Football': 'FootballProducts',
+      'Basketball': 'BasketballProducts',
+      'Baseball': 'BaseballProducts',
+      'Hockey': 'HockeyProducts',
+      'MMA': 'MMAProducts',
+      'Tennis': 'TennisProducts',
+      'Add Product': 'AddProduct',
+      'My Products': 'UserProducts',
+    };
+
+    const route = routeMap[category];
+    if (route) {
+      navigation.navigate(route);
+    }
+  };
+
   return (
     <View style={styles.sidebar}>
       <Text style={styles.sidebarTitle}>Categories</Text>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {categories.map((category, index) => (
+        {categories.map((category) => (
           <TouchableOpacity
-            key={index}
-            style={styles.categoryItem}
-            onPress={() => onSelectCategory(category.name)}
+            key={category.name}
+            style={styles.categoryButton}
+            onPress={() => navigateToCategory(category.name)}
           >
-            <MaterialIcons name={category.icon} size={24} color="#6e3de8" />
+            <MaterialIcons name={category.icon} size={24} color="#333" />
             <Text style={styles.categoryText}>{category.name}</Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity
+          style={styles.categoryButton}
+          onPress={() => navigateToCategory('Add Product')}
+        >
+          <MaterialIcons name="add-circle-outline" size={24} color="#333" />
+          <Text style={styles.categoryText}>Add Product</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.categoryButton}
+          onPress={() => navigateToCategory('My Products')}
+        >
+          <MaterialIcons name="inventory" size={24} color="#333" />
+          <Text style={styles.categoryText}>My Products</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -52,7 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#333',
   },
-  categoryItem: {
+  categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

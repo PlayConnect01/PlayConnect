@@ -22,10 +22,12 @@ const competetionRouter = require('./routes/competetion');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
-const paymentRouter = require('./routes/Paymentrouter.js');
+const paymentRoutes
+ = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
 const orderRoutes = require('./routes/orderRoutes');
-
+const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
+const userproductRoutes = require('./routes/userproduct');
 const app = express();
 
 // Middleware
@@ -81,12 +83,13 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
-app.use('/payments', paymentRouter);
+app.use('/payments', paymentRoutes);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
-app.use('/notifications', notificationRoutes);
+app.use('/orderHistory', orderHistoryRoutes);
 app.use('/orders', orderRoutes);
-
+app.use('/notifications', notificationRoutes);
+app.use('/userproduct', userproductRoutes);
 // Admin routes with prefix
 
 // Start the Server
