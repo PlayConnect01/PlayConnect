@@ -36,7 +36,9 @@ const Sidebar = () => {
       'Baseball': 'BaseballProducts',
       'Hockey': 'HockeyProducts',
       'MMA': 'MMAProducts',
-      'Tennis': 'TennisProducts'
+      'Tennis': 'TennisProducts',
+      'Add Product': 'AddProduct',
+      'My Products': 'UserProducts',
     };
 
     const route = routeMap[category];
@@ -49,16 +51,30 @@ const Sidebar = () => {
     <View style={styles.sidebar}>
       <Text style={styles.sidebarTitle}>Categories</Text>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {categories.map((category, index) => (
+        {categories.map((category) => (
           <TouchableOpacity
-            key={index}
-            style={styles.categoryItem}
+            key={category.name}
+            style={styles.categoryButton}
             onPress={() => navigateToCategory(category.name)}
           >
-            <MaterialIcons name={category.icon} size={24} color="#6e3de8" />
+            <MaterialIcons name={category.icon} size={24} color="#333" />
             <Text style={styles.categoryText}>{category.name}</Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity
+          style={styles.categoryButton}
+          onPress={() => navigateToCategory('Add Product')}
+        >
+          <MaterialIcons name="add-circle-outline" size={24} color="#333" />
+          <Text style={styles.categoryText}>Add Product</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.categoryButton}
+          onPress={() => navigateToCategory('My Products')}
+        >
+          <MaterialIcons name="inventory" size={24} color="#333" />
+          <Text style={styles.categoryText}>My Products</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -78,7 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#333',
   },
-  categoryItem: {
+  categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

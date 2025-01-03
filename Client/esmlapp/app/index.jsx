@@ -48,6 +48,8 @@ import BaseballProducts from "./marketplace/categories/BaseballProducts";
 import HockeyProducts from "./marketplace/categories/HockeyProducts";
 import MMAProducts from "./marketplace/categories/MMAProducts";
 import TennisProducts from "./marketplace/categories/TennisProducts";
+import AddProduct from "./marketplace/AddProduct";
+import UserProducts from './marketplace/UserProducts';
 
 const Stack = createStackNavigator();
 
@@ -85,6 +87,8 @@ const WrappedDeliveryServices = withMainLayout(DeliveryServicesScreen);
 const WrappedOrdersScreen = withMainLayout(OrdersScreen);
 const WrappedOrderDetails = withMainLayout(OrderDetails);
 const WrappedFavoritesScreen = withMainLayout(FavoritesScreen);
+const WrappedAddProduct = withMainLayout(AddProduct);
+const WrappedUserProducts = withMainLayout(UserProducts);
 
 export default function App() {
   return (
@@ -153,7 +157,9 @@ export default function App() {
           <Stack.Screen name="BaseballProducts" component={BaseballProducts} options={{ headerShown: true, title: 'Baseball Equipment' }} />
           <Stack.Screen name="HockeyProducts" component={HockeyProducts} options={{ headerShown: true, title: 'Hockey Equipment' }} />
           <Stack.Screen name="MMAProducts" component={MMAProducts} options={{ headerShown: true, title: 'MMA Equipment' }} />
-          <Stack.Screen name="TennisProducts" component={TennisProducts} options={{ headerShown: true, title: 'Tennis Equipment' }} />
+          <Stack.Screen name="TennisProducts" component={TennisProducts} options={{ headerShown: true, title: 'Tennis Equipment' }} />  
+          <Stack.Screen name="AddProduct" component={WrappedAddProduct} options={{ headerShown: true, title: 'Add Product' }} />
+          <Stack.Screen name="UserProducts" component={WrappedUserProducts} options={{ headerShown: true, title: 'My Products' }} />
         </Stack.Navigator>
       </GestureHandlerRootView>
     </StripeProvider>

@@ -6,6 +6,7 @@ import ConfirmationModal from './ConfirmationModal';
 import OrderHistory from './orders/OrderHistory';
 import { BASE_URL } from "../../Api";
 import PageContainer from '../components/PageContainer';
+import { FontAwesome } from '@expo/vector-icons'; // Import FontAwesome for icons
 
 const CartScreen = () => {
   const navigation = useNavigation();
@@ -156,6 +157,7 @@ const CartScreen = () => {
             style={[styles.tab, activeTab === 'cart' && styles.activeTab]}
             onPress={() => setActiveTab('cart')}
           >
+            <FontAwesome name="shopping-cart" size={24} color={activeTab === 'cart' ? '#FFFFFF' : '#4A5568'} />
             <Text style={[styles.tabText, activeTab === 'cart' && styles.activeTabText]}>
               Cart
             </Text>
@@ -164,6 +166,7 @@ const CartScreen = () => {
             style={[styles.tab, activeTab === 'history' && styles.activeTab]}
             onPress={() => setActiveTab('history')}
           >
+            <FontAwesome name="history" size={24} color={activeTab === 'history' ? '#FFFFFF' : '#4A5568'} />
             <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>
               Order History
             </Text>
@@ -257,11 +260,13 @@ const CartScreen = () => {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
+    backgroundColor: '#F0F4F8', 
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#E0E7FF', 
   },
   tabContainer: {
     flexDirection: 'row',
@@ -283,9 +288,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E0', 
   },
   activeTab: {
     backgroundColor: '#4FA5F5',
+    borderColor: '#4FA5F5', 
   },
   tabText: {
     fontSize: 16,
@@ -294,12 +302,13 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#FFFFFF',
+    fontWeight: '700', 
   },
   scrollView: {
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 100, // Add extra padding at the bottom for navbar
+    paddingBottom: 100, 
   },
   title: {
     fontSize: 24,
@@ -314,6 +323,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
     color: '#4A5568',
     fontWeight: '500',
+    fontStyle: 'italic', 
   },
   cartItem: {
     flexDirection: 'row',

@@ -21,6 +21,7 @@ import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
 import { BASE_URL } from "../../Api";
 import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const getStyles = (isSidebarVisible) => StyleSheet.create({
   safeArea: {
@@ -101,11 +102,11 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 4,
   },
   cartBadge: {
     position: 'absolute',
@@ -132,6 +133,28 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     marginVertical: 20,
     paddingHorizontal: 4,
   },
+  collectionDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginVertical: 10,
+    paddingHorizontal: 4,
+    textAlign: 'center',
+  },
+  collectionFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  collectionFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  collectionFeatureText: {
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 6,
+  },
   productContainer: {
     position: 'relative',
     width: '100%',
@@ -142,21 +165,19 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     overflow: 'hidden',
   },
   card: {
-    width: '90%',
-    height: '100%',
+    width: '70%',
+    height: 'auto',
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
+    padding: 10,
+    marginVertical: 10,
+    alignItems: 'center',
   },
   cardImageContainer: {
     width: '100%',
-    height: '100%',
+    height: 200,
     position: 'relative',
   },
   cardImage: {
@@ -164,26 +185,68 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%)',
+  badgeContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+  },
+  badgeNew: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 4,
+    padding: 4,
+    marginRight: 8,
+  },
+  badgeBestSeller: {
+    backgroundColor: '#FF4B4B',
+    borderRadius: 4,
+    padding: 4,
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   cardContentOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    padding: 24,
-    justifyContent: 'space-between',
+    padding: 8,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   cardTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
     textAlign: 'center',
-    marginTop: 24,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    marginVertical: 4,
+  },
+  cardPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    marginVertical: 4,
+  },
+  stockStatus: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+    marginVertical: 4,
+  },
+  quickViewButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 40,
+    height: 40,
+    elevation: 2,
+    marginVertical: 8,
+  },
+  quickViewText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   cardRatingContainer: {
     flexDirection: 'row',
@@ -199,22 +262,19 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
-  cardPrice: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginTop: 'auto',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+  reviewCount: {
+    fontSize: 14,
+    color: '#BDC3C7',
+    marginLeft: 8,
   },
   cardActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 24,
+    paddingHorizontal: 10,
+    marginTop: 8,
+    marginBottom: 8,
   },
   favoriteButton: {
     width: 50,
@@ -285,177 +345,102 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(79, 165, 245, 0.08)',
-    position: 'relative',
-    overflow: 'hidden',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   discountImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 16,
+    width: 80,
+    height: 80,
+    borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F7FAFF',
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  discountImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    backgroundColor: '#F0F0F0',
   },
   discountInfo: {
     flex: 1,
-    marginLeft: 16,
-    paddingRight: 8,
+    marginLeft: 12,
   },
   discountTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#2D3748',
-    marginBottom: 8,
-    letterSpacing: 0.3,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
   },
   discountPriceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
   discountPrice: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#4FA5F5',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF4B4B',
   },
   discountOldPrice: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#A0AEC0',
     textDecorationLine: 'line-through',
     marginLeft: 8,
-    fontWeight: '500',
   },
   discountSavings: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#48BB78',
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  discountPercentage: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: '#FF4B4B',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    shadowColor: '#FF4B4B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  discountPercentageText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
+    marginTop: 2,
   },
   discountCartButton: {
     backgroundColor: '#4FA5F5',
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 12,
+    padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 44,
-    height: 44,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-    marginLeft: 12,
-  },
-  discountCartButtonSuccess: {
-    backgroundColor: '#48BB78',
-  },
-  discountCartButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: '#FF4B4B',
-    width: 40,
+    minWidth: 40,
     height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '15deg' }],
-    shadowColor: '#FF4B4B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
     elevation: 2,
-  },
-  discountBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
+    marginLeft: 8,
   },
   discountDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#718096',
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 2,
   },
   discountFeatures: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 8,
+    marginTop: 4,
   },
   discountFeature: {
     backgroundColor: 'rgba(79, 165, 245, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 6,
+    marginBottom: 2,
   },
   discountFeatureText: {
     color: '#4FA5F5',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
   },
-  viewAllButton: {
-    backgroundColor: '#4FA5F5',
-    borderRadius: 16,
-    padding: 16,
+  viewAllButtonInline: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    elevation: 2,
   },
-  viewAllText: {
+  viewAllTextInline: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+    marginRight: 6,
   },
   notificationContainer: {
     position: 'absolute',
@@ -515,6 +500,46 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   scrollContent: {
     paddingTop: 16,
     paddingHorizontal: 16,
+  },
+  specialOffersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  specialOffersTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2D3748',
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  exploreButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  exploreButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
@@ -837,6 +862,10 @@ const Marketplace = () => {
 
   const currentProduct = products[currentProductIndex];
 
+  const showQuickView = (product) => {
+    navigation.navigate('ProductDetail', { productId: product.product_id, productName: product.name });
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
@@ -879,7 +908,24 @@ const Marketplace = () => {
             }
           >
             <SearchBar onSelectProduct={() => {}} />
-            <Text style={styles.sectionTitle}>Featured Product</Text>
+            <Text style={styles.sectionTitle}>Some of Our Collection</Text>
+            <Text style={styles.collectionDescription}>
+              Dive into our curated selection of products that blend style and innovation. Each piece is a testament to quality and craftsmanship, designed to inspire and elevate your lifestyle.
+            </Text>
+            <View style={styles.collectionFeatures}>
+              <View style={styles.collectionFeatureItem}>
+                <FontAwesome name="star" size={16} color="#FFD700" />
+                <Text style={styles.collectionFeatureText}>Premium Quality</Text>
+              </View>
+              <View style={styles.collectionFeatureItem}>
+                <FontAwesome name="leaf" size={16} color="#48BB78" />
+                <Text style={styles.collectionFeatureText}>Eco-Friendly</Text>
+              </View>
+              <View style={styles.collectionFeatureItem}>
+                <FontAwesome name="rocket" size={16} color="#4FA5F5" />
+                <Text style={styles.collectionFeatureText}>Innovative Design</Text>
+              </View>
+            </View>
             {currentProduct && (
               <View style={styles.productContainer}>
                 <TouchableOpacity style={[styles.navButton, styles.navButtonLeft]} onPress={showPreviousProduct}>
@@ -887,17 +933,33 @@ const Marketplace = () => {
                 </TouchableOpacity>
                 
                 <View style={styles.card}>
+                  <View style={styles.badgeContainer}>
+                    {currentProduct.isNew && (
+                      <View style={styles.badgeNew}>
+                        <Text style={styles.badgeText}>New Arrival</Text>
+                      </View>
+                    )}
+                    {currentProduct.isBestSeller && (
+                      <View style={styles.badgeBestSeller}>
+                        <Text style={styles.badgeText}>Best Seller</Text>
+                      </View>
+                    )}
+                  </View>
                   <View style={styles.cardImageContainer}>
                     <Image
                       source={{ uri: currentProduct.image_url }}
                       style={styles.cardImage}
                     />
-                    <View style={styles.imageOverlay} />
                   </View>
                   
                   <View style={styles.cardContentOverlay}>
                     <Text style={styles.cardTitle}>{currentProduct.name}</Text>
-                    
+                    <Text style={styles.cardPrice}>${currentProduct.price}</Text>
+                    <Text style={styles.stockStatus}>{currentProduct.stockStatus}</Text>
+                    <TouchableOpacity style={styles.quickViewButton} onPress={() => showQuickView(currentProduct)}>
+                      <Text style={styles.quickViewText}>Quick View</Text>
+                    </TouchableOpacity>
+
                     <View style={styles.cardRatingContainer}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <FontAwesome
@@ -909,9 +971,8 @@ const Marketplace = () => {
                         />
                       ))}
                       <Text style={styles.ratingText}>{currentProduct.rating.toFixed(1)}</Text>
+                      <Text style={styles.reviewCount}>({currentProduct.reviewCount} reviews)</Text>
                     </View>
-                    
-                    <Text style={styles.cardPrice}>${currentProduct.price}</Text>
                     
                     <View style={styles.cardActions}>
                       <TouchableOpacity
@@ -921,10 +982,10 @@ const Marketplace = () => {
                         ]}
                         onPress={() => toggleFavorite(currentProduct)}
                       >
-                        <FontAwesome
-                          name={favoriteProducts.includes(currentProduct.product_id) ? "heart" : "heart-o"} 
+                        <Ionicons
+                          name={favoriteProducts.includes(currentProduct.product_id) ? "heart" : "heart-dislike"} 
                           size={24} 
-                          color={favoriteProducts.includes(currentProduct.product_id) ? "#FF4B4B" : "#FFFFFF"} 
+                          color={favoriteProducts.includes(currentProduct.product_id) ? "#FF4B4B" : "#4FA5F5"} 
                         />
                       </TouchableOpacity>
                       
@@ -957,11 +1018,6 @@ const Marketplace = () => {
                         </Animated.View>
                       </TouchableOpacity>
                     </View>
-
-                    <View style={styles.swipeHint}>
-                      <Text style={styles.swipeHintText}>Swipe to explore</Text>
-                      <FontAwesome name="exchange" size={16} color="#FFFFFF" />
-                    </View>
                   </View>
                 </View>
                 
@@ -971,7 +1027,16 @@ const Marketplace = () => {
               </View>
             )}
 
-            <Text style={styles.sectionTitle}>Special Offers</Text>
+            <View style={styles.specialOffersHeader}>
+              <Text style={styles.specialOffersTitle}>Special Offers</Text>
+              <TouchableOpacity
+                style={styles.viewAllButtonInline}
+                onPress={() => navigation.navigate("AllDiscountedProduct")}
+              >
+                <Text style={styles.viewAllTextInline}>View All Offers</Text>
+                <FontAwesome name="arrow-right" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
             {discounts.map((discount) => {
               const discountedPrice = calculateDiscountedPrice(
                 discount.price,
@@ -1014,17 +1079,20 @@ const Marketplace = () => {
                     <Text style={styles.discountSavings}>
                       You save: ${savings.toFixed(2)} ({discount.discount}% OFF)
                     </Text>
-                    <Text style={styles.discountDescription} numberOfLines={2}>
-                      {discount.description || 'Experience premium quality and exceptional value with this exclusive offer.'}
-                    </Text>
                     <View style={styles.discountFeatures}>
                       <View style={styles.discountFeature}>
                         <Text style={styles.discountFeatureText}>Free Shipping</Text>
                       </View>
                       <View style={styles.discountFeature}>
-                        <Text style={styles.discountFeatureText}>Limited Time</Text>
+                        <Text style={styles.discountFeatureText}>30-Day Return</Text>
+                      </View>
+                      <View style={styles.discountFeature}>
+                        <Text style={styles.discountFeatureText}>Warranty Included</Text>
                       </View>
                     </View>
+                    <Text style={styles.discountDescription} numberOfLines={2}>
+                      {discount.description || 'Experience premium quality and exceptional value with this exclusive offer.'}
+                    </Text>
                   </View>
                   <TouchableOpacity
                     style={[
@@ -1050,10 +1118,7 @@ const Marketplace = () => {
                       {addingToCartId === discount.product_id ? (
                         <ActivityIndicator color="#FFFFFF" />
                       ) : (
-                        <>
-                          <FontAwesome name="shopping-cart" size={20} color="#FFFFFF" />
-                          <Text style={styles.discountCartButtonText}>Add</Text>
-                        </>
+                        <FontAwesome name="shopping-cart" size={20} color="#FFFFFF" />
                       )}
                     </Animated.View>
                   </TouchableOpacity>
@@ -1063,13 +1128,6 @@ const Marketplace = () => {
                 </TouchableOpacity>
               );
             })}
-
-            <TouchableOpacity
-              style={styles.viewAllButton}
-              onPress={() => navigation.navigate("AllDiscountedProduct")}
-            >
-              <Text style={styles.viewAllText}>View All Offers</Text>
-            </TouchableOpacity>
           </ScrollView>
 
           {loading && (

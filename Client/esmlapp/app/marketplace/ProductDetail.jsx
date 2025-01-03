@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  Modal,
+  Pressable,
   Alert
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -16,6 +18,52 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../../Api";
 import { Ionicons } from '@expo/vector-icons';
+
+const CustomAlert = ({ visible, onClose }) => {
+  const navigation = useNavigation();
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Success</Text>
+          <Text style={styles.modalMessage}>Product added to cart successfully!</Text>
+          <View style={styles.modalButtons}>
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={onClose}
+            >
+              <Text style={styles.textStyle}>Continue Shopping</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, styles.buttonOpen]}
+              onPress={() => {
+                onClose();
+                navigation.navigate('Cart');
+              }}
+            >
+              <Text style={styles.textStyle}>View Cart</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const NotificationBanner = ({ message, onClose }) => (
+  <View style={styles.notificationBanner}>
+    <Text style={styles.notificationText}>{message}</Text>
+    <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+      <Ionicons name="close" size={20} color="#FFFFFF" />
+    </TouchableOpacity>
+  </View>
+);
 
 const ProductDetail = () => {
   const navigation = useNavigation();
@@ -27,9 +75,13 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [showMessage, setShowMessage] = useState("");
+  const [notificationMessage, setNotificationMessage] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAddingToFavorites, setIsAddingToFavorites] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [promotion, setPromotion] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     if (productName) {
@@ -60,8 +112,28 @@ const ProductDetail = () => {
       }
     };
 
+    const fetchRelatedProducts = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/product/related/${productId}`);
+        setRelatedProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching related products:", error);
+      }
+    };
+
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/reviews/${productId}`);
+        setReviews(response.data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+
     if (productId) {
       fetchProductDetail();
+      fetchRelatedProducts();
+      fetchReviews();
     }
   }, [productId, navigation]);
 
@@ -86,107 +158,93 @@ const ProductDetail = () => {
     checkIfFavorite();
   }, [productId]);
 
-  const handleAddToCart = async () => {
+  useEffect(() => {
+    const fetchPromotion = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/promotion`);
+        setPromotion(response.data.message);
+      } catch (error) {
+        console.error("Error fetching promotion:", error);
+      }
+    };
+
+    fetchPromotion();
+  }, []);
+
+  const showNotification = (message, type = 'info', duration = 2000) => {
+    setNotificationMessage(message);
+    setTimeout(() => setNotificationMessage(''), duration);
+  };
+
+  const addToCart = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
-      const existingCart = await AsyncStorage.getItem('cartProducts');
-      const cartProductsList = existingCart ? JSON.parse(existingCart) : [];
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
 
-      if (!token || !userId || !product?.product_id) {
-        setShowMessage("Error: Missing required data");
-        setTimeout(() => setShowMessage(""), 2000);
-        return;
-      }
-
-      // Check if product is already in cart
-      if (cartProductsList.some(item => item.product_id === product.product_id)) {
-        setShowMessage("Product already in cart");
-        setTimeout(() => setShowMessage(""), 2000);
+      if (!token || !userId) {
+        showNotification("Please login to add items to cart", "warning");
+        navigation.navigate('Login');
         return;
       }
 
       setIsAddingToCart(true);
-
+      
       const response = await axios.post(
         `${BASE_URL}/cart/cart/add`,
-               {
-                 userId: parseInt(userId),
-                 productId: product.product_id,
-                 quantity: 1,
-                 price: product.price,
-               },
-        { 
-          headers: { 
+        {
+          userId: parseInt(userId),
+          productId: product.product_id,
+          quantity: 1,
+          price: product.price,
+        },
+        {
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          } 
+            'Content-Type': 'application/json',
+          },
         }
       );
 
       if (response.status === 201) {
-        // Add the product to local storage with quantity
-        const productWithQuantity = {
-          ...product,
-          quantity: quantity
-        };
-        cartProductsList.push(productWithQuantity);
-        await AsyncStorage.setItem('cartProducts', JSON.stringify(cartProductsList));
-        
-        Alert.alert(
-          'Success',
-          'Product added to cart successfully!',
-          [
-            {
-              text: 'Continue Shopping',
-              onPress: () => navigation.goBack(),
-              style: 'cancel',
-            },
-            {
-              text: 'View Cart',
-              onPress: () => navigation.navigate('Cart'),
-            },
-          ]
-        );
+        showNotification('Product added to cart successfully!', 'success');
       } else {
-        setShowMessage("Failed to add product to cart");
-        setTimeout(() => setShowMessage(""), 2000);
+        showNotification(" you are kepping  increment the quantity of the product", "error");
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
-      setShowMessage(error.response?.data?.message || "Error adding to cart. Please try again.");
-      setTimeout(() => setShowMessage(""), 2000);
+      showNotification("Error adding to cart. Please try again.", "error");
     } finally {
       setIsAddingToCart(false);
     }
-  };
+  }, [product, navigation]);
 
-  const toggleFavorite = async () => {
+  const toggleFavorite = useCallback(async () => {
     try {
-      setIsAddingToFavorites(true);
       const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?.user_id;
 
       if (!token || !userId) {
-        setShowMessage("Please login to add favorites");
-        setTimeout(() => setShowMessage(""), 2000);
+        showNotification("Please login to manage favorites", "warning");
+        navigation.navigate('Login');
         return;
       }
 
       if (isFavorite) {
-        // Remove from favorites
         await axios.delete(
-          `${BASE_URL}/favorites/favorites/remove/${userId}/${productId}`,
+          `${BASE_URL}/favorites/favorites/remove/${userId}/${product.product_id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setShowMessage("Removed from favorites");
+        showNotification("Removed from favorites", "success");
       } else {
-        // Add to favorites
         await axios.post(
           `${BASE_URL}/favorites/favorites/add`,
           {
             userId: parseInt(userId),
-            productId: productId,
+            productId: product.product_id,
           },
           {
             headers: {
@@ -195,19 +253,15 @@ const ProductDetail = () => {
             },
           }
         );
-        setShowMessage("Added to favorites");
+        showNotification("Added to favorites", "success");
       }
-      
+
       setIsFavorite(!isFavorite);
-      setTimeout(() => setShowMessage(""), 2000);
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      setShowMessage("Error updating favorites");
-      setTimeout(() => setShowMessage(""), 2000);
-    } finally {
-      setIsAddingToFavorites(false);
+      showNotification("Error updating favorites", "error");
     }
-  };
+  }, [product, isFavorite, navigation]);
 
   if (loading) {
     return (
@@ -234,6 +288,15 @@ const ProductDetail = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {notificationMessage && (
+        <NotificationBanner message={notificationMessage} onClose={() => setNotificationMessage('')} />
+      )}
+      {promotion && (
+        <View style={styles.promotionBanner}>
+          <Text style={styles.promotionText}>{promotion}</Text>
+        </View>
+      )}
+
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <TouchableOpacity 
@@ -242,8 +305,16 @@ const ProductDetail = () => {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: product.image_url }}
+            style={styles.image}
+            resizeMode="cover"
+          />
           <TouchableOpacity 
-            style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
+            style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive, { position: 'absolute', top: 16, right: 16 }]}
             onPress={toggleFavorite}
             disabled={isAddingToFavorites}
           >
@@ -258,12 +329,6 @@ const ProductDetail = () => {
             )}
           </TouchableOpacity>
         </View>
-
-        <Image
-          source={{ uri: product.image_url }}
-          style={styles.image}
-          resizeMode="cover"
-        />
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
@@ -294,10 +359,32 @@ const ProductDetail = () => {
               ))}
             </View>
           )}
+
+          <Text style={styles.sectionTitle}>User Reviews</Text>
+          {reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <View key={index} style={styles.reviewContainer}>
+                <Text style={styles.reviewText}>{review.comment}</Text>
+                <Text style={styles.reviewAuthor}>- {review.author}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noReviewsText}>No reviews yet.</Text>
+          )}
+
+          <Text style={styles.sectionTitle}>Related Products</Text>
+          <ScrollView horizontal style={styles.relatedProductsContainer}>
+            {relatedProducts.map((relatedProduct, index) => (
+              <View key={index} style={styles.relatedProductCard}>
+                <Image source={{ uri: relatedProduct.image_url }} style={styles.relatedProductImage} />
+                <Text style={styles.relatedProductName}>{relatedProduct.name}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
       </ScrollView>
 
-      <View style={styles.bottomContainer}>
+      <View style={[styles.bottomContainer, { marginBottom: 80 }]}>
         <View style={styles.quantityContainer}>
           <TouchableOpacity 
             style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
@@ -317,7 +404,7 @@ const ProductDetail = () => {
 
         <TouchableOpacity 
           style={[styles.addToCartButton, isAddingToCart && styles.addToCartButtonDisabled]}
-          onPress={handleAddToCart}
+          onPress={addToCart}
           disabled={isAddingToCart}
         >
           {isAddingToCart ? (
@@ -328,10 +415,8 @@ const ProductDetail = () => {
         </TouchableOpacity>
       </View>
 
-      {showMessage && (
-        <View style={styles.messageContainer}>
-          <Text style={styles.messageText}>{showMessage}</Text>
-        </View>
+      {modalVisible && (
+        <CustomAlert visible={modalVisible} onClose={() => setModalVisible(false)} />
       )}
     </SafeAreaView>
   );
@@ -402,6 +487,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF0F7',
     borderColor: '#FF69B4',
     transform: [{ scale: 1.05 }],
+  },
+  imageContainer: {
+    position: 'relative',
   },
   image: {
     width: Dimensions.get('window').width,
@@ -675,7 +763,179 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.5,
-  }
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2D3748',
+    marginBottom: 12,
+    marginTop: 24,
+    letterSpacing: 0.5,
+  },
+  reviewContainer: {
+    padding: 16,
+    backgroundColor: '#F7FAFF',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.1)',
+    marginBottom: 16,
+  },
+  reviewText: {
+    fontSize: 16,
+    color: '#4A5568',
+    lineHeight: 24,
+  },
+  reviewAuthor: {
+    fontSize: 14,
+    color: '#4A5568',
+    opacity: 0.8,
+  },
+  noReviewsText: {
+    fontSize: 16,
+    color: '#4A5568',
+    opacity: 0.8,
+    marginBottom: 24,
+  },
+  relatedProductsContainer: {
+    padding: 16,
+    backgroundColor: '#F7FAFF',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.1)',
+  },
+  relatedProductCard: {
+    width: 150,
+    height: 200,
+    marginRight: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  relatedProductImage: {
+    width: 150,
+    height: 120,
+    borderRadius: 15,
+    resizeMode: 'cover',
+  },
+  relatedProductName: {
+    fontSize: 16,
+    color: '#2D3748',
+    fontWeight: '600',
+    padding: 8,
+  },
+  promotionBanner: {
+    backgroundColor: '#4FA5F5',
+    padding: 16,
+    borderRadius: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.2)',
+  },
+  promotionText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#F7FAFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.2)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2D3748',
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#4A5568',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  button: {
+    padding: 16,
+    borderRadius: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.2)',
+  },
+  buttonClose: {
+    backgroundColor: '#A0AEC0',
+    marginRight: 16,
+  },
+  buttonOpen: {
+    backgroundColor: '#4FA5F5',
+  },
+  textStyle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4A5568',
+    letterSpacing: 0.5,
+  },
+  notificationBanner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#4FA5F5',
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  notificationText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  closeButton: {
+    padding: 8,
+  },
 });
 
 export default ProductDetail;
