@@ -1,20 +1,11 @@
-import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import axios from "axios";
-import { Calendar } from "react-native-calendars";
-import { useNavigation } from "@react-navigation/native"; // Import useNavigation
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Navbar from "../navbar/Navbar";
+import React, { useEffect, useState } from 'react'; 
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { Calendar } from 'react-native-calendars';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Navbar from '../navbar/Navbar';
 import { BASE_URL } from '../../Api';
 
 // Function to decode the token

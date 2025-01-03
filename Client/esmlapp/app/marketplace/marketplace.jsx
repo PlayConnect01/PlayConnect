@@ -472,7 +472,6 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
-    flex: 1,
   },
   notificationSuccess: {
     backgroundColor: 'rgba(72, 187, 120, 0.95)',
@@ -700,7 +699,7 @@ const Marketplace = () => {
       
       if (!token || !userId) {
         showNotification("Please login to add items to cart", "warning");
-        navigation.navigate('Login');
+        navigation.navigate('Login'); 
         return;
       }
 
@@ -711,7 +710,7 @@ const Marketplace = () => {
 
       if (cartProducts.some(item => item.product_id === product.product_id)) {
         showNotification("Product already in cart!", "warning");
-        navigation.navigate('ProductDetail', { productId: product.product_id });
+        navigation.navigate('Cart'); 
         return;
       }
 
@@ -780,7 +779,7 @@ const Marketplace = () => {
 
       if (!token || !userId) {
         showNotification("Please login to manage favorites", "warning");
-        navigation.navigate('Login');
+        navigation.navigate('Login'); 
         return;
       }
 
@@ -841,7 +840,7 @@ const Marketplace = () => {
       console.error("Error toggling favorite:", error);
       if (error.response?.status === 401) {
         showNotification("Please login to manage favorites", "warning");
-        navigation.navigate('Login');
+        navigation.navigate('Login'); 
       } else {
         showNotification(error.response?.data?.message || "Failed to update favorites", "error");
       }
@@ -863,7 +862,7 @@ const Marketplace = () => {
   const currentProduct = products[currentProductIndex];
 
   const showQuickView = (product) => {
-    navigation.navigate('ProductDetail', { productId: product.product_id, productName: product.name });
+    navigation.navigate('ProductDetail', { productId: product.product_id, productName: product.name }); 
   };
 
   return (
@@ -881,7 +880,7 @@ const Marketplace = () => {
               <Text style={styles.headerTitle}>Marketplace</Text>
               <View style={styles.headerIcons}>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('Cart')}
+                  onPress={() => navigation.navigate('Cart')} 
                   style={styles.iconButton}
                 >
                   <FontAwesome name="shopping-cart" size={20} color="#333" />
@@ -895,7 +894,7 @@ const Marketplace = () => {
                   style={styles.iconButton}
                   onPress={() => navigation.navigate('Favorites')}
                 >
-                  <FontAwesome name="heart-o" size={20} color="#333" />
+                  <FontAwesome name="heart-o" size={20} color="#333" />   
                 </TouchableOpacity>
               </View>
             </View>
@@ -1031,7 +1030,7 @@ const Marketplace = () => {
               <Text style={styles.specialOffersTitle}>Special Offers</Text>
               <TouchableOpacity
                 style={styles.viewAllButtonInline}
-                onPress={() => navigation.navigate("AllDiscountedProduct")}
+                onPress={() => navigation.navigate("AllDiscountedProducts")} 
               >
                 <Text style={styles.viewAllTextInline}>View All Offers</Text>
                 <FontAwesome name="arrow-right" size={16} color="#FFFFFF" />

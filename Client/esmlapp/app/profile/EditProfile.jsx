@@ -1,26 +1,15 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ActivityIndicator,
-  ScrollView,
-  TouchableWithoutFeedback,
-  Modal,
-  FlatList,
-} from "react-native";
-import axios from "axios";
-import * as ImagePicker from "expo-image-picker";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Buffer } from "buffer";
-import { useNavigation } from "@react-navigation/native"; // Import useNavigation
-import CountryPicker from "react-native-country-picker-modal";
-import { BASE_URL } from "../../Api.js";
-import Navbar from "../navbar/Navbar.jsx";
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView, TouchableWithoutFeedback, Modal, FlatList } from 'react-native';
+import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import CountryPicker from 'react-native-country-picker-modal';
+import { BASE_URL } from '../../Api.js';
+import Navbar from '../navbar/Navbar.jsx';
+
 
 global.Buffer = Buffer;
 
@@ -180,78 +169,69 @@ const EditProfile = () => {
     }
   };
 
-  // In EditProfile.jsx, modify the handleSubmit function:
+ // In EditProfile.jsx, modify the handleSubmit function:
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    return;
+  }
+
+  setIsSubmitting(true);
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      alert('Please log in again to continue.');
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        alert("Please log in again to continue.");
-        return;
-      }
+    const decodedToken = decodeToken(token);
+    const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
-      const decodedToken = decodeToken(token);
-      const userId =
-        decodedToken.id || decodedToken.user_id || decodedToken.userId;
-
-      // Combine the date fields into a single birthdate if all fields are present
-      let birthdateToSend = null;
-      if (
-        formData.birthdate_day &&
-        formData.birthdate_month &&
-        formData.birthdate_year
-      ) {
-        const formattedMonth = formData.birthdate_month.padStart(2, "0");
-        const formattedDay = formData.birthdate_day.padStart(2, "0");
-        birthdateToSend = `${formData.birthdate_year}-${formattedMonth}-${formattedDay}`;
-      }
-
-      // Format the request data
-      const requestData = {
-        username: formData.username.trim(),
-        email: formData.email.trim(),
-        location: formData.location.trim() || null,
-        phone_number: formData.phone_number,
-        phone_country_code: formData.phone_country_code,
-        birthdate: birthdateToSend, // Send as a single field
-        ...(formData.profile_picture?.startsWith("data:image") && {
-          profile_picture: formData.profile_picture,
-        }),
-      };
-
-      const response = await axios.put(
-        `${BASE_URL}/users/${userId}`,
-        requestData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data.success) {
-        alert("Profile updated successfully!");
-        navigation.navigate("profile/ProfilePage");
-      } else {
-        throw new Error(response.data.error || "Failed to update profile");
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert(
-        error.response?.data?.error ||
-          error.message ||
-          "Failed to update profile. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
+    // Combine the date fields into a single birthdate if all fields are present
+    let birthdateToSend = null;
+    if (formData.birthdate_day && formData.birthdate_month && formData.birthdate_year) {
+      const formattedMonth = formData.birthdate_month.padStart(2, '0');
+      const formattedDay = formData.birthdate_day.padStart(2, '0');
+      birthdateToSend = `${formData.birthdate_year}-${formattedMonth}-${formattedDay}`;
     }
-  };
+
+    // Format the request data
+    const requestData = {
+      username: formData.username.trim(),
+      email: formData.email.trim(),
+      location: formData.location.trim() || null,
+      phone_number: formData.phone_number,
+      phone_country_code: formData.phone_country_code,
+      birthdate: birthdateToSend, // Send as a single field
+      ...(formData.profile_picture?.startsWith('data:image') && {
+        profile_picture: formData.profile_picture
+      })
+    };
+    
+      const response = await axios.put(
+      `${BASE_URL}/users/${userId}`,
+      requestData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        }
+      }
+    );
+
+    if (response.data.success) {
+      alert('Profile updated successfully!');
+      navigation.navigate('profile/ProfilePage');
+    } else {
+      throw new Error(response.data.error || 'Failed to update profile');
+    }
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    alert(error.response?.data?.error || error.message || 'Failed to update profile. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const renderInput = (
     field,
@@ -302,7 +282,7 @@ const EditProfile = () => {
         <Text style={styles.headerTitle}>Edit Profile</Text>
       </View>
 
-      <ScrollView
+      <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -642,8 +622,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#6F61E8",
     height: 56,
     borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   buttonText: {
@@ -693,7 +673,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingBottom: 80, // Add padding to ensure button is not covered by navbar
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
 });
 
