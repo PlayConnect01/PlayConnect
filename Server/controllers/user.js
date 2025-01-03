@@ -250,4 +250,296 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile};
+const getAllUsers = async (req, res) => {
+  try {
+    // Get query parameters with defaults
+    const { 
+      includeBanned = 'true', 
+      includeBlocked = 'true',
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    // Convert string parameters to boolean
+    const showBanned = includeBanned.toLowerCase() === 'true';
+    const showBlocked = includeBlocked.toLowerCase() === 'true';
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build where clause based on filters
+    let whereClause = {};
+    
+    if (!showBanned && !showBlocked) {
+      whereClause = {
+        is_banned: false,
+        is_blocked: false
+      };
+    } else if (!showBanned) {
+      whereClause.is_banned = false;
+    } else if (!showBlocked) {
+      whereClause.is_blocked = false;
+    }
+
+    // Get users with pagination
+    const users = await prismaClient.user.findMany({
+      where: whereClause,
+      select: {
+        user_id: true,
+        username: true,
+        email: true,
+        location: true,
+        profile_picture: true,
+        birthdate: true,
+        phone_number: true,
+        phone_country_code: true,
+        is_banned: true,
+        is_blocked: true,
+        ban_reason: true,
+        block_reason: true,
+        created_teams: {
+          select: {
+            team_id: true,
+            team_name: true
+          }
+        }
+      },
+      skip: skip,
+      take: parseInt(limit)
+    });
+
+    // Get total count for pagination
+    const totalUsers = await prismaClient.user.count({
+      where: whereClause
+    });
+
+    res.status(200).json({
+      users,
+      pagination: {
+        total: totalUsers,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalUsers / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error("Fetch users error:", error);
+    res.status(500).json({ error: "Error fetching users" });
+  }
+};
+
+const banUser = async (req, res) => {
+  const { userId } = req.params;
+  const { banReason } = req.body;
+
+  try {
+    const updatedUser = await prismaClient.user.update({
+      where: {
+        user_id: parseInt(userId)
+      },
+      data: {
+        is_banned: true,
+        ban_reason: banReason
+      }
+    });
+
+    res.status(200).json({
+      message: "User has been banned successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error banning user:', error);
+    res.status(500).json({
+      error: "Failed to ban user",
+      details: error.message
+    });
+  }
+};
+
+const unbanUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const updatedUser = await prismaClient.user.update({
+      where: {
+        user_id: parseInt(userId)
+      },
+      data: {
+        is_banned: false
+      }
+    });
+
+    res.status(200).json({
+      message: "User has been unbanned successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error unbanning user:', error);
+    res.status(500).json({
+      error: "Failed to unban user",
+      details: error.message
+    });
+  }
+};
+
+const getTotalUsers = async (req, res) => {
+  try {
+    const count = await prismaClient.user.count();
+    res.json({ total: count });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching user count", details: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  const { userId } = req.params;
+  const parsedUserId = parseInt(userId);
+
+  try {
+    await prismaClient.$transaction([
+      // First delete all calendar entries
+      prismaClient.calendar.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete event participants before deleting events
+      prismaClient.eventParticipant.deleteMany({
+        where: { 
+          OR: [
+            { user_id: parsedUserId },
+            { event: { creator_id: parsedUserId } }
+          ]
+        }
+      }),
+
+      // Delete events created by user
+      prismaClient.event.deleteMany({
+        where: { creator_id: parsedUserId }
+      }),
+
+      // Delete cart items before cart
+      prismaClient.cartItem.deleteMany({
+        where: { cart: { user_id: parsedUserId } }
+      }),
+
+      // Delete cart
+      prismaClient.cart.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete order items before orders
+      prismaClient.orderItem.deleteMany({
+        where: { order: { user_id: parsedUserId } }
+      }),
+
+      // Delete orders
+      prismaClient.order.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete favorites
+      prismaClient.favorite.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete messages
+      prismaClient.message.deleteMany({
+        where: { sender_id: parsedUserId }
+      }),
+
+      // Delete chat memberships
+      prismaClient.chatMember.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete team members before teams
+      prismaClient.teamMember.deleteMany({
+        where: { 
+          OR: [
+            { user_id: parsedUserId },
+            { team: { created_by: parsedUserId } }
+          ]
+        }
+      }),
+
+      // Delete tournament teams before tournaments
+      prismaClient.tournamentTeam.deleteMany({
+        where: { 
+          tournament: { created_by: parsedUserId }
+        }
+      }),
+
+      // Delete teams created by user
+      prismaClient.team.deleteMany({
+        where: { created_by: parsedUserId }
+      }),
+
+      // Delete tournaments
+      prismaClient.tournament.deleteMany({
+        where: { created_by: parsedUserId }
+      }),
+
+      // Delete achievements
+      prismaClient.achievement.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete reports
+      prismaClient.report.deleteMany({
+        where: {
+          OR: [
+            { reported_by: parsedUserId },
+            { reported_user_id: parsedUserId }
+          ]
+        }
+      }),
+
+      // Delete points logs
+      prismaClient.pointsLog.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete notifications
+      prismaClient.notification.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete matches
+      prismaClient.match.deleteMany({
+        where: {
+          OR: [
+            { user_id_1: parsedUserId },
+            { user_id_2: parsedUserId }
+          ]
+        }
+      }),
+
+      // Delete video calls
+      prismaClient.videoCall.deleteMany({
+        where: {
+          OR: [
+            { initiator_id: parsedUserId },
+            { participant_id: parsedUserId }
+          ]
+        }
+      }),
+
+      // Finally delete the user
+      prismaClient.user.delete({
+        where: { user_id: parsedUserId }
+      })
+    ]);
+
+    res.status(200).json({
+      message: "User and all related data have been permanently deleted"
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      error: "Failed to delete user",
+      details: error.message
+    });
+  }
+};
+
+module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile, getAllUsers, banUser, unbanUser, getTotalUsers, deleteUser };
