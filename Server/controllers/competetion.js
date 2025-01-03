@@ -48,15 +48,46 @@ const getTournamentById = async (req, res) => {
         },
         teams: {
           include: {
-            members: true // Include members for each team
+            team: {
+              include: {
+                members: {
+                  include: {
+                    user: {
+                      select: {
+                        user_id: true,
+                        username: true
+                      }
+                    }
+                  }
+                },
+                creator: {
+                  select: {
+                    username: true
+                  }
+                }
+              }
+            }
           }
         }
       }
     });
+
     if (!tournament) {
       return res.status(404).json({ message: 'Tournament not found' });
     }
-    res.status(200).json(tournament);
+
+    // Transform data structure to match frontend expectations
+    const transformedTournament = {
+      ...tournament,
+      teams: tournament.teams.map(tt => ({
+        team_id: tt.team.team_id,
+        team_name: tt.team.team_name,
+        members: tt.team.members,
+        creator: tt.team.creator
+      }))
+    };
+
+    res.status(200).json(transformedTournament);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

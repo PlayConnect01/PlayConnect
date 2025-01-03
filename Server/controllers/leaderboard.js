@@ -8,6 +8,7 @@ const getLeaderboard = async (req, res) => {
         user_id: true,
         username: true,
         points: true,
+        profile_picture: true,
       },
       orderBy: {
         points: 'desc', // Order by points in descending order

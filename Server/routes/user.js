@@ -1,6 +1,6 @@
 const passport = require("passport");
 const  express  = require('express');
-const {signup,login,logout, getOneUser, updateUserProfile,handleSocialAuth} = require('../controllers/user.js') ;
+const {signup,login,logout, getOneUser, updateUserProfile,handleSocialAuth,reportUser} = require('../controllers/user.js') ;
 
 const router = express.Router();
 
@@ -34,6 +34,7 @@ router.get(
 
 router.put('/:id', updateUserProfile);
 
+router.post("/reports", reportUser);
 
 
 

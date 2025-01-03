@@ -88,7 +88,7 @@ model User {
   matches_as_user_1   Match[]        @relation("User1Matches")
   matches_as_user_2   Match[]        @relation("User2Matches")
   initiated_chats     Chat[]         @relation("ChatInitiator")
-
+reviews         Review[]
   // New relationships for video calls
   initiated_calls     VideoCall[]    @relation("CallInitiator")
   received_calls      VideoCall[]    @relation("CallParticipant")
@@ -102,7 +102,6 @@ model Sport {
   name        String
   description String?
   icon        String?  
-
   users       UserSport[]
   teams       Team[]
   tournaments Tournament[]
@@ -194,7 +193,7 @@ model Event {
 
   event_participants EventParticipant[]
   calendar_entries   Calendar[]
-
+reviews         Review[]
   creator_id    Int
   creator       User @relation("EventCreator", fields: [creator_id], references: [user_id])
 
@@ -467,4 +466,20 @@ model OrderItem {
 
   @@index([order_id])
   @@index([product_id])
+}
+
+model Review {
+  review_id    Int      @id @default(autoincrement())
+  event_id     Int
+  user_id      Int
+  rating       Int      // 1-5 stars
+  comment      String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  event        Event    @relation(fields: [event_id], references: [event_id])
+  user         User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([event_id])
+  @@index([user_id])
 }

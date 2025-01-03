@@ -250,4 +250,25 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile};
+const reportUser = async (req, res) => {
+  const { reported_user_id, reason } = req.body;
+  const reported_by = req.user.user_id; // Assuming you have user info in req.user
+
+  try {
+    const report = await prismaClient.report.create({
+      data: {
+        reported_user_id,
+        reported_by,
+        reason,
+        status: "Pending",
+      },
+    });
+
+    res.status(200).json({ success: true, report });
+  } catch (error) {
+    console.error("Error reporting user:", error);
+    res.status(500).json({ error: "Failed to report user" });
+  }
+};
+
+module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile, reportUser };

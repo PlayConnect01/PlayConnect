@@ -182,14 +182,6 @@ const App = () => {
     setUnreadNotifications(0);
   };
 
-  const handlePaymentPress = async () => {
-    // Fetch user details using the userId
-    const userDetailsResponse = await axios.get(`${BASE_URL}/users/${currentUserId}`);
-    const userDetails = userDetailsResponse.data;
-    navigation.navigate('PaymentScreen', {
-      userDetails: userDetails // Pass fetched user details
-    });
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -408,7 +400,7 @@ const App = () => {
       </ScrollView>
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={handlePaymentPress}
+        onPress={() => navigation.navigate("Homepage/CreateEvent")}
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>

@@ -150,6 +150,14 @@ const ProfilePage = () => {
     }
   };
 
+  const isEventPast = (eventDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today;
+  };
+
   if (loading) {
     return (
       <View style={styles.fullPage}>
@@ -189,7 +197,6 @@ const ProfilePage = () => {
             onPress={() => {
               setShowSettings(false);
               navigation.navigate("profile/EditProfile");
-              // Add your edit profile navigation/function here
             }}
           >
             <Text style={styles.settingsOptionText}>Edit Profile</Text>
@@ -242,15 +249,19 @@ const ProfilePage = () => {
         {activeTab === "achievement" && (
           <View style={styles.achievementContainer}>
             <View style={styles.statsContainer}>
-              <View style={styles.statBox}>
+              <TouchableOpacity 
+                style={styles.statBox}
+                onPress={() => navigation.navigate('profile/LeaderboardScreen')}
+              >
                 <View style={styles.iconCircle}>
                   <MaterialIcons name="leaderboard" size={24} color="#6F61E8" />
                 </View>
                 <View style={styles.statTextContainer}>
+                {  console.log("Rank", rank)} 
                   <Text style={styles.statNumber}>#{rank || "N/A"}</Text>
                   <Text style={styles.statLabel}>Leaderboard</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
               <View style={styles.statBox}>
                 <View style={styles.iconCircle}>
                   <MaterialIcons name="flash-on" size={24} color="#FF9500" />
@@ -290,35 +301,62 @@ const ProfilePage = () => {
         {activeTab === "events" && (
           <View style={styles.eventsContainer}>
             {events.length > 0 ? (
-              events.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventCard}
-                  onPress={() => handleEventPress(event)}
-                >
-                  <Image
-                    source={{ uri: event.image }}
-                    style={styles.eventImage}
-                  />
-                  <View style={styles.eventInfo}>
-                    <Text style={styles.eventName}>{event.event_name}</Text>
-                    <View style={styles.locationContainer}>
-                      <MaterialIcons
-                        name="location-on"
-                        size={16}
-                        color="#666"
-                      />
-                      <Text style={styles.locationText}>{event.location}</Text>
-                    </View>
-                    <View style={styles.ratingContainer}>
-                      <MaterialIcons name="star" size={16} color="#FFD700" />
-                      <Text style={styles.ratingText}>
-                        {event.rating || "4.5"}
+              events.map((event, index) => {
+                const isPast = isEventPast(event.date);
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.eventCard,
+                      isPast && styles.pastEventCard
+                    ]}
+                    onPress={() => handleEventPress(event)}
+                    disabled={isPast}
+                  >
+                    <Image
+                      source={{ uri: event.image }}
+                      style={[
+                        styles.eventImage,
+                        isPast && styles.pastEventImage
+                      ]}
+                    />
+                    <View style={styles.eventInfo}>
+                      <Text style={[
+                        styles.eventName,
+                        isPast && styles.pastEventText
+                      ]}>
+                        {event.event_name}
                       </Text>
+                      <View style={styles.locationContainer}>
+                        <MaterialIcons
+                          name="location-on"
+                          size={16}
+                          color={isPast ? "#999" : "#666"}
+                        />
+                        <Text style={[
+                          styles.locationText,
+                          isPast && styles.pastEventText
+                        ]}>
+                          {event.location}
+                        </Text>
+                      </View>
+                      <View style={styles.ratingContainer}>
+                        <MaterialIcons 
+                          name="star" 
+                          size={16} 
+                          color={isPast ? "#999" : "#FFD700"} 
+                        />
+                        <Text style={[
+                          styles.ratingText,
+                          isPast && styles.pastEventText
+                        ]}>
+                          {event.rating || "4.5"}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                );
+              })
             ) : (
               <Text style={styles.noEventsText}>No events created yet.</Text>
             )}
@@ -685,6 +723,16 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 20,
     fontSize: 16,
+  },
+  pastEventCard: {
+    opacity: 0.6,
+    backgroundColor: "#f5f5f5",
+  },
+  pastEventImage: {
+    opacity: 0.5,
+  },
+  pastEventText: {
+    color: "#999",
   },
 });
 
