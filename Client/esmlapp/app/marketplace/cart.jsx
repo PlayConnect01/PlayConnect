@@ -2,8 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import ConfirmationModal from './ConfirmationModal'; // Adjust the path as necessary
+import ConfirmationModal from './ConfirmationModal'; 
+import OrderHistory from './orders/OrderHistory';
 import { BASE_URL } from "../../Api";
+import PageContainer from '../components/PageContainer';
+import { FontAwesome } from '@expo/vector-icons'; // Import FontAwesome for icons
 
 const CartScreen = () => {
   const navigation = useNavigation();
@@ -12,6 +15,7 @@ const CartScreen = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('cart');
 
   const fetchCartItems = async () => {
     try {
@@ -137,107 +141,174 @@ const CartScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading cart...</Text>
-      </View>
+      <PageContainer>
+        <View style={styles.loadingContainer}>
+          <Text>Loading cart...</Text>
+        </View>
+      </PageContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <Text style={styles.title}>Cart</Text>
+    <PageContainer>
+      <View style={styles.mainContainer}>
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'cart' && styles.activeTab]}
+            onPress={() => setActiveTab('cart')}
+          >
+            <FontAwesome name="shopping-cart" size={24} color={activeTab === 'cart' ? '#FFFFFF' : '#4A5568'} />
+            <Text style={[styles.tabText, activeTab === 'cart' && styles.activeTabText]}>
+              Cart
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'history' && styles.activeTab]}
+            onPress={() => setActiveTab('history')}
+          >
+            <FontAwesome name="history" size={24} color={activeTab === 'history' ? '#FFFFFF' : '#4A5568'} />
+            <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>
+              Order History
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-        {cartItems.length === 0 ? (
-          <Text style={styles.emptyCart}>Your cart is empty</Text>
-        ) : (
-          <>
-            {cartItems.map((item) => (
-              <View key={item.cart_item_id} style={styles.cartItem}>
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.itemImage}
-                
-                />
-                <View style={styles.itemDetails}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+        {activeTab === 'cart' ? (
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            <Text style={styles.title}>Cart</Text>
+
+            {cartItems.length === 0 ? (
+              <Text style={styles.emptyCart}>Your cart is empty</Text>
+            ) : (
+              <>
+                {cartItems.map((item) => (
+                  <View key={item.cart_item_id} style={styles.cartItem}>
+                    <Image
+                      source={{ uri: item.image }}
+                      style={styles.itemImage}
+                    />
+                    <View style={styles.itemDetails}>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                      <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.quantityControl}>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => updateQuantity(item.cart_item_id, -1)}
+                      >
+                        <Text style={styles.quantityText}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.quantity}>{item.quantity}</Text>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => updateQuantity(item.cart_item_id, 1)}
+                      >
+                        <Text style={styles.quantityText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => deleteProduct(item.cart_item_id)}
+                      style={styles.deleteButton}
+                    >
+                      <Text style={styles.deleteText}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                <View style={styles.paymentDetails}>
+                  <Text style={styles.paymentLabel}>
+                    Total ({cartItems.length} items)
+                  </Text>
+                  <Text style={styles.paymentPrice}>
+                    ${calculateTotal().toFixed(2)}
+                  </Text>
                 </View>
-                <View style={styles.quantityControl}>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => updateQuantity(item.cart_item_id, -1)}
-                  >
-                    <Text style={styles.quantityText}>-</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.quantity}>{item.quantity}</Text>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => updateQuantity(item.cart_item_id, 1)}
-                  >
-                    <Text style={styles.quantityText}>+</Text>
-                  </TouchableOpacity>
-                </View>
+
                 <TouchableOpacity
-                  onPress={() => deleteProduct(item.cart_item_id)}
-                  style={styles.deleteButton}
+                  style={styles.checkoutButton}
+                  onPress={navigateToDeliveryServices}
                 >
-                  <Text style={styles.deleteText}>Delete</Text>
+                  <Text style={styles.checkoutText}>Choose Delivery Services</Text>
                 </TouchableOpacity>
-              </View>
-            ))}
+              </>
+            )}
 
-            <View style={styles.paymentDetails}>
-              <Text style={styles.paymentLabel}>
-                Total ({cartItems.length} items)
-              </Text>
-              <Text style={styles.paymentPrice}>
-                ${calculateTotal().toFixed(2)}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.checkoutButton}
-              onPress={navigateToDeliveryServices}
-            >
-              <Text style={styles.checkoutText}>Choose Delivery Services</Text>
-            </TouchableOpacity>
-          </>
+            <ConfirmationModal
+              visible={isModalVisible}
+              onConfirm={confirmDelete}
+              onCancel={() => {
+                setItemToDelete(null);
+                setModalVisible(false);
+              }}
+              message="Are you sure you want to delete this item?"
+            />
+          </ScrollView>
+        ) : (
+          <OrderHistory />
         )}
-
-        <ConfirmationModal
-          visible={isModalVisible}
-          onConfirm={confirmDelete}
-          onCancel={() => {
-            setItemToDelete(null); // Reset itemToDelete if canceled
-            setModalVisible(false);
-          }}
-          message="Are you sure you want to delete this item?"
-        />
-      </ScrollView>
-    </View>
+      </View>
+    </PageContainer>
   );
 };
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#F0F4F8', 
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F7FAFF',
+    backgroundColor: '#E0E7FF', 
   },
-  container: {
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    padding: 8,
+    marginBottom: 16,
+    borderRadius: 12,
+    shadowColor: '#4FA5F5',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  tab: {
     flex: 1,
-    backgroundColor: '#F7FAFF',
-    padding: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E0', 
+  },
+  activeTab: {
+    backgroundColor: '#4FA5F5',
+    borderColor: '#4FA5F5', 
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4A5568',
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+    fontWeight: '700', 
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100, 
   },
   title: {
     fontSize: 24,
@@ -252,6 +323,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
     color: '#4A5568',
     fontWeight: '500',
+    fontStyle: 'italic', 
   },
   cartItem: {
     flexDirection: 'row',
