@@ -4,28 +4,28 @@ const {
   getProductById,
   updateProduct,
   deleteProduct,
-  getUserProducts
+  getProductsByUserId
 } = require('../controllers/UserproductController');
 
 const express = require('express');
 const router = express.Router();
 
-// Add a new product
-router.post('/product', addProduct);
-
 // Get all products
-router.get('/products', getAllProducts);
+router.get('/', getAllProducts);
 
-// Get a single product by ID
-router.get('/product/:id', getProductById);
+// Get products by user ID
+router.get('/user/:userId', getProductsByUserId);
 
-// Update a product by ID
-router.put('/product/:id', updateProduct);
+// Get single product
+router.get('/:id', getProductById);
 
-// Delete a product by ID
-router.delete('/product/:id', deleteProduct);
+// Add new product
+router.post('/', addProduct);
 
-// Get all products added by the current user
-router.get('/user-products', getUserProducts);
+// Update product
+router.put('/:id', updateProduct);
+
+// Delete product
+router.delete('/:id', deleteProduct);
 
 module.exports = router;

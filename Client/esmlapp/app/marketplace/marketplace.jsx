@@ -7,10 +7,10 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  SafeAreaView,
   RefreshControl,
   Animated,
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useNavigation
 } from "@react-navigation/native";
@@ -27,30 +27,21 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F7FAFF',
-    position: 'relative',
+    paddingBottom: 16,
   },
   mainContainer: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#F7FAFF',
-    marginBottom: 80,
   },
   contentContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: isSidebarVisible ? 0 : 30,
-    borderTopRightRadius: 30,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
-    overflow: 'hidden',
+    paddingBottom: 24,
   },
   header: {
     backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(79, 165, 245, 0.1)',
@@ -65,11 +56,12 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 40,
   },
   menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -459,6 +451,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     zIndex: 1000,
+    marginBottom: 24,
   },
   notificationContent: {
     flex: 1,
@@ -497,8 +490,10 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     marginRight: 8,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingTop: 16,
     paddingHorizontal: 16,
+    paddingBottom: 32,
   },
   specialOffersHeader: {
     flexDirection: 'row',
@@ -516,7 +511,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 24,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -540,6 +535,172 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  tooltipContainer: {
+    position: 'absolute',
+    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    padding: 16,
+    borderRadius: 16,
+    maxWidth: 250,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 1000,
+    backdropFilter: 'blur(8px)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  tooltipText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  tooltipArrow: {
+    position: 'absolute',
+    width: 20,
+    height: 10,
+    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    transform: [{ rotate: '45deg' }],
+    top: -5,
+    left: '50%',
+    marginLeft: -10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  welcomeBannerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    zIndex: 100,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderTopWidth: 0,
+  },
+  welcomeBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  welcomeBannerText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    flex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    letterSpacing: 0.5,
+  },
+  welcomeBannerIcon: {
+    marginRight: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 10,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  welcomeBannerClose: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 30,
+    marginLeft: 16,
+  },
+  guideOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    zIndex: 999,
+    backdropFilter: 'blur(4px)',
+  },
+  guideSpotlight: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 100,
+    zIndex: 1000,
+    borderWidth: 2,
+    borderColor: '#4FA5F5',
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  guideText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 16,
+    lineHeight: 24,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  guideButton: {
+    backgroundColor: '#4FA5F5',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    marginTop: 16,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  guideButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  guideProgress: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  guideProgressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  guideProgressDotActive: {
+    backgroundColor: '#4FA5F5',
+    width: 24,
+  },
+  pulseAnimation: {
+    position: 'absolute',
+    borderRadius: 100,
+  },
+  tooltipIcon: {
+    marginRight: 8,
+  },
 });
 
 const Marketplace = () => {
@@ -556,13 +717,235 @@ const Marketplace = () => {
   const [cartProducts, setCartProducts] = useState([]);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [addingToCartId, setAddingToCartId] = useState(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const [currentGuideStep, setCurrentGuideStep] = useState(0);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
+
+  const styles = getStyles(isSidebarVisible);
+  
+  // Animation refs
+  const notificationTimeout = useRef(null);
   const animationValues = useRef({
     scale: new Animated.Value(1),
     success: new Animated.Value(0)
   }).current;
-  const notificationTimeout = useRef(null);
+  const bannerAnimation = useRef(new Animated.Value(0)).current;
+  const spotlightPosition = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const styles = getStyles(isSidebarVisible);
+  const guideSteps = [
+    {
+      target: 'search',
+      text: 'Search for your favorite products here',
+      icon: 'magnify',
+      position: { top: 60, left: 20 }
+    },
+    {
+      target: 'categories',
+      text: 'Browse through different categories',
+      icon: 'view-grid',
+      position: { top: 120, left: 20 }
+    },
+    {
+      target: 'cart',
+      text: 'View your shopping cart',
+      icon: 'cart',
+      position: { top: 60, right: 20 }
+    }
+  ];
+
+  const renderWelcomeBanner = () => {
+    if (!showWelcomeBanner) return null;
+
+    return (
+      <Animated.View
+        style={[
+          styles.welcomeBannerContainer,
+          {
+            transform: [
+              {
+                translateY: bannerAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-200, 0]
+                })
+              }
+            ],
+            opacity: bannerAnimation
+          }
+        ]}
+      >
+        <View style={styles.welcomeBannerContent}>
+          <Animated.View
+            style={[
+              styles.welcomeBannerIcon,
+              {
+                transform: [
+                  {
+                    scale: scaleAnim
+                  },
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg']
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="shopping-outline"
+              size={28}
+              color="#FFFFFF"
+            />
+          </Animated.View>
+
+          <Animated.Text 
+            style={[
+              styles.welcomeBannerText,
+              {
+                transform: [
+                  {
+                    translateX: bannerAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [50, 0]
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            Welcome to sportsmate Marketplace! 🎉
+          </Animated.Text>
+
+          <TouchableOpacity
+            style={styles.welcomeBannerClose}
+            onPress={() => {
+              Animated.parallel([
+                Animated.timing(bannerAnimation, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                  easing: Easing.out(Easing.ease)
+                }),
+                Animated.timing(scaleAnim, {
+                  toValue: 0,
+                  duration: 200,
+                  useNativeDriver: true
+                })
+              ]).start(() => setShowWelcomeBanner(false));
+            }}
+          >
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '180deg']
+                    })
+                  }
+                ]
+              }}
+            >
+              <MaterialCommunityIcons 
+                name="close" 
+                size={20} 
+                color="#FFFFFF" 
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const animateWelcomeBanner = () => {
+    Animated.sequence([
+      Animated.spring(bannerAnimation, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true
+      }),
+      Animated.delay(3000),
+      Animated.timing(bannerAnimation, {
+        toValue: 0,
+        duration: 800,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true
+      })
+    ]).start(() => setShowWelcomeBanner(false));
+  };
+
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      try {
+        const hasVisited = await AsyncStorage.getItem('hasVisitedMarketplace');
+        if (!hasVisited) {
+          setShowGuide(true);
+          await AsyncStorage.setItem('hasVisitedMarketplace', 'true');
+          animateWelcomeBanner();
+        }
+      } catch (error) {
+        console.error('Error checking first visit:', error);
+      }
+    };
+
+    checkFirstVisit();
+  }, []);
+
+  useEffect(() => {
+    if (showGuide) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 1500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease)
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease)
+          })
+        ])
+      ).start();
+
+      Animated.loop(
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+          easing: Easing.linear
+        })
+      ).start();
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.back)
+      }).start();
+    }
+
+    return () => {
+      pulseAnim.setValue(1);
+      rotateAnim.setValue(0);
+      fadeAnim.setValue(0);
+    };
+  }, [showGuide, pulseAnim, rotateAnim, fadeAnim]);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -625,15 +1008,32 @@ const Marketplace = () => {
         const userId = userData?.user_id;
 
         if (token && userId) {
-          const response = await axios.get(`${BASE_URL}/favorites/favorites/${userId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          const favoriteIds = response.data.map(fav => fav.product_id);
-          setFavoriteProducts(favoriteIds);
+          try {
+            const response = await axios.get(`${BASE_URL}/favorites/favorites/${userId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (response.data) {
+              const favoriteIds = response.data.map(fav => fav.product_id);
+              setFavoriteProducts(favoriteIds);
+            }
+          } catch (error) {
+            // Handle 404 gracefully - user might not have any favorites yet
+            if (error.response?.status === 404) {
+              console.log('No favorites found for user');
+              setFavoriteProducts([]);
+            } else {
+              console.error("Error loading favorites:", error);
+              showNotification("Failed to load favorites", "error");
+            }
+          }
+        } else {
+          // User not logged in - this is normal, just set empty favorites
+          setFavoriteProducts([]);
         }
       } catch (error) {
-        console.error("Error loading favorites:", error);
+        console.error("Error in loadFavorites:", error);
+        showNotification("Error loading favorites", "error");
       }
     };
 
@@ -699,7 +1099,7 @@ const Marketplace = () => {
       
       if (!token || !userId) {
         showNotification("Please login to add items to cart", "warning");
-        navigation.navigate('Login'); 
+        navigation.navigate('Login');
         return;
       }
 
@@ -710,7 +1110,7 @@ const Marketplace = () => {
 
       if (cartProducts.some(item => item.product_id === product.product_id)) {
         showNotification("Product already in cart!", "warning");
-        navigation.navigate('Cart'); 
+        navigation.navigate('Cart');
         return;
       }
 
@@ -862,11 +1262,168 @@ const Marketplace = () => {
   const currentProduct = products[currentProductIndex];
 
   const showQuickView = (product) => {
-    navigation.navigate('ProductDetail', { productId: product.product_id, productName: product.name }); 
+    navigation.navigate('ProductDetail', { 
+      productId: product.product_id, 
+      productName: product.name 
+    }); 
+  };
+
+  const renderGuide = () => {
+    if (!showGuide) return null;
+
+    const currentStep = guideSteps[currentGuideStep];
+    const spotlightSize = 80;
+
+    return (
+      <Animated.View 
+        style={[
+          styles.guideOverlay,
+          { opacity: fadeAnim }
+        ]}
+      >
+        {/* Pulse effect */}
+        <Animated.View
+          style={[
+            styles.pulseAnimation,
+            {
+              ...currentStep.position,
+              width: spotlightSize * 1.5,
+              height: spotlightSize * 1.5,
+              backgroundColor: 'rgba(79, 165, 245, 0.2)',
+              transform: [{ scale: pulseAnim }]
+            }
+          ]}
+        />
+        
+        {/* Main spotlight */}
+        <Animated.View
+          style={[
+            styles.guideSpotlight,
+            {
+              width: spotlightSize,
+              height: spotlightSize,
+              ...currentStep.position,
+              transform: [
+                {
+                  scale: spotlightPosition.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1]
+                  })
+                }
+              ]
+            }
+          ]}
+        />
+
+        {/* Tooltip */}
+        <View style={[styles.tooltipContainer, currentStep.position]}>
+          <Animated.View
+            style={[
+              styles.tooltipIcon,
+              {
+                transform: [
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg']
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            <MaterialCommunityIcons
+              name={currentStep.icon}
+              size={24}
+              color="#FFFFFF"
+            />
+          </Animated.View>
+
+          <Text style={styles.tooltipText}>{currentStep.text}</Text>
+
+          {/* Progress dots */}
+          <View style={styles.guideProgress}>
+            {guideSteps.map((_, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.guideProgressDot,
+                  currentGuideStep === index && styles.guideProgressDotActive,
+                  {
+                    transform: [
+                      {
+                        scale: currentGuideStep === index ? pulseAnim : 1
+                      }
+                    ]
+                  }
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Navigation button */}
+          <TouchableOpacity
+            style={styles.guideButton}
+            onPress={() => {
+              if (currentGuideStep < guideSteps.length - 1) {
+                // Next step animation
+                Animated.sequence([
+                  Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true
+                  }),
+                  Animated.timing(spotlightPosition, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true
+                  })
+                ]).start(() => {
+                  setCurrentGuideStep(currentGuideStep + 1);
+                  Animated.parallel([
+                    Animated.timing(fadeAnim, {
+                      toValue: 1,
+                      duration: 300,
+                      useNativeDriver: true
+                    }),
+                    Animated.spring(spotlightPosition, {
+                      toValue: 1,
+                      tension: 50,
+                      friction: 7,
+                      useNativeDriver: true
+                    })
+                  ]).start();
+                });
+              } else {
+                // Exit animation
+                Animated.parallel([
+                  Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true
+                  }),
+                  Animated.timing(spotlightPosition, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true
+                  })
+                ]).start(() => setShowGuide(false));
+              }
+            }}
+          >
+            <Text style={styles.guideButtonText}>
+              {currentGuideStep < guideSteps.length - 1 ? 'Next' : 'Got it!'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {renderWelcomeBanner()}
+      {renderGuide()}
       <View style={styles.mainContainer}>
         {isSidebarVisible && (
           <Sidebar onSelectCategory={handleSelectCategory} />
@@ -880,7 +1437,7 @@ const Marketplace = () => {
               <Text style={styles.headerTitle}>Marketplace</Text>
               <View style={styles.headerIcons}>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('Cart')} 
+                  onPress={() => navigation.navigate('Cart')}
                   style={styles.iconButton}
                 >
                   <FontAwesome name="shopping-cart" size={20} color="#333" />
@@ -905,26 +1462,13 @@ const Marketplace = () => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            overScrollMode="always"
           >
             <SearchBar onSelectProduct={() => {}} />
             <Text style={styles.sectionTitle}>Some of Our Collection</Text>
-            <Text style={styles.collectionDescription}>
-              Dive into our curated selection of products that blend style and innovation. Each piece is a testament to quality and craftsmanship, designed to inspire and elevate your lifestyle.
-            </Text>
-            <View style={styles.collectionFeatures}>
-              <View style={styles.collectionFeatureItem}>
-                <FontAwesome name="star" size={16} color="#FFD700" />
-                <Text style={styles.collectionFeatureText}>Premium Quality</Text>
-              </View>
-              <View style={styles.collectionFeatureItem}>
-                <FontAwesome name="leaf" size={16} color="#48BB78" />
-                <Text style={styles.collectionFeatureText}>Eco-Friendly</Text>
-              </View>
-              <View style={styles.collectionFeatureItem}>
-                <FontAwesome name="rocket" size={16} color="#4FA5F5" />
-                <Text style={styles.collectionFeatureText}>Innovative Design</Text>
-              </View>
-            </View>
+           
             {currentProduct && (
               <View style={styles.productContainer}>
                 <TouchableOpacity style={[styles.navButton, styles.navButtonLeft]} onPress={showPreviousProduct}>
@@ -1030,7 +1574,7 @@ const Marketplace = () => {
               <Text style={styles.specialOffersTitle}>Special Offers</Text>
               <TouchableOpacity
                 style={styles.viewAllButtonInline}
-                onPress={() => navigation.navigate("AllDiscountedProducts")} 
+                onPress={() => navigation.navigate('AllDiscountedProducts')}
               >
                 <Text style={styles.viewAllTextInline}>View All Offers</Text>
                 <FontAwesome name="arrow-right" size={16} color="#FFFFFF" />

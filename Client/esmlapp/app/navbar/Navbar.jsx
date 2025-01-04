@@ -59,11 +59,6 @@ const Navbar = () => {
 
   const isActive = (screenName) => {
     const currentRoute = route.name;
-    if (screenName === "Home" && currentRoute === "Home") return true;
-    if (screenName === "Profile" && currentRoute === "Profile") return true;
-    if (screenName === "Marketplace" && currentRoute === "Marketplace") return true;
-    if (screenName === "Messages" && currentRoute === "Messages") return true;
-    if (screenName === "Match" && currentRoute === "Match") return true;
     return currentRoute === screenName;
   };
 
@@ -116,7 +111,7 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("marketplace/marketplace")}
+          onPress={() => navigation.navigate("Marketplace")}
         >
           <Icon
             name="cart"
@@ -130,14 +125,14 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("profile/ProfilePage")}
+          onPress={() => navigation.navigate("ProfilePage")}
         >
           <Icon
             name="person"
             size={24}
-            color={isActive("Profile") ? "#0095FF" : "#64748B"}
+            color={isActive("ProfilePage") ? "#0095FF" : "#64748B"}
           />
-          <Text style={isActive("Profile") ? styles.navTextActive : styles.navText}>
+          <Text style={isActive("ProfilePage") ? styles.navTextActive : styles.navText}>
             Profile
           </Text>
         </TouchableOpacity>
