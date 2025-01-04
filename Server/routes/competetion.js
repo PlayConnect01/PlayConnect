@@ -5,7 +5,8 @@ const {
   createTournament,
   updateTournament,
   deleteTournament,
-  getAllTournamentsAndTeams
+  getAllTournamentsAndTeams,
+  getTotalTournaments
 } = require('../controllers/competetion');
 
 const router = express.Router();
@@ -26,5 +27,8 @@ router.put('/:id', updateTournament);
 
 // Delete a tournament
 router.delete('/:id', deleteTournament); 
+
+// Add this new route before the /:id route
+router.get("/count/total", getTotalTournaments);
 
 module.exports = router;

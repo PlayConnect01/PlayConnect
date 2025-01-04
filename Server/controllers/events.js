@@ -5,15 +5,13 @@ const prisma = new PrismaClient();
 
 const getUpcomingEvents = async (req, res) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); 
-
     const events = await prisma.event.findMany({
-      where: {
-        date: {
-          gte: today,
-        },
+      include: {
+        creator: true
       },
+      orderBy: {
+        date: 'desc'
+      }
     });
     res.json(events);
   } catch (error) {
@@ -242,20 +240,35 @@ const updateEvent = async (req, res) => {
   }
 };
 
+// Update or add this function to your event controller
 const deleteEvent = async (req, res) => {
+  const { eventId } = req.params;
+
   try {
-
-    const { id } = req.params;
-
-    await prisma.event.delete({
-      where: { event_id: parseInt(id) },
+    // First, delete all event participants
+    await prisma.eventParticipant.deleteMany({
+      where: {
+        event_id: parseInt(eventId)
+      }
     });
 
+    // Then delete the event itself
+    const deletedEvent = await prisma.event.delete({
+      where: {
+        event_id: parseInt(eventId)
+      }
+    });
 
-    res.status(204).send();
+    res.status(200).json({
+      message: "Event and all its participants deleted successfully",
+      event: deletedEvent
+    });
   } catch (error) {
- 
-    res.status(500).json({ error: "Error deleting the event", details: error.message });
+    console.error('Error deleting event:', error);
+    res.status(500).json({
+      error: "Failed to delete event",
+      details: error.message
+    });
   }
 };
 
@@ -332,6 +345,130 @@ const getParticipantQR = async (req, res) => {
   }
 };
 
+const getTomorrowEvents = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const dayAfterTomorrow = new Date(tomorrow);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+    const events = await prisma.event.findMany({
+      where: {
+        AND: [
+          {
+            date: {
+              gte: today,
+              lt: dayAfterTomorrow,
+            }
+          },
+          {
+            status: "approved"  // Only get approved events
+          }
+        ]
+      },
+      include: {
+        creator: true,
+      },
+      orderBy: {
+        date: 'asc'  // Order by date ascending
+      }
+    });
+
+    // Add a label to each event indicating if it's today or tomorrow
+    const eventsWithLabel = events.map(event => {
+      const eventDate = new Date(event.date);
+      eventDate.setHours(0, 0, 0, 0);
+      
+      const isToday = eventDate.getTime() === today.getTime();
+      const isTomorrow = eventDate.getTime() === tomorrow.getTime();
+
+      return {
+        ...event,
+        timeLabel: isToday ? "Today" : isTomorrow ? "Tomorrow" : ""
+      };
+    });
+
+    res.json(eventsWithLabel);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching events", details: error.message });
+  }
+};
+
+const getTotalEvents = async (req, res) => {
+  try {
+    const count = await prisma.event.count();
+    res.json({ total: count });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching event count", details: error.message });
+  }
+};
+
+const getPendingEvents = async (req, res) => {
+  try {
+    const pendingEvents = await prisma.event.findMany({
+      where: {
+        status: "pending"
+      },
+      include: {
+        creator: true
+      }
+    });
+    res.json(pendingEvents);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching pending events", details: error.message });
+  }
+};
+
+const approveEvent = async (req, res) => {
+  const { eventId } = req.params;
+  try {
+    const updatedEvent = await prisma.event.update({
+      where: { event_id: parseInt(eventId) },
+      data: { status: "approved" }
+    });
+    res.json(updatedEvent);
+  } catch (error) {
+    res.status(500).json({ error: "Error approving event", details: error.message });
+  }
+};
+
+const rejectEvent = async (req, res) => {
+  const { eventId } = req.params;
+  try {
+    const updatedEvent = await prisma.event.update({
+      where: { event_id: parseInt(eventId) },
+      data: { status: "rejected" }
+    });
+    res.json(updatedEvent);
+  } catch (error) {
+    res.status(500).json({ error: "Error rejecting event", details: error.message });
+  }
+};
+
+// New endpoint for homepage (approved events only)
+const getApprovedEvents = async (req, res) => {
+  try {
+    const events = await prisma.event.findMany({
+      where: {
+        status: "approved"
+      },
+      include: {
+        creator: true
+      },
+      orderBy: {
+        date: 'desc'
+      }
+    });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching events", details: error.message });
+  }
+};
+
 module.exports = { 
   EventWithCreator, 
   getAllEvents, 
@@ -345,5 +482,11 @@ module.exports = {
   removeParticipant, 
   isUserParticipant,
   getParticipantQR ,
-  getUpcomingEvents
+  getUpcomingEvents,
+  getTomorrowEvents,
+  getTotalEvents,
+  getPendingEvents,
+  approveEvent,
+  rejectEvent,
+  getApprovedEvents
 };

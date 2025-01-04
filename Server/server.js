@@ -93,6 +93,8 @@ app.use('/review', reviewRoutes);
 app.use('/reports', reportRoutes);
 
 
+// Admin routes with prefix
+
 // Start the Server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

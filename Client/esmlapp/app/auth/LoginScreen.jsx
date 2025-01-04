@@ -30,7 +30,6 @@ const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 export default function Login() {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -106,41 +105,40 @@ export default function Login() {
         <View style={styles.contentContainer}>
           <Text style={styles.title}>Welcome Back!</Text>
 
-          <View style={styles.inputContainer}>
-            <FontAwesome name="envelope" size={20} color="#ffffff80" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholderTextColor="#ffffff80"
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <View style={styles.inputContainer}>
+              <FontAwesome name="envelope" size={20} color="#ffffff80" />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholderTextColor="#ffffff80"
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+            </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="#ffffff80" />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!isPasswordVisible}
-              placeholderTextColor="#ffffff80"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-              <FontAwesome name={isPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
-            </TouchableOpacity>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.inputContainer}>
+              <FontAwesome name="key" size={20} color="#ffffff80" />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!isPasswordVisible}
+                placeholderTextColor="#ffffff80"
+                autoCapitalize="none"
+              />
+              <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+                <FontAwesome name={isPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
+              </TouchableOpacity>
+            </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.forgotPassword}
-            onPress={() => navigation.navigate('ForgotPassword')}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity onPress={handleLogin} style={styles.buttonContainer}>
             <LinearGradient
@@ -175,12 +173,14 @@ export default function Login() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.createAccountButton}
-            onPress={() => navigation.navigate('SignUp')}
-          >
-            <Text style={styles.createAccountText}>Create An Account</Text>
-          </TouchableOpacity>
+          <View style={styles.createAccountContainer}>
+            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+              <Text style={styles.createAccountText}>Create An Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
@@ -219,12 +219,16 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
+  inputGroup: {
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
+    marginBottom: windowHeight * 0.02,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: windowWidth * 0.03,
-    marginBottom: windowHeight * 0.02,
     height: windowHeight * 0.06,
     paddingHorizontal: windowWidth * 0.04,
     width: '100%',
@@ -308,11 +312,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  createAccountButton: {
-    marginBottom: windowHeight * 0.12,
+  createAccountContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
+    marginBottom: windowHeight * 0.12,
     marginTop: windowHeight * -0.02,
+  },
+  inputLabel: {
+    color: '#FFFFFF',
+    fontSize: windowWidth * 0.035,
+    marginBottom: windowHeight * 0.01,
   },
   createAccountText: {
     color: '#FFFFFF',

@@ -16,7 +16,7 @@ import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { BASE_URL } from "../../Api";
 import Navbar from '../navbar/Navbar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import NotificationsModal from '../components/NotificationsModal';
 
 const { width } = Dimensions.get("window");
@@ -119,7 +119,7 @@ const App = () => {
       });
 
     axios
-      .get(`${BASE_URL}/events/getAll`)
+      .get(`${BASE_URL}/events/approved`)
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
