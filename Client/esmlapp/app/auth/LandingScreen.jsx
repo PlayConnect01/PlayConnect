@@ -11,7 +11,7 @@ const Landing = () => {
 
   const pages = [
     {
-      title: "Welcome to PlayConnect",
+      title: "Welcome to sportsmate",
       description: "Discover partners, explore events, and gear up for your favorite sport!",
       image: require('../../assets/images/welcome_screen.png.webp')
     },

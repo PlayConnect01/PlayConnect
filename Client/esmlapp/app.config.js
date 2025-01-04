@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'PlayConnect',
+  name: 'sportsmate',
   slug: 'playconnect',
   version: '1.0.0',
   orientation: 'portrait',
@@ -30,8 +30,5 @@ module.exports = {
   extra: {
     apiUrl: process.env.API_URL || 'http://localhost:3000',
     adminApiUrl: process.env.ADMIN_API_URL || 'http://localhost:3000/admin'
-  },
-  plugins: [
-    'expo-router'
-  ]
+  }
 };
