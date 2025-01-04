@@ -26,6 +26,8 @@ const favorites = require('./routes/favoriteRoutes');
 const paymentRoutes = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
 const orderRoutes = require('./routes/orderRoutes');
+const reviewRoutes = require('./routes/review');
+const reportRoutes = require('./routes/reports.js');
 const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const userproductRoutes = require('./routes/userproduct');
 const app = express();
@@ -94,10 +96,11 @@ app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
 app.use('/orderHistory', orderHistoryRoutes);
 app.use('/orders', orderRoutes);
+app.use('/review', reviewRoutes);
+app.use('/reports', reportRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/userproduct', userproductRoutes);
 
-// Admin routes with prefix
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

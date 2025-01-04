@@ -75,8 +75,8 @@ export default function Login() {
         AsyncStorage.setItem('userData', JSON.stringify(user))
       ]);
 
-      console.log('Saved user data:', user);
-      console.log('Saved token:', token);
+      // console.log('Saved user data:', user);
+      // console.log('Saved token:', token);
 
       // Navigate to home page after successful login
       navigation.reset({
