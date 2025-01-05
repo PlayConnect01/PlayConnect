@@ -61,7 +61,8 @@ const Navbar = () => {
     const currentRoute = route.name;
     if (screenName === "Home" && currentRoute === "Home") return true;
     if (screenName === "Profile" && currentRoute === "Profile") return true;
-    if (screenName === "Marketplace" && currentRoute === "Marketplace") return true;
+    if (screenName === "Marketplace" && currentRoute === "Marketplace")
+      return true;
     if (screenName === "Messages" && currentRoute === "Messages") return true;
     if (screenName === "Match" && currentRoute === "Match") return true;
     return currentRoute === screenName;
@@ -72,21 +73,23 @@ const Navbar = () => {
       <View style={styles.navbar}>
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Home")}
+          onPress={() => navigation.navigate("Homepage/Homep")}
         >
           <Icon
             name="home"
             size={24}
             color={isActive("Home") ? "#0095FF" : "#9CA3AF"}
           />
-          <Text style={isActive("Home") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={isActive("Home") ? styles.navTextActive : styles.navText}
+          >
             Home
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Messages")}
+          onPress={() => navigation.navigate("Chat/MessagePage")}
         >
           <View style={styles.iconContainer}>
             <Icon
@@ -100,14 +103,19 @@ const Navbar = () => {
               </View>
             )}
           </View>
-          <Text style={isActive("Messages") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={isActive("Messages") ? styles.navTextActive : styles.navText}
+          >
             Message
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
-          onPress={() => navigation.navigate("Match")}
+          style={[
+            styles.centerButton,
+            isActive("Match") && styles.activeCenterButton,
+          ]}
+          onPress={() => navigation.navigate("Match/Firstpagematch")}
         >
           <View style={styles.centerButtonInner}>
             <Icon name="flame" size={28} color="#FFFFFF" />
@@ -116,28 +124,34 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Marketplace")}
+          onPress={() => navigation.navigate("marketplace/marketplace")}
         >
           <Icon
             name="cart"
             size={24}
             color={isActive("Marketplace") ? "#0095FF" : "#9CA3AF"}
           />
-          <Text style={isActive("Marketplace") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={
+              isActive("Marketplace") ? styles.navTextActive : styles.navText
+            }
+          >
             Market
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Profile")}
+          onPress={() => navigation.navigate("profile/ProfilePage")}
         >
           <Icon
             name="person"
             size={24}
             color={isActive("Profile") ? "#0095FF" : "#9CA3AF"}
           />
-          <Text style={isActive("Profile") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={isActive("Profile") ? styles.navTextActive : styles.navText}
+          >
             Profile
           </Text>
         </TouchableOpacity>
