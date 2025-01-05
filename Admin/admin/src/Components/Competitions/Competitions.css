@@ -1,0 +1,124 @@
+.tournaments-container {
+  padding: 2rem;
+}
+
+.tournaments-header {
+  margin-bottom: 2rem;
+}
+
+.tournaments-header h1 {
+  color: #333;
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+.tournaments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.tournament-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.tournament-card:hover {
+  transform: translateY(-4px);
+}
+
+.tournament-header {
+  padding: 1rem;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.sport-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.point-reward {
+  color: #f1c40f;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.tournament-info {
+  padding: 1.5rem;
+}
+
+.tournament-info h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.icon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.tournament-actions {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  border-top: 1px solid #eee;
+}
+
+.action-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.action-button.view {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.action-button.delete {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.action-button:hover {
+  filter: brightness(0.95);
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: #d32f2f;
+  background: #ffebee;
+  border-radius: 8px;
+  margin: 2rem;
+}

@@ -16,7 +16,7 @@ import axios from "axios";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { BASE_URL } from "../../Api";
 import Navbar from '../navbar/Navbar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import NotificationsModal from '../components/NotificationsModal';
 
 const { width } = Dimensions.get("window");
@@ -119,7 +119,7 @@ const App = () => {
       });
 
     axios
-      .get(`${BASE_URL}/events/getAll`)
+      .get(`${BASE_URL}/events/approved`)
       .then((response) => {
         const fetchedEvents = response.data;
         setEvents(fetchedEvents);
@@ -182,14 +182,6 @@ const App = () => {
     setUnreadNotifications(0);
   };
 
-  const handlePaymentPress = async () => {
-    // Fetch user details using the userId
-    const userDetailsResponse = await axios.get(`${BASE_URL}/users/${currentUserId}`);
-    const userDetails = userDetailsResponse.data;
-    navigation.navigate('PaymentScreen', {
-      userDetails: userDetails // Pass fetched user details
-    });
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -408,7 +400,7 @@ const App = () => {
       </ScrollView>
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={handlePaymentPress}
+        onPress={() => navigation.navigate("Homepage/CreateEvent")}
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>

@@ -31,7 +31,6 @@ const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 export default function Login() {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -115,7 +114,7 @@ export default function Login() {
           <View style={styles.contentContainer}>
             <Text style={styles.title}>Welcome Back!</Text>
 
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, { marginBottom: windowHeight * 0.02 }]}>
               <FontAwesome name="envelope" size={20} color="#ffffff80" />
               <TextInput
                 style={styles.input}
@@ -244,12 +243,16 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
+  inputGroup: {
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
+    marginBottom: windowHeight * 0.02,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: windowWidth * 0.03,
-    marginBottom: windowHeight * 0.02,
     height: windowHeight * 0.06,
     paddingHorizontal: windowWidth * 0.04,
     width: '100%',
@@ -333,11 +336,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  createAccountButton: {
-    marginBottom: windowHeight * 0.12,
+  createAccountContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: windowWidth * 0.85,
+    marginBottom: windowHeight * 0.12,
     marginTop: windowHeight * -0.02,
+  },
+  inputLabel: {
+    color: '#FFFFFF',
+    fontSize: windowWidth * 0.035,
+    marginBottom: windowHeight * 0.01,
   },
   createAccountText: {
     color: '#FFFFFF',

@@ -53,48 +53,68 @@ enum NotificationType {
   TOURNAMENT_INVITATION
 }
 
+model Admin {
+  admin_id    Int      @id @default(autoincrement())
+  username    String
+  email       String   @unique
+  password    String
+  role        String   @default("ADMIN")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  reviewed_events Event[]
+
+  handled_reports Report[] @relation("AdminHandledReports")
+}
+
 model User {
-  user_id         Int       @id @default(autoincrement())
+  user_id         Int                   @id @default(autoincrement())
   username        String
-  email           String    @unique
-  password          String?
-  auth_provider     String?
-  auth_provider_id  String?
+  email           String                @unique
+  password        String?
+  auth_provider   String?
+  auth_provider_id String?
   location        String?
   profile_picture String?
   skill_level     String?
   rating          Float?
-  points          Int       @default(0)
+  points          Int                   @default(0)
   birthdate       DateTime? 
   phone_number    String?
   phone_country_code String?
-
-  created_teams      Team[]          @relation("TeamCreator")
+  is_banned       Boolean               @default(false)
+  is_blocked      Boolean               @default(false)
+  ban_reason      String?
+  block_reason    String?
+ 
+  
+  created_teams      Team[]             @relation("TeamCreator")
   team_memberships   TeamMember[]
-  created_tournaments Tournament[]    @relation("TournamentCreator")
-  created_events     Event[]         @relation("EventCreator")
+  created_tournaments Tournament[]      @relation("TournamentCreator")
+  created_events     Event[]            @relation("EventCreator")
   event_participations EventParticipant[]
   sports            UserSport[]
   calendar_events   Calendar[]
   chat_memberships  ChatMember[]
-  sent_messages     Message[]        @relation("MessageSender")
+  sent_messages     Message[]           @relation("MessageSender")
   achievements      Achievement[]
   cart              Cart?
-  favorites         Favorite[]       // Add this new relation
-  reports_received  Report[]         @relation("ReportsReceived")
-  reports_sent      Report[]         @relation("ReportsSent")
+  favorites         Favorite[]          
+  reports_received  Report[]            @relation("ReportsReceived")
+  reports_sent      Report[]            @relation("ReportsSent")
   points_logs       PointsLog[]
   notifications     Notification[]   @relation("UserNotifications")
   matches_as_user_1   Match[]        @relation("User1Matches")
   matches_as_user_2   Match[]        @relation("User2Matches")
   initiated_chats     Chat[]         @relation("ChatInitiator")
-
-  // New relationships for video calls
+reviews         Review[]
   initiated_calls     VideoCall[]    @relation("CallInitiator")
   received_calls      VideoCall[]    @relation("CallParticipant")
 
-  // New relation for orders
+
   orders              Order[]
+  userProducts        UserProduct[]
+
+  @@index([email])
 }
 
 model Sport {
@@ -102,12 +122,13 @@ model Sport {
   name        String
   description String?
   icon        String?  
-
   users       UserSport[]
   teams       Team[]
   tournaments Tournament[]
   matches     Match[]
-  products    MarketplaceProduct[] // New relation to products
+  products    MarketplaceProduct[] 
+
+  @@index([name])
 }
 
 model UserSport {
@@ -191,14 +212,20 @@ model Event {
   participants   Int
   price          Float
   image          String?
+  status         String    @default("pending") // "pending", "approved", "rejected"
+  admin_note     String?   // Optional note from admin when rejecting
+  reviewed_at   DateTime? // When the admin reviewed the event
+  reviewed_by   Int?      // Admin who reviewed the event
+  admin         Admin?    @relation(fields: [reviewed_by], references: [admin_id])
 
   event_participants EventParticipant[]
   calendar_entries   Calendar[]
-
+reviews         Review[]
   creator_id    Int
   creator       User @relation("EventCreator", fields: [creator_id], references: [user_id])
 
   @@index([event_name])
+  @@index([reviewed_by])
 }
 
 model EventParticipant {
@@ -306,9 +333,24 @@ model MarketplaceProduct {
   sport        Sport    @relation(fields: [sport_id], references: [sport_id])
   cart_items   CartItem[]
   favorites    Favorite[]
-  order_items  OrderItem[] // Add this relation
+  order_items  OrderItem[]
+  userProducts UserProduct[]
 
   @@index([sport_id])
+}
+
+model UserProduct {
+  id          Int                @id @default(autoincrement())
+  user_id     Int
+  product_id  Int
+  created_at  DateTime           @default(now())
+
+  user        User               @relation(fields: [user_id], references: [user_id])
+  product     MarketplaceProduct @relation(fields: [product_id], references: [product_id])
+
+  @@index([user_id])
+  @@index([product_id])
+  @@unique([user_id, product_id]) // Ensure a user can't have the same product multiple times
 }
 
 model Cart {
@@ -483,4 +525,20 @@ model OrderItem {
 
   @@index([order_id])
   @@index([product_id])
+}
+
+model Review {
+  review_id    Int      @id @default(autoincrement())
+  event_id     Int
+  user_id      Int
+  rating       Int      // 1-5 stars
+  comment      String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  event        Event    @relation(fields: [event_id], references: [event_id])
+  user         User     @relation(fields: [user_id], references: [user_id])
+
+  @@index([event_id])
+  @@index([user_id])
 }
