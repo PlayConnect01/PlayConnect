@@ -7,10 +7,10 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  SafeAreaView,
   RefreshControl,
   Animated,
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useNavigation
 } from "@react-navigation/native";
@@ -21,35 +21,27 @@ import SearchBar from './SearchBar';
 import Sidebar from './Sidebar';
 import { BASE_URL } from "../../Api";
 import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const getStyles = (isSidebarVisible) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F7FAFF',
-    position: 'relative',
+    paddingBottom: 16,
   },
   mainContainer: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#F7FAFF',
-    marginBottom: 80,
   },
   contentContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: isSidebarVisible ? 0 : 30,
-    borderTopRightRadius: 30,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
-    overflow: 'hidden',
+    paddingBottom: 24,
   },
   header: {
     backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(79, 165, 245, 0.1)',
@@ -64,11 +56,12 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 40,
   },
   menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -101,11 +94,11 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 4,
   },
   cartBadge: {
     position: 'absolute',
@@ -132,6 +125,28 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     marginVertical: 20,
     paddingHorizontal: 4,
   },
+  collectionDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginVertical: 10,
+    paddingHorizontal: 4,
+    textAlign: 'center',
+  },
+  collectionFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  collectionFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  collectionFeatureText: {
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 6,
+  },
   productContainer: {
     position: 'relative',
     width: '100%',
@@ -142,21 +157,19 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     overflow: 'hidden',
   },
   card: {
-    width: '90%',
-    height: '100%',
+    width: '70%',
+    height: 'auto',
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
+    padding: 10,
+    marginVertical: 10,
+    alignItems: 'center',
   },
   cardImageContainer: {
     width: '100%',
-    height: '100%',
+    height: 200,
     position: 'relative',
   },
   cardImage: {
@@ -164,26 +177,68 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%)',
+  badgeContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+  },
+  badgeNew: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 4,
+    padding: 4,
+    marginRight: 8,
+  },
+  badgeBestSeller: {
+    backgroundColor: '#FF4B4B',
+    borderRadius: 4,
+    padding: 4,
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   cardContentOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    padding: 24,
-    justifyContent: 'space-between',
+    padding: 8,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   cardTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
     textAlign: 'center',
-    marginTop: 24,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    marginVertical: 4,
+  },
+  cardPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    marginVertical: 4,
+  },
+  stockStatus: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+    marginVertical: 4,
+  },
+  quickViewButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 40,
+    height: 40,
+    elevation: 2,
+    marginVertical: 8,
+  },
+  quickViewText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   cardRatingContainer: {
     flexDirection: 'row',
@@ -199,22 +254,19 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
-  cardPrice: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginTop: 'auto',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+  reviewCount: {
+    fontSize: 14,
+    color: '#BDC3C7',
+    marginLeft: 8,
   },
   cardActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 24,
+    paddingHorizontal: 10,
+    marginTop: 8,
+    marginBottom: 8,
   },
   favoriteButton: {
     width: 50,
@@ -285,177 +337,102 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(79, 165, 245, 0.08)',
-    position: 'relative',
-    overflow: 'hidden',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   discountImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 16,
+    width: 80,
+    height: 80,
+    borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F7FAFF',
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  discountImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    backgroundColor: '#F0F0F0',
   },
   discountInfo: {
     flex: 1,
-    marginLeft: 16,
-    paddingRight: 8,
+    marginLeft: 12,
   },
   discountTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#2D3748',
-    marginBottom: 8,
-    letterSpacing: 0.3,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
   },
   discountPriceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
   discountPrice: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#4FA5F5',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF4B4B',
   },
   discountOldPrice: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#A0AEC0',
     textDecorationLine: 'line-through',
     marginLeft: 8,
-    fontWeight: '500',
   },
   discountSavings: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#48BB78',
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  discountPercentage: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: '#FF4B4B',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    shadowColor: '#FF4B4B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  discountPercentageText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
+    marginTop: 2,
   },
   discountCartButton: {
     backgroundColor: '#4FA5F5',
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 12,
+    padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 44,
-    height: 44,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-    marginLeft: 12,
-  },
-  discountCartButtonSuccess: {
-    backgroundColor: '#48BB78',
-  },
-  discountCartButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: '#FF4B4B',
-    width: 40,
+    minWidth: 40,
     height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '15deg' }],
-    shadowColor: '#FF4B4B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
     elevation: 2,
-  },
-  discountBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
+    marginLeft: 8,
   },
   discountDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#718096',
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 2,
   },
   discountFeatures: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 8,
+    marginTop: 4,
   },
   discountFeature: {
     backgroundColor: 'rgba(79, 165, 245, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 6,
+    marginBottom: 2,
   },
   discountFeatureText: {
     color: '#4FA5F5',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
   },
-  viewAllButton: {
-    backgroundColor: '#4FA5F5',
-    borderRadius: 16,
-    padding: 16,
+  viewAllButtonInline: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    elevation: 2,
   },
-  viewAllText: {
+  viewAllTextInline: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+    marginRight: 6,
   },
   notificationContainer: {
     position: 'absolute',
@@ -474,6 +451,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     zIndex: 1000,
+    marginBottom: 24,
   },
   notificationContent: {
     flex: 1,
@@ -487,7 +465,6 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
-    flex: 1,
   },
   notificationSuccess: {
     backgroundColor: 'rgba(72, 187, 120, 0.95)',
@@ -513,8 +490,216 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     marginRight: 8,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingTop: 16,
     paddingHorizontal: 16,
+    paddingBottom: 32,
+  },
+  specialOffersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  specialOffersTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2D3748',
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  exploreButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  exploreButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  tooltipContainer: {
+    position: 'absolute',
+    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    padding: 16,
+    borderRadius: 16,
+    maxWidth: 250,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 1000,
+    backdropFilter: 'blur(8px)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  tooltipText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  tooltipArrow: {
+    position: 'absolute',
+    width: 20,
+    height: 10,
+    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    transform: [{ rotate: '45deg' }],
+    top: -5,
+    left: '50%',
+    marginLeft: -10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  welcomeBannerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    zIndex: 100,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderTopWidth: 0,
+  },
+  welcomeBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  welcomeBannerText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    flex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    letterSpacing: 0.5,
+  },
+  welcomeBannerIcon: {
+    marginRight: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 10,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  welcomeBannerClose: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 30,
+    marginLeft: 16,
+  },
+  guideOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    zIndex: 999,
+    backdropFilter: 'blur(4px)',
+  },
+  guideSpotlight: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 100,
+    zIndex: 1000,
+    borderWidth: 2,
+    borderColor: '#4FA5F5',
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  guideText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 16,
+    lineHeight: 24,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  guideButton: {
+    backgroundColor: '#4FA5F5',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    marginTop: 16,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  guideButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  guideProgress: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  guideProgressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  guideProgressDotActive: {
+    backgroundColor: '#4FA5F5',
+    width: 24,
+  },
+  pulseAnimation: {
+    position: 'absolute',
+    borderRadius: 100,
+  },
+  tooltipIcon: {
+    marginRight: 8,
   },
 });
 
@@ -532,13 +717,235 @@ const Marketplace = () => {
   const [cartProducts, setCartProducts] = useState([]);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [addingToCartId, setAddingToCartId] = useState(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const [currentGuideStep, setCurrentGuideStep] = useState(0);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
+
+  const styles = getStyles(isSidebarVisible);
+  
+  // Animation refs
+  const notificationTimeout = useRef(null);
   const animationValues = useRef({
     scale: new Animated.Value(1),
     success: new Animated.Value(0)
   }).current;
-  const notificationTimeout = useRef(null);
+  const bannerAnimation = useRef(new Animated.Value(0)).current;
+  const spotlightPosition = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const styles = getStyles(isSidebarVisible);
+  const guideSteps = [
+    {
+      target: 'search',
+      text: 'Search for your favorite products here',
+      icon: 'magnify',
+      position: { top: 60, left: 20 }
+    },
+    {
+      target: 'categories',
+      text: 'Browse through different categories',
+      icon: 'view-grid',
+      position: { top: 120, left: 20 }
+    },
+    {
+      target: 'cart',
+      text: 'View your shopping cart',
+      icon: 'cart',
+      position: { top: 60, right: 20 }
+    }
+  ];
+
+  const renderWelcomeBanner = () => {
+    if (!showWelcomeBanner) return null;
+
+    return (
+      <Animated.View
+        style={[
+          styles.welcomeBannerContainer,
+          {
+            transform: [
+              {
+                translateY: bannerAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-200, 0]
+                })
+              }
+            ],
+            opacity: bannerAnimation
+          }
+        ]}
+      >
+        <View style={styles.welcomeBannerContent}>
+          <Animated.View
+            style={[
+              styles.welcomeBannerIcon,
+              {
+                transform: [
+                  {
+                    scale: scaleAnim
+                  },
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg']
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="shopping-outline"
+              size={28}
+              color="#FFFFFF"
+            />
+          </Animated.View>
+
+          <Animated.Text 
+            style={[
+              styles.welcomeBannerText,
+              {
+                transform: [
+                  {
+                    translateX: bannerAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [50, 0]
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            Welcome to sportsmate Marketplace! 🎉
+          </Animated.Text>
+
+          <TouchableOpacity
+            style={styles.welcomeBannerClose}
+            onPress={() => {
+              Animated.parallel([
+                Animated.timing(bannerAnimation, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                  easing: Easing.out(Easing.ease)
+                }),
+                Animated.timing(scaleAnim, {
+                  toValue: 0,
+                  duration: 200,
+                  useNativeDriver: true
+                })
+              ]).start(() => setShowWelcomeBanner(false));
+            }}
+          >
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '180deg']
+                    })
+                  }
+                ]
+              }}
+            >
+              <MaterialCommunityIcons 
+                name="close" 
+                size={20} 
+                color="#FFFFFF" 
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const animateWelcomeBanner = () => {
+    Animated.sequence([
+      Animated.spring(bannerAnimation, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true
+      }),
+      Animated.delay(3000),
+      Animated.timing(bannerAnimation, {
+        toValue: 0,
+        duration: 800,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true
+      })
+    ]).start(() => setShowWelcomeBanner(false));
+  };
+
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      try {
+        const hasVisited = await AsyncStorage.getItem('hasVisitedMarketplace');
+        if (!hasVisited) {
+          setShowGuide(true);
+          await AsyncStorage.setItem('hasVisitedMarketplace', 'true');
+          animateWelcomeBanner();
+        }
+      } catch (error) {
+        console.error('Error checking first visit:', error);
+      }
+    };
+
+    checkFirstVisit();
+  }, []);
+
+  useEffect(() => {
+    if (showGuide) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 1500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease)
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease)
+          })
+        ])
+      ).start();
+
+      Animated.loop(
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+          easing: Easing.linear
+        })
+      ).start();
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.back)
+      }).start();
+    }
+
+    return () => {
+      pulseAnim.setValue(1);
+      rotateAnim.setValue(0);
+      fadeAnim.setValue(0);
+    };
+  }, [showGuide, pulseAnim, rotateAnim, fadeAnim]);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -601,15 +1008,32 @@ const Marketplace = () => {
         const userId = userData?.user_id;
 
         if (token && userId) {
-          const response = await axios.get(`${BASE_URL}/favorites/favorites/${userId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          const favoriteIds = response.data.map(fav => fav.product_id);
-          setFavoriteProducts(favoriteIds);
+          try {
+            const response = await axios.get(`${BASE_URL}/favorites/favorites/${userId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (response.data) {
+              const favoriteIds = response.data.map(fav => fav.product_id);
+              setFavoriteProducts(favoriteIds);
+            }
+          } catch (error) {
+            // Handle 404 gracefully - user might not have any favorites yet
+            if (error.response?.status === 404) {
+              console.log('No favorites found for user');
+              setFavoriteProducts([]);
+            } else {
+              console.error("Error loading favorites:", error);
+              showNotification("Failed to load favorites", "error");
+            }
+          }
+        } else {
+          // User not logged in - this is normal, just set empty favorites
+          setFavoriteProducts([]);
         }
       } catch (error) {
-        console.error("Error loading favorites:", error);
+        console.error("Error in loadFavorites:", error);
+        showNotification("Error loading favorites", "error");
       }
     };
 
@@ -686,7 +1110,7 @@ const Marketplace = () => {
 
       if (cartProducts.some(item => item.product_id === product.product_id)) {
         showNotification("Product already in cart!", "warning");
-        navigation.navigate('ProductDetail', { productId: product.product_id });
+        navigation.navigate('Cart');
         return;
       }
 
@@ -755,7 +1179,7 @@ const Marketplace = () => {
 
       if (!token || !userId) {
         showNotification("Please login to manage favorites", "warning");
-        navigation.navigate('Login');
+        navigation.navigate('Login'); 
         return;
       }
 
@@ -816,7 +1240,7 @@ const Marketplace = () => {
       console.error("Error toggling favorite:", error);
       if (error.response?.status === 401) {
         showNotification("Please login to manage favorites", "warning");
-        navigation.navigate('Login');
+        navigation.navigate('Login'); 
       } else {
         showNotification(error.response?.data?.message || "Failed to update favorites", "error");
       }
@@ -837,8 +1261,169 @@ const Marketplace = () => {
 
   const currentProduct = products[currentProductIndex];
 
+  const showQuickView = (product) => {
+    navigation.navigate('ProductDetail', { 
+      productId: product.product_id, 
+      productName: product.name 
+    }); 
+  };
+
+  const renderGuide = () => {
+    if (!showGuide) return null;
+
+    const currentStep = guideSteps[currentGuideStep];
+    const spotlightSize = 80;
+
+    return (
+      <Animated.View 
+        style={[
+          styles.guideOverlay,
+          { opacity: fadeAnim }
+        ]}
+      >
+        {/* Pulse effect */}
+        <Animated.View
+          style={[
+            styles.pulseAnimation,
+            {
+              ...currentStep.position,
+              width: spotlightSize * 1.5,
+              height: spotlightSize * 1.5,
+              backgroundColor: 'rgba(79, 165, 245, 0.2)',
+              transform: [{ scale: pulseAnim }]
+            }
+          ]}
+        />
+        
+        {/* Main spotlight */}
+        <Animated.View
+          style={[
+            styles.guideSpotlight,
+            {
+              width: spotlightSize,
+              height: spotlightSize,
+              ...currentStep.position,
+              transform: [
+                {
+                  scale: spotlightPosition.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1]
+                  })
+                }
+              ]
+            }
+          ]}
+        />
+
+        {/* Tooltip */}
+        <View style={[styles.tooltipContainer, currentStep.position]}>
+          <Animated.View
+            style={[
+              styles.tooltipIcon,
+              {
+                transform: [
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg']
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            <MaterialCommunityIcons
+              name={currentStep.icon}
+              size={24}
+              color="#FFFFFF"
+            />
+          </Animated.View>
+
+          <Text style={styles.tooltipText}>{currentStep.text}</Text>
+
+          {/* Progress dots */}
+          <View style={styles.guideProgress}>
+            {guideSteps.map((_, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.guideProgressDot,
+                  currentGuideStep === index && styles.guideProgressDotActive,
+                  {
+                    transform: [
+                      {
+                        scale: currentGuideStep === index ? pulseAnim : 1
+                      }
+                    ]
+                  }
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Navigation button */}
+          <TouchableOpacity
+            style={styles.guideButton}
+            onPress={() => {
+              if (currentGuideStep < guideSteps.length - 1) {
+                // Next step animation
+                Animated.sequence([
+                  Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true
+                  }),
+                  Animated.timing(spotlightPosition, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true
+                  })
+                ]).start(() => {
+                  setCurrentGuideStep(currentGuideStep + 1);
+                  Animated.parallel([
+                    Animated.timing(fadeAnim, {
+                      toValue: 1,
+                      duration: 300,
+                      useNativeDriver: true
+                    }),
+                    Animated.spring(spotlightPosition, {
+                      toValue: 1,
+                      tension: 50,
+                      friction: 7,
+                      useNativeDriver: true
+                    })
+                  ]).start();
+                });
+              } else {
+                // Exit animation
+                Animated.parallel([
+                  Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true
+                  }),
+                  Animated.timing(spotlightPosition, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true
+                  })
+                ]).start(() => setShowGuide(false));
+              }
+            }}
+          >
+            <Text style={styles.guideButtonText}>
+              {currentGuideStep < guideSteps.length - 1 ? 'Next' : 'Got it!'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      {renderWelcomeBanner()}
+      {renderGuide()}
       <View style={styles.mainContainer}>
         {isSidebarVisible && (
           <Sidebar onSelectCategory={handleSelectCategory} />
@@ -866,7 +1451,7 @@ const Marketplace = () => {
                   style={styles.iconButton}
                   onPress={() => navigation.navigate('Favorites')}
                 >
-                  <FontAwesome name="heart-o" size={20} color="#333" />
+                  <FontAwesome name="heart-o" size={20} color="#333" />   
                 </TouchableOpacity>
               </View>
             </View>
@@ -877,9 +1462,13 @@ const Marketplace = () => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            overScrollMode="always"
           >
             <SearchBar onSelectProduct={() => {}} />
-            <Text style={styles.sectionTitle}>Featured Product</Text>
+            <Text style={styles.sectionTitle}>Some of Our Collection</Text>
+           
             {currentProduct && (
               <View style={styles.productContainer}>
                 <TouchableOpacity style={[styles.navButton, styles.navButtonLeft]} onPress={showPreviousProduct}>
@@ -887,17 +1476,33 @@ const Marketplace = () => {
                 </TouchableOpacity>
                 
                 <View style={styles.card}>
+                  <View style={styles.badgeContainer}>
+                    {currentProduct.isNew && (
+                      <View style={styles.badgeNew}>
+                        <Text style={styles.badgeText}>New Arrival</Text>
+                      </View>
+                    )}
+                    {currentProduct.isBestSeller && (
+                      <View style={styles.badgeBestSeller}>
+                        <Text style={styles.badgeText}>Best Seller</Text>
+                      </View>
+                    )}
+                  </View>
                   <View style={styles.cardImageContainer}>
                     <Image
                       source={{ uri: currentProduct.image_url }}
                       style={styles.cardImage}
                     />
-                    <View style={styles.imageOverlay} />
                   </View>
                   
                   <View style={styles.cardContentOverlay}>
                     <Text style={styles.cardTitle}>{currentProduct.name}</Text>
-                    
+                    <Text style={styles.cardPrice}>${currentProduct.price}</Text>
+                    <Text style={styles.stockStatus}>{currentProduct.stockStatus}</Text>
+                    <TouchableOpacity style={styles.quickViewButton} onPress={() => showQuickView(currentProduct)}>
+                      <Text style={styles.quickViewText}>Quick View</Text>
+                    </TouchableOpacity>
+
                     <View style={styles.cardRatingContainer}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <FontAwesome
@@ -909,9 +1514,8 @@ const Marketplace = () => {
                         />
                       ))}
                       <Text style={styles.ratingText}>{currentProduct.rating.toFixed(1)}</Text>
+                      <Text style={styles.reviewCount}>({currentProduct.reviewCount} reviews)</Text>
                     </View>
-                    
-                    <Text style={styles.cardPrice}>${currentProduct.price}</Text>
                     
                     <View style={styles.cardActions}>
                       <TouchableOpacity
@@ -921,10 +1525,10 @@ const Marketplace = () => {
                         ]}
                         onPress={() => toggleFavorite(currentProduct)}
                       >
-                        <FontAwesome
-                          name={favoriteProducts.includes(currentProduct.product_id) ? "heart" : "heart-o"} 
+                        <Ionicons
+                          name={favoriteProducts.includes(currentProduct.product_id) ? "heart" : "heart-dislike"} 
                           size={24} 
-                          color={favoriteProducts.includes(currentProduct.product_id) ? "#FF4B4B" : "#FFFFFF"} 
+                          color={favoriteProducts.includes(currentProduct.product_id) ? "#FF4B4B" : "#4FA5F5"} 
                         />
                       </TouchableOpacity>
                       
@@ -957,11 +1561,6 @@ const Marketplace = () => {
                         </Animated.View>
                       </TouchableOpacity>
                     </View>
-
-                    <View style={styles.swipeHint}>
-                      <Text style={styles.swipeHintText}>Swipe to explore</Text>
-                      <FontAwesome name="exchange" size={16} color="#FFFFFF" />
-                    </View>
                   </View>
                 </View>
                 
@@ -971,7 +1570,16 @@ const Marketplace = () => {
               </View>
             )}
 
-            <Text style={styles.sectionTitle}>Special Offers</Text>
+            <View style={styles.specialOffersHeader}>
+              <Text style={styles.specialOffersTitle}>Special Offers</Text>
+              <TouchableOpacity
+                style={styles.viewAllButtonInline}
+                onPress={() => navigation.navigate('AllDiscountedProducts')}
+              >
+                <Text style={styles.viewAllTextInline}>View All Offers</Text>
+                <FontAwesome name="arrow-right" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
             {discounts.map((discount) => {
               const discountedPrice = calculateDiscountedPrice(
                 discount.price,
@@ -1014,17 +1622,20 @@ const Marketplace = () => {
                     <Text style={styles.discountSavings}>
                       You save: ${savings.toFixed(2)} ({discount.discount}% OFF)
                     </Text>
-                    <Text style={styles.discountDescription} numberOfLines={2}>
-                      {discount.description || 'Experience premium quality and exceptional value with this exclusive offer.'}
-                    </Text>
                     <View style={styles.discountFeatures}>
                       <View style={styles.discountFeature}>
                         <Text style={styles.discountFeatureText}>Free Shipping</Text>
                       </View>
                       <View style={styles.discountFeature}>
-                        <Text style={styles.discountFeatureText}>Limited Time</Text>
+                        <Text style={styles.discountFeatureText}>30-Day Return</Text>
+                      </View>
+                      <View style={styles.discountFeature}>
+                        <Text style={styles.discountFeatureText}>Warranty Included</Text>
                       </View>
                     </View>
+                    <Text style={styles.discountDescription} numberOfLines={2}>
+                      {discount.description || 'Experience premium quality and exceptional value with this exclusive offer.'}
+                    </Text>
                   </View>
                   <TouchableOpacity
                     style={[
@@ -1050,10 +1661,7 @@ const Marketplace = () => {
                       {addingToCartId === discount.product_id ? (
                         <ActivityIndicator color="#FFFFFF" />
                       ) : (
-                        <>
-                          <FontAwesome name="shopping-cart" size={20} color="#FFFFFF" />
-                          <Text style={styles.discountCartButtonText}>Add</Text>
-                        </>
+                        <FontAwesome name="shopping-cart" size={20} color="#FFFFFF" />
                       )}
                     </Animated.View>
                   </TouchableOpacity>
@@ -1063,13 +1671,6 @@ const Marketplace = () => {
                 </TouchableOpacity>
               );
             })}
-
-            <TouchableOpacity
-              style={styles.viewAllButton}
-              onPress={() => navigation.navigate("AllDiscountedProduct")}
-            >
-              <Text style={styles.viewAllText}>View All Offers</Text>
-            </TouchableOpacity>
           </ScrollView>
 
           {loading && (

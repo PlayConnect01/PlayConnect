@@ -83,6 +83,13 @@ export default function Login() {
         AsyncStorage.setItem('userData', JSON.stringify(user))
       ]);
 
+<<<<<<< HEAD
+=======
+      // console.log('Saved user data:', user);
+      // console.log('Saved token:', token);
+
+      // Navigate to home page after successful login
+>>>>>>> 4a222e247eafc640dd5884c9d060431d7faa0613
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],

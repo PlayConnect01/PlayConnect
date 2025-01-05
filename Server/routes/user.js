@@ -12,7 +12,7 @@ const {
   unbanUser,
   getTotalUsers,
   deleteUser,
-  getTopPlayers
+  reportUser
 } = require('../controllers/user.js');
 
 const router = express.Router();
@@ -55,8 +55,8 @@ router.get(
 
 router.get("/count/total", getTotalUsers);
 
+router.post("/reports", reportUser);
 router.delete('/delete/:userId', deleteUser);
 
-router.get('/top', getTopPlayers);
 
 module.exports = router;

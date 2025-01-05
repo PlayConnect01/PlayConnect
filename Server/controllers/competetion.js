@@ -54,7 +54,17 @@ const getTournamentById = async (req, res) => {
               include: {
                 members: {
                   include: {
-                    user: true
+                    user: {
+                      select: {
+                        user_id: true,
+                        username: true
+                      }
+                    }
+                  }
+                },
+                creator: {
+                  select: {
+                    username: true
                   }
                 }
               }
@@ -63,10 +73,23 @@ const getTournamentById = async (req, res) => {
         }
       }
     });
+
     if (!tournament) {
       return res.status(404).json({ message: 'Tournament not found' });
     }
-    res.status(200).json(tournament);
+
+    // Transform data structure to match frontend expectations
+    const transformedTournament = {
+      ...tournament,
+      teams: tournament.teams.map(tt => ({
+        team_id: tt.team.team_id,
+        team_name: tt.team.team_name,
+        members: tt.team.members,
+        creator: tt.team.creator
+      }))
+    };
+
+    res.status(200).json(transformedTournament);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -200,7 +223,12 @@ const getTodayTournaments = async (req, res) => {
         },
         teams: {
           include: {
-            team: true
+            team: {
+              select: {
+                team_id: true,
+                team_name: true
+              }
+            }
           }
         }
       },
@@ -209,34 +237,38 @@ const getTodayTournaments = async (req, res) => {
       }
     });
 
-    // Format the tournaments with proper time labels
-    const tournamentsWithLabel = tournaments.map(tournament => {
-      const tournamentDate = new Date(tournament.start_date);
+    // Format tournaments with time labels
+    const formattedTournaments = tournaments.map(tournament => {
+      const startTime = new Date(tournament.start_date);
+      const endTime = new Date(tournament.end_date);
       const currentTime = new Date();
       
       let timeLabel = "Today";
-      if (tournamentDate < currentTime) {
+      if (startTime < currentTime) {
         timeLabel = "Ongoing";
       }
 
       return {
         ...tournament,
         timeLabel,
-        formattedStartTime: tournamentDate.toLocaleTimeString([], { 
+        start_time: startTime.toLocaleTimeString([], { 
           hour: '2-digit', 
           minute: '2-digit' 
         }),
-        formattedEndTime: new Date(tournament.end_date).toLocaleTimeString([], {
+        end_time: endTime.toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit'
         })
       };
     });
 
-    res.json(tournamentsWithLabel);
+    res.json(formattedTournaments);
   } catch (error) {
     console.error('Error fetching tournaments:', error);
-    res.status(500).json({ error: "Error fetching tournaments", details: error.message });
+    res.status(500).json({ 
+      error: "Error fetching tournaments", 
+      details: error.message 
+    });
   }
 };
 

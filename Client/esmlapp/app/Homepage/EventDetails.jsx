@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Modal, TextInput, Button } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
-import { BASE_URL } from "../../Api";
+import { BASE_URL } from '../../Api.js';
 import MapView, { Marker } from 'react-native-maps';
 import { Camera } from 'expo-camera';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
+import EventReviews from './EventReviews.jsx';
 
 const decodeToken = (token) => {
   try {
@@ -41,6 +42,24 @@ const EventDetails = () => {
   const [scannedData, setScannedData] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [stripeKey, setStripeKey] = useState(null);
+  const [userId, setUserId] = useState(null); // Add userId state
+
+  // Add useEffect to get userId from token
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (token) {
+          const decodedToken = decodeToken(token);
+          const id = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+          setUserId(id);
+        }
+      } catch (error) {
+        console.error('Error getting userId:', error);
+      }
+    };
+    getUserId();
+  }, []);
 
   // Fetch Stripe key from backend
   useEffect(() => {
@@ -85,6 +104,7 @@ const EventDetails = () => {
 
     fetchEvent();
   }, [eventId]);
+
 
 
 const initializePayment = async (amount, userId) => {
@@ -307,6 +327,7 @@ const initializePayment = async (amount, userId) => {
     navigation.navigate("Homepage/Homep");
   };
 
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -424,7 +445,9 @@ const initializePayment = async (amount, userId) => {
             <View style={styles.participantGrid}>
               {event.event_participants?.map((participant) => (
                 <View key={participant.user_id} style={styles.participantItem}>
+                   <TouchableOpacity onPress={() => navigation.navigate('profile/UserProfilePage', { userId: participant.user_id, reportedBy: userId })}>
                   <Ionicons name="person-circle" size={40} color="black" />
+                  </TouchableOpacity>
                   <Text style={styles.participantName}>{participant.user.username}</Text>
                 </View>
               ))}
@@ -449,6 +472,7 @@ const initializePayment = async (amount, userId) => {
             )}
           </View>
         </View>
+        <EventReviews eventId={eventId} navigation={navigation} userJoined={userJoined} userId={userId} />
       </ScrollView>
 
       {/* Payment Processing Modal */}
@@ -538,6 +562,7 @@ const initializePayment = async (amount, userId) => {
           </View>
         </Modal>
       )}
+
     </View>
   </StripeProvider>
 );
@@ -653,6 +678,54 @@ joinButtonText: {
   color: 'white',
   fontSize: 16,
   fontWeight: 'bold',
+},
+deleteButton: {
+  alignSelf: 'flex-end',
+  marginTop: 8,
+  padding: 4,
+  borderRadius: 4,
+  backgroundColor: '#ff6b6b',
+},
+deleteButtonText: {
+  color: '#fff',
+  fontSize: 14,
+  fontWeight: 'bold',
+},
+cancelButton: {
+  marginRight: 12,
+  padding: 8,
+  borderRadius: 4,
+},
+cancelButtonText: {
+  fontSize: 16,
+  color: '#666',
+},
+submitButton: {
+  backgroundColor: '#0095FF',
+  padding: 8,
+  borderRadius: 4,
+},
+submitButtonText: {
+  fontSize: 16,
+  color: '#fff',
+  fontWeight: 'bold',
+},
+starRatingContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 16,
+},
+starRating: {
+  flexDirection: 'row',
+  marginLeft: 8,
+},
+star: {
+  fontSize: 24,
+  color: '#ccc',
+},
+selectedStar: {
+  fontSize: 24,
+  color: '#FFD700',
 },
 });
 

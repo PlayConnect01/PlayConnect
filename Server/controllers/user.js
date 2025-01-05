@@ -1,14 +1,13 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const { PrismaClient } = require("@prisma/client");
+const prisma = require('../prisma');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 dotenv.config();
 
 
-const prismaClient = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Email transporter setup
@@ -61,7 +60,7 @@ const signup = async (req, res) => {
   }
 
   try {
-    const existingUser = await prismaClient.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
@@ -71,7 +70,7 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prismaClient.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
@@ -129,7 +128,7 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await prismaClient.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.password) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -189,7 +188,7 @@ const getOneUser = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const user = await prismaClient.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { user_id: Number(id) }, // Ensure 'id' is converted to a number
     });
 
@@ -219,7 +218,7 @@ const updateUserProfile = async (req, res) => {
     } = req.body;
 
     // Validate user exists
-    const existingUser = await prismaClient.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { user_id: userId },
     });
 
@@ -238,7 +237,7 @@ const updateUserProfile = async (req, res) => {
       ...(birthdate && { birthdate: new Date(birthdate) }), // Convert string to Date object
     };
 
-    const updatedUser = await prismaClient.user.update({
+    const updatedUser = await prisma.user.update({
       where: { user_id: userId },
       data: updateData
     });
@@ -256,6 +255,27 @@ const updateUserProfile = async (req, res) => {
       error: 'Failed to update user profile',
       details: error.message 
     });
+  }
+};
+
+const reportUser = async (req, res) => {
+  const { reported_user_id, reason } = req.body;
+  const reported_by = req.user.user_id; // Assuming you have user info in req.user
+
+  try {
+    const report = await prisma.report.create({
+      data: {
+        reported_user_id,
+        reported_by,
+        reason,
+        status: "Pending",
+      },
+    });
+
+    res.status(200).json({ success: true, report });
+  } catch (error) {
+    console.error("Error reporting user:", error);
+    res.status(500).json({ error: "Failed to report user" });
   }
 };
 
@@ -291,7 +311,7 @@ const getAllUsers = async (req, res) => {
     }
 
     // Get users with pagination
-    const users = await prismaClient.user.findMany({
+    const users = await prisma.user.findMany({
       where: whereClause,
       select: {
         user_id: true,
@@ -322,7 +342,7 @@ const getAllUsers = async (req, res) => {
     console.log('Users from database:', users);
 
     // Get total count for pagination
-    const totalUsers = await prismaClient.user.count({
+    const totalUsers = await prisma.user.count({
       where: whereClause
     });
 
@@ -346,7 +366,7 @@ const banUser = async (req, res) => {
   const { banReason } = req.body;
 
   try {
-    const updatedUser = await prismaClient.user.update({
+    const updatedUser = await prisma.user.update({
       where: {
         user_id: parseInt(userId)
       },
@@ -373,7 +393,7 @@ const unbanUser = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const updatedUser = await prismaClient.user.update({
+    const updatedUser = await prisma.user.update({
       where: {
         user_id: parseInt(userId)
       },
@@ -397,7 +417,7 @@ const unbanUser = async (req, res) => {
 
 const getTotalUsers = async (req, res) => {
   try {
-    const count = await prismaClient.user.count();
+    const count = await prisma.user.count();
     res.json({ total: count });
   } catch (error) {
     res.status(500).json({ error: "Error fetching user count", details: error.message });
@@ -409,96 +429,82 @@ const deleteUser = async (req, res) => {
   const parsedUserId = parseInt(userId);
 
   try {
-    await prismaClient.$transaction([
-      // First delete all calendar entries
-      prismaClient.calendar.deleteMany({
+    await prisma.$transaction([
+      // Delete reviews first
+      prisma.review.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete event participants before deleting events
-      prismaClient.eventParticipant.deleteMany({
-        where: { 
-          OR: [
-            { user_id: parsedUserId },
-            { event: { creator_id: parsedUserId } }
-          ]
-        }
+      // Delete calendar entries
+      prisma.calendar.deleteMany({
+        where: { user_id: parsedUserId }
       }),
 
-      // Delete events created by user
-      prismaClient.event.deleteMany({
+      // Delete event participants and events
+      prisma.eventParticipant.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      prisma.event.deleteMany({
         where: { creator_id: parsedUserId }
       }),
 
-      // Delete cart items before cart
-      prismaClient.cartItem.deleteMany({
+      // Delete cart items and cart
+      prisma.cartItem.deleteMany({
         where: { cart: { user_id: parsedUserId } }
       }),
 
-      // Delete cart
-      prismaClient.cart.deleteMany({
+      prisma.cart.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete order items before orders
-      prismaClient.orderItem.deleteMany({
+      // Delete order items and orders
+      prisma.orderItem.deleteMany({
         where: { order: { user_id: parsedUserId } }
       }),
 
-      // Delete orders
-      prismaClient.order.deleteMany({
+      prisma.order.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete favorites
-      prismaClient.favorite.deleteMany({
+      // Delete user products and favorites
+      prisma.userProduct.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete messages
-      prismaClient.message.deleteMany({
+      prisma.favorite.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
+      // Delete messages and chat members
+      prisma.message.deleteMany({
         where: { sender_id: parsedUserId }
       }),
 
-      // Delete chat memberships
-      prismaClient.chatMember.deleteMany({
+      prisma.chatMember.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete team members before teams
-      prismaClient.teamMember.deleteMany({
-        where: { 
-          OR: [
-            { user_id: parsedUserId },
-            { team: { created_by: parsedUserId } }
-          ]
-        }
+      // Delete team members and teams
+      prisma.teamMember.deleteMany({
+        where: { user_id: parsedUserId }
       }),
 
-      // Delete tournament teams before tournaments
-      prismaClient.tournamentTeam.deleteMany({
-        where: { 
-          tournament: { created_by: parsedUserId }
-        }
-      }),
-
-      // Delete teams created by user
-      prismaClient.team.deleteMany({
+      prisma.team.deleteMany({
         where: { created_by: parsedUserId }
       }),
 
-      // Delete tournaments
-      prismaClient.tournament.deleteMany({
-        where: { created_by: parsedUserId }
+      // Delete achievements and points logs
+      prisma.achievement.deleteMany({
+        where: { user_id: parsedUserId }
       }),
 
-      // Delete achievements
-      prismaClient.achievement.deleteMany({
+      prisma.pointsLog.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
       // Delete reports
-      prismaClient.report.deleteMany({
+      prisma.report.deleteMany({
         where: {
           OR: [
             { reported_by: parsedUserId },
@@ -507,28 +513,13 @@ const deleteUser = async (req, res) => {
         }
       }),
 
-      // Delete points logs
-      prismaClient.pointsLog.deleteMany({
-        where: { user_id: parsedUserId }
-      }),
-
       // Delete notifications
-      prismaClient.notification.deleteMany({
+      prisma.notification.deleteMany({
         where: { user_id: parsedUserId }
-      }),
-
-      // Delete matches
-      prismaClient.match.deleteMany({
-        where: {
-          OR: [
-            { user_id_1: parsedUserId },
-            { user_id_2: parsedUserId }
-          ]
-        }
       }),
 
       // Delete video calls
-      prismaClient.videoCall.deleteMany({
+      prisma.videoCall.deleteMany({
         where: {
           OR: [
             { initiator_id: parsedUserId },
@@ -537,8 +528,23 @@ const deleteUser = async (req, res) => {
         }
       }),
 
+      // Delete matches
+      prisma.match.deleteMany({
+        where: {
+          OR: [
+            { user_id_1: parsedUserId },
+            { user_id_2: parsedUserId }
+          ]
+        }
+      }),
+
+      // Delete user sports
+      prisma.userSport.deleteMany({
+        where: { user_id: parsedUserId }
+      }),
+
       // Finally delete the user
-      prismaClient.user.delete({
+      prisma.user.delete({
         where: { user_id: parsedUserId }
       })
     ]);
@@ -555,41 +561,17 @@ const deleteUser = async (req, res) => {
   }
 };
 
-const getTopPlayers = async (req, res) => {
-  try {
-    const users = await prismaClient.user.findMany({
-      where: {
-        is_banned: false,
-        is_blocked: false
-      },
-      select: {
-        user_id: true,
-        username: true,
-        profile_picture: true,
-        points: true,
-        achievements: {
-          select: {
-            achievement_name: true,
-            achieved_at: true
-          }
-        }
-      }
-    });
-
-    // Ensure points is never null and convert to number
-    const processedUsers = users.map(user => ({
-      ...user,
-      points: Number(user.points || 0) // Convert to number and handle null/undefined
-    }));
-
-    res.status(200).json(processedUsers);
-  } catch (error) {
-    console.error('Error fetching players:', error);
-    res.status(500).json({   
-      error: "Error fetching users", 
-      details: error.message 
-    });
-  }
+module.exports = { 
+  signup, 
+  login, 
+  logout, 
+  handleSocialAuth, 
+  getOneUser, 
+  updateUserProfile, 
+  getAllUsers, 
+  banUser, 
+  unbanUser, 
+  getTotalUsers, 
+  deleteUser,
+  reportUser 
 };
-
-module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile, getAllUsers, banUser, unbanUser, getTotalUsers, deleteUser, getTopPlayers };

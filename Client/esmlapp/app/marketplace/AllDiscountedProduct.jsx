@@ -138,7 +138,7 @@ const AllDiscountedProducts = () => {
     }
   };
 
-  const toggleFavorite = async (productId) => {
+  const toggleFavorite = useCallback(async (product) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const userDataStr = await AsyncStorage.getItem('userData');
@@ -146,45 +146,74 @@ const AllDiscountedProducts = () => {
       const userId = userData?.user_id;
 
       if (!token || !userId) {
-        showNotification("Please log in to manage favorites", "warning");
+        showNotification("Please login to manage favorites", "warning");
+        navigation.navigate('Login');
         return;
       }
 
-      let updatedFavorites = [...favorites];
-      const isFavorite = updatedFavorites.includes(productId);
+      const isAlreadyFavorite = favorites.includes(product.product_id);
 
-      if (isFavorite) {
-        updatedFavorites = updatedFavorites.filter(id => id !== productId);
-        await AsyncStorage.setItem('favoriteProducts', JSON.stringify(updatedFavorites));
-        setFavorites(updatedFavorites);
-        showNotification('Removed from favorites', 'info');
-      } else {
-        updatedFavorites.push(productId);
-        await AsyncStorage.setItem('favoriteProducts', JSON.stringify(updatedFavorites));
-        setFavorites(updatedFavorites);
-        showNotification('Added to favorites', 'success');
-      }
-
-      // Update favorites in the backend
-      const endpoint = isFavorite ? 'remove' : 'add';
-      await axios.post(
-        `${BASE_URL}/favorites/${endpoint}`,
-        {
-          userId: parseInt(userId),
-          productId: productId
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+      if (isAlreadyFavorite) {
+        // First get the favorite_id
+        const favoritesResponse = await axios.get(
+          `${BASE_URL}/favorites/favorites/user/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }
+        );
+        
+        const favorite = favoritesResponse.data.find(fav => fav.product_id === product.product_id);
+        
+        if (!favorite) {
+          showNotification("Could not find favorite to remove", "error");
+          return;
         }
-      );
+
+        // Remove from favorites using favorite_id
+        await axios.delete(
+          `${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`,
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        setFavorites(prev => prev.filter(id => id !== product.product_id));
+        showNotification("Removed from favorites ❌", "success");
+      } else {
+        // Add to favorites
+        await axios.post(
+          `${BASE_URL}/favorites/favorites/add`,
+          {
+            userId: parseInt(userId),
+            productId: product.product_id
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        setFavorites(prev => [...prev, product.product_id]);
+        showNotification("Added to favorites ❤️", "success");
+      }
     } catch (error) {
-      console.error("Error updating favorites:", error);
-      showNotification("Failed to update favorites", "error");
+      console.error("Error toggling favorite:", error);
+      if (error.response?.status === 401) {
+        showNotification("Please login to manage favorites", "warning");
+        navigation.navigate('Login');
+      } else {
+        showNotification(error.response?.data?.message || "Failed to update favorites", "error");
+      }
     }
-  };
+  }, [favorites, navigation, showNotification]);
 
   const navigateToProductDetail = (productId) => {
     navigation.navigate('ProductDetail', { productId });
@@ -310,7 +339,7 @@ const AllDiscountedProducts = () => {
         
         <TouchableOpacity
           style={styles.favoriteButton}
-          onPress={() => toggleFavorite(product.product_id)}
+          onPress={() => toggleFavorite(product)}
         >
           <FontAwesome
             name={isFavorite ? 'heart' : 'heart-o'}
@@ -436,80 +465,83 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7FAFF',
-    padding: 16,
   },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1A365D',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#4A5568',
-    marginBottom: 16,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F7FAFF',
   },
   sortingContainer: {
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sortingTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
     color: '#2D3748',
+    marginBottom: 12,
   },
   sortingButtons: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
   sortButton: {
-    paddingHorizontal: 12,
+    flex: 1,
     paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 20,
     backgroundColor: '#F0F4F8',
+    alignItems: 'center',
   },
   sortButtonActive: {
     backgroundColor: '#4FA5F5',
   },
   sortButtonText: {
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: '500',
     color: '#4A5568',
   },
   sortButtonTextActive: {
-    color: '#FFF',
+    color: '#FFFFFF',
   },
   categoriesContainer: {
-    marginBottom: 16,
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
   categoryTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#2D3748',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   productsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 16,
   },
   productCard: {
     width: cardWidth,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    marginBottom: 16,
+    overflow: 'hidden',
     shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-    overflow: 'hidden',
+    marginBottom: 16,
   },
   discountBadge: {
     position: 'absolute',
@@ -522,7 +554,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   discountText: {
-    color: '#FFF',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -531,6 +563,9 @@ const styles = StyleSheet.create({
     top: 12,
     left: 12,
     zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: 8,
+    borderRadius: 20,
   },
   productImage: {
     width: '100%',
@@ -541,10 +576,11 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#2D3748',
     marginBottom: 4,
+    height: 40,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -562,13 +598,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   discountedPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#48BB78',
     marginRight: 8,
   },
   originalPrice: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#A0AEC0',
     textDecorationLine: 'line-through',
   },
@@ -588,31 +624,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#48BB78',
   },
   buttonText: {
-    color: '#FFF',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '600',
   },
   notification: {
     position: 'absolute',
-    bottom: 20,
+    bottom: Platform.OS === 'ios' ? 90 : 70,
     left: 20,
     right: 20,
-    backgroundColor: '#000000CC',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  notificationSuccess: {
+    backgroundColor: 'rgba(72, 187, 120, 0.9)',
+  },
+  notificationError: {
+    backgroundColor: 'rgba(245, 101, 101, 0.9)',
+  },
+  notificationWarning: {
+    backgroundColor: 'rgba(236, 201, 75, 0.9)',
+  },
+  notificationIcon: {
+    marginRight: 12,
   },
   notificationText: {
+    flex: 1,
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '500',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   }
 });
 
