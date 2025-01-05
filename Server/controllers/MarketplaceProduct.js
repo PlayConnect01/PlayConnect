@@ -238,9 +238,178 @@ try {
     return res.status(500).json({ error: "An error occurred while searching for products." });
 }}
 
-// Export the controller function
+// Function to get discounted products by category
+async function getDiscountedProductsByCategory(req, res) {
+    const { category } = req.params;
+    
+    try {
+        let products;
+        
+        if (category.toLowerCase() === 'all') {
+            products = await prisma.marketplaceProduct.findMany({
+                where: {
+                    discount: {
+                        gt: 0
+                    }
+                },
+                include: {
+                    sport: true
+                },
+                orderBy: {
+                    discount: 'desc'
+                }
+            });
+        } else {
+            // Get the sport ID for the category name
+            const sport = await prisma.sport.findFirst({
+                where: {
+                    name: {
+                        equals: category,
+                        mode: 'insensitive'
+                    }
+                }
+            });
+
+            if (!sport) {
+                return res.status(404).json({ 
+                    success: false,
+                    message: `Sport category '${category}' not found`
+                });
+            }
+
+            products = await prisma.marketplaceProduct.findMany({
+                where: {
+                    AND: [
+                        { sport_id: sport.sport_id },
+                        { discount: { gt: 0 } }
+                    ]
+                },
+                include: {
+                    sport: true
+                },
+                orderBy: {
+                    discount: 'desc'
+                }
+            });
+        }
+
+        if (!products || products.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: `No discounted products found in ${category}`
+            });
+        }
+
+        // Add additional product information
+        const enhancedProducts = products.map(product => ({
+            ...product,
+            discounted_price: parseFloat((product.price * (1 - product.discount / 100)).toFixed(2)),
+            savings: parseFloat((product.price * (product.discount / 100)).toFixed(2)),
+            formatted_price: `$${product.price.toFixed(2)}`,
+            formatted_discounted_price: `$${(product.price * (1 - product.discount / 100)).toFixed(2)}`
+        }));
+
+        res.json({
+            success: true,
+            count: enhancedProducts.length,
+            category: category,
+            products: enhancedProducts
+        });
+    } catch (error) {
+        console.error('Error getting discounted products by category:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to get discounted products for this category',
+            error: error.message
+        });
+    }
+}
+
+// Function to get all products by category
+async function getProductsByCategory(req, res) {
+    const { category } = req.params;
+    
+    try {
+        let products;
+        
+        if (category.toLowerCase() === 'all') {
+            products = await prisma.marketplaceProduct.findMany({
+                include: {
+                    sport: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+        } else {
+            // Get the sport ID for the category name
+            const sport = await prisma.sport.findFirst({
+                where: {
+                    name: {
+                        equals: category,
+                        mode: 'insensitive'
+                    }
+                }
+            });
+
+            if (!sport) {
+                return res.status(404).json({ 
+                    success: false,
+                    message: `Sport category '${category}' not found`
+                });
+            }
+
+            products = await prisma.marketplaceProduct.findMany({
+                where: {
+                    sport_id: sport.sport_id
+                },
+                include: {
+                    sport: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+        }
+
+        if (!products || products.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: `No products found in ${category}`
+            });
+        }
+
+        // Add additional product information
+        const enhancedProducts = products.map(product => ({
+            ...product,
+            discounted_price: product.discount > 0 ? parseFloat((product.price * (1 - product.discount / 100)).toFixed(2)) : product.price,
+            savings: product.discount > 0 ? parseFloat((product.price * (product.discount / 100)).toFixed(2)) : 0,
+            formatted_price: `$${product.price.toFixed(2)}`,
+            formatted_discounted_price: product.discount > 0 ? 
+                `$${(product.price * (1 - product.discount / 100)).toFixed(2)}` : 
+                `$${product.price.toFixed(2)}`
+        }));
+
+        res.json({
+            success: true,
+            count: enhancedProducts.length,
+            category: category,
+            products: enhancedProducts
+        });
+    } catch (error) {
+        console.error('Error getting products by category:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to get products for this category',
+            error: error.message
+        });
+    }
+}
+
+// Export the controller functions
 module.exports = {
-    getProductsBySportId, getLimitedProductsBySport,
+    getProductsBySportId,
+    getLimitedProductsBySport,
     getLowestPriceProduct,
     getTwoLowestPriceProducts,
     getAllProductsBySport,
@@ -249,5 +418,7 @@ module.exports = {
     getTopThreeDiscountedProducts,
     getProductsByDiscount,
     getProductById,
-    searchProductByName // Add this line
+    searchProductByName,
+    getDiscountedProductsByCategory,
+    getProductsByCategory
 };

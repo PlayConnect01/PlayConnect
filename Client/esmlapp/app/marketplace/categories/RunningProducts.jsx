@@ -25,9 +25,9 @@ import { BlurView } from 'expo-blur';
 import Toast from 'react-native-toast-message';
 import { Easing } from 'react-native';
 
-const SPORT_ID = 1; 
+const SPORT_ID = 12; 
 
-const  FootballProducts= () => {
+const   RunningProducts= () => {
   const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
   
   const [products, setProducts] = useState([]);
@@ -1543,4 +1543,15 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FootballProducts;
+
+
+
+
+
+
+
+
+
+
+
+export default RunningProducts;
