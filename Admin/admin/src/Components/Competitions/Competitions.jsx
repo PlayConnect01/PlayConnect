@@ -3,6 +3,7 @@ import axios from 'axios';
 import './Competitions.css';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { MdEmojiEvents, MdPerson, MdCalendarToday, MdGroup, MdAdd } from 'react-icons/md';
 
 const Competitions = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -60,6 +61,12 @@ const Competitions = () => {
     <div className="tournaments-container">
       <div className="tournaments-header">
         <h1>Tournaments Management</h1>
+        <button 
+          className="add-tournament-button"
+          onClick={() => navigate('/admin/competitions/create')}
+        >
+          <MdAdd /> New Tournament
+        </button>
       </div>
       <div className="tournaments-grid">
         {tournaments.map((tournament) => (
@@ -69,23 +76,24 @@ const Competitions = () => {
                 {tournament.sport?.name || 'No Sport'}
               </div>
               <div className="point-reward">
-                🏆 {tournament.point_reward} Points
+                <MdEmojiEvents style={{ color: '#FFD700' }} />
+                {tournament.point_reward} Points
               </div>
             </div>
             <div className="tournament-info">
               <h3>{tournament.tournament_name}</h3>
               <div className="info-row">
-                <span className="icon">👤</span>
+                <span className="icon"><MdPerson style={{ color: '#333' }} /></span>
                 <span>Organizer: {tournament.creator?.username}</span>
               </div>
               <div className="info-row">
-                <span className="icon">📅</span>
+                <span className="icon"><MdCalendarToday style={{ color: '#333' }} /></span>
                 <span>
                   {new Date(tournament.start_date).toLocaleDateString()} - {new Date(tournament.end_date).toLocaleDateString()}
                 </span>
               </div>
               <div className="info-row">
-                <span className="icon">👥</span>
+                <span className="icon"><MdGroup style={{ color: '#333' }} /></span>
                 <span>Teams: {tournament.teams?.length || 0}</span>
               </div>
             </div>
@@ -111,3 +119,4 @@ const Competitions = () => {
 };
 
 export default Competitions;
+

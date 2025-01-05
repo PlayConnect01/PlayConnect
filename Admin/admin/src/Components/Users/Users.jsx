@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Users.css';
 import Swal from 'sweetalert2';
+import { MdGavel, MdLock, MdLockOpen } from 'react-icons/md';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -320,25 +321,25 @@ const Users = () => {
                       className="unban-btn"
                       title="Unban user"
                     >
-                      🔓
+                      <MdLockOpen />
                     </button>
                   ) : (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <>
                       <button 
                         onClick={() => handleBanUser(user.user_id, user.username)}
                         className="ban-btn"
                         title="Ban user"
                       >
-                        ⛔
+                        <MdLock />
                       </button>
                       <button 
                         onClick={() => handleDeleteUser(user.user_id, user.username)}
                         className="delete-btn"
                         title="Delete user permanently"
                       >
-                        🗑️
+                        <MdGavel />
                       </button>
-                    </div>
+                    </>
                   )}
                 </td>
               </tr>

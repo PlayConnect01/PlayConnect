@@ -64,6 +64,7 @@ model Admin {
   reviewed_events Event[]
 
   handled_reports Report[] @relation("AdminHandledReports")
+  created_tournaments Tournament[] @relation("TournamentCreator")
 }
 
 model User {
@@ -90,7 +91,6 @@ model User {
   
   created_teams      Team[]          @relation("TeamCreator")
   team_memberships   TeamMember[]
-  created_tournaments Tournament[]    @relation("TournamentCreator")
   created_events     Event[]         @relation("EventCreator")
   event_participations EventParticipant[]
   sports            UserSport[]
@@ -178,7 +178,7 @@ model Tournament {
   point_reward    Int
 
   sport           Sport      @relation(fields: [sport_id], references: [sport_id])
-  creator         User       @relation("TournamentCreator", fields: [created_by], references: [user_id])
+  creator         Admin      @relation("TournamentCreator", fields: [created_by], references: [admin_id])
   teams           TournamentTeam[]
 
   @@index([sport_id])

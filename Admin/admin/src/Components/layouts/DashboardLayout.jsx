@@ -8,6 +8,7 @@ import Events from '../Events/Events';
 import EventDetails from '../Events/EventDetails';
 import Competitions from '../Competitions/Competitions';
 import CompetitionsDetails from '../Competitions/CompetitionsDetails';
+import CreateCompetition from '../Competitions/CreateCompetition';
 
 const DashboardLayout = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -45,6 +46,7 @@ const DashboardLayout = () => {
           <Route path="/events/details/:eventId" element={<EventDetails />} />
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/competitions/details/:id" element={<CompetitionsDetails />} />
+          <Route path="/competitions/create" element={<CreateCompetition />} />
           <Route path="/" element={<Dashboard />} />
         </Routes>
       </div>

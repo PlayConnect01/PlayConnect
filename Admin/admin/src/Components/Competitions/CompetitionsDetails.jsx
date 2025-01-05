@@ -32,9 +32,6 @@ const CompetitionsDetails = () => {
   return (
     <div className="tournament-details-container">
       <div className="tournament-details-header">
-        <button className="back-button" onClick={() => navigate('/admin/competitions')}>
-          ← Back to Tournaments
-        </button>
         <h1>{tournament.tournament_name}</h1>
       </div>
 

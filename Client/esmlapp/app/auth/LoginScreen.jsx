@@ -67,24 +67,40 @@ export default function Login() {
         password,
       });
 
+      if (response.data.user.is_banned) {
+        Alert.alert(
+          'Account Banned',
+          'Your account has been banned. Please contact support for more information.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       const { token, user } = response.data;
       
-      // Save both token and user data
       await Promise.all([
         AsyncStorage.setItem('userToken', token),
         AsyncStorage.setItem('userData', JSON.stringify(user))
       ]);
 
-      console.log('Saved user data:', user);
-      console.log('Saved token:', token);
-
-      // Navigate to home page after successful login
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      Alert.alert('Error', 'Invalid login credentials!');
+      console.log('Login error:', error.response?.data);
+      
+      if (error.response?.status === 403 && error.response?.data?.error === "Account banned") {
+        Alert.alert(
+          'Account Banned',
+          `${error.response.data.message}\n\nReason: ${error.response.data.ban_reason || 'Not specified'}`,
+          [{ text: 'OK' }]
+        );
+      } else if (error.response?.status === 401) {
+        Alert.alert('Error', 'Invalid email or password');
+      } else {
+        Alert.alert('Error', 'Something went wrong. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }

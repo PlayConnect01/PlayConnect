@@ -76,6 +76,7 @@ const signup = async (req, res) => {
         email,
         password: hashedPassword,
         username,
+        is_banned: false
       },
     });
 
@@ -134,12 +135,20 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    // Check if user is banned
+    if (user.is_banned) {
+      return res.status(403).json({ 
+        error: "Account banned", 
+        message: "Your account has been banned. Please contact support for more information.",
+        banReason: user.ban_reason
+      });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-  
     const token = jwt.sign({ userId: user.user_id }, JWT_SECRET, {
       expiresIn: "24h",
     });
@@ -290,6 +299,7 @@ const getAllUsers = async (req, res) => {
         email: true,
         location: true,
         profile_picture: true,
+        points: true,
         birthdate: true,
         phone_number: true,
         phone_country_code: true,
@@ -304,9 +314,12 @@ const getAllUsers = async (req, res) => {
           }
         }
       },
-      skip: skip,
+      skip: (parseInt(page) - 1) * parseInt(limit),
       take: parseInt(limit)
     });
+
+    // Log users to check points
+    console.log('Users from database:', users);
 
     // Get total count for pagination
     const totalUsers = await prismaClient.user.count({
@@ -542,4 +555,41 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile, getAllUsers, banUser, unbanUser, getTotalUsers, deleteUser };
+const getTopPlayers = async (req, res) => {
+  try {
+    const users = await prismaClient.user.findMany({
+      where: {
+        is_banned: false,
+        is_blocked: false
+      },
+      select: {
+        user_id: true,
+        username: true,
+        profile_picture: true,
+        points: true,
+        achievements: {
+          select: {
+            achievement_name: true,
+            achieved_at: true
+          }
+        }
+      }
+    });
+
+    // Ensure points is never null and convert to number
+    const processedUsers = users.map(user => ({
+      ...user,
+      points: Number(user.points || 0) // Convert to number and handle null/undefined
+    }));
+
+    res.status(200).json(processedUsers);
+  } catch (error) {
+    console.error('Error fetching players:', error);
+    res.status(500).json({   
+      error: "Error fetching users", 
+      details: error.message 
+    });
+  }
+};
+
+module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile, getAllUsers, banUser, unbanUser, getTotalUsers, deleteUser, getTopPlayers };

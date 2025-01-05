@@ -25,6 +25,7 @@ const favorites = require('./routes/favoriteRoutes');
 const paymentRouter = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
 const orderRoutes = require('./routes/orderRoutes');
+const adminRoutes = require('./routes/AdminAuth.js');
 
 const app = express();
 
@@ -86,6 +87,8 @@ app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/orders', orderRoutes);
+app.use('/admin', adminRoutes);
+
 
 // Admin routes with prefix
 

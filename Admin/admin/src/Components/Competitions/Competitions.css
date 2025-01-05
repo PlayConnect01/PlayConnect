@@ -4,6 +4,25 @@
 
 .tournaments-header {
   margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.back-button {
+  padding: 0.5rem 1rem;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: fit-content;
+}
+
+.back-button:hover {
+  background-color: #1565c0;
 }
 
 .tournaments-header h1 {
@@ -49,9 +68,11 @@
 }
 
 .point-reward {
-  color: #f1c40f;
-  font-weight: bold;
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #FFD700;
+  font-weight: 500;
 }
 
 .tournament-info {
@@ -92,6 +113,10 @@
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
 }
 
 .action-button.view {
@@ -121,4 +146,34 @@
   background: #ffebee;
   border-radius: 8px;
   margin: 2rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.add-tournament-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-left: auto;
+  font-size: 0.9rem;
+  width: 160px;
+
+}
+
+.add-tournament-btn:hover {
+  background-color: #1565c0;
+  transform: translateY(-2px);
 }
