@@ -19,8 +19,9 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../Api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import CustomAlert from '../../Alerts/CustomAlert';
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -31,10 +32,15 @@ const SignUpScreen = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
-    useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const navigation = useNavigation();
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
 
   const fadeAnim = new Animated.Value(0);
   const slideAnim = new Animated.Value(50);
@@ -56,17 +62,39 @@ const SignUpScreen = () => {
   }, []);
 
   const handleSignUp = async () => {
+    if (!username || !email || !password || !confirmPassword) {
+      setAlertTitle('Error');
+      setAlertMessage('All fields are required!');
+      setAlertVisible(true);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setAlertTitle('Error');
+      setAlertMessage('Passwords do not match!');
+      setAlertVisible(true);
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const response = await axios.post(`${BASE_URL}/users/signup`, {
         username,
         email,
         password,
       });
-      console.log("Sign-up successful:", response.data);
-      navigation.navigate("Login");
+      setAlertTitle('Success');
+      setAlertMessage('Sign up successful! Please login.');
+      setAlertVisible(true);
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 2000);
     } catch (error) {
-      console.error("Sign-up error:", error.response?.data || error.message);
-      alert("Error signing up. Please try again.");
+      setAlertTitle('Error');
+      setAlertMessage(error.response?.data?.message || 'Error signing up. Please try again.');
+      setAlertVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,113 +105,129 @@ const SignUpScreen = () => {
         style={styles.backgroundImage}
         resizeMode="cover"
       />
-      <View style={styles.overlay}>
-        <View style={styles.contentContainer}>
-          <Text style={styles.title}>Join the Team Today!</Text>
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.overlay}>
+          <View style={styles.contentContainer}>
+            <Text style={styles.title}>Join the Team Today!</Text>
 
-          <View style={styles.inputContainer}>
-            <FontAwesome name="user" size={20} color="#ffffff80" />
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              value={username}
-              onChangeText={setUsername}
-              placeholderTextColor="#ffffff80"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome name="envelope" size={20} color="#ffffff80" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              placeholderTextColor="#ffffff80"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="#ffffff80" />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!isPasswordVisible}
-              placeholderTextColor="#ffffff80"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity
-              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-              style={styles.eyeIcon}
-            >
-              <FontAwesome
-                name={isPasswordVisible ? "eye" : "eye-slash"}
-                size={20}
-                color="#ffffff80"
+            <View style={styles.inputContainer}>
+              <FontAwesome name="user" size={20} color="#ffffff80" />
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+                placeholderTextColor="#ffffff80"
+                autoCapitalize="none"
+                returnKeyType="next"
+                onSubmitEditing={() => emailRef.current?.focus()}
+                blurOnSubmit={false}
               />
-            </TouchableOpacity>
-          </View>
+            </View>
 
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="#ffffff80" />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!isConfirmPasswordVisible}
-              placeholderTextColor="#ffffff80"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity
-              onPress={() =>
-                setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
-              }
-              style={styles.eyeIcon}
-            >
-              <FontAwesome
-                name={isConfirmPasswordVisible ? "eye" : "eye-slash"}
-                size={20}
-                color="#ffffff80"
+            <View style={styles.inputContainer}>
+              <FontAwesome name="envelope" size={20} color="#ffffff80" />
+              <TextInput
+                ref={emailRef}
+                style={styles.input}
+                placeholder="Enter Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholderTextColor="#ffffff80"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                blurOnSubmit={false}
               />
-            </TouchableOpacity>
-          </View>
+            </View>
 
-          <TouchableOpacity
-            onPress={handleSignUp}
-            style={styles.buttonContainer}
-          >
-            <LinearGradient
-              colors={["#0080FF", "#0A66C2", "#0080FF"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.gradient}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Sign Up</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <FontAwesome name="lock" size={20} color="#ffffff80" />
+              <TextInput
+                ref={passwordRef}
+                style={styles.input}
+                placeholder="Enter Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholderTextColor="#ffffff80"
+                secureTextEntry={!isPasswordVisible}
+                returnKeyType="next"
+                onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+              <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+                <Feather
+                  name={isPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#ffffff80"
+                />
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.loginTextContainer}>
+            <View style={styles.inputContainer}>
+              <FontAwesome name="lock" size={20} color="#ffffff80" />
+              <TextInput
+                ref={confirmPasswordRef}
+                style={styles.input}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholderTextColor="#ffffff80"
+                secureTextEntry={!isConfirmPasswordVisible}
+                returnKeyType="done"
+                onSubmitEditing={handleSignUp}
+              />
+              <TouchableOpacity onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}>
+                <Feather
+                  name={isConfirmPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#ffffff80"
+                />
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
-              style={styles.loginButton}
-              onPress={() => navigation.navigate("Login")}
+              onPress={handleSignUp}
+              style={styles.buttonContainer}
             >
-              <Text style={styles.loginText}>
-                Already have an account? Login
-              </Text>
+              <LinearGradient
+                colors={["#0080FF", "#0A66C2", "#0080FF"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradient}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Sign Up</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
+
+            <View style={styles.loginTextContainer}>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text style={styles.loginText}>
+                  Already have an account? Login
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAwareScrollView>
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </View>
   );
 };

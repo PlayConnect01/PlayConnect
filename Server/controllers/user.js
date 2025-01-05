@@ -250,6 +250,27 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+const reportUser = async (req, res) => {
+  const { reported_user_id, reason } = req.body;
+  const reported_by = req.user.user_id; // Assuming you have user info in req.user
+
+  try {
+    const report = await prismaClient.report.create({
+      data: {
+        reported_user_id,
+        reported_by,
+        reason,
+        status: "Pending",
+      },
+    });
+
+    res.status(200).json({ success: true, report });
+  } catch (error) {
+    console.error("Error reporting user:", error);
+    res.status(500).json({ error: "Failed to report user" });
+  }
+};
+
 const getAllUsers = async (req, res) => {
   try {
     // Get query parameters with defaults
@@ -397,12 +418,10 @@ const deleteUser = async (req, res) => {
 
   try {
     await prismaClient.$transaction([
-      // First delete all calendar entries
       prismaClient.calendar.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete event participants before deleting events
       prismaClient.eventParticipant.deleteMany({
         where: { 
           OR: [
@@ -412,47 +431,38 @@ const deleteUser = async (req, res) => {
         }
       }),
 
-      // Delete events created by user
       prismaClient.event.deleteMany({
         where: { creator_id: parsedUserId }
       }),
 
-      // Delete cart items before cart
       prismaClient.cartItem.deleteMany({
         where: { cart: { user_id: parsedUserId } }
       }),
 
-      // Delete cart
       prismaClient.cart.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete order items before orders
       prismaClient.orderItem.deleteMany({
         where: { order: { user_id: parsedUserId } }
       }),
 
-      // Delete orders
       prismaClient.order.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete favorites
       prismaClient.favorite.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete messages
       prismaClient.message.deleteMany({
         where: { sender_id: parsedUserId }
       }),
 
-      // Delete chat memberships
       prismaClient.chatMember.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete team members before teams
       prismaClient.teamMember.deleteMany({
         where: { 
           OR: [
@@ -462,29 +472,24 @@ const deleteUser = async (req, res) => {
         }
       }),
 
-      // Delete tournament teams before tournaments
       prismaClient.tournamentTeam.deleteMany({
         where: { 
           tournament: { created_by: parsedUserId }
         }
       }),
 
-      // Delete teams created by user
       prismaClient.team.deleteMany({
         where: { created_by: parsedUserId }
       }),
 
-      // Delete tournaments
       prismaClient.tournament.deleteMany({
         where: { created_by: parsedUserId }
       }),
 
-      // Delete achievements
       prismaClient.achievement.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete reports
       prismaClient.report.deleteMany({
         where: {
           OR: [
@@ -494,17 +499,14 @@ const deleteUser = async (req, res) => {
         }
       }),
 
-      // Delete points logs
       prismaClient.pointsLog.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete notifications
       prismaClient.notification.deleteMany({
         where: { user_id: parsedUserId }
       }),
 
-      // Delete matches
       prismaClient.match.deleteMany({
         where: {
           OR: [
@@ -514,7 +516,6 @@ const deleteUser = async (req, res) => {
         }
       }),
 
-      // Delete video calls
       prismaClient.videoCall.deleteMany({
         where: {
           OR: [
@@ -524,7 +525,6 @@ const deleteUser = async (req, res) => {
         }
       }),
 
-      // Finally delete the user
       prismaClient.user.delete({
         where: { user_id: parsedUserId }
       })
@@ -542,4 +542,17 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, handleSocialAuth, getOneUser, updateUserProfile, getAllUsers, banUser, unbanUser, getTotalUsers, deleteUser };
+module.exports = { 
+  signup, 
+  login, 
+  logout, 
+  handleSocialAuth, 
+  getOneUser, 
+  updateUserProfile, 
+  getAllUsers, 
+  banUser, 
+  unbanUser, 
+  getTotalUsers, 
+  deleteUser,
+  reportUser 
+};

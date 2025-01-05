@@ -1,11 +1,12 @@
 const express = require("express");
-const {getAllEvents,getEventById,createEvent,updateEvent, deleteEvent, getEventsByDate , EventWithCreator , addParticipantWithQR , removeParticipant, getParticipatedEvents, isUserParticipant, getParticipantQR, getTomorrowEvents, getTotalEvents, getPendingEvents, approveEvent, rejectEvent, getApprovedEvents} = require("../controllers/events");
+const {getAllEvents,getEventById,createEvent,updateEvent, deleteEvent, getEventsByDate , EventWithCreator , addParticipantWithQR , removeParticipant, getParticipatedEvents, isUserParticipant, getParticipantQR, getTomorrowEvents, getTotalEvents, getPendingEvents, approveEvent, rejectEvent, getApprovedEvents, getUpcomingEvents} = require("../controllers/events");
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const router = express.Router();
 
 router.get("/getAll", getAllEvents);
+router.get("/getUpcomingEvents", getUpcomingEvents);
 router.get("/getById/:id", getEventById);
 router.post("/create", createEvent);
 router.put("/update/:id", updateEvent);

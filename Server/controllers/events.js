@@ -3,7 +3,7 @@ const QRCode = require('qrcode');
 
 const prisma = new PrismaClient();
 
-const getAllEvents = async (req, res) => {
+const getUpcomingEvents = async (req, res) => {
   try {
     const events = await prisma.event.findMany({
       include: {
@@ -13,6 +13,15 @@ const getAllEvents = async (req, res) => {
         date: 'desc'
       }
     });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching events", details: error.message });
+  }
+};
+
+const getAllEvents = async (req, res) => {
+  try {
+    const events = await prisma.event.findMany();
     res.json(events);
   } catch (error) {
     res.status(500).json({ error: "Error fetching events", details: error.message });
@@ -472,7 +481,8 @@ module.exports = {
   getParticipatedEvents, 
   removeParticipant, 
   isUserParticipant,
-  getParticipantQR,
+  getParticipantQR ,
+  getUpcomingEvents,
   getTomorrowEvents,
   getTotalEvents,
   getPendingEvents,
