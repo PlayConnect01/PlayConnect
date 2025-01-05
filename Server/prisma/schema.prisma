@@ -86,7 +86,6 @@ model User {
   ban_reason      String?
   block_reason    String?
  
-  
   created_teams      Team[]             @relation("TeamCreator")
   team_memberships   TeamMember[]
   created_tournaments Tournament[]      @relation("TournamentCreator")
@@ -343,6 +342,7 @@ model UserProduct {
   id          Int                @id @default(autoincrement())
   user_id     Int
   product_id  Int
+  status      String            @default("active")
   created_at  DateTime           @default(now())
 
   user        User               @relation(fields: [user_id], references: [user_id])

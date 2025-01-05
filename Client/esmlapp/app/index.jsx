@@ -51,6 +51,10 @@ import BaseballProducts from "./marketplace/categories/BaseballProducts";
 import HockeyProducts from "./marketplace/categories/HockeyProducts";
 import MMAProducts from "./marketplace/categories/MMAProducts";
 import TennisProducts from "./marketplace/categories/TennisProducts";
+import BoxingProducts from "./marketplace/categories/BoxingProducts";
+import RunningProducts from "./marketplace/categories/RunningProducts";
+import SwimmingProducts from "./marketplace/categories/SwimmingProducts";
+import YogaProducts from "./marketplace/categories/YogaProducts";
 
 import UserProducts from './marketplace/UserProducts';
 
@@ -106,6 +110,10 @@ const WrappedBaseballProducts = withMainLayout(BaseballProducts);
 const WrappedHockeyProducts = withMainLayout(HockeyProducts);
 const WrappedMMAProducts = withMainLayout(MMAProducts);
 const WrappedTennisProducts = withMainLayout(TennisProducts);
+const WrappedBoxingProducts = withMainLayout(BoxingProducts);
+const WrappedRunningProducts = withMainLayout(RunningProducts);
+const WrappedSwimmingProducts = withMainLayout(SwimmingProducts);
+const WrappedYogaProducts = withMainLayout(YogaProducts);
 
 function App() {
   return (
@@ -179,6 +187,10 @@ function App() {
               <Stack.Screen name="HockeyProducts" component={WrappedHockeyProducts} options={{ headerShown: true, title: 'Hockey Equipment' }} />
               <Stack.Screen name="MMAProducts" component={WrappedMMAProducts} options={{ headerShown: true, title: 'MMA Equipment' }} />
               <Stack.Screen name="TennisProducts" component={WrappedTennisProducts} options={{ headerShown: true, title: 'Tennis Equipment' }} />
+              <Stack.Screen name="BoxingProducts" component={WrappedBoxingProducts} options={{ headerShown: true, title: 'Boxing Equipment' }} />
+              <Stack.Screen name="RunningProducts" component={WrappedRunningProducts} options={{ headerShown: true, title: 'Running Equipment' }} />
+              <Stack.Screen name="SwimmingProducts" component={WrappedSwimmingProducts} options={{ headerShown: true, title: 'Swimming Equipment' }} />
+              <Stack.Screen name="YogaProducts" component={WrappedYogaProducts} options={{ headerShown: true, title: 'Yoga Equipment' }} />
               <Stack.Screen name="UserProducts" component={WrappedUserProducts} options={{ headerShown: true, title: 'My Products' }} />
             </Stack.Navigator>
           </NavigationContainer>

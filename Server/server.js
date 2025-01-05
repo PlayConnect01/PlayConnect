@@ -28,6 +28,8 @@ const notificationRoutes = require('./routes/notification');
 const orderRoutes = require('./routes/orderRoutes');
 const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const userproductRoutes = require('./routes/userproduct');
+const sportsProductRoutes = require('./routes/sportsProduct');
+const categoryProductRoutes = require('./routes/categoryRoutes');
 const app = express();
 
 // Middleware
@@ -96,7 +98,9 @@ app.use('/orderHistory', orderHistoryRoutes);
 app.use('/orders', orderRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/userproduct', userproductRoutes);
-
+app.use('/sportsproduct', sportsProductRoutes);
+app.use('/api/sports', sportsProductRoutes);
+app.use('/category', categoryProductRoutes);
 // Admin routes with prefix
 
 // Start the Server

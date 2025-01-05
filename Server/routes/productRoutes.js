@@ -1,16 +1,17 @@
 const express = require('express');
-const {
+const { 
   getProductsBySportId, getLimitedProductsBySport,
   getLowestPriceProduct,
   getTwoLowestPriceProducts,
   getAllProductsBySport,
-  getTopTwoRatedProductsBySport,   
-  getAllDiscountedProducts,
-  getTopThreeDiscountedProducts,
+  getTopTwoRatedProductsBySport,
+    getAllDiscountedProducts,
+    getTopThreeDiscountedProducts,
   getProductsByDiscount,
   getProductById,
   searchProductByName,
-  
+  getDiscountedProductsByCategory,
+  getProductsByCategory
 } = require('../controllers/MarketplaceProduct');
 
 
@@ -40,6 +41,12 @@ router.get('/discounted/top-three', getTopThreeDiscountedProducts);
 
 // Route to get products by a specific discount
 router.get('/discounted/:discount', getProductsByDiscount);
+
+// Route to get all products by category
+router.get('/category/:category', getProductsByCategory);
+
+// Route to get discounted products by category
+router.get('/discounted/category/:category', getDiscountedProductsByCategory);
 
 router.get('/products/:id',getProductById);
 

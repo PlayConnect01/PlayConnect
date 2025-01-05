@@ -5,47 +5,31 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const categories = [
-  { name: 'Gym', icon: 'fitness-center' },
-  { name: 'Cricket', icon: 'sports-cricket' },
-  { name: 'Rowing', icon: 'rowing' },
-  { name: 'Skating', icon: 'skateboarding' },
-  { name: 'E-Sports', icon: 'sports-esports' },
-  { name: 'Trophies', icon: 'emoji-events' },
-  { name: 'Walking', icon: 'directions-walk' },
-  { name: 'Football', icon: 'sports-football' },
-  { name: 'Basketball', icon: 'sports-basketball' },
-  { name: 'Baseball', icon: 'sports-baseball' },
-  { name: 'Hockey', icon: 'sports-hockey' },
-  { name: 'MMA', icon: 'sports-mma' },
-  { name: 'Tennis', icon: 'sports-tennis' },
-  { name: 'My Products', icon: 'inventory' },
+  { name: 'Gym', icon: 'fitness-center', screen: 'GymProducts' },
+  { name: 'Cricket', icon: 'sports-cricket', screen: 'CricketProducts' },
+  { name: 'Rowing', icon: 'rowing', screen: 'RowingProducts' },
+  { name: 'Skating', icon: 'skateboarding', screen: 'SkatingProducts' },
+  { name: 'E-Sports', icon: 'sports-esports', screen: 'ESportsProducts' },
+  { name: 'Trophies', icon: 'emoji-events', screen: 'TrophiesProducts' },
+  { name: 'Walking', icon: 'directions-walk', screen: 'WalkingProducts' },
+  { name: 'Football', icon: 'sports-football', screen: 'FootballProducts' },
+  { name: 'Basketball', icon: 'sports-basketball', screen: 'BasketballProducts' },
+  { name: 'Baseball', icon: 'sports-baseball', screen: 'BaseballProducts' },
+  { name: 'Hockey', icon: 'sports-hockey', screen: 'HockeyProducts' },
+  { name: 'MMA', icon: 'sports-mma', screen: 'MMAProducts' },
+  { name: 'Tennis', icon: 'sports-tennis', screen: 'TennisProducts' },
+  { name: 'Boxing', icon: 'sports-mma', screen: 'BoxingProducts' },
+  { name: 'Running', icon: 'directions-run', screen: 'RunningProducts' },
+  { name: 'Swimming', icon: 'pool', screen: 'SwimmingProducts' },
+  { name: 'Yoga', icon: 'self-improvement', screen: 'YogaProducts' },
+  { name: 'My Products', icon: 'inventory', screen: 'UserProducts' },
 ];
 
 const Sidebar = () => {
   const navigation = useNavigation();
 
   const navigateToCategory = (category) => {
-    const routeMap = {
-      'Gym': 'GymProducts',
-      'Cricket': 'CricketProducts',
-      'Rowing': 'RowingProducts',
-      'Skating': 'SkatingProducts',
-      'E-Sports': 'ESportsProducts',
-      'Trophies': 'TrophiesProducts',
-      'Walking': 'WalkingProducts',
-      'Football': 'FootballProducts',
-      'Basketball': 'BasketballProducts',
-      'Baseball': 'BaseballProducts',
-      'Hockey': 'HockeyProducts',
-      'MMA': 'MMAProducts',
-      'Tennis': 'TennisProducts',
-      'My Products': 'UserProducts',
-    };
-
-    const route = routeMap[category];
-    if (route) {
-      navigation.navigate(route);
-    }
+    navigation.navigate(category.screen);
   };
 
   return (
@@ -63,7 +47,7 @@ const Sidebar = () => {
             <TouchableOpacity
               key={category.name}
               style={styles.categoryButton}
-              onPress={() => navigateToCategory(category.name)}
+              onPress={() => navigateToCategory(category)}
             >
               <MaterialIcons name={category.icon} size={24} color="#333" />
               <Text style={styles.categoryText}>{category.name}</Text>
@@ -80,7 +64,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    paddingBottom: 80, 
+    paddingBottom: 80,
   },
   sidebar: {
     width: 200,
@@ -101,7 +85,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 80, 
+    paddingBottom: 80,
   },
   categoryButton: {
     flexDirection: 'row',
@@ -116,7 +100,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   bottomPadding: {
-    height: 60, 
+    height: 20,
   },
 });
 
