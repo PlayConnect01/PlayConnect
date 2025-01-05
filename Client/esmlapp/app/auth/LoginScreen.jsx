@@ -23,6 +23,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { BASE_URL } from "../../Api";
 import { BlurView } from 'expo-blur';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import CustomAlert from '../../Alerts/CustomAlert';
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -34,7 +35,11 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const navigation = useNavigation();
+  const passwordRef = useRef(null);
 
   const fadeAnim = new Animated.Value(0);
   const slideAnim = new Animated.Value(50);
@@ -56,7 +61,9 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'All fields are required!');
+      setAlertTitle('Error');
+      setAlertMessage('All fields are required!');
+      setAlertVisible(true);
       return;
     }
 
@@ -69,22 +76,19 @@ export default function Login() {
 
       const { token, user } = response.data;
       
-      // Save both token and user data
       await Promise.all([
         AsyncStorage.setItem('userToken', token),
         AsyncStorage.setItem('userData', JSON.stringify(user))
       ]);
 
-      // console.log('Saved user data:', user);
-      // console.log('Saved token:', token);
-
-      // Navigate to home page after successful login
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      Alert.alert('Error', 'Invalid login credentials!');
+      setAlertTitle('Error');
+      setAlertMessage('Invalid login credentials!');
+      setAlertVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -95,19 +99,22 @@ export default function Login() {
   };
 
   return (
-    <View style={styles.container}>
-      <ImageBackground
-        source={require('../../assets/images/signin.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
-      <View style={styles.overlay}>
-        <View style={styles.contentContainer}>
-          <Text style={styles.title}>Welcome Back!</Text>
+    <KeyboardAwareScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.container}>
+        <ImageBackground
+          source={require('../../assets/images/signin.png')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+        <View style={styles.overlay}>
+          <View style={styles.contentContainer}>
+            <Text style={styles.title}>Welcome Back!</Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, { marginBottom: windowHeight * 0.02 }]}>
               <FontAwesome name="envelope" size={20} color="#ffffff80" />
               <TextInput
                 style={styles.input}
@@ -117,73 +124,90 @@ export default function Login() {
                 placeholderTextColor="#ffffff80"
                 autoCapitalize="none"
                 keyboardType="email-address"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                blurOnSubmit={false}
               />
             </View>
-          </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputContainer}>
-              <FontAwesome name="key" size={20} color="#ffffff80" />
+              <FontAwesome name="lock" size={20} color="#ffffff80" />
               <TextInput
+                ref={passwordRef}
                 style={styles.input}
-                placeholder="Password"
+                placeholder="Enter Password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry={!isPasswordVisible}
                 placeholderTextColor="#ffffff80"
-                autoCapitalize="none"
+                secureTextEntry={!isPasswordVisible}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
               />
-              <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-                <FontAwesome name={isPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#ffffff80" />
+              <TouchableOpacity onPress={togglePasswordVisibility}>
+                <Feather
+                  name={isPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#ffffff80"
+                />
               </TouchableOpacity>
             </View>
-          </View>
 
-          <TouchableOpacity onPress={handleLogin} style={styles.buttonContainer}>
-            <LinearGradient
-              colors={['#0080FF', '#0A66C2', '#0080FF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.gradient}
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() => navigation.navigate('ForgotPassword')}
             >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Login</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>Or continue with</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <View style={styles.socialButtonsContainer}>
-            <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="google" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="apple" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <FontAwesome name="facebook" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.createAccountContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.createAccountText}>Create An Account</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleLogin} style={styles.buttonContainer}>
+              <LinearGradient
+                colors={['#0080FF', '#0A66C2', '#0080FF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradient}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Login</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>Or continue with</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <View style={styles.socialButtonsContainer}>
+              <TouchableOpacity style={styles.socialButton}>
+                <FontAwesome name="google" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.socialButton}>
+                <FontAwesome name="apple" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.socialButton}>
+                <FontAwesome name="facebook" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.createAccountButton}
+              onPress={() => navigation.navigate('SignUp')}
+            >
+              <Text style={styles.createAccountText}>Create An Account</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
-    </View>
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
+    </KeyboardAwareScrollView>
   );
 }
 
