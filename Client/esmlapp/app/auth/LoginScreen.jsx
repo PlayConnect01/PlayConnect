@@ -59,6 +59,16 @@ export default function Login() {
     }).start();
   }, []);
 
+  const handleNavigation = (screenName, message) => {
+    setAlertTitle('Navigation');
+    setAlertMessage(message);
+    setAlertVisible(true);
+    setTimeout(() => {
+      setAlertVisible(false);
+      navigation.navigate(screenName);
+    }, 1500);
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
       setAlertTitle('Error');
@@ -75,11 +85,9 @@ export default function Login() {
       });
 
       if (response.data.user.is_banned) {
-        Alert.alert(
-          'Account Banned',
-          'Your account has been banned. Please contact support for more information.',
-          [{ text: 'OK' }]
-        );
+        setAlertTitle('Account Banned');
+        setAlertMessage(`Your account has been banned.\nReason: ${response.data.ban_reason || 'Not specified'}`);
+        setAlertVisible(true);
         return;
       }
 
@@ -98,19 +106,18 @@ export default function Login() {
       console.log('Login error:', error.response?.data);
       
       if (error.response?.status === 403 && error.response?.data?.error === "Account banned") {
-        Alert.alert(
-          'Account Banned',
-          `${error.response.data.message}\n\nReason: ${error.response.data.ban_reason || 'Not specified'}`,
-          [{ text: 'OK' }]
-        );
-      } else if (error.response?.status === 401) {
-        Alert.alert('Error', 'Invalid email or password');
+        setAlertTitle('Account Banned');
+        setAlertMessage(`Your account has been banned.\nReason: ${error.response.data.ban_reason || 'Not specified'}`);
+        setAlertVisible(true);
+      } else if (error.response?.status === 401 || error.response?.data?.error === "Invalid credentials") {
+        setAlertTitle('Invalid Credentials');
+        setAlertMessage('The email or password you entered is incorrect. Please try again.');
+        setAlertVisible(true);
       } else {
-        Alert.alert('Error', 'Something went wrong. Please try again later.');
+        setAlertTitle('Error');
+        setAlertMessage('Something went wrong. Please try again later.');
+        setAlertVisible(true);
       }
-      setAlertTitle('Error');
-      setAlertMessage('Invalid login credentials!');
-      setAlertVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -176,7 +183,7 @@ export default function Login() {
 
             <TouchableOpacity
               style={styles.forgotPassword}
-              onPress={() => navigation.navigate('ForgotPassword')}
+              onPress={() => handleNavigation('ForgotPassword', 'Redirecting to password reset...')}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -216,7 +223,7 @@ export default function Login() {
 
             <TouchableOpacity
               style={styles.createAccountButton}
-              onPress={() => navigation.navigate('SignUp')}
+              onPress={() => handleNavigation('SignUp', 'Redirecting to sign up...')}
             >
               <Text style={styles.createAccountText}>Create An Account</Text>
             </TouchableOpacity>
