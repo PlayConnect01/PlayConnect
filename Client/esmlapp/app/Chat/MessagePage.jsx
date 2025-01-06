@@ -21,7 +21,6 @@ const MessagePage = (props) => {
   };
 
   useEffect(() => {
-    console.log(navigation.navigate);
     
     const loadToken = async () => {
       try {
@@ -33,7 +32,6 @@ const MessagePage = (props) => {
         const decodedToken = decodeJWT(token); // Use the decode function directly
         if (decodedToken?.userId) {
           setCurrentUserId(decodedToken.userId);
-          console.log('User ID:', decodedToken.userId);
           fetchAcceptedMatches(decodedToken.userId); // Fetch accepted matches
         } else {
           throw new Error('User ID not found in token');
@@ -50,9 +48,7 @@ const MessagePage = (props) => {
   const fetchAcceptedMatches = async (userId) => {
     try {
       const response = await axios.get(`${BASE_URL}/matches/accepted/${userId}`);
-      console.log("ahmed"  , userId)
       setMatches(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error('Error fetching accepted matches:', error);
       Alert.alert('Error', 'Failed to load accepted matches.');
@@ -77,8 +73,7 @@ const MessagePage = (props) => {
             key={index}
             style={styles.messageItem}
             onPress={() => {
-              console.log('Chat ID:', match.chat_id);
-              navigation.navigate('Chat/ChatDetails', {
+              navigation.navigate('ChatDetails', {
                 user: match.user_1.user_id === currentUserId ? match.user_2 : match.user_1,
                 chatId: match.chat_id,
                 currentUserId: currentUserId

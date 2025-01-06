@@ -315,13 +315,10 @@ const Users = () => {
                 <td className="user-info">
                   <img 
                     src={user.profile_picture || 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png'} 
-                    alt={user.username}
+                    alt={`${user.username}'s avatar`} 
                     className="user-avatar"
-                    onError={(e) => {
-                      e.target.src = 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png';
-                    }}
                   />
-                  <span>{user.username}</span>
+                  {user.username}
                 </td>
                 <td>{user.email}</td>
                 <td>
@@ -340,29 +337,23 @@ const Users = () => {
                 </td>
                 <td className="action-buttons">
                   {user.is_banned ? (
-                    <button 
+                    <MdLockOpen 
                       onClick={() => handleUnbanUser(user.user_id, user.username)}
                       className="unban-btn"
                       title="Unban user"
-                    >
-                      <MdLockOpen />
-                    </button>
+                    />
                   ) : (
                     <>
-                      <button 
+                      <MdLock 
                         onClick={() => handleBanUser(user.user_id, user.username)}
                         className="ban-btn"
                         title="Ban user"
-                      >
-                        <MdLock />
-                      </button>
-                      <button 
+                      />
+                      <MdGavel 
                         onClick={() => handleDeleteUser(user.user_id, user.username)}
                         className="delete-btn"
                         title="Delete user permanently"
-                      >
-                        <MdGavel />
-                      </button>
+                      />
                     </>
                   )}
                 </td>
