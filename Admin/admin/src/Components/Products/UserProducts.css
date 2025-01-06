@@ -81,12 +81,16 @@
   height: 200px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .product-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 60%;
+  height: 65%;
+  object-fit: contain;
+  margin: auto;
 }
 
 .product-info {
