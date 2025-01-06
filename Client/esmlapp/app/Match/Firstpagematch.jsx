@@ -30,7 +30,7 @@ const App = () => {
   const navigation = useNavigation();
 
   const handleMatchNow = () => {
-    navigation.navigate('Match/Matchingpage');
+    navigation.navigate('Matchingpage');
   };
 
   const handleHome = () => {

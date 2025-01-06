@@ -1,7 +1,20 @@
-import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Modal, StyleSheet, Dimensions } from 'react-native';
 
-const CustomAlert = ({ visible, title, message, onClose }) => {
+const CustomAlert = ({ visible, title, message, onClose, timeout = 3000 }) => {
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, timeout);
+
+      return () => clearTimeout(timer);
+    }
+  }, [visible, onClose, timeout]);
+
+  const isError = title?.toLowerCase() === 'error';
+  const isSuccess = title?.toLowerCase() === 'success';
+
   return (
     <Modal
       visible={visible}
@@ -11,11 +24,14 @@ const CustomAlert = ({ visible, title, message, onClose }) => {
     >
       <View style={styles.container}>
         <View style={styles.alertBox}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[
+            styles.title,
+            isError && styles.errorTitle,
+            isSuccess && styles.successTitle
+          ]}>
+            {title}
+          </Text>
           <Text style={styles.message}>{message}</Text>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>OK</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -54,20 +70,14 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
-    marginBottom: 20,
   },
-  button: {
-    backgroundColor: '#3498db',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    borderRadius: 25,
+  errorTitle: {
+    color: '#ff0000',
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  successTitle: {
+    color: '#28a745',
   },
 });
 

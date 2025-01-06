@@ -78,25 +78,22 @@ const WrappedCompetitionPage = withMainLayout(CompetitionPage);
 const WrappedTournamentList = withMainLayout(TournamentList);
 const WrappedTournamentDetail = withMainLayout(TournamentDetail);
 const WrappedCategoryEvents = withMainLayout(CategoryEvents);
-const WrappedCalendarPage = withMainLayout(CalendarPage);
 const WrappedMatch = withMainLayout(Match);
 const WrappedMatchingpage = withMainLayout(Matchingpage);
 const WrappedMessagePage = withMainLayout(MessagePage);
-const WrappedChatDetails = withMainLayout(ChatDetails);
+const WrappedCalendarPage = withMainLayout(CalendarPage);
 const WrappedProfilePage = withMainLayout(ProfilePage);
-const WrappedEditProfile = withMainLayout(EditProfile);
 const WrappedMarketplace = withMainLayout(Marketplace);
 const WrappedProducts = withMainLayout(Products);
 const WrappedProductDetail = withMainLayout(ProductDetail);
 const WrappedCartScreen = withMainLayout(CartScreen);
 const WrappedPaymentScreen = withMainLayout(PaymentScreen);
 const WrappedPaymentSuccess = withMainLayout(PaymentSuccess);
+const WrappedEditProfile = withMainLayout(EditProfile);
 const WrappedDeliveryServices = withMainLayout(DeliveryServicesScreen);
 const WrappedOrdersScreen = withMainLayout(OrdersScreen);
 const WrappedOrderDetails = withMainLayout(OrderDetails);
 const WrappedFavoritesScreen = withMainLayout(FavoritesScreen);
-
-const WrappedUserProducts = withMainLayout(UserProducts);
 const WrappedAllDiscountedProducts = withMainLayout(AllDiscountedProducts);
 const WrappedGymProducts = withMainLayout(GymProducts);
 const WrappedCricketProducts = withMainLayout(CricketProducts);
@@ -115,6 +112,7 @@ const WrappedBoxingProducts = withMainLayout(BoxingProducts);
 const WrappedRunningProducts = withMainLayout(RunningProducts);
 const WrappedSwimmingProducts = withMainLayout(SwimmingProducts);
 const WrappedYogaProducts = withMainLayout(YogaProducts);
+const WrappedUserProducts = withMainLayout(UserProducts);
 
 function App() {
   return (
@@ -159,7 +157,7 @@ function App() {
               <Stack.Screen name="Match" component={WrappedMatch} />
               <Stack.Screen name="Matchingpage" component={WrappedMatchingpage} />
               <Stack.Screen name="Messages" component={WrappedMessagePage} />
-              <Stack.Screen name="ChatDetails" component={WrappedChatDetails} />
+              <Stack.Screen name="ChatDetails" component={ChatDetails} />
               <Stack.Screen name="Profile" component={WrappedProfilePage} />
               <Stack.Screen name="EditProfile" component={WrappedEditProfile} />
               <Stack.Screen name="UserProfilePage" component={UserProfilePage} />

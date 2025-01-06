@@ -109,6 +109,7 @@ const NotificationsModal = ({
 
     switch (notification.type) {
       case "MATCH_REQUEST":
+        const senderName = notification?.match?.user_1?.username || "Someone";
         return (
           <TouchableOpacity
             key={notification.notification_id}
@@ -117,10 +118,7 @@ const NotificationsModal = ({
           >
             <View style={styles.messageContainer}>
               <Text style={styles.messageText}>
-                {notification.senderName ||
-                  notification.user?.username ||
-                  "Someone"}{" "}
-                wants to match with you!
+                {senderName} wants to match with you!
               </Text>
               {!notification.is_read && <View style={styles.unreadDot} />}
             </View>
