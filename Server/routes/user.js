@@ -12,7 +12,8 @@ const {
   unbanUser,
   getTotalUsers,
   deleteUser,
-  reportUser
+  reportUser,
+  getUserProfile
 } = require('../controllers/user.js');
 
 const router = express.Router();
@@ -20,6 +21,7 @@ const router = express.Router();
 // Base user routes
 router.get("/AllUsers", getAllUsers);           // Get all users
 router.get("/:id", getOneUser);         // Get single user
+router.get('/profile/:id', getUserProfile); // Get user profile with points
 router.put("/:id", updateUserProfile);  // Update user
 router.put('/ban/:userId', banUser);
 router.put('/unban/:userId', unbanUser);

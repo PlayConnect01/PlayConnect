@@ -63,7 +63,7 @@ const SignUpScreen = () => {
         password,
       });
       console.log("Sign-up successful:", response.data);
-      navigation.navigate("Login");
+      navigation.navigate("auth/LoginScreen");
     } catch (error) {
       console.error("Sign-up error:", error.response?.data || error.message);
       alert("Error signing up. Please try again.");

@@ -81,7 +81,7 @@ export default function Login() {
       // Navigate to home page after successful login
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Home' }],
+        routes: [{ name: 'Homepage/Homep' }],
       });
     } catch (error) {
       Alert.alert('Error', 'Invalid login credentials!');
@@ -174,7 +174,7 @@ export default function Login() {
           </View>
 
           <View style={styles.createAccountContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+            <TouchableOpacity onPress={() => navigation.navigate('auth/SignUpScreen')}>
               <Text style={styles.createAccountText}>Create An Account</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>

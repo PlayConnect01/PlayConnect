@@ -6,7 +6,11 @@ const {
   updateTournament,
   deleteTournament,
   getAllTournamentsAndTeams,
-  getTotalTournaments
+  getTotalTournaments,
+  createTournamentTeam,
+  addTeamMemberWithQR,
+  getTeamDetails,
+  removeTeamMember
 } = require('../controllers/competetion');
 
 const router = express.Router();
@@ -15,6 +19,15 @@ const router = express.Router();
 router.get('/', getAllTournaments); 
 
 router.get('/Teams', getAllTournamentsAndTeams); 
+
+// Get total tournaments count
+router.get("/count/total", getTotalTournaments);
+
+// Team routes
+router.post('/:tournamentId/teams', createTournamentTeam);
+router.get('/teams/:teamId', getTeamDetails);
+router.post('/teams/:teamId/join', addTeamMemberWithQR);
+router.delete('/teams/:teamId/members/:userId', removeTeamMember);
 
 // Get a tournament by ID
 router.get('/:id', getTournamentById); 
@@ -27,8 +40,5 @@ router.put('/:id', updateTournament);
 
 // Delete a tournament
 router.delete('/:id', deleteTournament); 
-
-// Add this new route before the /:id route
-router.get("/count/total", getTotalTournaments);
 
 module.exports = router;

@@ -1,4 +1,18 @@
 -- CreateTable
+CREATE TABLE `Admin` (
+    `admin_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `username` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NOT NULL,
+    `role` VARCHAR(191) NOT NULL DEFAULT 'ADMIN',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `Admin_email_key`(`email`),
+    PRIMARY KEY (`admin_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `User` (
     `user_id` INTEGER NOT NULL AUTO_INCREMENT,
     `username` VARCHAR(191) NOT NULL,
@@ -14,6 +28,10 @@ CREATE TABLE `User` (
     `birthdate` DATETIME(3) NULL,
     `phone_number` VARCHAR(191) NULL,
     `phone_country_code` VARCHAR(191) NULL,
+    `is_banned` BOOLEAN NOT NULL DEFAULT false,
+    `is_blocked` BOOLEAN NOT NULL DEFAULT false,
+    `ban_reason` VARCHAR(191) NULL,
+    `block_reason` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`user_id`)
@@ -103,9 +121,14 @@ CREATE TABLE `Event` (
     `participants` INTEGER NOT NULL,
     `price` DOUBLE NOT NULL,
     `image` VARCHAR(191) NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
+    `admin_note` VARCHAR(191) NULL,
+    `reviewed_at` DATETIME(3) NULL,
+    `reviewed_by` INTEGER NULL,
     `creator_id` INTEGER NOT NULL,
 
     INDEX `Event_event_name_idx`(`event_name`),
+    INDEX `Event_reviewed_by_idx`(`reviewed_by`),
     PRIMARY KEY (`event_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -245,11 +268,14 @@ CREATE TABLE `Report` (
     `reported_user_id` INTEGER NOT NULL,
     `reported_by` INTEGER NOT NULL,
     `reason` VARCHAR(191) NOT NULL,
-    `report_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `status` VARCHAR(191) NOT NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
+    `handled_by` INTEGER NULL,
+    `handled_at` DATETIME(3) NULL,
+    `action_taken` VARCHAR(191) NULL,
 
     INDEX `Report_reported_user_id_idx`(`reported_user_id`),
     INDEX `Report_reported_by_idx`(`reported_by`),
+    INDEX `Report_handled_by_idx`(`handled_by`),
     PRIMARY KEY (`report_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -394,6 +420,9 @@ ALTER TABLE `TournamentTeam` ADD CONSTRAINT `TournamentTeam_tournament_id_fkey` 
 ALTER TABLE `TournamentTeam` ADD CONSTRAINT `TournamentTeam_team_id_fkey` FOREIGN KEY (`team_id`) REFERENCES `Team`(`team_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Event` ADD CONSTRAINT `Event_reviewed_by_fkey` FOREIGN KEY (`reviewed_by`) REFERENCES `Admin`(`admin_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Event` ADD CONSTRAINT `Event_creator_id_fkey` FOREIGN KEY (`creator_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -449,6 +478,9 @@ ALTER TABLE `Report` ADD CONSTRAINT `Report_reported_user_id_fkey` FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE `Report` ADD CONSTRAINT `Report_reported_by_fkey` FOREIGN KEY (`reported_by`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Report` ADD CONSTRAINT `Report_handled_by_fkey` FOREIGN KEY (`handled_by`) REFERENCES `Admin`(`admin_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PointsLog` ADD CONSTRAINT `PointsLog_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

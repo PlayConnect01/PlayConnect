@@ -177,21 +177,51 @@ const logout = (req, res) => {
 
 // Fetch a single user by user ID
 const getOneUser = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const user = await prismaClient.user.findUnique({
-      where: { user_id: Number(id) }, // Ensure 'id' is converted to a number
-    });
+    const { id } = req.params;
+    const userId = parseInt(id);
+
+    // Get user data and count their created events
+    const [user, createdEventsCount] = await Promise.all([
+      prismaClient.user.findUnique({
+        where: { user_id: userId },
+        include: {
+          sports: {
+            include: {
+              sport: true
+            }
+          }
+        }
+      }),
+      prismaClient.event.count({
+        where: { creator_id: userId }
+      })
+    ]);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json({ user });
+    // Calculate points (500 per created event)
+    const points = createdEventsCount * 500;
+
+    // Update user's points
+    await prismaClient.user.update({
+      where: { user_id: userId },
+      data: { points: points }
+    });
+
+    // Return updated user data
+    res.json({
+      user: {
+        ...user,
+        points: points,
+        created_events_count: createdEventsCount
+      }
+    });
   } catch (error) {
-    console.error("Fetch user error:", error);
-    res.status(500).json({ error: "Error fetching user" });
+    console.error("Error getting user:", error);
+    res.status(500).json({ error: "Error getting user" });
   }
 };
 
@@ -542,6 +572,58 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const calculateUserPoints = async (userId) => {
+  const createdEvents = await prismaClient.event.count({
+    where: {
+      creator_id: userId
+    }
+  });
+  
+  const points = createdEvents * 500;
+  
+  // Update user points
+  await prismaClient.user.update({
+    where: { user_id: userId },
+    data: { points: points }
+  });
+  
+  return points;
+};
+
+const getUserProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prismaClient.user.findUnique({
+      where: { user_id: parseInt(id) },
+      include: {
+        created_events: true,
+        event_participations: {
+          include: {
+            event: true
+          }
+        },
+        sports: {
+          include: {
+            sport: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Calculate and update points
+    const points = await calculateUserPoints(parseInt(id));
+    user.points = points;
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching user profile", details: error.message });
+  }
+};
+
 module.exports = { 
   signup, 
   login, 
@@ -554,5 +636,7 @@ module.exports = {
   unbanUser, 
   getTotalUsers, 
   deleteUser,
-  reportUser 
+  reportUser,
+  getUserProfile,
+  calculateUserPoints
 };

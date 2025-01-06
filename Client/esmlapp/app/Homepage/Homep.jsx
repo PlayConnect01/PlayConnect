@@ -171,9 +171,23 @@ const App = () => {
     }
   };
 
+  const getOrdinalSuffix = (day) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+    return `${month} ${day}${getOrdinalSuffix(day)} ${year}`;
   };
 
   const handleNotificationPress = () => {
@@ -181,7 +195,6 @@ const App = () => {
     // Reset notification count when opening notifications
     setUnreadNotifications(0);
   };
-
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -329,16 +342,10 @@ const App = () => {
                   {eventCategories.map((category) => (
                     <TouchableOpacity
                       key={category.id}
-                      style={[
-                        styles.categoryButton,
-                        selectedCategory === category.name && styles.selectedCategory,
-                      ]}
+                      style={[styles.categoryButton, selectedCategory === category.name && styles.selectedCategory]}
                       onPress={() => setSelectedCategory(category.name)}
                     >
-                      <Text style={[
-                        styles.categoryText,
-                        selectedCategory === category.name && { color: "#fff" }
-                      ]}>
+                      <Text style={[styles.categoryText, selectedCategory === category.name && { color: "#fff" }]}>
                         {category.name}
                       </Text>
                     </TouchableOpacity>
@@ -386,7 +393,7 @@ const App = () => {
                           color="#0095FF"
                         />
                         <Text style={styles.eventDetailText}>
-                          {formatDate(event.start_time)}
+                          {formatDate(event.date)}
                         </Text>
                       </View>
                     </View>

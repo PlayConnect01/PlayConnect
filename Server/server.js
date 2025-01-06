@@ -92,6 +92,73 @@ app.use('/orders', orderRoutes);
 app.use('/review', reviewRoutes);
 app.use('/reports', reportRoutes);
 
+// Tournament team creation endpoint
+app.post("/api/tournaments/:tournamentId/teams", async (req, res) => {
+  try {
+    const { tournamentId } = req.params;
+    const { teamName } = req.body;
+    // Using a default user ID since we're not using authentication
+    const userId = 1;
+
+    // Create a new team
+    const tournament = await prismaClient.tournament.findUnique({
+      where: { tournament_id: parseInt(tournamentId) },
+      include: { sport: true }
+    });
+
+    if (!tournament) {
+      return res.status(404).json({ error: "Tournament not found" });
+    }
+
+    const team = await prismaClient.team.create({
+      data: {
+        team_name: teamName,
+        sport_id: tournament.sport_id,
+        created_by: userId,
+      },
+    });
+
+    // Add creator as team member
+    await prismaClient.teamMember.create({
+      data: {
+        team_id: team.team_id,
+        user_id: userId,
+        role: "CAPTAIN",
+      },
+    });
+
+    // Link team to tournament
+    const tournamentTeam = await prismaClient.tournamentTeam.create({
+      data: {
+        tournament_id: parseInt(tournamentId),
+        team_id: team.team_id,
+      },
+      include: {
+        team: {
+          include: {
+            members: {
+              include: {
+                user: true
+              }
+            },
+            creator: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      team: {
+        ...tournamentTeam.team,
+        tournament_team_id: tournamentTeam.tournament_team_id
+      }
+    });
+  } catch (error) {
+    console.error("Error creating tournament team:", error);
+    res.status(500).json({ error: "Failed to create team" });
+  }
+});
 
 // Admin routes with prefix
 

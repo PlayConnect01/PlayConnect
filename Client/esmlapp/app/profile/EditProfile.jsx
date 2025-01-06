@@ -276,7 +276,7 @@ const handleSubmit = async () => {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.navigate("profile/ProfilePage")}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
