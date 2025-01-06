@@ -16,6 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { BASE_URL } from "../../Api";
 import CustomAlert from "../../Alerts/CustomAlert";
+import { Feather } from "@expo/vector-icons";
 
 const PasswordRecoveryScreen = () => {
   const [step, setStep] = useState(1);
@@ -23,6 +24,8 @@ const PasswordRecoveryScreen = () => {
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
+  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
+  const [isRepeatPasswordVisible, setIsRepeatPasswordVisible] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
@@ -36,57 +39,126 @@ const PasswordRecoveryScreen = () => {
     setAlertVisible(true);
   };
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    const errors = [];
+    if (password.length < minLength) errors.push("at least 8 characters");
+    if (!hasUpperCase) errors.push("one uppercase letter");
+    if (!hasLowerCase) errors.push("one lowercase letter");
+    if (!hasNumbers) errors.push("one number");
+    if (!hasSpecialChar) errors.push("one special character");
+
+    return errors;
+  };
+
   const handleNextStep = async () => {
     if (step === 1) {
+      if (!email) {
+        showCustomAlert("Error", "Please enter your email address.");
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        showCustomAlert("Invalid Email", "Please enter a valid email address.");
+        return;
+      }
+
       try {
-        await axios.post(`${BASE_URL}/password/request-password-reset`, {
+        const response = await axios.post(`${BASE_URL}/password/request-password-reset`, {
           email,
         });
         showCustomAlert(
           "Success",
-          "Password reset request sent. Check your email for the code."
+          "Password reset code has been sent to your email. Please check your inbox and spam folder."
         );
         setStep(2);
       } catch (error) {
-        showCustomAlert(
-          "Error",
-          "Error sending password reset request. Please try again."
-        );
+        if (error.response?.status === 404) {
+          showCustomAlert("Error", "No account found with this email address.");
+        } else if (error.response?.status === 429) {
+          showCustomAlert("Error", "Too many attempts. Please try again later.");
+        } else {
+          showCustomAlert(
+            "Error",
+            "Unable to send reset code. Please try again later."
+          );
+        }
       }
     } else if (step === 2) {
+      if (!code || code.length !== 4) {
+        showCustomAlert("Invalid Code", "Please enter the 4-digit verification code.");
+        return;
+      }
+
       try {
-        await axios.post(`${BASE_URL}/password/verify-reset-code`, {
+        const response = await axios.post(`${BASE_URL}/password/verify-reset-code`, {
           email,
+          code,
+        });
+        showCustomAlert("Success", "Code verified successfully.");
+        setStep(3);
+      } catch (error) {
+        if (error.response?.status === 400) {
+          showCustomAlert("Invalid Code", "The code you entered is incorrect. Please try again.");
+        } else if (error.response?.status === 408) {
+          showCustomAlert("Code Expired", "The verification code has expired. Please request a new one.");
+          setStep(1);
+        } else {
+          showCustomAlert("Error", "Failed to verify code. Please try again.");
+        }
+      }
+    } else if (step === 3) {
+      if (!newPassword || !repeatPassword) {
+        showCustomAlert("Error", "Please fill in all password fields.");
+        return;
+      }
+
+      const passwordErrors = validatePassword(newPassword);
+      if (passwordErrors.length > 0) {
+        showCustomAlert(
+          "Invalid Password",
+          `Password must contain ${passwordErrors.join(", ")}.`
+        );
+        return;
+      }
+
+      if (newPassword !== repeatPassword) {
+        showCustomAlert("Password Mismatch", "The passwords you entered do not match.");
+        return;
+      }
+
+      try {
+        await axios.post(`${BASE_URL}/password/update-password`, {
+          email,
+          newPassword,
           code,
         });
         showCustomAlert(
           "Success",
-          "Code verified. You can now reset your password."
+          "Password reset successful! You will be redirected to the login screen."
         );
-        setStep(3);
-      } catch (error) {
-        showCustomAlert("Error", "Invalid code. Please try again.");
-      }
-    } else if (step === 3) {
-      if (newPassword === repeatPassword) {
-        try {
-          await axios.post(`${BASE_URL}/password/update-password`, {
-            email,
-            newPassword,
-          });
-          showCustomAlert(
-            "Success",
-            "Password reset successfully. You can now log in."
-          );
+        setTimeout(() => {
           navigation.navigate("Login");
-        } catch (error) {
+        }, 2000);
+      } catch (error) {
+        if (error.response?.status === 400) {
+          showCustomAlert("Error", "Invalid password format or expired session.");
+        } else {
           showCustomAlert(
             "Error",
-            "Error resetting password. Please try again."
+            "Failed to update password. Please try again later."
           );
         }
-      } else {
-        showCustomAlert("Error", "Passwords do not match");
       }
     }
   };
@@ -190,22 +262,46 @@ const PasswordRecoveryScreen = () => {
           {step === 3 && (
             <View style={styles.inputContainer}>
               <Text style={styles.subtitle}>Enter your new password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="New Password"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry
-                placeholderTextColor="#666"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Repeat New Password"
-                value={repeatPassword}
-                onChangeText={setRepeatPassword}
-                secureTextEntry
-                placeholderTextColor="#666"
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry={!isNewPasswordVisible}
+                  placeholderTextColor="#666"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setIsNewPasswordVisible(!isNewPasswordVisible)}
+                >
+                  <Feather
+                    name={isNewPasswordVisible ? "eye" : "eye-off"}
+                    size={20}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Repeat New Password"
+                  value={repeatPassword}
+                  onChangeText={setRepeatPassword}
+                  secureTextEntry={!isRepeatPasswordVisible}
+                  placeholderTextColor="#666"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setIsRepeatPasswordVisible(!isRepeatPasswordVisible)}
+                >
+                  <Feather
+                    name={isRepeatPasswordVisible ? "eye" : "eye-off"}
+                    size={20}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           )}
 
@@ -313,6 +409,27 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 20,
     color: "#333",
+  },
+  passwordContainer: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  passwordInput: {
+    flex: 1,
+    height: "100%",
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: "#333",
+  },
+  eyeIcon: {
+    padding: 10,
   },
   button: {
     width: "100%",

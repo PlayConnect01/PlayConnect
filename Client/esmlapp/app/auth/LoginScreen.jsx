@@ -59,9 +59,7 @@ export default function Login() {
     }).start();
   }, []);
 
-  const handleNavigation = (screenName) => {
-    navigation.navigate(screenName);
-  };
+
 
   const handleLogin = async () => {
     if (!email || !password) {

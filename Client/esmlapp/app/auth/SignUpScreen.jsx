@@ -69,8 +69,25 @@ const SignUpScreen = () => {
       return;
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAlertTitle('Invalid Email');
+      setAlertMessage('Please enter a valid email address.');
+      setAlertVisible(true);
+      return;
+    }
+
+    // Password validation
+    if (password.length < 8) {
+      setAlertTitle('Invalid Password');
+      setAlertMessage('Password must be at least 8 characters long.');
+      setAlertVisible(true);
+      return;
+    }
+
     if (password !== confirmPassword) {
-      setAlertTitle('Error');
+      setAlertTitle('Password Mismatch');
       setAlertMessage('Passwords do not match!');
       setAlertVisible(true);
       return;
@@ -90,8 +107,18 @@ const SignUpScreen = () => {
         navigation.navigate('Login');
       }, 2000);
     } catch (error) {
-      setAlertTitle('Error');
-      setAlertMessage(error.response?.data?.message || 'Error signing up. Please try again.');
+      console.log('Signup error:', error.response?.data);
+      
+      if (error.response?.data?.error === 'Email already exists') {
+        setAlertTitle('Email Error');
+        setAlertMessage('This email is already registered. Please use a different email or login.');
+      } else if (error.response?.data?.error === 'Username already exists') {
+        setAlertTitle('Username Error');
+        setAlertMessage('This username is already taken. Please choose a different username.');
+      } else {
+        setAlertTitle('Error');
+        setAlertMessage('Something went wrong. Please try again later.');
+      }
       setAlertVisible(true);
     } finally {
       setIsLoading(false);
