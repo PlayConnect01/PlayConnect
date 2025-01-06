@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,8 +16,6 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { BASE_URL } from "../../Api";
 import CustomAlert from "../../Alerts/CustomAlert";
-
-
 
 const PasswordRecoveryScreen = () => {
   const [step, setStep] = useState(1);
@@ -95,171 +96,185 @@ const PasswordRecoveryScreen = () => {
   };
 
   return (
-    <LinearGradient colors={["#fff", "#fff"]} style={styles.gradient}>
-      <Image
-        source={require("../../assets/images/backgroundforget.png")}
-        style={styles.backgroundImage}
-        blurRadius={2}
-      />
-      <SafeAreaView style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <Image
-          source={
-            step === 1
-              ? require("../../assets/images/Forgot password-amico 1.png")
-              : require("../../assets/images/Enter OTP-rafiki 1.png")
-          }
-          style={styles.stepImage}
+          source={require("../../assets/images/signin.png")}
+          style={styles.backgroundImage}
         />
-        <Text style={styles.title}>
-          {step === 1
-            ? "Forgot Password?"
-            : step === 2
-            ? "Verify"
-            : "Setup New Password"}
-        </Text>
+        <View style={styles.container}>
+          <Image
+            source={
+              step === 1
+                ? require("../../assets/images/Forgot password-amico 1.png")
+                : require("../../assets/images/Enter OTP-rafiki 1.png")
+            }
+            style={styles.stepImage}
+          />
+          <Text style={styles.title}>
+            {step === 1
+              ? "Forgot Password?"
+              : step === 2
+              ? "Verify"
+              : "Setup New Password"}
+          </Text>
 
-        {step === 1 && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.subtitle}>
-              Don't worry! Please enter the email address linked with your
-              account
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#666"
-            />
-          </View>
-        )}
-
-        {step === 2 && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.subtitle}>
-              Enter the verification code sent to your email
-            </Text>
-            <View style={styles.codeContainer}>
-              {[0, 1, 2, 3].map((_, index) => (
-                <TextInput
-                  key={index}
-                  ref={inputRefs[index]}
-                  style={styles.codeBox}
-                  value={code[index] || ""}
-                  onChangeText={(text) => {
-                    if (text.length <= 1) {
-                      const newCode = code.split("");
-                      newCode[index] = text;
-                      setCode(newCode.join(""));
-
-                      // Move to next input if there's a value and not the last input
-                      if (text.length === 1 && index < 3) {
-                        inputRefs[index + 1].current.focus();
-                      }
-                    }
-                  }}
-                  onKeyPress={({ nativeEvent }) => {
-                    // Move to previous input on backspace if current input is empty
-                    if (
-                      nativeEvent.key === "Backspace" &&
-                      !code[index] &&
-                      index > 0
-                    ) {
-                      inputRefs[index - 1].current.focus();
-                    }
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  placeholderTextColor="#888"
-                />
-              ))}
+          {step === 1 && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.subtitle}>
+                Don't worry! Please enter the email address linked with your
+                account
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor="#666"
+              />
             </View>
-          </View>
-        )}
+          )}
 
-        {step === 3 && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.subtitle}>Enter your new password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="New Password"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-              placeholderTextColor="#666"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Repeat New Password"
-              value={repeatPassword}
-              onChangeText={setRepeatPassword}
-              secureTextEntry
-              placeholderTextColor="#666"
-            />
-          </View>
-        )}
+          {step === 2 && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.subtitle}>
+                Enter the verification code sent to your email
+              </Text>
+              <View style={styles.codeContainer}>
+                {[0, 1, 2, 3].map((_, index) => (
+                  <TextInput
+                    key={index}
+                    ref={inputRefs[index]}
+                    style={styles.codeBox}
+                    value={code[index] || ""}
+                    onChangeText={(text) => {
+                      if (text.length <= 1) {
+                        const newCode = code.split("");
+                        newCode[index] = text;
+                        setCode(newCode.join(""));
 
-        <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-          <LinearGradient
-            colors={["#3498db", "#2980b9"]}
-            style={styles.gradientButton}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Text style={styles.buttonText}>{step < 3 ? "Next" : "Save"}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+                        // Move to next input if there's a value and not the last input
+                        if (text.length === 1 && index < 3) {
+                          inputRefs[index + 1].current.focus();
+                        }
+                      }
+                    }}
+                    onKeyPress={({ nativeEvent }) => {
+                      // Move to previous input on backspace if current input is empty
+                      if (
+                        nativeEvent.key === "Backspace" &&
+                        !code[index] &&
+                        index > 0
+                      ) {
+                        inputRefs[index - 1].current.focus();
+                      }
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    placeholderTextColor="#888"
+                  />
+                ))}
+              </View>
+            </View>
+          )}
 
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+          {step === 3 && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.subtitle}>Enter your new password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="New Password"
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Repeat New Password"
+                value={repeatPassword}
+                onChangeText={setRepeatPassword}
+                secureTextEntry
+                placeholderTextColor="#666"
+              />
+            </View>
+          )}
+
+          <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+            <LinearGradient
+              colors={["#3498db", "#2980b9"]}
+              style={styles.gradientButton}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Text style={styles.buttonText}>{step < 3 ? "Next" : "Save"}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
       <CustomAlert
         visible={alertVisible}
         title={alertTitle}
         message={alertMessage}
         onClose={() => setAlertVisible(false)}
       />
-    </LinearGradient>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
-    backgroundColor: "#fff",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    minHeight: "100%",
   },
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "transparent",
+    paddingTop: 200,
   },
   backgroundImage: {
     position: "absolute",
     width: "100%",
     height: "100%",
-    opacity: 0.1,
+    opacity: 1,
+    resizeMode: "cover",
   },
   stepImage: {
-    width: 280,
-    height: 280,
-    marginBottom: 20,
+    width: 200,
+    height: 200,
+    marginTop: 50,
+    marginBottom: 30,
     resizeMode: "contain",
+    alignSelf: "center",
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
+    color: "#fff",
     marginBottom: 10,
     textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#fff",
     textAlign: "center",
     marginBottom: 20,
     paddingHorizontal: 20,
@@ -321,8 +336,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   cancelButtonText: {
-    color: "#666",
+    color: "#D3D3D3",
     fontSize: 16,
+    textDecorationLine: "underline",
   },
 });
 

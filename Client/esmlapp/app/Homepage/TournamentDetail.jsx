@@ -182,7 +182,7 @@ const TournamentDetail = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("Homepage/TournamentList")}
+          onPress={() => navigation.navigate("TournamentList")}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
         </TouchableOpacity>
@@ -311,13 +311,13 @@ const TournamentDetail = () => {
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setShowCreateTeamModal(false)}
               >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Text style={[styles.modalButtonText, styles.cancelButtonText]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.createButton]}
                 onPress={handleCreateTeam}
               >
-                <Text style={styles.modalButtonText}>Create</Text>
+                <Text style={[styles.modalButtonText, styles.createButtonText]}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -604,22 +604,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     marginHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f5f5f5',
   },
   createButton: {
-    backgroundColor: "#007BFF",
+    backgroundColor: '#0095FF',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   cancelButtonText: {
-    color: "#666",
-    textAlign: "center",
-    fontWeight: "600",
+    color: '#333',
   },
   createButtonText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "600",
+    color: '#fff',
   },
   loading: {
     fontSize: 16,

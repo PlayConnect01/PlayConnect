@@ -60,4 +60,5 @@ router.get("/count/total", getTotalUsers);
 router.post("/reports", reportUser);
 router.delete('/delete/:userId', deleteUser);
 
+
 module.exports = router;

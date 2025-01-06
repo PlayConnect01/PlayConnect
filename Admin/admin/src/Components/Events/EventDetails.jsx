@@ -38,16 +38,18 @@ const EventDetails = () => {
   return (
     <div className="event-details">
       <div className="event-details-header">
-        <button className="back-button" onClick={handleBack}>
-          Back to Events
-        </button>
-        <h1>{event.event_name}</h1>
       </div>
 
       <div className="event-details-grid">
         <div className="event-info-card">
           <h2>Event Information</h2>
           <div className="info-content">
+          <div className="info-row">
+              <span className="label">Name:</span>
+              <span>
+              {event.event_name}
+              </span>
+            </div>
             <div className="info-row">
               <span className="label">Date:</span>
               <span>{new Date(event.date).toLocaleDateString()}</span>
@@ -74,9 +76,11 @@ const EventDetails = () => {
               <span className="label">Max Participants:</span>
               <span>{event.participants}</span>
             </div>
-            <div className="info-row description">
+            <div className="info-row">
               <span className="label">Description:</span>
-              <span>{event.description}</span>
+              <span>
+              {event.description}
+              </span>
             </div>
           </div>
         </div>

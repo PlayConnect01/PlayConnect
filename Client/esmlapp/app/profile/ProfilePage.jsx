@@ -60,7 +60,7 @@ const ProfilePage = () => {
         }
 
         const userResponse = await axios.get(`${BASE_URL}/users/${userId}`);
-        setUserData(userResponse.data.user);
+        setUserData(userResponse.data);
 
         const leaderboardResponse = await axios.get(`${BASE_URL}/leaderboard`);
         const leaderboard = leaderboardResponse.data;
@@ -134,7 +134,7 @@ const ProfilePage = () => {
   );
 
   const handleEventPress = (event) => {
-    navigation.navigate("Homepage/EventDetails", { eventId: event.event_id });
+    navigation.navigate("EventDetails", { eventId: event.event_id });
   };
 
   const handleLogout = async () => {
@@ -153,6 +153,10 @@ const ProfilePage = () => {
     const eventDateObj = new Date(eventDate);
     eventDateObj.setHours(0, 0, 0, 0);
     return eventDateObj < today;
+  };
+
+  const handleCreateEvent = () => {
+    navigation.navigate("AddNewEvent");
   };
 
   if (loading) {
@@ -193,7 +197,7 @@ const ProfilePage = () => {
             style={styles.settingsOption}
             onPress={() => {
               setShowSettings(false);
-              navigation.navigate("profile/EditProfile");
+              navigation.navigate("EditProfile");
             }}
           >
             <Text style={styles.settingsOptionText}>Edit Profile</Text>

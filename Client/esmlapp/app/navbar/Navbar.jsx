@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import io from "socket.io-client";
@@ -77,9 +77,11 @@ const Navbar = () => {
           <Icon
             name="home"
             size={24}
-            color={isActive("Home") ? "#0095FF" : "#9CA3AF"}
+            color={isActive("Home") ? "#0095FF" : "#64748B"}
           />
-          <Text style={isActive("Home") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={isActive("Home") ? styles.navTextActive : styles.navText}
+          >
             Home
           </Text>
         </TouchableOpacity>
@@ -92,7 +94,7 @@ const Navbar = () => {
             <Icon
               name="chatbubble"
               size={24}
-              color={isActive("Messages") ? "#0095FF" : "#9CA3AF"}
+              color={isActive("Messages") ? "#0095FF" : "#64748B"}
             />
             {unreadCount > 0 && (
               <View style={styles.badge}>
@@ -100,13 +102,18 @@ const Navbar = () => {
               </View>
             )}
           </View>
-          <Text style={isActive("Messages") ? styles.navTextActive : styles.navText}>
-            Message
+          <Text
+            style={isActive("Messages") ? styles.navTextActive : styles.navText}
+          >
+            Messages
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.centerButton, isActive("Match") && styles.activeCenterButton]}
+          style={[
+            styles.centerButton,
+            isActive("Match") && styles.activeCenterButton,
+          ]}
           onPress={() => navigation.navigate("Match")}
         >
           <View style={styles.centerButtonInner}>
@@ -116,28 +123,32 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("marketplace/marketplace")}
+          onPress={() => navigation.navigate("Marketplace")}
         >
           <Icon
             name="cart"
             size={24}
-            color={isActive("Marketplace") ? "#0095FF" : "#9CA3AF"}
+            color={isActive("Marketplace") ? "#0095FF" : "#64748B"}
           />
-          <Text style={isActive("Marketplace") ? styles.navTextActive : styles.navText}>
-            Market
+          <Text
+            style={isActive("Marketplace") ? styles.navTextActive : styles.navText}
+          >
+            Shop
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("profile/ProfilePage")}
+          onPress={() => navigation.navigate("Profile")}
         >
           <Icon
             name="person"
             size={24}
-            color={isActive("Profile") ? "#0095FF" : "#9CA3AF"}
+            color={isActive("Profile") ? "#0095FF" : "#64748B"}
           />
-          <Text style={isActive("Profile") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={isActive("Profile") ? styles.navTextActive : styles.navText}
+          >
             Profile
           </Text>
         </TouchableOpacity>
@@ -155,48 +166,58 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#F3F4F6",
-    elevation: 4,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    zIndex: 1000,
   },
   navbar: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    height: 65,
+    height: 75,
     backgroundColor: "#FFFFFF",
-    paddingBottom: 10,
-    paddingBottom: 0,
-    backgroundColor: "#FFFFFF",
+    paddingBottom: Platform.OS === 'ios' ? 25 : 15,
+    paddingTop: 10,
   },
   navItem: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 8,
-    minWidth: 60,
+    minWidth: 70,
+    borderRadius: 12,
+    marginHorizontal: 4,
   },
   activeItem: {
-    backgroundColor: "#E0E0E0",
-    borderRadius: 10,
+    backgroundColor: "#F0F7FF",
+    borderRadius: 12,
   },
   navText: {
-    color: "#9CA3AF",
+    color: "#64748B",
     fontSize: 12,
     marginTop: 4,
+    fontWeight: "500",
   },
   navTextActive: {
     color: "#0095FF",
     fontSize: 12,
     marginTop: 4,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   centerButton: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -15,
+    marginTop: -30,
   },
   centerButtonInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "#0095FF",
     alignItems: "center",
     justifyContent: "center",
@@ -206,29 +227,32 @@ const styles = StyleSheet.create({
       height: 4,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  activeCenterButton: {},
   activeCenterButton: {
-    // Add any specific active states for the center button if needed
+    backgroundColor: "#007ACC",
   },
   iconContainer: {
     position: "relative",
     width: 24,
     height: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
   badge: {
     position: "absolute",
     right: -8,
     top: -8,
-    backgroundColor: "red",
+    backgroundColor: "#EF4444",
     borderRadius: 10,
     minWidth: 18,
     height: 18,
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1,
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
   },
   badgeText: {
     color: "white",

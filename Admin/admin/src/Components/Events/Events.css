@@ -4,6 +4,25 @@
 
 .events-header {
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.back-button {
+  padding: 0.5rem 1rem;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: fit-content;
+}
+
+.back-button:hover {
+  background-color: #1565c0;
 }
 
 .events-header h1 {
@@ -163,4 +182,15 @@
 
 .event-card.rejected .event-status-badge {
   background-color: #dc3545;
+}
+
+.event-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+  color: #666;
+}
+
+.location-icon {
+  font-size: 22px;
 }

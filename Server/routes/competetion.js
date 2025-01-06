@@ -10,7 +10,8 @@ const {
   createTournamentTeam,
   addTeamMemberWithQR,
   getTeamDetails,
-  removeTeamMember
+  removeTeamMember,
+  getTodayTournaments
 } = require('../controllers/competetion');
 
 const router = express.Router();
@@ -33,12 +34,17 @@ router.delete('/teams/:teamId/members/:userId', removeTeamMember);
 router.get('/:id', getTournamentById); 
 
 // Create a new tournament
-router.post('/', createTournament); 
+router.post('/create', createTournament); 
 
 // Update a tournament
 router.put('/:id', updateTournament); 
 
 // Delete a tournament
 router.delete('/:id', deleteTournament); 
+
+// Add this new route before the /:id route
+router.get("/count/total", getTotalTournaments);
+
+router.get('/today', getTodayTournaments);
 
 module.exports = router;

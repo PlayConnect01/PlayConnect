@@ -445,7 +445,7 @@ const initializePayment = async (amount, userId) => {
             <View style={styles.participantGrid}>
               {event.event_participants?.map((participant) => (
                 <View key={participant.user_id} style={styles.participantItem}>
-                   <TouchableOpacity onPress={() => navigation.navigate('profile/UserProfilePage', { userId: participant.user_id, reportedBy: userId })}>
+                   <TouchableOpacity onPress={() => navigation.navigate('UserProfilePage', { userId: participant.user_id, reportedBy: userId })}>
                   <Ionicons name="person-circle" size={40} color="black" />
                   </TouchableOpacity>
                   <Text style={styles.participantName}>{participant.user.username}</Text>

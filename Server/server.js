@@ -3,6 +3,7 @@ const http = require('http');
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
+const fs = require('fs'); // Add this line
 const { initializeSocket } = require('./config/socket');
 const passport = require('./config/passport.js');
 
@@ -22,19 +23,31 @@ const competetionRouter = require('./routes/competetion');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const favorites = require('./routes/favoriteRoutes');
-const paymentRouter = require('./routes/Paymentrouter.js');
+const paymentRoutes = require('./routes/Paymentrouter.js');
 const notificationRoutes = require('./routes/notification');
 const orderRoutes = require('./routes/orderRoutes');
+const adminRoutes = require('./routes/AdminAuth.js');
 const reviewRoutes = require('./routes/review');
 const reportRoutes = require('./routes/reports.js');
-
-
+const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
+const userproductRoutes = require('./routes/userproduct');
+const sportsProductRoutes = require('./routes/sportsProduct');
+const categoryProductRoutes = require('./routes/categoryRoutes');
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json({limit: '50mb', extended: true}));
 app.use(express.urlencoded({limit: '50mb', extended: true}));
+
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(uploadDir));
 
 // Session middleware
 app.use(
@@ -71,9 +84,6 @@ const server = http.createServer(app);
 // Initialize WebSocket server for video calls and other socket connections
 initializeSocket(server);
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Mount Routers
 app.use('/sports', sportRoutes);
 app.use('/users', userRouter);
@@ -84,82 +94,19 @@ app.use('/password', passwordRouter);
 app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/favorites', favorites);
-app.use('/payments', paymentRouter);
+app.use('/payments', paymentRoutes);
 app.use('/leaderboard', leaderboardRoutes);
 app.use('/chats', chatRoutes);
-app.use('/notifications', notificationRoutes);
+app.use('/orderHistory', orderHistoryRoutes);
 app.use('/orders', orderRoutes);
+app.use('/admin', adminRoutes);
 app.use('/review', reviewRoutes);
 app.use('/reports', reportRoutes);
-
-// Tournament team creation endpoint
-app.post("/api/tournaments/:tournamentId/teams", async (req, res) => {
-  try {
-    const { tournamentId } = req.params;
-    const { teamName } = req.body;
-    // Using a default user ID since we're not using authentication
-    const userId = 1;
-
-    // Create a new team
-    const tournament = await prismaClient.tournament.findUnique({
-      where: { tournament_id: parseInt(tournamentId) },
-      include: { sport: true }
-    });
-
-    if (!tournament) {
-      return res.status(404).json({ error: "Tournament not found" });
-    }
-
-    const team = await prismaClient.team.create({
-      data: {
-        team_name: teamName,
-        sport_id: tournament.sport_id,
-        created_by: userId,
-      },
-    });
-
-    // Add creator as team member
-    await prismaClient.teamMember.create({
-      data: {
-        team_id: team.team_id,
-        user_id: userId,
-        role: "CAPTAIN",
-      },
-    });
-
-    // Link team to tournament
-    const tournamentTeam = await prismaClient.tournamentTeam.create({
-      data: {
-        tournament_id: parseInt(tournamentId),
-        team_id: team.team_id,
-      },
-      include: {
-        team: {
-          include: {
-            members: {
-              include: {
-                user: true
-              }
-            },
-            creator: true
-          }
-        }
-      }
-    });
-
-    res.json({
-      success: true,
-      team: {
-        ...tournamentTeam.team,
-        tournament_team_id: tournamentTeam.tournament_team_id
-      }
-    });
-  } catch (error) {
-    console.error("Error creating tournament team:", error);
-    res.status(500).json({ error: "Failed to create team" });
-  }
-});
-
+app.use('/notifications', notificationRoutes);
+app.use('/userproduct', userproductRoutes);
+app.use('/sportsproduct', sportsProductRoutes);
+app.use('/api/sports', sportsProductRoutes);
+app.use('/category', categoryProductRoutes);
 // Admin routes with prefix
 
 // Start the Server

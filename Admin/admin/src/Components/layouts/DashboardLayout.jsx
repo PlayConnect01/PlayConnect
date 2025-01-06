@@ -8,6 +8,11 @@ import Events from '../Events/Events';
 import EventDetails from '../Events/EventDetails';
 import Competitions from '../Competitions/Competitions';
 import CompetitionsDetails from '../Competitions/CompetitionsDetails';
+import CreateCompetition from '../Competitions/CreateCompetition';
+import Products from '../Products/Products';
+import UserProducts from '../Products/UserProducts';
+import ProductDetails from '../Products/ProductDetails';
+import Reports from '../Reports/Reports';
 
 const DashboardLayout = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -28,6 +33,15 @@ const DashboardLayout = () => {
       case 'competitions':
         navigate('/admin/competitions');
         break;
+      case 'products':
+        navigate('/admin/products');
+        break;
+      case 'userProducts':
+        navigate('/admin/user-products');
+        break;
+      case 'reports':
+        navigate('/admin/reports');
+        break;
       default:
         navigate('/admin/dashboard');
     }
@@ -38,15 +52,23 @@ const DashboardLayout = () => {
       <Sidebar onPageChange={handlePageChange} />
       <div className="main-content">
         <Header />
-        <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/events/details/:eventId" element={<EventDetails />} />
-          <Route path="/competitions" element={<Competitions />} />
-          <Route path="/competitions/details/:id" element={<CompetitionsDetails />} />
-          <Route path="/" element={<Dashboard />} />
-        </Routes>
+        <div className="content-area">
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/details/:eventId" element={<EventDetails />} />
+            <Route path="/competitions" element={<Competitions />} />
+            <Route path="/competitions/details/:id" element={<CompetitionsDetails />} />
+            <Route path="/competitions/create" element={<CreateCompetition />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetails />} />
+            <Route path="/user-products" element={<UserProducts />} />
+            <Route path="/user-products/:id" element={<ProductDetails />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/" element={<Dashboard />} />
+          </Routes>
+        </div>
       </div>
     </div>
   );

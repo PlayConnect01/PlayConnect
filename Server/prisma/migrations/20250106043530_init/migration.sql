@@ -34,6 +34,7 @@ CREATE TABLE `User` (
     `block_reason` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
+    INDEX `User_email_idx`(`email`),
     PRIMARY KEY (`user_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -44,6 +45,7 @@ CREATE TABLE `Sport` (
     `description` VARCHAR(191) NULL,
     `icon` VARCHAR(191) NULL,
 
+    INDEX `Sport_name_idx`(`name`),
     PRIMARY KEY (`sport_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -222,6 +224,20 @@ CREATE TABLE `MarketplaceProduct` (
 
     INDEX `MarketplaceProduct_sport_id_idx`(`sport_id`),
     PRIMARY KEY (`product_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `UserProduct` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `product_id` INTEGER NOT NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `UserProduct_user_id_idx`(`user_id`),
+    INDEX `UserProduct_product_id_idx`(`product_id`),
+    UNIQUE INDEX `UserProduct_user_id_product_id_key`(`user_id`, `product_id`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -411,7 +427,7 @@ ALTER TABLE `TeamMember` ADD CONSTRAINT `TeamMember_user_id_fkey` FOREIGN KEY (`
 ALTER TABLE `Tournament` ADD CONSTRAINT `Tournament_sport_id_fkey` FOREIGN KEY (`sport_id`) REFERENCES `Sport`(`sport_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Tournament` ADD CONSTRAINT `Tournament_created_by_fkey` FOREIGN KEY (`created_by`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Tournament` ADD CONSTRAINT `Tournament_created_by_fkey` FOREIGN KEY (`created_by`) REFERENCES `Admin`(`admin_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `TournamentTeam` ADD CONSTRAINT `TournamentTeam_tournament_id_fkey` FOREIGN KEY (`tournament_id`) REFERENCES `Tournament`(`tournament_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -457,6 +473,12 @@ ALTER TABLE `Achievement` ADD CONSTRAINT `Achievement_user_id_fkey` FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE `MarketplaceProduct` ADD CONSTRAINT `MarketplaceProduct_sport_id_fkey` FOREIGN KEY (`sport_id`) REFERENCES `Sport`(`sport_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserProduct` ADD CONSTRAINT `UserProduct_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserProduct` ADD CONSTRAINT `UserProduct_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `MarketplaceProduct`(`product_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Cart` ADD CONSTRAINT `Cart_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
