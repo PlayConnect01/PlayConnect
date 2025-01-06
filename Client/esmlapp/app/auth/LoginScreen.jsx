@@ -59,6 +59,10 @@ export default function Login() {
     }).start();
   }, []);
 
+  const handleNavigation = (screenName) => {
+    navigation.navigate(screenName);
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
       setAlertTitle('Error');
@@ -75,11 +79,9 @@ export default function Login() {
       });
 
       if (response.data.user.is_banned) {
-        Alert.alert(
-          'Account Banned',
-          'Your account has been banned. Please contact support for more information.',
-          [{ text: 'OK' }]
-        );
+        setAlertTitle('Account Banned');
+        setAlertMessage(`Your account has been banned.\nReason: ${response.data.ban_reason || 'Not specified'}`);
+        setAlertVisible(true);
         return;
       }
 
@@ -98,19 +100,18 @@ export default function Login() {
       console.log('Login error:', error.response?.data);
       
       if (error.response?.status === 403 && error.response?.data?.error === "Account banned") {
-        Alert.alert(
-          'Account Banned',
-          `${error.response.data.message}\n\nReason: ${error.response.data.ban_reason || 'Not specified'}`,
-          [{ text: 'OK' }]
-        );
-      } else if (error.response?.status === 401) {
-        Alert.alert('Error', 'Invalid email or password');
+        setAlertTitle('Account Banned');
+        setAlertMessage(`Your account has been banned.\nReason: ${error.response.data.ban_reason || 'Not specified'}`);
+        setAlertVisible(true);
+      } else if (error.response?.status === 401 || error.response?.data?.error === "Invalid credentials") {
+        setAlertTitle('Invalid Credentials');
+        setAlertMessage('The email or password you entered is incorrect. Please try again.');
+        setAlertVisible(true);
       } else {
-        Alert.alert('Error', 'Something went wrong. Please try again later.');
+        setAlertTitle('Error');
+        setAlertMessage('Something went wrong. Please try again later.');
+        setAlertVisible(true);
       }
-      setAlertTitle('Error');
-      setAlertMessage('Invalid login credentials!');
-      setAlertVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -136,50 +137,62 @@ export default function Login() {
           <View style={styles.contentContainer}>
             <Text style={styles.title}>Welcome Back!</Text>
 
-            <View style={[styles.inputContainer, { marginBottom: windowHeight * 0.02 }]}>
-              <FontAwesome name="envelope" size={20} color="#ffffff80" />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholderTextColor="#ffffff80"
-                autoCapitalize="none"
-                keyboardType="email-address"
-                returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()}
-                blurOnSubmit={false}
-              />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Email :</Text>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="envelope" size={20} color="#ffffff80" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholderTextColor="#ffffff80"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  blurOnSubmit={false}
+                />
+              </View>
             </View>
 
-            <View style={styles.inputContainer}>
-              <FontAwesome name="lock" size={20} color="#ffffff80" />
-              <TextInput
-                ref={passwordRef}
-                style={styles.input}
-                placeholder="Enter Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholderTextColor="#ffffff80"
-                secureTextEntry={!isPasswordVisible}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-              />
-              <TouchableOpacity onPress={togglePasswordVisibility}>
-                <Feather
-                  name={isPasswordVisible ? "eye" : "eye-off"}
-                  size={20}
-                  color="#ffffff80"
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Password :</Text>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="lock" size={20} color="#ffffff80" />
+                <TextInput
+                  ref={passwordRef}
+                  style={styles.input}
+                  placeholder="Enter Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholderTextColor="#ffffff80"
+                  secureTextEntry={!isPasswordVisible}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
                 />
+                <TouchableOpacity onPress={togglePasswordVisibility}>
+                  <Feather
+                    name={isPasswordVisible ? "eye" : "eye-off"}
+                    size={20}
+                    color="#ffffff80"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.accountActionsContainer}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SignUp')}
+              >
+                <Text style={[styles.createAccountText, styles.underlineText]}>Create an Account</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ForgotPassword')}
+              >
+                <Text style={[styles.createAccountText, styles.underlineText]}>Forgot Password?</Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={() => navigation.navigate('ForgotPassword')}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity onPress={handleLogin} style={styles.buttonContainer}>
               <LinearGradient
@@ -213,13 +226,6 @@ export default function Login() {
                 <FontAwesome name="facebook" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={styles.createAccountButton}
-              onPress={() => navigation.navigate('SignUp')}
-            >
-              <Text style={styles.createAccountText}>Create An Account</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -250,7 +256,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: windowWidth * 0.05,
-    paddingTop: windowHeight * 0.15,
+    paddingTop: windowHeight * 0.12,
     alignItems: 'center',
   },
   title: {
@@ -289,16 +295,19 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: windowWidth * 0.02,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: windowHeight * 0.04,
-    marginTop: windowHeight * 0.01,
+  accountActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     width: '100%',
     maxWidth: windowWidth * 0.85,
+    marginBottom: windowHeight * 0.05,
   },
-  forgotPasswordText: {
+  createAccountText: {
     color: '#FFFFFF',
-    fontSize: windowWidth * 0.03,
+    fontSize: windowWidth * 0.035,
+  },
+  underlineText: {
+    textDecorationLine: 'underline',
   },
   buttonContainer: {
     width: '100%',
@@ -358,22 +367,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  createAccountContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    maxWidth: windowWidth * 0.85,
-    marginBottom: windowHeight * 0.12,
-    marginTop: windowHeight * -0.02,
-  },
   inputLabel: {
     color: '#FFFFFF',
     fontSize: windowWidth * 0.035,
     marginBottom: windowHeight * 0.01,
-  },
-  createAccountText: {
-    color: '#FFFFFF',
-    fontSize: windowWidth * 0.035,
-    textDecorationLine: 'underline',
+    alignSelf: 'flex-start',
+    fontWeight: '500',
   },
 });

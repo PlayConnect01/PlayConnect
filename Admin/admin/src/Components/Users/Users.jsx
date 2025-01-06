@@ -62,22 +62,24 @@ const Users = () => {
         title: 'Ban User',
         html: `
           <div style="width: 100%;">
-            <select id="banReason" class="swal2-select" style="width: 100%; margin-bottom: 10px;">
+            <select id="banReason" class="swal2-select" style="width: 100%; margin-bottom: 10px; height: 40px !important;">
               <option value="">Select a reason</option>
               ${banReasons.map(reason => `<option value="${reason}">${reason}</option>`).join('')}
               <option value="custom">Custom reason...</option>
             </select>
-            <input id="customReason" class="swal2-input" placeholder="Enter custom reason..." style="display: none;">
+            <input id="customReason" class="swal2-input" placeholder="Enter custom reason..." style="display: none; height: 40px !important;">
           </div>
         `,
-        width: '320px',
+        width: '400px',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ban User',
         cancelButtonText: 'Cancel',
         customClass: {
-          popup: 'no-scroll-popup'
+          popup: 'large-popup',
+          input: 'large-input',
+          select: 'large-select'
         },
         didOpen: () => {
           // Show/hide custom reason input based on selection
@@ -143,11 +145,18 @@ const Users = () => {
                 : user
             ));
 
-            await Swal.fire(
-              'Banned!',
-              `${username} has been banned successfully.`,
-              'success'
-            );
+            await Swal.fire({
+              title: 'Banned!',
+              text: `${username} has been banned successfully.`,
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false,
+              customClass: {
+                popup: 'small-popup',
+                title: 'small-title',
+                content: 'small-content'
+              }
+            });
           }
         }
       }
@@ -216,8 +225,7 @@ const Users = () => {
         title: 'Delete User',
         html: `
           <div style="min-width: 300px;">
-            <p>This will permanently delete ${username} and all their data.</p>
-            <p>This action cannot be undone!</p>
+            <p>Are You Sure You Want To Delete ${username}?</p>
           </div>
         `,
         icon: 'warning',
@@ -315,13 +323,10 @@ const Users = () => {
                 <td className="user-info">
                   <img 
                     src={user.profile_picture || 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png'} 
-                    alt={user.username}
+                    alt={`${user.username}'s avatar`} 
                     className="user-avatar"
-                    onError={(e) => {
-                      e.target.src = 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png';
-                    }}
                   />
-                  <span>{user.username}</span>
+                  {user.username}
                 </td>
                 <td>{user.email}</td>
                 <td>
@@ -340,29 +345,23 @@ const Users = () => {
                 </td>
                 <td className="action-buttons">
                   {user.is_banned ? (
-                    <button 
+                    <MdLockOpen 
                       onClick={() => handleUnbanUser(user.user_id, user.username)}
                       className="unban-btn"
                       title="Unban user"
-                    >
-                      <MdLockOpen />
-                    </button>
+                    />
                   ) : (
                     <>
-                      <button 
+                      <MdLock 
                         onClick={() => handleBanUser(user.user_id, user.username)}
                         className="ban-btn"
                         title="Ban user"
-                      >
-                        <MdLock />
-                      </button>
-                      <button 
+                      />
+                      <MdGavel 
                         onClick={() => handleDeleteUser(user.user_id, user.username)}
                         className="delete-btn"
                         title="Delete user permanently"
-                      >
-                        <MdGavel />
-                      </button>
+                      />
                     </>
                   )}
                 </td>

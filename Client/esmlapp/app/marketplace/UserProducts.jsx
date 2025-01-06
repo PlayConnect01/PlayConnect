@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo, useMemo, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -132,6 +132,37 @@ const DeleteConfirmationModal = ({ visible, product, onClose, onConfirm }) => {
   );
 };
 
+const FormInput = memo(({ label, icon, value, onChangeText, placeholder, keyboardType = "default", multiline = false, numberOfLines = 1 }) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <View style={styles.inputWrapper}>
+      {icon && (
+        <MaterialIcons 
+          name={icon} 
+          size={20} 
+          color="#718096" 
+          style={styles.inputIcon}
+        />
+      )}
+      <TextInput
+        style={[
+          styles.input,
+          icon && styles.inputWithIcon,
+          value && styles.inputFilled,
+          multiline && styles.textArea
+        ]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        keyboardType={keyboardType}
+        placeholderTextColor="#A0AEC0"
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+      />
+    </View>
+  </View>
+));
+
 const UserProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -164,7 +195,6 @@ const UserProducts = () => {
   const [productToDelete, setProductToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -187,27 +217,6 @@ const UserProducts = () => {
       fetchUserProducts();
     }
   }, [userId]);
-
-  useEffect(() => {
-    if (!products) return;
-    
-    let filtered = [...products];
-    
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Apply category filter
-    if (selectedFilter !== 'all') {
-      filtered = filtered.filter(product => product.sport?.name === selectedFilter);
-    }
-    
-    setFilteredProducts(filtered);
-  }, [searchQuery, selectedFilter, products]);
 
   useEffect(() => {
     fetchSports();
@@ -457,6 +466,15 @@ const UserProducts = () => {
       }
     };
 
+    const handleInputChange = useCallback((field, value) => {
+      if (field === 'discount') {
+        const discount = Math.min(Math.max(parseFloat(value) || 0, 0), 100);
+        setFormData(prev => ({...prev, [field]: discount.toString()}));
+      } else {
+        setFormData(prev => ({...prev, [field]: value}));
+      }
+    }, []);
+
     return (
       <Modal
         visible={isModalVisible}
@@ -501,85 +519,40 @@ const UserProducts = () => {
                     </Text>
                   </View>
 
-                  <View style={styles.formGrid}>
-                    <View style={styles.formGridItem}>
-                      <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Product Name *</Text>
-                        <View style={styles.inputWrapper}>
-                          <MaterialIcons 
-                            name="shopping-bag" 
-                            size={20} 
-                            color="#718096" 
-                            style={styles.inputIcon}
-                          />
-                          <TextInput
-                            style={[
-                              styles.input,
-                              styles.inputWithIcon,
-                              formData.name && styles.inputFilled
-                            ]}
-                            value={formData.name}
-                            onChangeText={(text) => setFormData(prev => ({...prev, name: text}))}
-                            placeholder="Enter product name"
-                            placeholderTextColor="#A0AEC0"
-                          />
-                        </View>
-                      </View>
-                    </View>
+                  <FormInput
+                    label="Product Name *"
+                    icon="shopping-bag"
+                    value={formData.name}
+                    onChangeText={(text) => handleInputChange('name', text)}
+                    placeholder="Enter product name"
+                  />
 
-                    <View style={styles.formGridItem}>
-                      <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Price *</Text>
-                        <View style={styles.inputWrapper}>
-                          <MaterialIcons 
-                            name="attach-money" 
-                            size={20} 
-                            color="#718096" 
-                            style={styles.inputIcon}
-                          />
-                          <TextInput
-                            style={[
-                              styles.input,
-                              styles.inputWithIcon,
-                              formData.price && styles.inputFilled
-                            ]}
-                            value={formData.price}
-                            onChangeText={(text) => setFormData(prev => ({...prev, price: text}))}
-                            placeholder="0.00"
-                            keyboardType="decimal-pad"
-                            placeholderTextColor="#A0AEC0"
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  </View>
+                  <FormInput
+                    label="Price *"
+                    icon="attach-money"
+                    value={formData.price}
+                    onChangeText={(text) => handleInputChange('price', text)}
+                    placeholder="0.00"
+                    keyboardType="decimal-pad"
+                  />
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Discount (%)</Text>
-                    <View style={styles.inputWrapper}>
-                      <MaterialIcons 
-                        name="local-offer" 
-                        size={20} 
-                        color="#718096" 
-                        style={styles.inputIcon}
-                      />
-                      <TextInput
-                        style={[
-                          styles.input,
-                          styles.inputWithIcon,
-                          formData.discount && styles.inputFilled
-                        ]}
-                        value={formData.discount}
-                        onChangeText={(text) => {
-                          const discount = Math.min(Math.max(parseFloat(text) || 0, 0), 100);
-                          setFormData(prev => ({...prev, discount: discount.toString()}));
-                        }}
-                        placeholder="Enter discount percentage"
-                        keyboardType="decimal-pad"
-                        placeholderTextColor="#A0AEC0"
-                      />
-                    </View>
-                  </View>
+                  <FormInput
+                    label="Discount (%)"
+                    icon="local-offer"
+                    value={formData.discount}
+                    onChangeText={(text) => handleInputChange('discount', text)}
+                    placeholder="Enter discount percentage"
+                    keyboardType="decimal-pad"
+                  />
+
+                  <FormInput
+                    label="Description"
+                    value={formData.description}
+                    onChangeText={(text) => handleInputChange('description', text)}
+                    placeholder="Enter product description"
+                    multiline={true}
+                    numberOfLines={4}
+                  />
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Category *</Text>
@@ -609,28 +582,6 @@ const UserProducts = () => {
                         color={selectedSport ? '#4FA5F5' : '#718096'} 
                       />
                     </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Description</Text>
-                    <View style={styles.inputWrapper}>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          styles.textArea,
-                          formData.description && styles.inputFilled
-                        ]}
-                        value={formData.description}
-                        onChangeText={(text) => setFormData(prev => ({...prev, description: text}))}
-                        placeholder="Enter product description"
-                        multiline
-                        numberOfLines={4}
-                        placeholderTextColor="#A0AEC0"
-                      />
-                      <Text style={styles.characterCount}>
-                        {formData.description.length}/500
-                      </Text>
-                    </View>
                   </View>
 
                   <View style={styles.formSection}>
@@ -803,7 +754,7 @@ const UserProducts = () => {
     }
   };
 
-  const SportSelectionModal = () => {
+  const SportSelectionModal = memo(() => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredSports, setFilteredSports] = useState(sports);
 
@@ -834,9 +785,9 @@ const UserProducts = () => {
       'Tennis': { icon: 'sports-tennis', color: '#4FA5F5', bgColor: '#E6F0FA', gradient: ['#4FA5F5', '#72B9F7'] }
     };
 
-    const handleSearch = (text) => {
+    const handleSearch = useCallback((text) => {
       setSearchQuery(text);
-    };
+    }, []);
 
     const clearSearch = () => {
       setSearchQuery('');
@@ -946,9 +897,9 @@ const UserProducts = () => {
         </TouchableWithoutFeedback>
       </Modal>
     );
-  };
+  });
 
-  const renderItem = ({ item }) => (
+  const renderItem = useCallback(({ item }) => (
     <View style={styles.productCard}>
       <Image
         source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
@@ -988,7 +939,30 @@ const UserProducts = () => {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleUpdate, handleDelete]);
+
+  const handleSearch = useCallback((text) => {
+    setSearchQuery(text);
+  }, []);
+
+  const memoizedFilteredProducts = useMemo(() => {
+    if (!products) return [];
+    
+    let filtered = [...products];
+    
+    if (searchQuery) {
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter(product => product.sport?.name === selectedFilter);
+    }
+    
+    return filtered;
+  }, [products, searchQuery, selectedFilter]);
 
   const showAlert = (title, message, buttons) => {
     setAlertConfig({
@@ -1033,7 +1007,7 @@ const UserProducts = () => {
             style={styles.searchInput}
             placeholder="Search products..."
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleSearch}
             placeholderTextColor="#A0AEC0"
           />
           {searchQuery ? (
@@ -1089,7 +1063,7 @@ const UserProducts = () => {
           <Text style={styles.emptyText}>No products yet</Text>
           <Text style={styles.emptySubText}>Start selling by adding your first product!</Text>
         </View>
-      ) : filteredProducts.length === 0 ? (
+      ) : memoizedFilteredProducts.length === 0 ? (
         <View style={styles.emptyContainer}>
           <MaterialIcons name="search-off" size={64} color="#ccc" />
           <Text style={styles.emptyText}>No matches found</Text>
@@ -1097,12 +1071,16 @@ const UserProducts = () => {
         </View>
       ) : (
         <FlatList
-          data={filteredProducts}
+          data={memoizedFilteredProducts}
           keyExtractor={(item) => item.product_id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={<View style={{ height: 80 }} />}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          initialNumToRender={5}
         />
       )}
 

@@ -81,18 +81,44 @@ const Events = () => {
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
-        cancelButtonColor: '#6c757d',
+        cancelButtonColor: '#3085d6',
         confirmButtonText: 'Yes, approve it'
       });
 
       if (result.isConfirmed) {
-        await axios.put(`http://localhost:3000/events/approve/${eventId}`);
+        // First, approve the event
+        const approveResponse = await axios.put(`http://localhost:3000/events/approve/${eventId}`);
+        
+        // Find the event to get the creator's ID
+        const event = events.find(e => e.event_id === eventId);
+        
+        if (event && event.creator_id) {
+          try {
+            await axios.post(`http://localhost:3000/users/updatePoints`, {
+              userId: event.creator_id,
+              points: 500,
+              activity: 'EVENT_APPROVAL'
+            });
+          } catch (pointsError) {
+            console.error('Error updating points:', pointsError);
+          }
+        }
+
+        // Update local state
         setEvents(events.map(event => 
           event.event_id === eventId 
             ? { ...event, status: 'approved' }
             : event
         ));
-        Swal.fire('Approved!', 'The event has been approved.', 'success');
+
+        // Modified success alert to auto-close
+        await Swal.fire({
+          title: 'Approved!',
+          text: 'The event has been approved .',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       }
     } catch (error) {
       console.error('Error approving event:', error);
@@ -119,7 +145,15 @@ const Events = () => {
             ? { ...event, status: 'rejected' }
             : event
         ));
-        Swal.fire('Rejected!', 'The event has been rejected.', 'success');
+        
+        // Modified success alert to auto-close
+        await Swal.fire({
+          title: 'Rejected!',
+          text: 'The event has been rejected.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       }
     } catch (error) {
       console.error('Error rejecting event:', error);

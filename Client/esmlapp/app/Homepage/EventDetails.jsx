@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Modal, TextInput, Button } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, Modal, TextInput, Button, Dimensions } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -10,6 +10,49 @@ import MapView, { Marker } from 'react-native-maps';
 import { Camera } from 'expo-camera';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import EventReviews from './EventReviews.jsx';
+
+const formatTime = (timeString) => {
+  if (!timeString) return '';
+  
+  // If timeString is already in HH:mm format, just parse the hours and minutes
+  if (timeString.includes(':')) {
+    const [hours, minutes] = timeString.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hours, 10));
+    date.setMinutes(parseInt(minutes, 10));
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  }
+  
+  // Fallback for full date string
+  const date = new Date(timeString);
+  return date.toLocaleTimeString([], { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
+};
+
+const getOrdinalSuffix = (day) => {
+  if (day > 3 && day < 21) return 'th';
+  switch (day % 10) {
+    case 1: return 'st';
+    case 2: return 'nd';
+    case 3: return 'rd';
+    default: return 'th';
+  }
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const month = date.toLocaleString('default', { month: 'long' });
+  const year = date.getFullYear();
+  return `${month} ${day}${getOrdinalSuffix(day)} ${year}`;
+};
 
 const decodeToken = (token) => {
   try {
@@ -184,6 +227,7 @@ const initializePayment = async (amount, userId) => {
 
       const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
+      // Add participant to event
       const response = await axios.post(
         `${BASE_URL}/events/addParticipant`,
         { eventId, userId },
@@ -197,9 +241,18 @@ const initializePayment = async (amount, userId) => {
         setModalVisible(true);
       }
 
+      // Update event data and user joined status
       const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
       setEvent(updatedEvent.data);
       setUserJoined(true);
+
+      // Show success message with points
+      Alert.alert(
+        "Success",
+        "You have joined the event and earned 100 points!",
+        [{ text: "OK" }]
+      );
+
       return true;
     } catch (error) {
       console.error('Add participant error:', error);
@@ -208,64 +261,49 @@ const initializePayment = async (amount, userId) => {
   };
 
   const handleRemoveParticipant = async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.error("Token not found in AsyncStorage");
-        Alert.alert('Error', 'You are not logged in. Please log in to leave the event.');
-        return;
-      }
+    Alert.alert(
+      "Leave Event",
+      "Are you sure you want to leave this event? You will lose 100 points.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Leave",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await axios.delete(
+                `${BASE_URL}/events/removeParticipant/${eventId}/${userId}`
+              );
 
-      const decodedToken = decodeToken(token);
-      if (!decodedToken) {
-        Alert.alert('Error', 'Invalid token. Please log in again.');
-        return;
-      }
-
-      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
-
-      Alert.alert(
-        '⚠️ Warning!',
-        'Are you sure you want to leave this event? If you leave, you will not be able to get your money back.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Leave',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await axios.post(
-                  `${BASE_URL}/events/removeParticipant`,
-                  { eventId, userId },
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                    },
-                  }
-                );
-
-                Alert.alert('Success', 'You have successfully left the event!');
-                const updatedEvent = await axios.get(`${BASE_URL}/events/getById/${eventId}`);
-                setEvent(updatedEvent.data);
+              if (response.status === 200) {
+                setEvent(prevEvent => ({
+                  ...prevEvent,
+                  event_participants: prevEvent.event_participants.filter(
+                    participant => participant.user_id !== userId
+                  )
+                }));
                 setUserJoined(false);
-                setQrCode(null);
-              } catch (error) {
-                Alert.alert('Error', 'Failed to leave the event. Please try again.');
+                Alert.alert(
+                  "Success",
+                  "You have left the event and lost 100 points",
+                  [{ text: "OK" }]
+                );
               }
-            },
-          },
-        ],
-        { 
-          cancelable: false,
-          titleStyle: { color: 'red' }
+            } catch (error) {
+              console.error("Error removing participant:", error);
+              Alert.alert(
+                "Error",
+                "Failed to remove you from the event. Please try again.",
+                [{ text: "OK" }]
+              );
+            }
+          }
         }
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to leave the event. Please try again.');
-    }
+      ]
+    );
   };
 
   const handleJoinEvent = async () => {
@@ -397,8 +435,10 @@ const initializePayment = async (amount, userId) => {
 
             <View style={styles.detailRow}>
               <Ionicons name="calendar" size={20} color="#0095FF" style={styles.detailIcon} />
-              <Text style={styles.boldLabel}>Date:</Text>
-              <Text style={styles.boldContent}>{new Date(event.date).toLocaleString()}</Text>
+              <Text style={styles.boldLabel}>Date & Time:</Text>
+              <Text style={styles.boldContent}>
+                {`${formatDate(event.date)} at ${formatTime(event.start_time)} - ${formatTime(event.end_time)}`}
+              </Text>
             </View>
 
             <View style={styles.detailRow}>
@@ -445,7 +485,7 @@ const initializePayment = async (amount, userId) => {
             <View style={styles.participantGrid}>
               {event.event_participants?.map((participant) => (
                 <View key={participant.user_id} style={styles.participantItem}>
-                   <TouchableOpacity onPress={() => navigation.navigate('profile/UserProfilePage', { userId: participant.user_id, reportedBy: userId })}>
+                   <TouchableOpacity onPress={() => navigation.navigate('UserProfilePage', { userId: participant.user_id, reportedBy: userId })}>
                   <Ionicons name="person-circle" size={40} color="black" />
                   </TouchableOpacity>
                   <Text style={styles.participantName}>{participant.user.username}</Text>

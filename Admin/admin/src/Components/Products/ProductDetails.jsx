@@ -5,6 +5,20 @@ import './ProductDetails.css';
 import { MdArrowBack, MdEdit, MdDelete, MdLocalOffer, MdStar, MdSave, MdClose } from 'react-icons/md';
 import Swal from 'sweetalert2';
 
+const sweetAlertConfig = {
+  width: '280px',
+  padding: '0.8rem',
+  customClass: {
+    popup: 'small-popup',
+    title: 'small-title',
+    content: 'small-content',
+    confirmButton: 'small-button'
+  },
+  timer: 1500,
+  showConfirmButton: false,
+  timerProgressBar: true
+};
+
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -52,10 +66,21 @@ const ProductDetails = () => {
       
       setProduct(response.data);
       setEditMode(prev => ({ ...prev, [field]: false }));
-      Swal.fire('Success', 'Product updated successfully', 'success');
+      
+      await Swal.fire({
+        ...sweetAlertConfig,
+        icon: 'success',
+        title: 'Success',
+        text: 'Product updated successfully'
+      });
     } catch (error) {
       console.error('Error updating product:', error);
-      Swal.fire('Error', 'Failed to update product', 'error');
+      await Swal.fire({
+        ...sweetAlertConfig,
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to update product'
+      });
     }
   };
 
@@ -68,17 +93,29 @@ const ProductDetails = () => {
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Delete'
+        confirmButtonText: 'Delete',
+        width: '280px',
+        padding: '0.8rem'
       });
 
       if (result.isConfirmed) {
         await axios.delete(`http://localhost:3000/product/products/${id}`);
-        Swal.fire('Deleted!', 'Product has been deleted.', 'success');
+        await Swal.fire({
+          ...sweetAlertConfig,
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Product has been deleted'
+        });
         navigate('/admin/products');
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      Swal.fire('Error', 'Failed to delete product.', 'error');
+      await Swal.fire({
+        ...sweetAlertConfig,
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to delete product'
+      });
     }
   };
 

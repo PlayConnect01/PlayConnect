@@ -55,6 +55,7 @@ import BoxingProducts from "./marketplace/categories/BoxingProducts";
 import RunningProducts from "./marketplace/categories/RunningProducts";
 import SwimmingProducts from "./marketplace/categories/SwimmingProducts";
 import YogaProducts from "./marketplace/categories/YogaProducts";
+import UserProfilePage from "./profile/UserProfilePage"; 
 
 import UserProducts from './marketplace/UserProducts';
 
@@ -161,6 +162,7 @@ function App() {
               <Stack.Screen name="ChatDetails" component={WrappedChatDetails} />
               <Stack.Screen name="Profile" component={WrappedProfilePage} />
               <Stack.Screen name="EditProfile" component={WrappedEditProfile} />
+              <Stack.Screen name="UserProfilePage" component={UserProfilePage} />
               
               {/* Marketplace Flow */}
               <Stack.Screen name="Marketplace" component={WrappedMarketplace} />

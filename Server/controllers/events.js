@@ -66,7 +66,12 @@ const addParticipantWithQR = async (req, res) => {
     }
 
     // Fetch event and user details
-    const event = await prisma.event.findUnique({ where: { event_id: parseInt(eventId) } });
+    const event = await prisma.event.findUnique({ 
+      where: { event_id: parseInt(eventId) },
+      include: {
+        creator: true
+      }
+    });
     const user = await prisma.user.findUnique({ where: { user_id: parseInt(userId) } });
 
     if (!event || !user) {
@@ -82,16 +87,43 @@ const addParticipantWithQR = async (req, res) => {
     // Generate QR code
     const qrCode = await QRCode.toDataURL(JSON.stringify(qrData));
 
-    // Store participant with QR code
-    const participant = await prisma.eventParticipant.create({
-      data: {
-        event_id: parseInt(eventId),
-        user_id: parseInt(userId),
-        qr_code: qrCode,
-      },
-    });
+    // Store participant with QR code and update user points
+    const [participant, updatedUser, notification] = await prisma.$transaction([
+      // Create participant
+      prisma.eventParticipant.create({
+        data: {
+          event_id: parseInt(eventId),
+          user_id: parseInt(userId),
+          qr_code: qrCode,
+        },
+      }),
+      // Update user points
+      prisma.user.update({
+        where: { user_id: parseInt(userId) },
+        data: {
+          points: {
+            increment: 100
+          }
+        },
+      }),
+      // Create notification
+      prisma.notification.create({
+        data: {
+          user_id: parseInt(userId),
+          title: "Points Earned!",
+          content: `Congratulations! You have successfully joined "${event.event_name}" and earned 100 points. The event will be held at ${event.location} on ${new Date(event.date).toLocaleDateString()}. Don't forget to check your QR code for entry!`,
+          type: "GENERAL",
+          is_read: false,
+          action_url: `/events/${eventId}`
+        },
+      })
+    ]);
 
-    res.status(201).json({ message: "Participant added and QR code generated", qrCode, participant });
+    res.status(201).json({ 
+      qrCode, 
+      participant,
+      pointsEarned: 100
+    });
   } catch (error) {
     console.error("Error adding participant:", error);
     res.status(500).json({ error: "Internal server error", details: error.message });
@@ -99,31 +131,66 @@ const addParticipantWithQR = async (req, res) => {
 };
 
 const removeParticipant = async (req, res) => {
-  const { eventId, userId } = req.body;
+  const { eventId, userId } = req.params;
 
   try {
-    // Check if the user is a participant of the event
-    const existingParticipation = await prisma.eventParticipant.findFirst({
-      where: { event_id: parseInt(eventId), user_id: parseInt(userId) },
+    // Check if the participant exists
+    const participant = await prisma.eventParticipant.findFirst({
+      where: {
+        event_id: parseInt(eventId),
+        user_id: parseInt(userId),
+      },
+      include: {
+        event: true
+      }
     });
 
-    if (!existingParticipation) {
-      return res.status(404).json({ error: "User is not a participant of this event" });
+    if (!participant) {
+      return res.status(404).json({ error: "Participant not found in this event" });
     }
 
-    // Remove the participant from the event
-    await prisma.eventParticipant.delete({
+    // First delete the participant record
+    await prisma.eventParticipant.deleteMany({
       where: {
-        event_participant_id: existingParticipation.event_participant_id,
-      },
+        AND: [
+          { event_id: parseInt(eventId) },
+          { user_id: parseInt(userId) }
+        ]
+      }
     });
 
-    res.status(200).json({ message: "Participant removed successfully" });
+    // Then update user points
+    await prisma.user.update({
+      where: { 
+        user_id: parseInt(userId)
+      },
+      data: {
+        points: {
+          decrement: 100
+        }
+      }
+    });
+
+    // Finally create notification
+    await prisma.notification.create({
+      data: {
+        user_id: parseInt(userId),
+        title: "Points Deducted",
+        content: `You have left the event "${participant.event.event_name}" and 100 points have been deducted from your account.`,
+        type: "GENERAL",
+        is_read: false,
+        action_url: `/events/${eventId}`
+      }
+    });
+
+    res.json({ 
+      pointsDeducted: 100 
+    });
   } catch (error) {
-    res.status(500).json({ error: "Error removing participant", details: error.message });
+    console.error("Error removing participant:", error);
+    res.status(500).json({ error: "Internal server error", details: error.message });
   }
 };
-
 
 const createEvent = async (req, res) => {
   try {
@@ -426,12 +493,56 @@ const getPendingEvents = async (req, res) => {
 const approveEvent = async (req, res) => {
   const { eventId } = req.params;
   try {
-    const updatedEvent = await prisma.event.update({
-      where: { event_id: parseInt(eventId) },
-      data: { status: "approved" }
+    // Use a transaction to ensure both event update and points update succeed or fail together
+    const updatedEvent = await prisma.$transaction(async (prisma) => {
+      // First, update the event status
+      const event = await prisma.event.update({
+        where: { event_id: parseInt(eventId) },
+        data: { 
+          status: "approved",
+          reviewed_at: new Date(),
+        },
+        include: {
+          creator: true // Include creator details
+        }
+      });
+
+      // Update the user's points
+      await prisma.user.update({
+        where: { user_id: event.creator_id },
+        data: {
+          points: {
+            increment: 500
+          }
+        }
+      });
+
+      // Create points log entry
+      await prisma.pointsLog.create({
+        data: {
+          user_id: event.creator_id,
+          activity: 'EVENT_APPROVAL',
+          points: 500,
+        }
+      });
+
+      // Create notification for the user
+      await prisma.notification.create({
+        data: {
+          user_id: event.creator_id,
+          title: "Event Approved!",
+          content: `Your event "${event.event_name}" has been approved! You've earned 500 points.`,
+          type: "GENERAL",
+          action_url: `/events/${event.event_id}`
+        }
+      });
+
+      return event;
     });
+
     res.json(updatedEvent);
   } catch (error) {
+    console.error('Error approving event:', error);
     res.status(500).json({ error: "Error approving event", details: error.message });
   }
 };

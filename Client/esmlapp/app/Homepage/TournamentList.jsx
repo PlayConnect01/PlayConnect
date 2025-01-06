@@ -34,7 +34,7 @@ const TournamentList = () => {
       key={tournament.tournament_id}
       style={styles.card}
       onPress={() =>
-        navigation.navigate("Homepage/TournamentDetail", {
+        navigation.navigate("TournamentDetail", {
           id: tournament.tournament_id,
         })
       }
@@ -57,17 +57,23 @@ const TournamentList = () => {
       </View>
 
       <View style={styles.statsRow}>
-        <View style={styles.statItem}>
+        <View style={styles.statItem} key="teams-stat">
           <MaterialCommunityIcons
             name="account-group"
             size={24}
             color="#0095FF"
+            key="teams-icon"
           />
           <Text style={styles.statValue}>{tournament.teams?.length || 0}</Text>
           <Text style={styles.statLabel}>Teams</Text>
         </View>
-        <View style={styles.statItem}>
-          <MaterialCommunityIcons name="trophy" size={24} color="#0095FF" />
+        <View style={styles.statItem} key="points-stat">
+          <MaterialCommunityIcons
+            name="trophy"
+            size={24}
+            color="#0095FF"
+            key="trophy-icon"
+          />
           <Text style={styles.statValue}>{tournament.point_reward}</Text>
           <Text style={styles.statLabel}>Points</Text>
         </View>
@@ -78,7 +84,7 @@ const TournamentList = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Home")}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tournaments</Text>

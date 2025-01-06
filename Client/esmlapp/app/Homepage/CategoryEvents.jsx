@@ -58,9 +58,7 @@ const CategoryEvents = () => {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Back Arrow and Title */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Homepage/Homep")}
-          >
+          <TouchableOpacity onPress={() => navigation.navigate("Home")}>
             <Ionicons name="arrow-back" size={24} color="#555" />
           </TouchableOpacity>
           <Text style={styles.categoryTitle}>{categoryName} Events</Text>
@@ -93,7 +91,7 @@ const CategoryEvents = () => {
             key={event.event_id}
             style={styles.eventItem}
             onPress={() =>
-              navigation.navigate("Homepage/EventDetails", {
+              navigation.navigate("EventDetails", {
                 eventId: event.event_id,
               })
             }
