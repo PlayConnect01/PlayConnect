@@ -1,5 +1,6 @@
 .dashboard {
     padding: 2rem;
+    position: relative;
   }
   
   .stats-grid {
@@ -70,7 +71,7 @@
     align-items: center;
     justify-content: center;
     background: #f0f0f0;
-    font-size: 2rem;
+    color: #666;
   }
   
   .event-info {
@@ -106,4 +107,128 @@
     font-size: 0.9rem;
     font-weight: 500;
     z-index: 1;
+  }
+  
+  /* Update these styles for event icons */
+  .event-icon {
+    font-size: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+    margin-bottom: 10px;
+    color: #666;
+  }  
+  .location-icon {
+    font-size: 35px;
+  }
+  
+  /* Tournament styles */
+  .tournament-grid {
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .tournament-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+  }
+  
+  .tournament-time-label {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #1976d2;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  .tournament-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: #333;
+  }
+  
+  .tournament-info p {
+    margin: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+  }
+  
+  .tournament-icon {
+    font-size: 1.2rem;
+    color: #1976d2;
+  }
+  
+  /* Top Players styles */
+  .top-players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .player-card {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .player-rank {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #1976d2;
+    margin-right: 1rem;
+    min-width: 30px;
+  }
+  
+  .player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 1rem;
+  }
+  
+  .player-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .player-info {
+    flex: 1;
+  }
+  
+  .player-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+  }
+  
+  .player-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  /* Add medal colors for top 3 */
+  .player-card:nth-child(1) .player-rank {
+    color: gold;
+  }
+  
+  .player-card:nth-child(2) .player-rank {
+    color: silver;
+  }
+  
+  .player-card:nth-child(3) .player-rank {
+    color: #cd7f32;
   }

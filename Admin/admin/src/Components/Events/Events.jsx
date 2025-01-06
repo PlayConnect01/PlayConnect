@@ -3,6 +3,8 @@ import axios from 'axios';
 import './Events.css';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { MdAccessTime, MdLocationOn, MdPerson } from 'react-icons/md';
+import { BsCalendarEvent } from 'react-icons/bs';
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -166,20 +168,16 @@ const Events = () => {
             </div>
             <div className="event-info">
               <h3>{event.event_name}</h3>
-              <p className="event-date">
-                <span className="icon">📆</span>
-                {new Date(event.date).toLocaleDateString()}
+              <p>
+                <MdAccessTime className="event-icon" />
+                {event.start_time} - {event.end_time}
               </p>
-              <p className="event-time">
-                <span className="icon">⏰</span>
-                {event.start_time || 'N/A'} - {event.end_time || 'N/A'}
+              <p>
+                <MdLocationOn className="event-icon location-icon" />
+                {event.location}
               </p>
-              <p className="event-location">
-                <span className="icon">📍</span>
-                {event.location || 'No location specified'}
-              </p>
-              <p className="event-creator">
-                <span className="icon">👤</span>
+              <p>
+                <MdPerson className="event-icon" />
                 Created by: {event.creator?.username}
               </p>
             </div>

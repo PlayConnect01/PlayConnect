@@ -74,6 +74,15 @@ export default function Login() {
         password,
       });
 
+      if (response.data.user.is_banned) {
+        Alert.alert(
+          'Account Banned',
+          'Your account has been banned. Please contact support for more information.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       const { token, user } = response.data;
       
       await Promise.all([
@@ -86,6 +95,19 @@ export default function Login() {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
+      console.log('Login error:', error.response?.data);
+      
+      if (error.response?.status === 403 && error.response?.data?.error === "Account banned") {
+        Alert.alert(
+          'Account Banned',
+          `${error.response.data.message}\n\nReason: ${error.response.data.ban_reason || 'Not specified'}`,
+          [{ text: 'OK' }]
+        );
+      } else if (error.response?.status === 401) {
+        Alert.alert('Error', 'Invalid email or password');
+      } else {
+        Alert.alert('Error', 'Something went wrong. Please try again later.');
+      }
       setAlertTitle('Error');
       setAlertMessage('Invalid login credentials!');
       setAlertVisible(true);

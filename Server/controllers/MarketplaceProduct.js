@@ -406,6 +406,176 @@ async function getProductsByCategory(req, res) {
     }
 }
 
+// Get all products for admin dashboard
+const getAllProductsAdmin = async (req, res) => {
+  try {
+    const products = await prisma.marketplaceProduct.findMany({
+      include: {
+        sport: true,
+        userProducts: {
+          include: {
+            user: {
+              select: {
+                username: true,
+                email: true,
+                profile_picture: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+
+    const formattedProducts = products.map(product => ({
+      ...product,
+      seller: product.userProducts[0]?.user || null,
+      userProducts: undefined
+    }));
+
+    res.status(200).json(formattedProducts);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+};
+
+// Get product details for admin
+const getProductDetailsAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await prisma.marketplaceProduct.findUnique({
+      where: { product_id: parseInt(id) },
+      include: {
+        sport: true,
+        userProducts: {
+          include: {
+            user: {
+              select: {
+                username: true,
+                email: true,
+                profile_picture: true
+              }
+            }
+          }
+        },
+        reviews: {
+          include: {
+            user: {
+              select: {
+                username: true,
+                profile_picture: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const formattedProduct = {
+      ...product,
+      seller: product.userProducts[0]?.user || null,
+      userProducts: undefined,
+      total_reviews: product.reviews.length,
+      average_rating: product.reviews.length > 0 
+        ? (product.reviews.reduce((acc, rev) => acc + rev.rating, 0) / product.reviews.length).toFixed(1)
+        : 0
+    };
+
+    res.status(200).json(formattedProduct);
+  } catch (error) {
+    console.error('Error fetching product details:', error);
+    res.status(500).json({ error: 'Failed to fetch product details' });
+  }
+};
+
+// Add this new function before module.exports
+const updateProductAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Validate and convert numeric fields
+    if (updateData.price) updateData.price = parseFloat(updateData.price);
+    if (updateData.discount) updateData.discount = parseFloat(updateData.discount);
+    if (updateData.rating) updateData.rating = parseFloat(updateData.rating);
+    if (updateData.sport_id) updateData.sport_id = parseInt(updateData.sport_id);
+
+    const updatedProduct = await prisma.marketplaceProduct.update({
+      where: { product_id: parseInt(id) },
+      data: {
+        ...updateData,
+        updated_at: new Date()
+      },
+      include: {
+        sport: true,
+        userProducts: {
+          include: {
+            user: {
+              select: {
+                username: true,
+                email: true,
+                profile_picture: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const formattedProduct = {
+      ...updatedProduct,
+      seller: updatedProduct.userProducts[0]?.user || null,
+      userProducts: undefined
+    };
+
+    res.status(200).json(formattedProduct);
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ error: 'Failed to update product' });
+  }
+};
+
+// Add the delete function
+const deleteProductAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First delete related records
+    await prisma.cartItem.deleteMany({
+      where: { product_id: parseInt(id) }
+    });
+
+    await prisma.favorite.deleteMany({
+      where: { product_id: parseInt(id) }
+    });
+
+    await prisma.orderItem.deleteMany({
+      where: { product_id: parseInt(id) }
+    });
+
+    await prisma.userProduct.deleteMany({
+      where: { product_id: parseInt(id) }
+    });
+
+    // Then delete the product
+    await prisma.marketplaceProduct.delete({
+      where: { product_id: parseInt(id) }
+    });
+
+    res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ error: 'Failed to delete product' });
+  }
+};
+
 // Export the controller functions
 module.exports = {
     getProductsBySportId,
@@ -420,5 +590,9 @@ module.exports = {
     getProductById,
     searchProductByName,
     getDiscountedProductsByCategory,
-    getProductsByCategory
+    getProductsByCategory,
+    getAllProductsAdmin,
+    getProductDetailsAdmin,
+    updateProductAdmin,
+    deleteProductAdmin
 };

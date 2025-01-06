@@ -11,7 +11,11 @@ const {
   getProductById,
   searchProductByName,
   getDiscountedProductsByCategory,
-  getProductsByCategory
+  getProductsByCategory,
+  getAllProductsAdmin,
+  getProductDetailsAdmin,
+  updateProductAdmin,
+  deleteProductAdmin
 } = require('../controllers/MarketplaceProduct');
 
 
@@ -50,5 +54,11 @@ router.get('/discounted/category/:category', getDiscountedProductsByCategory);
 
 router.get('/products/:id',getProductById);
 
+// Admin routes
+router.get('/products', getAllProductsAdmin);
+router.get('/products/:id', getProductDetailsAdmin);
+
+router.put('/products/:id', updateProductAdmin);
+router.delete('/products/:id', deleteProductAdmin);
 
 module.exports = router;

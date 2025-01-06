@@ -64,6 +64,7 @@ model Admin {
   reviewed_events Event[]
 
   handled_reports Report[] @relation("AdminHandledReports")
+  created_tournaments Tournament[] @relation("TournamentCreator")
 }
 
 model User {
@@ -88,8 +89,7 @@ model User {
  
   created_teams      Team[]             @relation("TeamCreator")
   team_memberships   TeamMember[]
-  created_tournaments Tournament[]      @relation("TournamentCreator")
-  created_events     Event[]            @relation("EventCreator")
+  created_events     Event[]         @relation("EventCreator")
   event_participations EventParticipant[]
   sports            UserSport[]
   calendar_events   Calendar[]
@@ -179,7 +179,7 @@ model Tournament {
   point_reward    Int
 
   sport           Sport      @relation(fields: [sport_id], references: [sport_id])
-  creator         User       @relation("TournamentCreator", fields: [created_by], references: [user_id])
+  creator         Admin      @relation("TournamentCreator", fields: [created_by], references: [admin_id])
   teams           TournamentTeam[]
 
   @@index([sport_id])
@@ -342,7 +342,7 @@ model UserProduct {
   id          Int                @id @default(autoincrement())
   user_id     Int
   product_id  Int
-  status      String            @default("active")
+  status      String            @default("PENDING")
   created_at  DateTime           @default(now())
 
   user        User               @relation(fields: [user_id], references: [user_id])
@@ -484,17 +484,6 @@ model VideoCall {
   @@index([participant_id])
 }
 
-model Admin {
-  admin_id    Int      @id @default(autoincrement())
-  username    String
-  email       String   @unique
-  password    String
-  role        String   @default("ADMIN")
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  handled_reports Report[] @relation("AdminHandledReports")
-}
 
 model Order {
   order_id          Int         @id @default(autoincrement())

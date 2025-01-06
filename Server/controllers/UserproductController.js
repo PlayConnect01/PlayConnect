@@ -409,3 +409,82 @@ exports.deleteProduct = async (req, res) => {
     });
   }
 };
+
+// Get products by status
+exports.getProductsByStatus = async (req, res) => {
+  try {
+    const { status } = req.params;
+    const products = await prisma.userProduct.findMany({
+      where: {
+        status: status.toUpperCase()
+      },
+      include: {
+        product: {
+          include: {
+            sport: true
+          }
+        },
+        user: {
+          select: {
+            username: true,
+            email: true,
+            profile_picture: true
+          }
+        }
+      }
+    });
+
+    const formattedProducts = products.map(({ product, user, ...userProduct }) => ({
+      id: userProduct.id,
+      status: userProduct.status,
+      created_at: userProduct.created_at,
+      ...product,
+      seller: user
+    }));
+
+    res.status(200).json(formattedProducts);
+  } catch (error) {
+    console.error('Error fetching products by status:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+};
+
+// Update product status
+exports.updateProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const updatedProduct = await prisma.userProduct.update({
+      where: { id: parseInt(id) },
+      data: { status },
+      include: {
+        product: {
+          include: {
+            sport: true
+          }
+        },
+        user: {
+          select: {
+            username: true,
+            email: true,
+            profile_picture: true
+          }
+        }
+      }
+    });
+
+    const formattedProduct = {
+      id: updatedProduct.id,
+      status: updatedProduct.status,
+      created_at: updatedProduct.created_at,
+      ...updatedProduct.product,
+      seller: updatedProduct.user
+    };
+
+    res.status(200).json(formattedProduct);
+  } catch (error) {
+    console.error('Error updating product status:', error);
+    res.status(500).json({ error: 'Failed to update product status' });
+  }
+};

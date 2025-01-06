@@ -99,19 +99,51 @@ const getTournamentById = async (req, res) => {
 const createTournament = async (req, res) => {
   const { tournament_name, sport_id, created_by, start_date, end_date, point_reward } = req.body;
   try {
+    // First verify that the admin exists
+    const adminExists = await prisma.admin.findUnique({
+      where: { admin_id: parseInt(created_by) }
+    });
+
+    if (!adminExists) {
+      console.log("Admin not found for ID:", created_by);
+      return res.status(404).json({ 
+        error: "Admin not found",
+        message: "The admin ID provided does not exist in the database."
+      });
+    }
+
+    // Convert string datetime to proper Date objects
+    const startDateTime = new Date(start_date);
+    const endDateTime = new Date(end_date);
+
     const newTournament = await prisma.tournament.create({
       data: {
         tournament_name,
-        sport_id,
-        created_by,
-        start_date,
-        end_date,
-        point_reward
+        sport_id: parseInt(sport_id),
+        created_by: parseInt(created_by),
+        start_date: startDateTime,
+        end_date: endDateTime,
+        point_reward: parseInt(point_reward)
+      },
+      include: {
+        sport: true,
+        creator: {
+          select: { 
+            admin_id: true,
+            username: true 
+          }
+        }
       }
     });
+
     res.status(201).json(newTournament);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Tournament creation error:', error);
+    res.status(400).json({ 
+      error: "Error creating tournament",
+      message: error.message,
+      details: "Make sure the admin ID exists in the database"
+    });
   }
 };
 
@@ -160,6 +192,86 @@ const getTotalTournaments = async (req, res) => {
   }
 };
 
+// Add this new function
+const getTodayTournaments = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const tournaments = await prisma.tournament.findMany({
+      where: {
+        start_date: {
+          gte: today,
+          lt: tomorrow,
+        }
+      },
+      include: {
+        sport: {
+          select: {
+            name: true,
+            icon: true
+          }
+        },
+        creator: {
+          select: { 
+            username: true,
+            admin_id: true
+          }
+        },
+        teams: {
+          include: {
+            team: {
+              select: {
+                team_id: true,
+                team_name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        start_date: 'asc'
+      }
+    });
+
+    // Format tournaments with time labels
+    const formattedTournaments = tournaments.map(tournament => {
+      const startTime = new Date(tournament.start_date);
+      const endTime = new Date(tournament.end_date);
+      const currentTime = new Date();
+      
+      let timeLabel = "Today";
+      if (startTime < currentTime) {
+        timeLabel = "Ongoing";
+      }
+
+      return {
+        ...tournament,
+        timeLabel,
+        start_time: startTime.toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        end_time: endTime.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      };
+    });
+
+    res.json(formattedTournaments);
+  } catch (error) {
+    console.error('Error fetching tournaments:', error);
+    res.status(500).json({ 
+      error: "Error fetching tournaments", 
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllTournaments,
   getTournamentById,
@@ -167,5 +279,7 @@ module.exports = {
   updateTournament,
   deleteTournament,
   getAllTournamentsAndTeams,
-  getTotalTournaments
+  getTotalTournaments,
+  createTournament,
+  getTodayTournaments
 };
