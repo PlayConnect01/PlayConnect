@@ -61,7 +61,6 @@ const Match = () => {
         const decodedToken = decodeJWT(token);
         if (decodedToken?.userId) {
           setCurrentUserId(decodedToken.userId);
-          console.log('User ID:', decodedToken.userId);
           fetchNotifications(decodedToken.userId);
         } else {
           throw new Error('User ID not found in token');
@@ -86,7 +85,6 @@ const Match = () => {
 
           if (response.data.length > 0) {
             setUsers(response.data);
-            console.log('Données récupérées:', response.data);
           } else {
             showCustomAlert('No Matches', 'No users with common sports found.');
           }

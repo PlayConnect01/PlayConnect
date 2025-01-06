@@ -1006,7 +1006,6 @@ const Marketplace = () => {
         setCartCount(response.data.count);
         setCartProducts(response.data.products || []);
       } else {
-        console.log('No user data found:', { token, userData });
       }
     } catch (error) {
       console.error("Error fetching cart count:", error);

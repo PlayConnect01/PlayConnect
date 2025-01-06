@@ -493,12 +493,56 @@ const getPendingEvents = async (req, res) => {
 const approveEvent = async (req, res) => {
   const { eventId } = req.params;
   try {
-    const updatedEvent = await prisma.event.update({
-      where: { event_id: parseInt(eventId) },
-      data: { status: "approved" }
+    // Use a transaction to ensure both event update and points update succeed or fail together
+    const updatedEvent = await prisma.$transaction(async (prisma) => {
+      // First, update the event status
+      const event = await prisma.event.update({
+        where: { event_id: parseInt(eventId) },
+        data: { 
+          status: "approved",
+          reviewed_at: new Date(),
+        },
+        include: {
+          creator: true // Include creator details
+        }
+      });
+
+      // Update the user's points
+      await prisma.user.update({
+        where: { user_id: event.creator_id },
+        data: {
+          points: {
+            increment: 500
+          }
+        }
+      });
+
+      // Create points log entry
+      await prisma.pointsLog.create({
+        data: {
+          user_id: event.creator_id,
+          activity: 'EVENT_APPROVAL',
+          points: 500,
+        }
+      });
+
+      // Create notification for the user
+      await prisma.notification.create({
+        data: {
+          user_id: event.creator_id,
+          title: "Event Approved!",
+          content: `Your event "${event.event_name}" has been approved! You've earned 500 points.`,
+          type: "GENERAL",
+          action_url: `/events/${event.event_id}`
+        }
+      });
+
+      return event;
     });
+
     res.json(updatedEvent);
   } catch (error) {
+    console.error('Error approving event:', error);
     res.status(500).json({ error: "Error approving event", details: error.message });
   }
 };
@@ -556,4 +600,4 @@ module.exports = {
   approveEvent,
   rejectEvent,
   getApprovedEvents
-};
+}
