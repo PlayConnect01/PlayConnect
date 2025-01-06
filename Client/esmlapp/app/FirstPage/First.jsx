@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Image, Animated, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, Image, Animated, Dimensions, Platform, Easing } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,24 +22,28 @@ const First = () => {
       Animated.sequence([
         Animated.timing(rippleAnim, {
           toValue: 1,
-          duration: 1000,
+          duration: 500,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
           useNativeDriver: true,
         }),
         Animated.timing(rippleAnim, {
           toValue: 0.7,
-          duration: 500,
+          duration: 250,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
           useNativeDriver: true,
         }),
         Animated.loop(
           Animated.sequence([
             Animated.timing(rippleAnim, {
               toValue: 1,
-              duration: 1000,
+              duration: 500,
+              easing: Easing.bezier(0.25, 0.1, 0.25, 1),
               useNativeDriver: true,
             }),
             Animated.timing(rippleAnim, {
               toValue: 0.7,
-              duration: 1000,
+              duration: 500,
+              easing: Easing.bezier(0.25, 0.1, 0.25, 1),
               useNativeDriver: true,
             }),
           ])
@@ -49,31 +53,33 @@ const First = () => {
       Animated.loop(
         Animated.timing(rotateAnim, {
           toValue: 1,
-          duration: 8000,
+          duration: 4000,
+          easing: Easing.linear,
           useNativeDriver: true,
         })
       ),
       // Decorative circle animation
       Animated.timing(decorativeAnim, {
         toValue: 1,
-        duration: 1000,
-        delay: 500,
+        duration: 500,
+        delay: 250,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         useNativeDriver: true,
       }),
       // Logo animations
       Animated.sequence([
-        Animated.delay(500),
+        Animated.delay(250),
         Animated.parallel([
           Animated.spring(fadeAnim, {
             toValue: 1,
-            friction: 3,
-            tension: 40,
+            friction: 6,
+            tension: 50,
             useNativeDriver: true,
           }),
           Animated.spring(scaleAnim, {
             toValue: 1,
-            friction: 3,
-            tension: 40,
+            friction: 6,
+            tension: 50,
             useNativeDriver: true,
           }),
         ]),
@@ -85,23 +91,26 @@ const First = () => {
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 500,
+          duration: 250,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
           useNativeDriver: true,
         }),
         Animated.timing(rippleAnim, {
           toValue: 0,
-          duration: 500,
+          duration: 250,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
           useNativeDriver: true,
         }),
         Animated.timing(decorativeAnim, {
           toValue: 0,
-          duration: 500,
+          duration: 250,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
           useNativeDriver: true,
         }),
       ]).start(() => {
         navigation.replace('Landing');
       });
-    }, 4000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [navigation, fadeAnim, scaleAnim, rippleAnim, rotateAnim, decorativeAnim]);

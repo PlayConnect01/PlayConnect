@@ -5,7 +5,7 @@ import Login from './Components/Auth/Login/Login';
 import Signup from './Components/Auth/Signup/Signup';
 
 function App() {
-  const isAuthenticated = !!localStorage.getItem('adminToken');
+  const isAuthenticated = localStorage.getItem('adminToken') !== null;
 
   return (
     <Router>

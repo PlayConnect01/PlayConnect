@@ -22,30 +22,32 @@ import Sidebar from './Sidebar';
 import { BASE_URL } from "../../Api";
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../../contexts/ThemeContext';
 
-const getStyles = (isSidebarVisible) => StyleSheet.create({
+const getStyles = (isSidebarVisible, isDarkMode) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7FAFF',
+    backgroundColor: isDarkMode ? '#121212' : '#F7FAFF',
     paddingBottom: 16,
   },
   mainContainer: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#F7FAFF',
+    backgroundColor: isDarkMode ? '#121212' : '#F7FAFF',
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDarkMode ? '#121212' : '#FFFFFF',
     paddingBottom: 24,
   },
   header: {
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    backgroundColor: isDarkMode ? '#2A2A2A' : 'rgba(255, 255, 255, 0.98)',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(79, 165, 245, 0.1)',
-    shadowColor: '#4FA5F5',
+    borderBottomColor: isDarkMode ? '#333' : 'rgba(79, 165, 245, 0.1)',
+    shadowColor: isDarkMode ? '#333' : '#4FA5F5',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -62,10 +64,10 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDarkMode ? '#333' : '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#333' : '#4FA5F5',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -74,27 +76,27 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#4FA5F5',
+    color: isDarkMode ? '#FFFFFF' : '#4FA5F5',
     letterSpacing: 0.5,
   },
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(79, 165, 245, 0.04)',
+    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.04)' : 'rgba(79, 165, 245, 0.04)',
     padding: 6,
     borderRadius: 14,
   },
   iconButton: {
     position: 'relative',
     padding: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDarkMode ? '#333' : '#FFFFFF',
     borderRadius: 12,
     width: 38,
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: isDarkMode ? '#333' : '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -104,30 +106,30 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#FF4B4B',
+    backgroundColor: isDarkMode ? '#FF4B4B' : '#FF4B4B',
     borderRadius: 10,
     minWidth: 18,
     height: 18,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: isDarkMode ? '#333' : '#FFFFFF',
   },
   cartBadgeText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
   },
   sectionTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2D3748',
+    color: isDarkMode ? '#FFFFFF' : '#2D3748',
     marginVertical: 20,
     paddingHorizontal: 4,
   },
   collectionDescription: {
     fontSize: 16,
-    color: '#555',
+    color: isDarkMode ? '#BDC3C7' : '#555',
     marginVertical: 10,
     paddingHorizontal: 4,
     textAlign: 'center',
@@ -144,7 +146,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   },
   collectionFeatureText: {
     fontSize: 14,
-    color: '#333',
+    color: isDarkMode ? '#BDC3C7' : '#333',
     marginLeft: 6,
   },
   productContainer: {
@@ -159,7 +161,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   card: {
     width: '70%',
     height: 'auto',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDarkMode ? '#333' : '#FFFFFF',
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
@@ -184,19 +186,19 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     flexDirection: 'row',
   },
   badgeNew: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     borderRadius: 4,
     padding: 4,
     marginRight: 8,
   },
   badgeBestSeller: {
-    backgroundColor: '#FF4B4B',
+    backgroundColor: isDarkMode ? '#FF4B4B' : '#FF4B4B',
     borderRadius: 4,
     padding: 4,
   },
   badgeText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontWeight: '600',
   },
   cardContentOverlay: {
@@ -207,25 +209,25 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: isDarkMode ? '#FFFFFF' : '#333',
     textAlign: 'center',
     marginVertical: 4,
   },
   cardPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
+    color: isDarkMode ? '#FFFFFF' : '#333',
     textAlign: 'center',
     marginVertical: 4,
   },
   stockStatus: {
     fontSize: 14,
-    color: '#333',
+    color: isDarkMode ? '#BDC3C7' : '#333',
     textAlign: 'center',
     marginVertical: 4,
   },
   quickViewButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     borderRadius: 12,
     padding: 8,
     alignItems: 'center',
@@ -237,26 +239,26 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   },
   quickViewText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontWeight: '600',
   },
   cardRatingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.15)',
     padding: 12,
     borderRadius: 16,
     marginTop: 16,
   },
   ratingText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
   },
   reviewCount: {
     fontSize: 14,
-    color: '#BDC3C7',
+    color: isDarkMode ? '#BDC3C7' : '#BDC3C7',
     marginLeft: 8,
   },
   cardActions: {
@@ -272,26 +274,26 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: isDarkMode ? '#333' : '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   favoriteButtonActive: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.9)',
   },
   cartButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -299,7 +301,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     overflow: 'hidden',
   },
   cartButtonSuccess: {
-    backgroundColor: '#48BB78',
+    backgroundColor: isDarkMode ? '#48BB78' : '#48BB78',
   },
   cartButtonContent: {
     alignItems: 'center',
@@ -317,10 +319,10 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDarkMode ? '#333' : '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#333' : '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -336,11 +338,11 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   discountItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDarkMode ? '#333' : '#FFFFFF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: isDarkMode ? '#333' : '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -351,7 +353,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     height: 80,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: isDarkMode ? '#444' : '#F0F0F0',
   },
   discountInfo: {
     flex: 1,
@@ -360,7 +362,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   discountTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: isDarkMode ? '#FFFFFF' : '#333',
     marginBottom: 4,
   },
   discountPriceContainer: {
@@ -370,22 +372,22 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   discountPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FF4B4B',
+    color: isDarkMode ? '#FF4B4B' : '#FF4B4B',
   },
   discountOldPrice: {
     fontSize: 14,
-    color: '#A0AEC0',
+    color: isDarkMode ? '#BDC3C7' : '#A0AEC0',
     textDecorationLine: 'line-through',
     marginLeft: 8,
   },
   discountSavings: {
     fontSize: 12,
-    color: '#48BB78',
+    color: isDarkMode ? '#48BB78' : '#48BB78',
     fontWeight: '500',
     marginTop: 2,
   },
   discountCartButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     borderRadius: 12,
     padding: 8,
     alignItems: 'center',
@@ -397,7 +399,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   },
   discountDescription: {
     fontSize: 12,
-    color: '#718096',
+    color: isDarkMode ? '#BDC3C7' : '#718096',
     marginTop: 2,
   },
   discountFeatures: {
@@ -406,7 +408,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     marginTop: 4,
   },
   discountFeature: {
-    backgroundColor: 'rgba(79, 165, 245, 0.1)',
+    backgroundColor: isDarkMode ? 'rgba(79, 165, 245, 0.1)' : 'rgba(79, 165, 245, 0.1)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -414,14 +416,14 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     marginBottom: 2,
   },
   discountFeatureText: {
-    color: '#4FA5F5',
+    color: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     fontSize: 10,
     fontWeight: '500',
   },
   viewAllButtonInline: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     borderRadius: 12,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -429,7 +431,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     elevation: 2,
   },
   viewAllTextInline: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
     marginRight: 6,
@@ -439,13 +441,13 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     top: 100,
     left: 20,
     right: 20,
-    backgroundColor: 'rgba(79, 165, 245, 0.95)',
+    backgroundColor: isDarkMode ? 'rgba(79, 165, 245, 0.95)' : 'rgba(79, 165, 245, 0.95)',
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -462,18 +464,18 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     marginRight: 12,
   },
   notificationText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
   },
   notificationSuccess: {
-    backgroundColor: 'rgba(72, 187, 120, 0.95)',
+    backgroundColor: isDarkMode ? 'rgba(72, 187, 120, 0.95)' : 'rgba(72, 187, 120, 0.95)',
   },
   notificationError: {
-    backgroundColor: 'rgba(245, 101, 101, 0.95)',
+    backgroundColor: isDarkMode ? 'rgba(245, 101, 101, 0.95)' : 'rgba(245, 101, 101, 0.95)',
   },
   notificationWarning: {
-    backgroundColor: 'rgba(246, 173, 85, 0.95)',
+    backgroundColor: isDarkMode ? 'rgba(246, 173, 85, 0.95)' : 'rgba(246, 173, 85, 0.95)',
   },
   swipeHint: {
     position: 'absolute',
@@ -486,7 +488,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   },
   swipeHintText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     marginRight: 8,
   },
   scrollContent: {
@@ -504,7 +506,7 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   specialOffersTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2D3748',
+    color: isDarkMode ? '#FFFFFF' : '#2D3748',
   },
   loadingContainer: {
     position: 'absolute',
@@ -514,34 +516,34 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     bottom: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: isDarkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.5)',
   },
   exploreButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     borderRadius: 20,
     paddingVertical: 12,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 20,
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   exploreButtonText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   tooltipContainer: {
     position: 'absolute',
-    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    backgroundColor: isDarkMode ? 'rgba(79, 165, 245, 0.98)' : 'rgba(79, 165, 245, 0.98)',
     padding: 16,
     borderRadius: 16,
     maxWidth: 250,
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -549,15 +551,15 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     zIndex: 1000,
     backdropFilter: 'blur(8px)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)',
   },
   tooltipText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 16,
     lineHeight: 22,
     textAlign: 'center',
     fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowColor: isDarkMode ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
@@ -565,32 +567,32 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     position: 'absolute',
     width: 20,
     height: 10,
-    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    backgroundColor: isDarkMode ? 'rgba(79, 165, 245, 0.98)' : 'rgba(79, 165, 245, 0.98)',
     transform: [{ rotate: '45deg' }],
     top: -5,
     left: '50%',
     marginLeft: -10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)',
   },
   welcomeBannerContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(79, 165, 245, 0.98)',
+    backgroundColor: isDarkMode ? 'rgba(79, 165, 245, 0.98)' : 'rgba(79, 165, 245, 0.98)',
     paddingVertical: 20,
     paddingHorizontal: 24,
     zIndex: 100,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.4,
     shadowRadius: 15,
     elevation: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)',
     borderTopWidth: 0,
   },
   welcomeBannerContent: {
@@ -599,21 +601,21 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   welcomeBannerText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
     flex: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowColor: isDarkMode ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
     letterSpacing: 0.5,
   },
   welcomeBannerIcon: {
     marginRight: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)',
     padding: 10,
     borderRadius: 50,
-    shadowColor: '#000',
+    shadowColor: isDarkMode ? '#000' : '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -621,57 +623,57 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   },
   welcomeBannerClose: {
     padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)',
     borderRadius: 30,
     marginLeft: 16,
   },
   guideOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.8)',
     zIndex: 999,
     backdropFilter: 'blur(4px)',
   },
   guideSpotlight: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.1)',
     borderRadius: 100,
     zIndex: 1000,
     borderWidth: 2,
-    borderColor: '#4FA5F5',
-    shadowColor: '#4FA5F5',
+    borderColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
+    shadowColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 10,
   },
   guideText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 20,
     marginBottom: 16,
     lineHeight: 24,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: isDarkMode ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
   guideButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 25,
     marginTop: 16,
-    shadowColor: '#4FA5F5',
+    shadowColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.3)',
   },
   guideButtonText: {
-    color: '#FFFFFF',
+    color: isDarkMode ? '#FFFFFF' : '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -688,10 +690,10 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.3)',
   },
   guideProgressDotActive: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: isDarkMode ? '#4FA5F5' : '#4FA5F5',
     width: 24,
   },
   pulseAnimation: {
@@ -701,10 +703,36 @@ const getStyles = (isSidebarVisible) => StyleSheet.create({
   tooltipIcon: {
     marginRight: 8,
   },
+  themeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 'auto',
+    marginBottom: 20,
+  },
+  darkThemeToggle: {
+    backgroundColor: '#2A2A2A',
+  },
+  lightThemeToggle: {
+    backgroundColor: '#F0F0F0',
+  },
+  themeToggleText: {
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  darkText: {
+    color: '#FFFFFF',
+  },
+  lightText: {
+    color: '#000000',
+  },
 });
 
 const Marketplace = () => {
   const navigation = useNavigation();   
+  const { isDarkMode, toggleTheme } = useTheme();
   const [products, setProducts] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
@@ -721,7 +749,7 @@ const Marketplace = () => {
   const [currentGuideStep, setCurrentGuideStep] = useState(0);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
 
-  const styles = getStyles(isSidebarVisible);
+  const styles = getStyles(isSidebarVisible, isDarkMode);
   
   // Animation refs
   const notificationTimeout = useRef(null);
@@ -1289,7 +1317,7 @@ const Marketplace = () => {
               ...currentStep.position,
               width: spotlightSize * 1.5,
               height: spotlightSize * 1.5,
-              backgroundColor: 'rgba(79, 165, 245, 0.2)',
+              backgroundColor: isDarkMode ? 'rgba(79, 165, 245, 0.2)' : 'rgba(79, 165, 245, 0.2)',
               transform: [{ scale: pulseAnim }]
             }
           ]}
@@ -1426,7 +1454,22 @@ const Marketplace = () => {
       {renderGuide()}
       <View style={styles.mainContainer}>
         {isSidebarVisible && (
-          <Sidebar onSelectCategory={handleSelectCategory} />
+          <View style={styles.sidebar}>
+            <TouchableOpacity 
+              style={[styles.themeToggle, isDarkMode ? styles.darkThemeToggle : styles.lightThemeToggle]} 
+              onPress={toggleTheme}
+            >
+              <MaterialIcons 
+                name={isDarkMode ? 'light-mode' : 'dark-mode'} 
+                size={24} 
+                color={isDarkMode ? '#FFFFFF' : '#000000'} 
+              />
+              <Text style={[styles.themeToggleText, isDarkMode ? styles.darkText : styles.lightText]}>
+                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              </Text>
+            </TouchableOpacity>
+            <Sidebar onSelectCategory={handleSelectCategory} isDarkMode={isDarkMode} />
+          </View>
         )}
         <View style={styles.contentContainer}>
           <View style={styles.header}>

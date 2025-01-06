@@ -31,7 +31,8 @@ const reviewRoutes = require('./routes/review');
 const reportRoutes = require('./routes/reports.js');
 const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const userproductRoutes = require('./routes/userproduct');
-
+const sportsProductRoutes = require('./routes/sportsProduct');
+const categoryProductRoutes = require('./routes/categoryRoutes');
 const app = express();
 
 // Middleware
@@ -103,6 +104,10 @@ app.use('/review', reviewRoutes);
 app.use('/reports', reportRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/userproduct', userproductRoutes);
+app.use('/sportsproduct', sportsProductRoutes);
+app.use('/api/sports', sportsProductRoutes);
+app.use('/category', categoryProductRoutes);
+// Admin routes with prefix
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

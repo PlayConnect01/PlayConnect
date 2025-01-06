@@ -87,7 +87,6 @@ model User {
   ban_reason      String?
   block_reason    String?
  
-  
   created_teams      Team[]             @relation("TeamCreator")
   team_memberships   TeamMember[]
   created_events     Event[]         @relation("EventCreator")
@@ -343,6 +342,7 @@ model UserProduct {
   id          Int                @id @default(autoincrement())
   user_id     Int
   product_id  Int
+  status      String            @default("PENDING")
   created_at  DateTime           @default(now())
 
   user        User               @relation(fields: [user_id], references: [user_id])
@@ -483,6 +483,7 @@ model VideoCall {
   @@index([initiator_id])
   @@index([participant_id])
 }
+
 
 model Order {
   order_id          Int         @id @default(autoincrement())

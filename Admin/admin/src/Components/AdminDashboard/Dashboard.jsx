@@ -192,10 +192,10 @@ const Dashboard = () => {
                 <div className="player-rank">#{player.rank}</div>
                 <div className="player-avatar">
                   <img 
-                    src={player.profile_picture || '/default-avatar.png'} 
+                    src={player.profile_picture || 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png'} 
                     alt={player.username}
                     onError={(e) => {
-                      e.target.src = '/default-avatar.png';
+                      e.target.src = 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png';
                     }}
                   />
                 </div>

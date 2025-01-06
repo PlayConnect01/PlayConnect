@@ -3,6 +3,7 @@ import axios from 'axios';
 import './Users.css';
 import Swal from 'sweetalert2';
 import { MdGavel, MdLock, MdLockOpen } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -19,10 +20,27 @@ const Users = () => {
     "Violation of terms",
     "Other"
   ];
+  const location = useLocation();
+  const [highlightedUserId, setHighlightedUserId] = useState(null);
 
   useEffect(() => {
     fetchUsers();
   }, [currentPage]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const highlightId = searchParams.get('highlight');
+    if (highlightId) {
+      setHighlightedUserId(parseInt(highlightId));
+      // Find and scroll to the user
+      setTimeout(() => {
+        const userRow = document.getElementById(`user-${highlightId}`);
+        if (userRow) {
+          userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+    }
+  }, [location]);
 
   const fetchUsers = async () => {
     try {
@@ -286,15 +304,21 @@ const Users = () => {
           </thead>
           <tbody>
             {filteredUsers.map((user) => (
-              <tr key={user.user_id} className={user.is_banned ? 'banned-user' : ''}>
+              <tr 
+                key={user.user_id} 
+                id={`user-${user.user_id}`}
+                className={`${user.is_banned ? 'banned-user' : ''} ${
+                  highlightedUserId === user.user_id ? 'highlighted-user' : ''
+                }`}
+              >
                 <td>{user.user_id}</td>
                 <td className="user-info">
                   <img 
-                    src={user.profile_picture || '/default-avatar.png'} 
+                    src={user.profile_picture || 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png'} 
                     alt={user.username}
                     className="user-avatar"
                     onError={(e) => {
-                      e.target.src = '/default-avatar.png';
+                      e.target.src = 'https://res.cloudinary.com/dc9siq9ry/image/upload/v1736126260/b9yxzz71wazs1hrefao6.png';
                     }}
                   />
                   <span>{user.username}</span>

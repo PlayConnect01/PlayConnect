@@ -23,7 +23,7 @@ const Sidebar = ({ onPageChange }) => {
     { title: 'Competitions', page: 'competitions', icon: <MdEmojiEvents className="menu-icon" /> },
     { title: 'Products', page: 'products', icon: <MdShoppingCart className="menu-icon" /> },
     { title: 'Reports', page: 'reports', icon: <MdReport className="menu-icon" /> },
-    { title: 'Admins', page: 'admins', icon: <MdAdminPanelSettings className="menu-icon" /> },
+    // { title: 'Admins', page: 'admins', icon: <MdAdminPanelSettings className="menu-icon" /> },
   ];
 
   const handleMenuClick = (page) => {

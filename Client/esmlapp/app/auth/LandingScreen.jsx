@@ -1,78 +1,103 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ScrollView } from 'react-native-gesture-handler';
 
 const { width } = Dimensions.get('window');
 
-const Landing = () => {
-  const [currentPage, setCurrentPage] = useState(0);
-  const navigate = useNavigation();
+const slides = [
+  {
+    id: '1',
+    image: require('../../assets/images/6.png'),
+  },
+  {
+    id: '2',
+    image: require('../../assets/images/7.png'),
+  },
+  {
+    id: '3',
+    image: require('../../assets/images/8.png'),
+  },
+];
 
-  const pages = [
-    {
-      title: "Welcome to sportsmate",
-      description: "Discover partners, explore events, and gear up for your favorite sport!",
-      image: require('../../assets/images/welcome_screen.png.webp')
-    },
-    {
-      title: "Find Your Sports Partner",
-      description: "Connect with enthusiasts who share your passion for the game.",
-      image: require('../../assets/images/Join Exciting Events.webp'),
-    },
-    {
-      title: "Join Exciting Events",
-      description: "Stay in the loop with events that match your interests.",
-      image: require('../../assets/images/Find Your Sports Partner.webp'),
-    },
-    {
-      title: "Gear Up for Your Journey",
-      description: "Shop top-notch products to enhance your performance.",
-      image: require('../../assets/images/Gear Up for Your Journey.webp'),
-    },
-    {
-      title: "Let’s Get Started",
-      description: "Sign up or log in and unleash your sporting potential!",
-      image: require('../../assets/images/LetGetStarted.png'),
-    },
-  ];
+const LandingScreen = () => {
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const navigation = useNavigation();
+  const flatListRef = useRef(null);
 
-  const handleScroll = (event) => {
-    const pageIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-    setCurrentPage(pageIndex);
+  const updateCurrentSlideIndex = (e) => {
+    const contentOffsetX = e.nativeEvent.contentOffset.x;
+    const currentIndex = Math.round(contentOffsetX / width);
+    setCurrentSlideIndex(currentIndex);
   };
 
-  const renderPages = () => {
-    return pages.map((page, index) => (
-      <View key={index} style={styles.page}>
-        <Image source={page.image} style={styles.image} />
-        <Text style={styles.title}>{page.title}</Text>
-        <Text style={styles.description}>{page.description}</Text>
+  const renderItem = ({ item }) => {
+    return (
+      <View style={[styles.slide]}>
+        <Image source={item.image} style={styles.image} />
       </View>
-    ));
+    );
+  };
+
+  const handleNext = () => {
+    if (currentSlideIndex < slides.length - 1) {
+      flatListRef.current.scrollToIndex({
+        index: currentSlideIndex + 1,
+        animated: true,
+      });
+    } else {
+      navigation.navigate('Login');
+    }
+  };
+
+  const handleSkip = () => {
+    navigation.navigate('Login');
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <FlatList
+        ref={flatListRef}
+        data={slides}
+        renderItem={renderItem}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
-        {renderPages()}
-      </ScrollView>
-      <View style={styles.indicatorContainer}>
-        {pages.map((_, index) => (
-          <View key={index} style={[styles.indicator, currentPage === index && styles.activeIndicator]} />
-        ))}
+        onMomentumScrollEnd={updateCurrentSlideIndex}
+        keyExtractor={(item) => item.id}
+      />
+
+      <View style={styles.footer}>
+        <View style={styles.indicatorContainer}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.indicator,
+                currentSlideIndex === index && styles.activeIndicator,
+              ]}
+            />
+          ))}
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity onPress={handleSkip}>
+            <Text style={styles.skipButton}>Skip</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <Text style={styles.nextButtonText}>
+              {currentSlideIndex === slides.length - 1 ? 'Get Started' : 'Next'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      {currentPage === pages.length - 1 && (
-        <TouchableOpacity style={styles.button} onPress={() => navigate.navigate('Login')}>
-          <Text style={styles.buttonText}>Get Started</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -80,64 +105,64 @@ const Landing = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#fff',
   },
-  page: {
+  slide: {
     width,
-    justifyContent: 'center',
+    height: '100%',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
   },
   image: {
-    width: 300,
-    height: 300,
-    marginBottom: 20,
-    borderRadius: 20,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
-  title: {
-    fontSize: 24,
-    color: '#333',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 30,
-    paddingHorizontal: 10,
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    padding: 20,
+    backgroundColor: 'transparent',
   },
   indicatorContainer: {
     flexDirection: 'row',
-    position: 'absolute',
-    bottom: 100,
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   indicator: {
-    width: 10,
     height: 10,
+    width: 10,
+    backgroundColor: '#888',
+    marginHorizontal: 5,
     borderRadius: 5,
-    backgroundColor: '#ccc',
-    margin: 5,
   },
   activeIndicator: {
-    backgroundColor: '#333',
+    backgroundColor: '#3498db',
+    width: 20,
   },
-  button: {
-    backgroundColor: '#007BFF',
-    padding: 15,
-    borderRadius: 25,
-    position: 'absolute',
-    bottom: 40,
-    width: '80%',
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  buttonText: {
+  skipButton: {
+    fontSize: 16,
+    color: '#666',
+    textDecorationLine: 'underline',
+  },
+  nextButton: {
+    backgroundColor: '#3498db',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  nextButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });
 
-export default Landing;
+export default LandingScreen;

@@ -187,7 +187,7 @@ const ProfilePage = () => {
             style={styles.settingsOption}
             onPress={() => {
               setShowSettings(false);
-              navigation.navigate("profile/EditProfile");
+              navigation.navigate("EditProfile");
             }}
           >
             <Text style={styles.settingsOptionText}>Edit Profile</Text>

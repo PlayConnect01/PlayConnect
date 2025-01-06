@@ -348,3 +348,23 @@ td:last-child {
   width: 80px;
   padding: 0.5rem;
 }
+
+.highlighted-user {
+  animation: highlight 2s ease-in-out;
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+@keyframes highlight {
+  0% {
+    background-color: rgba(33, 150, 243, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgba(33, 150, 243, 0.1);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: rgba(33, 150, 243, 0.1);
+    transform: scale(1);
+  }
+}
