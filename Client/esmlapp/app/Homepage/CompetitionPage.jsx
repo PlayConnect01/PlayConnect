@@ -78,6 +78,14 @@ const CompetitionPage = () => {
         <View style={styles.content}>
           {tournaments.map(renderTournamentCard)}
         </View>
+        <Text
+          style={styles.seeAll}
+          onPress={() =>
+            navigation.navigate("TournamentList")
+          }
+        >
+          See All
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -182,6 +190,12 @@ const styles = StyleSheet.create({
   statLabel: {
     color: '#6B7280',
     marginTop: 2,
+  },
+  seeAll: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 4,
   },
 });
 

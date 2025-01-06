@@ -60,7 +60,7 @@ const ProfilePage = () => {
         }
 
         const userResponse = await axios.get(`${BASE_URL}/users/${userId}`);
-        setUserData(userResponse.data.user);
+        setUserData(userResponse.data);
 
         const leaderboardResponse = await axios.get(`${BASE_URL}/leaderboard`);
         const leaderboard = leaderboardResponse.data;
@@ -98,6 +98,12 @@ const ProfilePage = () => {
     return 5;
   };
 
+  const calculateProgress = (points, level) => {
+    const currentLevelPoints = (level - 1) * 1000;
+    const pointsInCurrentLevel = points - currentLevelPoints;
+    return (pointsInCurrentLevel / 1000) * 100;
+  };
+
   const fetchEventsByDate = async (date) => {
     try {
       const response = await axios.get(`${BASE_URL}/events/getByDate/${date}`);
@@ -120,7 +126,7 @@ const ProfilePage = () => {
       const today = new Date().toISOString().split("T")[0];
       if (date >= today) {
         // Mark only upcoming events
-        acc[date] = { marked: true, dotColor: "#6F61E8" };
+        acc[date] = { marked: true, dotColor: "#007BFF" };
       }
       return acc;
     },
@@ -128,7 +134,7 @@ const ProfilePage = () => {
   );
 
   const handleEventPress = (event) => {
-    navigation.navigate("Homepage/EventDetails", { eventId: event.event_id });
+    navigation.navigate("EventDetails", { eventId: event.event_id });
   };
 
   const handleLogout = async () => {
@@ -149,10 +155,14 @@ const ProfilePage = () => {
     return eventDateObj < today;
   };
 
+  const handleCreateEvent = () => {
+    navigation.navigate("AddNewEvent");
+  };
+
   if (loading) {
     return (
       <View style={styles.fullPage}>
-        <ActivityIndicator size="large" color="#6F61E8" style={styles.loader} />
+        <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
         <Navbar />
       </View>
     );
@@ -245,7 +255,7 @@ const ProfilePage = () => {
                 onPress={() => navigation.navigate('profile/LeaderboardScreen')}
               >
                 <View style={styles.iconCircle}>
-                  <MaterialIcons name="leaderboard" size={24} color="#6F61E8" />
+                  <MaterialIcons name="leaderboard" size={24} color="#007BFF" />
                 </View>
                 <View style={styles.statTextContainer}>
                 {  console.log("Rank", rank)} 
@@ -277,14 +287,24 @@ const ProfilePage = () => {
                 </View>
               </View>
               <View style={styles.progressBarContainer}>
-                <View style={styles.progressBar} />
+                <View 
+                  style={[
+                    styles.progressBar, 
+                    { width: `${calculateProgress(userData.points || 0, userLevel)}%` }
+                  ]} 
+                />
                 <View style={styles.pointsIndicator}>
                   <Text style={styles.currentPoints}>
-                    {userData.points || 0}
+                    {userData.points || 0} Points
                   </Text>
-                  <Text style={styles.maxPoints}>{1000 * userLevel}</Text>
+                  <Text style={styles.maxPoints}>
+                    {userLevel * 1000} Points
+                  </Text>
                 </View>
               </View>
+              <Text style={styles.eventsCreatedText}>
+                Events Created: {userData.created_events_count || 0}
+              </Text>
             </View>
           </View>
         )}
@@ -405,214 +425,12 @@ const styles = StyleSheet.create({
   fullPage: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 16,
   },
   scrollView: {
     flex: 1,
   },
   scrollViewContent: {
-    padding: 0,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  profileContainer: {
-    alignItems: "center",
-    marginVertical: 10,
-    paddingHorizontal: 16,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 16,
-  },
-  profileName: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  email: {
-    fontSize: 16,
-    color: "gray",
-    marginBottom: 16,
-  },
-  tabsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginVertical: 20,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 15,
-    padding: 4,
-    marginHorizontal: 0,
-    height: 50,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  activeTab: {
-    backgroundColor: "#6F61E8",
-  },
-  tabText: {
-    color: "#666",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  tabTextActive: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 24,
-    paddingHorizontal: 0,
-    width: "100%",
-  },
-  statBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 20,
     padding: 16,
-    width: "48%",
-    height: 70,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    marginHorizontal: 0,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  statTextContainer: {
-    flex: 1,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: "#666",
-  },
-  levelBox: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
-    marginHorizontal: 0,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  levelHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  levelCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#1A1A1A",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  levelNumberGold: {
-    color: "#FFD700",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  levelTextContainer: {
-    flex: 1,
-  },
-  levelTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  pointsToNext: {
-    fontSize: 14,
-    color: "#666",
-  },
-  progressBarContainer: {
-    height: 12,
-    backgroundColor: "#F0F0F0",
-    borderRadius: 6,
-    overflow: "hidden",
-  },
-  progressBar: {
-    height: "100%",
-    width: "75%", // Adjust based on actual progress
-    backgroundColor: "#FFD700",
-    borderRadius: 6,
-  },
-  pointsIndicator: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  currentPoints: {
-    fontSize: 14,
-    color: "#666",
-  },
-  maxPoints: {
-    fontSize: 14,
-    color: "#666",
-  },
-  eventContainer: {
-    flexDirection: "row",
-    marginVertical: 10,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    padding: 10,
-  },
-  eventImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  eventDetails: {
-    flex: 1,
-  },
-  eventName: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  eventDate: {
-    color: "gray",
-    fontSize: 14,
-  },
-  eventDescription: {
-    fontSize: 14,
-    color: "gray",
-  },
-  noEventsText: {
-    color: "gray",
-    textAlign: "center",
-    marginTop: 20,
-  },
-  calendarContainer: {
-    marginTop: 10,
   },
   header: {
     flexDirection: "row",
@@ -621,64 +439,172 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 48,
     paddingBottom: 16,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
+    color: "#2d4150",
   },
-  settingsMenu: {
-    position: "absolute",
-    top: 90,
-    right: 16,
-    backgroundColor: "white",
+  profileContainer: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 12,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2d4150",
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 16,
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    marginBottom: 20,
+    backgroundColor: "#fff",
     borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 1000,
-    width: 150, // Fixed width for the menu
+    padding: 4,
+    marginHorizontal: 16,
   },
-  settingsOption: {
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: "#007BFF",
+  },
+  tabText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  tabTextActive: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  statBox: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8f8f8",
+    borderRadius: 12,
     padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    marginHorizontal: 8,
   },
-  settingsOptionText: {
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  statTextContainer: {
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#2d4150",
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+  levelBox: {
+    backgroundColor: "#f8f8f8",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  levelHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  levelCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: "#FFD700",
+  },
+  levelNumberGold: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFD700",
+  },
+  levelTextContainer: {
+    flex: 1,
+  },
+  levelTitle: {
     fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
+    fontWeight: "bold",
+    color: "#2d4150",
   },
-  logoutOption: {
-    borderBottomWidth: 0, // Remove border from last item
+  pointsToNext: {
+    fontSize: 12,
+    color: "#666",
   },
-  logoutText: {
-    fontSize: 16,
-    color: "red",
-    fontWeight: "500",
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
+    overflow: "hidden",
   },
-  achievementContainer: {
-    paddingHorizontal: 0,
+  progressBar: {
+    height: "100%",
+    backgroundColor: "#007BFF",
+    borderRadius: 4,
+  },
+  pointsIndicator: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  currentPoints: {
+    fontSize: 12,
+    color: "#666",
+  },
+  maxPoints: {
+    fontSize: 12,
+    color: "#666",
   },
   eventsContainer: {
-    flex: 1,
-    paddingHorizontal: 0,
+    marginTop: 16,
   },
   eventCard: {
-    marginBottom: 80,
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    overflow: "hidden", // This ensures the image respects the border radius
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: "hidden",
   },
   eventImage: {
     width: "100%",
-    height: 200, // Increased height
+    height: 160,
     resizeMode: "cover",
   },
   eventInfo: {
@@ -686,9 +612,9 @@ const styles = StyleSheet.create({
   },
   eventName: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
+    color: "#2d4150",
     marginBottom: 8,
-    color: "#333",
   },
   locationContainer: {
     flexDirection: "row",
@@ -709,21 +635,60 @@ const styles = StyleSheet.create({
     color: "#666",
     marginLeft: 4,
   },
+  settingsMenu: {
+    position: "absolute",
+    top: 90,
+    right: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  settingsOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  settingsOptionText: {
+    fontSize: 16,
+    color: "#2d4150",
+  },
+  logoutOption: {
+    borderBottomWidth: 0,
+  },
+  logoutText: {
+    fontSize: 16,
+    color: "#FF3B30",
+  },
   noEventsText: {
     textAlign: "center",
     color: "#666",
     marginTop: 20,
-    fontSize: 16,
+    fontSize: 14,
   },
   pastEventCard: {
-    opacity: 0.6,
-    backgroundColor: "#f5f5f5",
+    opacity: 0.7,
   },
   pastEventImage: {
-    opacity: 0.5,
+    opacity: 0.7,
   },
   pastEventText: {
     color: "#999",
+  },
+  eventsCreatedText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 12,
+    textAlign: "center",
+  },
+  loader: {
+    marginTop: 20,
   },
 });
 

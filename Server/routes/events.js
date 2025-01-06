@@ -15,7 +15,7 @@ router.get("/getByDate/:date", getEventsByDate);
 router.get("/getEventWithCreator" , EventWithCreator )
 router.post('/addParticipant', addParticipantWithQR);
 router.get("/getParticipated/:userId", getParticipatedEvents);
-router.post("/removeParticipant", removeParticipant);
+router.delete("/removeParticipant/:eventId/:userId", removeParticipant);
 router.get("/isUserParticipant/:eventId/:userId", isUserParticipant);
 router.get("/getParticipantQR/:eventId/:userId", getParticipantQR);
 router.get("/getTomorrowEvents", getTomorrowEvents);

@@ -136,7 +136,7 @@ export default function Login() {
           <View style={styles.contentContainer}>
             <Text style={styles.title}>Welcome Back!</Text>
 
-            <View style={[styles.inputContainer, { marginBottom: windowHeight * 0.02 }]}>
+            <View style={[styles.inputContainer, { marginBottom: windowHeight * 0.02 }]} >
               <FontAwesome name="envelope" size={20} color="#ffffff80" />
               <TextInput
                 style={styles.input}

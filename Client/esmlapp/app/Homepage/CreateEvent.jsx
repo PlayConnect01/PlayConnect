@@ -225,7 +225,7 @@ const AddNewEvent = () => {
       Alert.alert(
         'Request Sent!',
         'Your event request has been sent to the admin team for review. You will be notified once it is approved.',
-        [{ text: 'Okay', onPress: () => navigation.navigate('Homepage/Homep') }]
+        [{ text: 'Okay', onPress: () => navigation.navigate('Home') }]
       );
 
       setEventName('');

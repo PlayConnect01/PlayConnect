@@ -171,9 +171,23 @@ const App = () => {
     }
   };
 
+  const getOrdinalSuffix = (day) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+    return `${month} ${day}${getOrdinalSuffix(day)} ${year}`;
   };
 
   const handleNotificationPress = () => {
@@ -181,7 +195,6 @@ const App = () => {
     // Reset notification count when opening notifications
     setUnreadNotifications(0);
   };
-
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -200,7 +213,7 @@ const App = () => {
             </View>
             <View style={styles.headerIcons}>
               <TouchableOpacity
-                onPress={() => navigation.navigate("Homepage/CalendarPage")}
+                onPress={() => navigation.navigate("CalendarPage")}
               >
                 <Ionicons name="calendar-outline" size={24} color="#555" />
               </TouchableOpacity>
@@ -253,7 +266,7 @@ const App = () => {
                       <TouchableOpacity
                         key={category.id} // Add unique key prop
                         onPress={() =>
-                          navigation.navigate("Homepage/CategoryEvents", {
+                          navigation.navigate("CategoryEvents", {
                             categoryName: category.name,
                           })
                         }
@@ -277,7 +290,7 @@ const App = () => {
                     <Text
                       style={styles.seeAll}
                       onPress={() =>
-                        navigation.navigate("Homepage/TournamentList")
+                        navigation.navigate("TournamentList")
                       }
                     >
                       See All
@@ -293,7 +306,7 @@ const App = () => {
                         key={competition.tournament_id} // Add unique key prop
                         style={styles.competitionItemWrapper}
                         onPress={() =>
-                          navigation.navigate("Homepage/TournamentDetail", {
+                          navigation.navigate("TournamentDetail", {
                             id: competition.tournament_id,
                           })
                         }
@@ -329,16 +342,10 @@ const App = () => {
                   {eventCategories.map((category) => (
                     <TouchableOpacity
                       key={category.id}
-                      style={[
-                        styles.categoryButton,
-                        selectedCategory === category.name && styles.selectedCategory,
-                      ]}
+                      style={[styles.categoryButton, selectedCategory === category.name && styles.selectedCategory]}
                       onPress={() => setSelectedCategory(category.name)}
                     >
-                      <Text style={[
-                        styles.categoryText,
-                        selectedCategory === category.name && { color: "#fff" }
-                      ]}>
+                      <Text style={[styles.categoryText, selectedCategory === category.name && { color: "#fff" }]}>
                         {category.name}
                       </Text>
                     </TouchableOpacity>
@@ -353,12 +360,12 @@ const App = () => {
               >
                 {filteredEvents.map((event) => (
                   <TouchableOpacity
-                    key={event.id} // Add unique key prop
+                    key={event.event_id}
                     style={
                       searchQuery ? styles.fullWidthEventItem : styles.eventItem
                     }
                     onPress={() =>
-                      navigation.navigate("Homepage/EventDetails", {
+                      navigation.navigate("EventDetails", {
                         eventId: event.event_id,
                       })
                     }
@@ -374,6 +381,7 @@ const App = () => {
                           name="google-maps"
                           size={16}
                           color="#0095FF"
+                          key="map-icon"
                         />
                         <Text style={styles.eventDetailText}>
                           {event.location}
@@ -384,9 +392,10 @@ const App = () => {
                           name="calendar-outline"
                           size={16}
                           color="#0095FF"
+                          key="calendar-icon"
                         />
                         <Text style={styles.eventDetailText}>
-                          {formatDate(event.start_time)}
+                          {formatDate(event.date)}
                         </Text>
                       </View>
                     </View>
@@ -400,7 +409,7 @@ const App = () => {
       </ScrollView>
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={() => navigation.navigate("Homepage/CreateEvent")}
+        onPress={() => navigation.navigate("AddNewEvent")}
       >
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>

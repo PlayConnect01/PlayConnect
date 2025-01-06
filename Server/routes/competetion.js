@@ -7,7 +7,11 @@ const {
   deleteTournament,
   getAllTournamentsAndTeams,
   getTotalTournaments,
-  getTodayTournaments,
+  createTournamentTeam,
+  addTeamMemberWithQR,
+  getTeamDetails,
+  removeTeamMember,
+  getTodayTournaments
 } = require('../controllers/competetion');
 
 const router = express.Router();
@@ -16,6 +20,15 @@ const router = express.Router();
 router.get('/', getAllTournaments); 
 
 router.get('/Teams', getAllTournamentsAndTeams); 
+
+// Get total tournaments count
+router.get("/count/total", getTotalTournaments);
+
+// Team routes
+router.post('/:tournamentId/teams', createTournamentTeam);
+router.get('/teams/:teamId', getTeamDetails);
+router.post('/teams/:teamId/join', addTeamMemberWithQR);
+router.delete('/teams/:teamId/members/:userId', removeTeamMember);
 
 // Get a tournament by ID
 router.get('/:id', getTournamentById); 

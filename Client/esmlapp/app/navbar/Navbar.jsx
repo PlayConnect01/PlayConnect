@@ -72,7 +72,7 @@ const Navbar = () => {
       <View style={styles.navbar}>
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Homepage/Homep")}
+          onPress={() => navigation.navigate("Home")}
         >
           <Icon
             name="home"
@@ -88,7 +88,7 @@ const Navbar = () => {
 
         <TouchableOpacity
           style={[styles.navItem]}
-          onPress={() => navigation.navigate("Chat/MessagePage")}
+          onPress={() => navigation.navigate("Messages")}
         >
           <View style={styles.iconContainer}>
             <Icon
@@ -105,7 +105,7 @@ const Navbar = () => {
           <Text
             style={isActive("Messages") ? styles.navTextActive : styles.navText}
           >
-            Message
+            Messages
           </Text>
         </TouchableOpacity>
 
@@ -114,7 +114,7 @@ const Navbar = () => {
             styles.centerButton,
             isActive("Match") && styles.activeCenterButton,
           ]}
-          onPress={() => navigation.navigate("Match/Firstpagematch")}
+          onPress={() => navigation.navigate("Match")}
         >
           <View style={styles.centerButtonInner}>
             <Icon name="flame" size={28} color="#FFFFFF" />
@@ -131,11 +131,9 @@ const Navbar = () => {
             color={isActive("Marketplace") ? "#0095FF" : "#64748B"}
           />
           <Text
-            style={
-              isActive("Marketplace") ? styles.navTextActive : styles.navText
-            }
+            style={isActive("Marketplace") ? styles.navTextActive : styles.navText}
           >
-            Market
+            Shop
           </Text>
         </TouchableOpacity>
 
@@ -146,9 +144,11 @@ const Navbar = () => {
           <Icon
             name="person"
             size={24}
-            color={isActive("ProfilePage") ? "#0095FF" : "#64748B"}
+            color={isActive("Profile") ? "#0095FF" : "#64748B"}
           />
-          <Text style={isActive("Profile") ? styles.navTextActive : styles.navText}>
+          <Text
+            style={isActive("Profile") ? styles.navTextActive : styles.navText}
+          >
             Profile
           </Text>
         </TouchableOpacity>

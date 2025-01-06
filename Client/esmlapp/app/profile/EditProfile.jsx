@@ -27,6 +27,7 @@ const decodeToken = (token) => {
 const EditProfile = () => {
   const navigation = useNavigation();
   const [userData, setUserData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -42,36 +43,73 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setIsLoading(true);
         const token = await AsyncStorage.getItem("userToken");
-        if (!token) return;
+        if (!token) {
+          navigation.navigate('login'); 
+          return;
+        }
 
-        // Decode the token to get user ID
-        const base64Url = token.split(".")[1];
-        const base64 = base64Url.replace("-", "+").replace("_", "/");
-        const decodedToken = JSON.parse(atob(base64));
-        const userId =
-          decodedToken.id || decodedToken.user_id || decodedToken.userId;
+        const decodedToken = decodeToken(token);
+        if (!decodedToken) {
+          throw new Error('Invalid token');
+        }
+
+        const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+        if (!userId) {
+          throw new Error('User ID not found in token');
+        }
 
         const response = await axios.get(`${BASE_URL}/users/${userId}`);
-        setUserData(response.data.user);
-
-        // Set the form data with existing user data
-        setFormData((prev) => ({
-          ...prev,
-          username: response.data.user.username || "",
-          email: response.data.user.email || "",
-          profile_picture: response.data.user.profile_picture || "",
-          phone_number: response.data.user.phone_number || "",
-          phone_country_code: response.data.user.phone_country_code || "+1",
-          location: response.data.user.location || "",
-        }));
+        const user = response.data;
+        
+        setUserData(user);
+        
+        
+        // Only update form data if we have user data
+        if (user) {
+          setFormData(prev => ({
+            ...prev,
+            username: user.username || "",
+            email: user.email || "",
+            profile_picture: user.profile_picture || "",
+            phone_number: user.phone_number || "",
+            phone_country_code: user.phone_country_code || "+1",
+            location: user.location || "",
+            // If birthdate exists, parse it
+            ...(user.birthdate && {
+              birthdate_day: new Date(user.birthdate).getDate().toString().padStart(2, '0'),
+              birthdate_month: (new Date(user.birthdate).getMonth() + 1).toString().padStart(2, '0'),
+              birthdate_year: new Date(user.birthdate).getFullYear().toString()
+            })
+          }));
+        }
+         if (user) {
+          setFormData(prev => ({
+            ...prev,
+            username: user.username || "",
+            email: user.email || "",
+            profile_picture: user.profile_picture || "",
+            phone_number: user.phone_number || "",
+            phone_country_code: user.phone_country_code || "+1",
+            location: user.location || "",
+            ...(user.birthdate && {
+              birthdate_day: new Date(user.birthdate).getDate().toString().padStart(2, '0'),
+              birthdate_month: (new Date(user.birthdate).getMonth() + 1).toString().padStart(2, '0'),
+              birthdate_year: new Date(user.birthdate).getFullYear().toString()
+            })
+          }));
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        alert("Failed to load user data. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [navigation]);
 
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [showDayPicker, setShowDayPicker] = useState(false);
@@ -273,10 +311,18 @@ const handleSubmit = async () => {
     setShowYearPicker(false);
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6F61E8" />
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.navigate("profile/ProfilePage")}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
@@ -675,6 +721,12 @@ const styles = StyleSheet.create({
     paddingBottom: 80, // Add padding to ensure button is not covered by navbar
     backgroundColor: '#fff',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff'
+  }
 });
 
 export default EditProfile;
