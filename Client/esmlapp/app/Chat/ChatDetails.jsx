@@ -22,7 +22,6 @@ const ChatDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { user ,  chatId , currentUserId } = route.params
-  console.log(user ,  chatId , currentUserId  , "helloo");
   
  
 
@@ -59,7 +58,6 @@ const ChatDetails = () => {
 
     // Recevoir les messages des autres utilisateurs uniquement
     socket.on("receiveMessage", (data) => {
-      console.log('Message received from other user:', data);
       if (data.senderId !== currentUserId) {
         setMessages((prevMessages) => [...prevMessages, data]);
         scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -80,11 +78,8 @@ const ChatDetails = () => {
   const loadMessages = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Loading messages for chat:', chatId);
-      console.log('API URL:', `${BASE_URL}/chats/${chatId}/messages`);
 
       const response = await axios.get(`${BASE_URL}/chats/${chatId}/messages`);
-      console.log('Messages loaded:', response.data);
       setMessages(response.data || []);
     } catch (error) {
       console.error("Error loading messages:", error.response || error);
@@ -128,7 +123,6 @@ const ChatDetails = () => {
 
   const handleAudioMessage = useCallback(
     (audioMessage) => {
-      console.log("Handling audio message:", audioMessage);
       // Update local state for sender
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -312,7 +306,6 @@ const ChatDetails = () => {
           chatId={chatId}
           currentUserId={currentUserId}
           onImageUpload={(imageMessage) => {
-            console.log('Image message to send:', imageMessage);
             // Ajouter l'image localement
             setMessages((prev) => [...prev, imageMessage]);
             
@@ -569,6 +562,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "rgba(0,0,0,0.05)",
+    marginBottom:78
   },
   input: {
     flex: 1,

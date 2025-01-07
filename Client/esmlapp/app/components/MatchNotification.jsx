@@ -18,9 +18,10 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
   const likeScale = useRef(new Animated.Value(1)).current;
   const dislikeScale = useRef(new Animated.Value(1)).current;
 
-  // Utiliser les données de l'expéditeur du match (user_1)
-  const senderData = notification?.match?.user_1;
-  const sportData = notification?.match?.sport;
+  // Get match data from the notification
+  const matchData = notification?.match || {};
+  const senderData = matchData?.user_1 || {};
+  const sportData = matchData?.sport || {};
   
   const senderName = senderData?.username || "Unknown User";
   const senderImage = senderData?.profile_picture || "default_image_url";
@@ -28,7 +29,7 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
   const senderSports = senderData?.sports?.map((sport) => sport.sport.name) || [];
   const matchSport = sportData?.name || "Unknown Sport";
 
-  console.log("Match data:", { sender: senderData, sport: sportData }); // Pour déboguer
+  console.log("Match data:", { sender: senderData, sport: sportData }); // For debugging
 
   const animateButton = (scale) => {
     Animated.sequence([

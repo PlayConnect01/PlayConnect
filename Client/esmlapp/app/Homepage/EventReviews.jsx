@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { BASE_URL } from '../../Api';
+import CustomAlert from '../../Alerts/CustomAlert';
 
 const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
   const [reviews, setReviews] = useState([]);
@@ -12,6 +13,9 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   useEffect(() => {
     fetchReviews();
@@ -25,7 +29,9 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
       setAverageRating(response.data.averageRating);
       setTotalReviews(response.data.totalReviews);
     } catch (error) {
-      Alert.alert('Error', 'Unable to load reviews');
+      setAlertTitle('Error');
+      setAlertMessage('Unable to load reviews');
+      setAlertVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -33,18 +39,24 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
 
   const handleAddReviewPress = () => {
     if (!userId) {
-      Alert.alert('Error', 'Please log in to submit a review');
+      setAlertTitle('Error');
+      setAlertMessage('Please log in to submit a review');
+      setAlertVisible(true);
       return;
     }
 
     if (!userJoined) {
-      Alert.alert('Notice', 'Only participants can write reviews');
+      setAlertTitle('Notice');
+      setAlertMessage('Only participants can write reviews');
+      setAlertVisible(true);
       return;
     }
 
     const hasAlreadyReviewed = reviews.some(review => review.user_id === userId);
     if (hasAlreadyReviewed) {
-      Alert.alert('Notice', 'You have already reviewed this event');
+      setAlertTitle('Notice');
+      setAlertMessage('You have already reviewed this event');
+      setAlertVisible(true);
       return;
     }
 
@@ -53,12 +65,16 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
 
   const handleReviewSubmit = async () => {
     if (newReviewStars === 0) {
-      Alert.alert('Error', 'Please select a star rating');
+      setAlertTitle('Error');
+      setAlertMessage('Please select a star rating');
+      setAlertVisible(true);
       return;
     }
 
     if (!newReviewText.trim()) {
-      Alert.alert('Error', 'Please write a review');
+      setAlertTitle('Error');
+      setAlertMessage('Please write a review');
+      setAlertVisible(true);
       return;
     }
 
@@ -74,35 +90,44 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
       setNewReviewStars(0);
       setIsReviewModalVisible(false);
       fetchReviews();
-      Alert.alert('Success', 'Review submitted successfully');
+      setAlertTitle('Success');
+      setAlertMessage('Review submitted successfully');
+      setAlertVisible(true);
     } catch (error) {
-      Alert.alert('Error', 'Failed to submit review');
+      setAlertTitle('Error');
+      setAlertMessage('Failed to submit review');
+      setAlertVisible(true);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeleteReview = async (reviewId) => {
-    Alert.alert(
-      'Delete Review',
-      'Are you sure you want to delete this review?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await axios.delete(`${BASE_URL}/review/events/${eventId}/reviews/${reviewId}`);
-              fetchReviews();
-              Alert.alert('Success', 'Review deleted successfully');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete review');
-            }
-          }
-        }
-      ]
-    );
+    setAlertTitle('Delete Review');
+    setAlertMessage('Are you sure you want to delete this review?');
+    setAlertVisible(true);
+    const deleteReview = async () => {
+      try {
+        await axios.delete(`${BASE_URL}/review/events/${eventId}/reviews/${reviewId}`);
+        fetchReviews();
+        setAlertTitle('Success');
+        setAlertMessage('Review deleted successfully');
+        setAlertVisible(true);
+      } catch (error) {
+        setAlertTitle('Error');
+        setAlertMessage('Failed to delete review');
+        setAlertVisible(true);
+      }
+    };
+    const handleAlertPress = (buttonIndex) => {
+      if (buttonIndex === 1) {
+        deleteReview();
+      }
+    };
+    const alertButtons = [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: handleAlertPress },
+    ];
   };
 
   const renderStars = (rating) => (
@@ -130,6 +155,12 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
 
   return (
     <View style={styles.container}>
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
       <View style={styles.header}>
         <Text style={styles.title}>Reviews ({totalReviews})</Text>
         <View style={styles.ratingInfo}>
@@ -141,7 +172,7 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
       {reviews.map((review) => (
         <View key={review.review_id} style={styles.reviewCard}>
           <View style={styles.reviewHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => navigation.navigate('profile/UserProfilePage', { userId: review.user_id })}
               style={styles.userInfo}
             >
@@ -150,9 +181,9 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
             </TouchableOpacity>
             {renderStars(review.rating)}
           </View>
-          
+
           <Text style={styles.reviewText}>{review.comment}</Text>
-          
+
           {review.user_id === userId && (
             <TouchableOpacity
               style={styles.deleteButton}
@@ -183,7 +214,7 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Write a Review</Text>
-            
+
             <View style={styles.starSelection}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity
@@ -220,7 +251,7 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.modalButton, styles.submitButton]}
                 onPress={handleReviewSubmit}

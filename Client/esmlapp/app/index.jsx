@@ -56,8 +56,8 @@ import RunningProducts from "./marketplace/categories/RunningProducts";
 import SwimmingProducts from "./marketplace/categories/SwimmingProducts";
 import YogaProducts from "./marketplace/categories/YogaProducts";
 import UserProfilePage from "./profile/UserProfilePage"; 
-
 import UserProducts from './marketplace/UserProducts';
+import LeaderboardScreen from "./profile/LeaderboardScreen";
 
 const Stack = createStackNavigator();
 
@@ -112,6 +112,7 @@ const WrappedBoxingProducts = withMainLayout(BoxingProducts);
 const WrappedRunningProducts = withMainLayout(RunningProducts);
 const WrappedSwimmingProducts = withMainLayout(SwimmingProducts);
 const WrappedYogaProducts = withMainLayout(YogaProducts);
+const WrappedLeaderboardScreen = withMainLayout(LeaderboardScreen);
 const WrappedUserProducts = withMainLayout(UserProducts);
 
 function App() {
@@ -161,6 +162,7 @@ function App() {
               <Stack.Screen name="Profile" component={WrappedProfilePage} />
               <Stack.Screen name="EditProfile" component={WrappedEditProfile} />
               <Stack.Screen name="UserProfilePage" component={UserProfilePage} />
+              <Stack.Screen name="LeaderboardScreen" component={WrappedLeaderboardScreen} />
               
               {/* Marketplace Flow */}
               <Stack.Screen name="Marketplace" component={WrappedMarketplace} />
@@ -191,7 +193,7 @@ function App() {
               <Stack.Screen name="RunningProducts" component={WrappedRunningProducts} options={{ headerShown: true, title: 'Running Equipment' }} />
               <Stack.Screen name="SwimmingProducts" component={WrappedSwimmingProducts} options={{ headerShown: true, title: 'Swimming Equipment' }} />
               <Stack.Screen name="YogaProducts" component={WrappedYogaProducts} options={{ headerShown: true, title: 'Yoga Equipment' }} />
-              <Stack.Screen name="UserProducts" component={WrappedUserProducts} options={{ headerShown: true, title: 'My Products' }} />
+              <Stack.Screen name="UserProducts" component={WrappedUserProducts} options={{ headerShown: true, title: 'User Products' }} />
             </Stack.Navigator>
           </NavigationContainer>
         </StripeProvider>

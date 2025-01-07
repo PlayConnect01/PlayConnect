@@ -324,7 +324,7 @@ const EditProfile = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6F61E8" />
+        <ActivityIndicator size="large" color="#0095FF" />
       </View>
     );
   }
@@ -332,7 +332,7 @@ const EditProfile = () => {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate("profile/ProfilePage")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
@@ -354,7 +354,7 @@ const EditProfile = () => {
             style={styles.profileImage}
           />
           <View style={styles.changePhotoButton}>
-            <Ionicons name="camera" size={20} color="#6F61E8" />
+            <Ionicons name="camera" size={20} color="#0095FF" />
             <Text style={styles.changePhotoText}>Change Photo</Text>
           </View>
         </TouchableOpacity>
@@ -608,12 +608,12 @@ const styles = StyleSheet.create({
   changePhotoButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0EEFF",
+    backgroundColor: "#E6F4FF",
     padding: 8,
     borderRadius: 20,
   },
   changePhotoText: {
-    color: "#6F61E8",
+    color: "#0095FF",
     fontSize: 14,
     marginLeft: 5,
   },
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#6F61E8",
+    backgroundColor: "#0095FF",
     height: 56,
     borderRadius: 12,
     justifyContent: 'center',
