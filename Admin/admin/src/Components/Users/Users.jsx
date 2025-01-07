@@ -62,22 +62,24 @@ const Users = () => {
         title: 'Ban User',
         html: `
           <div style="width: 100%;">
-            <select id="banReason" class="swal2-select" style="width: 100%; margin-bottom: 10px;">
+            <select id="banReason" class="swal2-select" style="width: 100%; margin-bottom: 10px; height: 40px !important;">
               <option value="">Select a reason</option>
               ${banReasons.map(reason => `<option value="${reason}">${reason}</option>`).join('')}
               <option value="custom">Custom reason...</option>
             </select>
-            <input id="customReason" class="swal2-input" placeholder="Enter custom reason..." style="display: none;">
+            <input id="customReason" class="swal2-input" placeholder="Enter custom reason..." style="display: none; height: 40px !important;">
           </div>
         `,
-        width: '320px',
+        width: '400px',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ban User',
         cancelButtonText: 'Cancel',
         customClass: {
-          popup: 'no-scroll-popup'
+          popup: 'large-popup',
+          input: 'large-input',
+          select: 'large-select'
         },
         didOpen: () => {
           // Show/hide custom reason input based on selection
@@ -114,26 +116,34 @@ const Users = () => {
       });
 
       if (result) {
-        const finalReason = result.value;
+        const finalReason = result;
 
         // Confirmation dialog
         const confirmResult = await Swal.fire({
-          title: 'Confirm Ban',
+          title: `Ban ${username}`,
           html: `
-            Are you sure you want to ban ${username}?<br>
             <b>Reason:</b> ${finalReason}
           `,
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#d33',
           cancelButtonColor: '#3085d6',
-          confirmButtonText: 'Yes, ban user',
-          cancelButtonText: 'Cancel'
+          confirmButtonText: 'Ban User',
+          cancelButtonText: 'Cancel',
+          width: '400px',
+          customClass: {
+            popup: 'large-popup',
+            title: 'large-title',
+            content: 'large-content',
+            confirmButton: 'large-button',
+            cancelButton: 'large-button',
+            actions: 'large-actions'
+          }
         });
 
         if (confirmResult.isConfirmed) {
           const response = await axios.put(`http://localhost:3000/users/ban/${userId}`, {
-            banReason: finalReason
+            ban_reason: finalReason
           });
           
           if (response.status === 200) {
@@ -143,11 +153,18 @@ const Users = () => {
                 : user
             ));
 
-            await Swal.fire(
-              'Banned!',
-              `${username} has been banned successfully.`,
-              'success'
-            );
+            await Swal.fire({
+              title: 'Banned!',
+              text: `${username} has been banned successfully.`,
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false,
+              customClass: {
+                popup: 'small-popup',
+                title: 'small-title',
+                content: 'small-content'
+              }
+            });
           }
         }
       }
@@ -164,14 +181,23 @@ const Users = () => {
   const handleUnbanUser = async (userId, username) => {
     try {
       const result = await Swal.fire({
-        title: 'Unban User',
-        text: `Are you sure you want to unban ${username}?`,
+        title: `Unban ${username}`,
+      
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, unban user',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Unban User',
+        cancelButtonText: 'Cancel',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
@@ -185,11 +211,18 @@ const Users = () => {
               : user
           ));
 
-          await Swal.fire(
-            'Unbanned!',
-            `${username} has been unbanned successfully.`,
-            'success'
-          );
+          await Swal.fire({
+            title: 'Unbanned!',
+            text: `${username} has been unbanned successfully.`,
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            customClass: {
+              popup: 'small-popup',
+              title: 'small-title',
+              content: 'small-content'
+            }
+          });
         }
       }
     } catch (error) {
@@ -216,8 +249,7 @@ const Users = () => {
         title: 'Delete User',
         html: `
           <div style="min-width: 300px;">
-            <p>This will permanently delete ${username} and all their data.</p>
-            <p>This action cannot be undone!</p>
+            <p>Are You Sure You Want To Delete ${username}?</p>
           </div>
         `,
         icon: 'warning',

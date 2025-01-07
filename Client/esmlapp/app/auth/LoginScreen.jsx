@@ -60,7 +60,6 @@ export default function Login() {
   }, []);
 
 
-
   const handleLogin = async () => {
     if (!email || !password) {
       setAlertTitle('Error');
