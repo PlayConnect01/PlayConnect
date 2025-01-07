@@ -61,7 +61,7 @@ const ProfilePage = () => {
 
         const userResponse = await axios.get(`${BASE_URL}/users/${userId}`);
         setUserData(userResponse.data);
-
+console.log("User Dataaaaaaa", userResponse.data.points);
         const leaderboardResponse = await axios.get(`${BASE_URL}/leaderboard`);
         const leaderboard = leaderboardResponse.data;
 
@@ -103,6 +103,7 @@ const ProfilePage = () => {
     const pointsInCurrentLevel = points - currentLevelPoints;
     return (pointsInCurrentLevel / 1000) * 100;
   };
+  
 
   const fetchEventsByDate = async (date) => {
     try {
@@ -252,7 +253,7 @@ const ProfilePage = () => {
             <View style={styles.statsContainer}>
               <TouchableOpacity 
                 style={styles.statBox}
-                onPress={() => navigation.navigate('profile/LeaderboardScreen')}
+                onPress={() => navigation.navigate('LeaderboardScreen')}
               >
                 <View style={styles.iconCircle}>
                   <MaterialIcons name="leaderboard" size={24} color="#007BFF" />

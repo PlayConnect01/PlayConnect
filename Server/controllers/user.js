@@ -211,8 +211,7 @@ const getOneUser = async (req, res) => {
     }
 
     // Calculate points (500 per created event)
-    const points = createdEventsCount * 500;
-
+    const points = user.points 
     // Update user's points
     await prisma.user.update({
       where: { user_id: userId },
@@ -393,7 +392,7 @@ const getAllUsers = async (req, res) => {
 
 const banUser = async (req, res) => {
   const { userId } = req.params;
-  const { banReason } = req.body;
+  const { ban_reason } = req.body;
 
   try {
     const updatedUser = await prisma.user.update({
@@ -402,7 +401,7 @@ const banUser = async (req, res) => {
       },
       data: {
         is_banned: true,
-        ban_reason: banReason
+        ban_reason: ban_reason
       }
     });
 
@@ -592,7 +591,6 @@ const deleteUser = async (req, res) => {
 };
 
 
-
 const getUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
@@ -617,9 +615,6 @@ const getUserProfile = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Calculate and update points
-    const points = await calculateUserPoints(parseInt(id));
-    user.points = points;
 
     res.json(user);
   } catch (error) {
@@ -641,4 +636,5 @@ module.exports = {
   deleteUser,
   reportUser,
   getUserProfile,
+  
 };

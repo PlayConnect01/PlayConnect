@@ -124,7 +124,7 @@ const LeaderboardScreen = () => {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.navigate('profile/ProfilePage')}
+          onPress={() => navigation.navigate('Profile')}
         >
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>

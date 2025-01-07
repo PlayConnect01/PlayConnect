@@ -44,19 +44,45 @@ const NotificationsModal = ({
   };
 
   const handleNotificationClick = async (notification) => {
-    if (!notification.is_read) {
-      try {
-        await axios.put(
-          `${BASE_URL}/notifications/${notification.notification_id}/read`
+    try {
+      // Mark notification as read if it's not already read
+      if (!notification.is_read) {
+        await axios.put(`${BASE_URL}/notifications/${notification.notification_id}/read`);
+        
+        // Update the notifications list locally
+        setNotifications(prevNotifications => 
+          prevNotifications.map(n => 
+            n.notification_id === notification.notification_id 
+              ? { ...n, is_read: true } 
+              : n
+          )
         );
+
         if (onNotificationsUpdate) {
           onNotificationsUpdate();
         }
-      } catch (error) {
-        console.error("Error marking notification as read:", error);
       }
+
+      // Handle different notification types
+      if (notification.type === 'MATCH_REQUEST') {
+        // Fetch full match details before showing the match card
+        try {
+          const matchResponse = await axios.get(`${BASE_URL}/matches/${notification.match_id}`);
+          const matchData = matchResponse.data;
+          setSelectedMatch({
+            ...notification,
+            match: matchData
+          });
+        } catch (error) {
+          console.error("Error fetching match details:", error);
+        }
+      } else if (notification.type === 'GENERAL') {
+        // For general notifications, we just mark them as read
+        // No additional action needed
+      }
+    } catch (error) {
+      console.error("Error handling notification click:", error);
     }
-    setSelectedMatch(notification);
   };
 
   const handleAcceptMatch = async (matchId, notificationId) => {

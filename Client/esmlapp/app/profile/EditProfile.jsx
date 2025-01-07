@@ -259,7 +259,7 @@ const handleSubmit = async () => {
 
     if (response.data.success) {
       alert('Profile updated successfully!');
-      navigation.navigate('profile/ProfilePage');
+      navigation.navigate('Profile');
     } else {
       throw new Error(response.data.error || 'Failed to update profile');
     }
@@ -322,7 +322,7 @@ const handleSubmit = async () => {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate("profile/ProfilePage")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>

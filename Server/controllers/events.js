@@ -600,4 +600,4 @@ module.exports = {
   approveEvent,
   rejectEvent,
   getApprovedEvents
-};
+}

@@ -82,7 +82,8 @@ const App = () => {
     try {
       const response = await axios.get(`${BASE_URL}/notifications/${userId}`);
       if (response.data && Array.isArray(response.data)) {
-        setUnreadNotifications(response.data.filter((n) => !n.read).length);
+        const unreadCount = response.data.filter(n => !n.is_read).length;
+        setUnreadNotifications(unreadCount);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -192,8 +193,12 @@ const App = () => {
 
   const handleNotificationPress = () => {
     setShowNotifications(true);
-    // Reset notification count when opening notifications
-    setUnreadNotifications(0);
+  };
+
+  const handleNotificationsUpdate = () => {
+    if (currentUserId) {
+      fetchNotifications(currentUserId);
+    }
   };
 
   return (
@@ -381,7 +386,7 @@ const App = () => {
                           name="google-maps"
                           size={16}
                           color="#0095FF"
-                          key="map-icon"
+                          key={`map-icon-${event.event_id}`}
                         />
                         <Text style={styles.eventDetailText}>
                           {event.location}
@@ -392,7 +397,7 @@ const App = () => {
                           name="calendar-outline"
                           size={16}
                           color="#0095FF"
-                          key="calendar-icon"
+                          key={`calendar-icon-${event.event_id}`}
                         />
                         <Text style={styles.eventDetailText}>
                           {formatDate(event.date)}
@@ -421,7 +426,7 @@ const App = () => {
           visible={showNotifications}
           onClose={() => setShowNotifications(false)}
           userId={currentUserId}
-          onNotificationsUpdate={() => fetchNotifications(currentUserId)}
+          onNotificationsUpdate={handleNotificationsUpdate}
         />
       )}
     </View>

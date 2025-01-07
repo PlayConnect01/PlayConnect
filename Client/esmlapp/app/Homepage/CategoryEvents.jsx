@@ -18,13 +18,12 @@ const { width } = Dimensions.get("window");
 const CategoryEvents = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { categoryName } = route.params; // Receive the category name from navigation params
+  const { categoryName } = route.params;
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch all events initially
     axios
       .get(`${BASE_URL}/events/getAll`)
       .then((response) => {
@@ -38,7 +37,6 @@ const CategoryEvents = () => {
   }, []);
 
   useEffect(() => {
-    // Filter events by the selected category
     if (categoryName === "All Type") {
       setFilteredEvents(events);
     } else {
@@ -48,15 +46,32 @@ const CategoryEvents = () => {
     }
   }, [categoryName, events]);
 
+  const getOrdinalSuffix = (day) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+    return `${month} ${day}${getOrdinalSuffix(day)} ${year}`;
+  };
+
   if (loading) {
     return <Text>Loading events...</Text>;
   }
 
-  // Handle case when no events are found for the selected category
   if (filteredEvents.length === 0) {
     return (
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Back Arrow and Title */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.navigate("Home")}>
             <Ionicons name="arrow-back" size={24} color="#555" />
@@ -64,7 +79,6 @@ const CategoryEvents = () => {
           <Text style={styles.categoryTitle}>{categoryName} Events</Text>
         </View>
 
-        {/* No Events Found Message */}
         <View style={styles.noEventsContainer}>
           <Text style={styles.noEventsText}>
             No events found in this category.
@@ -76,7 +90,6 @@ const CategoryEvents = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Back Arrow and Title */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#555" />
@@ -84,7 +97,6 @@ const CategoryEvents = () => {
         <Text style={styles.categoryTitle}>{categoryName} Events</Text>
       </View>
 
-      {/* Display Events */}
       <ScrollView contentContainerStyle={styles.eventsGrid}>
         {filteredEvents.map((event) => (
           <TouchableOpacity
@@ -110,7 +122,7 @@ const CategoryEvents = () => {
               </View>
               <View style={styles.eventRow}>
                 <Ionicons name="calendar-outline" size={16} color="#555" />
-                <Text style={styles.eventDetailText}>{event.date}</Text>
+                <Text style={styles.eventDetailText}>{formatDate(event.date)}</Text>
               </View>
             </View>
           </TouchableOpacity>

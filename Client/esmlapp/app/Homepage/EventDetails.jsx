@@ -362,7 +362,7 @@ const initializePayment = async (amount, userId) => {
   }, []);
 
   const handleGoBack = () => {
-    navigation.navigate("Homepage/Homep");
+    navigation.navigate("Home");
   };
 
 

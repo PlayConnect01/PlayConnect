@@ -232,24 +232,27 @@ th {
 }
 
 .small-popup {
-  font-size: 0.85rem !important;
-  max-width: 280px !important;
+  font-size: 0.9rem !important;
+  width: 320px !important;
 }
 
 .small-title {
-  font-size: 1rem !important;
-  padding: 0.4rem !important;
+  font-size: 1.4rem !important;
+  padding: 1rem 1rem 0.5rem 1rem !important;
+  color: #545454 !important;
 }
 
 .small-content {
-  font-size: 0.85rem !important;
-  margin: 0.4rem 0 !important;
-  padding: 0 0.5rem !important;
+  font-size: 0.9rem !important;
+  margin: 0.5rem 0 !important;
+  padding: 0 1rem !important;
 }
 
 .small-button {
-  font-size: 0.8rem !important;
-  padding: 0.3rem 0.6rem !important;
+  font-size: 0.95rem !important;
+  padding: 0.6rem 0 !important;
+  width: 100% !important;
+  margin: 0.3rem 0 !important;
 }
 
 .swal2-icon {
@@ -271,16 +274,14 @@ th {
 /* Update SweetAlert button colors */
 .swal2-confirm.swal2-styled {
   background-color: #dc3545 !important;
-  box-shadow: none !important;
-  font-size: 1rem !important;
-  padding: 0.5rem 1.5rem !important;
+  width: calc(100% - 2rem) !important;
+  margin: 0.3rem 1rem !important;
 }
 
 .swal2-cancel.swal2-styled {
   background-color: #3085d6 !important;
-  box-shadow: none !important;
-  font-size: 1rem !important;
-  padding: 0.5rem 1.5rem !important;
+  width: calc(100% - 2rem) !important;
+  margin: 0.3rem 1rem !important;
 }
 
 /* Make sure hover states are consistent */

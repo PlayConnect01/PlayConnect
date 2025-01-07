@@ -116,26 +116,34 @@ const Users = () => {
       });
 
       if (result) {
-        const finalReason = result.value;
+        const finalReason = result;
 
         // Confirmation dialog
         const confirmResult = await Swal.fire({
-          title: 'Confirm Ban',
+          title: `Ban ${username}`,
           html: `
-            Are you sure you want to ban ${username}?<br>
             <b>Reason:</b> ${finalReason}
           `,
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#d33',
           cancelButtonColor: '#3085d6',
-          confirmButtonText: 'Yes, ban user',
-          cancelButtonText: 'Cancel'
+          confirmButtonText: 'Ban User',
+          cancelButtonText: 'Cancel',
+          width: '400px',
+          customClass: {
+            popup: 'large-popup',
+            title: 'large-title',
+            content: 'large-content',
+            confirmButton: 'large-button',
+            cancelButton: 'large-button',
+            actions: 'large-actions'
+          }
         });
 
         if (confirmResult.isConfirmed) {
           const response = await axios.put(`http://localhost:3000/users/ban/${userId}`, {
-            banReason: finalReason
+            ban_reason: finalReason
           });
           
           if (response.status === 200) {
@@ -173,14 +181,23 @@ const Users = () => {
   const handleUnbanUser = async (userId, username) => {
     try {
       const result = await Swal.fire({
-        title: 'Unban User',
-        text: `Are you sure you want to unban ${username}?`,
+        title: `Unban ${username}`,
+      
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, unban user',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Unban User',
+        cancelButtonText: 'Cancel',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
@@ -194,11 +211,18 @@ const Users = () => {
               : user
           ));
 
-          await Swal.fire(
-            'Unbanned!',
-            `${username} has been unbanned successfully.`,
-            'success'
-          );
+          await Swal.fire({
+            title: 'Unbanned!',
+            text: `${username} has been unbanned successfully.`,
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            customClass: {
+              popup: 'small-popup',
+              title: 'small-title',
+              content: 'small-content'
+            }
+          });
         }
       }
     } catch (error) {

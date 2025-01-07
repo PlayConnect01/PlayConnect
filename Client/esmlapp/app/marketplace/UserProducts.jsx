@@ -202,7 +202,6 @@ const UserProducts = () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const id = await AsyncStorage.getItem('user_id');
-        console.log('Loaded auth data:', { token, id });
         setAuthToken(token);
         setUserId(id);
       } catch (error) {

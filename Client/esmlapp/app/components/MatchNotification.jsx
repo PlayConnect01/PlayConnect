@@ -13,23 +13,23 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-
 const MatchNotification = ({ notification, onAccept, onReject }) => {
   const [showModal, setShowModal] = useState(true);
   const likeScale = useRef(new Animated.Value(1)).current;
   const dislikeScale = useRef(new Animated.Value(1)).current;
 
-  const senderName =
-    notification?.senderName || notification?.user?.username || "Unknown User";
-  const senderImage =
-    notification?.senderImage ||
-    notification?.user?.profile_picture ||
-    "default_image_url";
-  const senderLocation =
-    notification?.senderLocation ||
-    notification?.user?.location ||
-    "Location not specified";
-  const senderSports = notification?.user?.interested_sports || [];
+  // Get match data from the notification
+  const matchData = notification?.match || {};
+  const senderData = matchData?.user_1 || {};
+  const sportData = matchData?.sport || {};
+  
+  const senderName = senderData?.username || "Unknown User";
+  const senderImage = senderData?.profile_picture || "default_image_url";
+  const senderLocation = senderData?.location || "Location not specified";
+  const senderSports = senderData?.sports?.map((sport) => sport.sport.name) || [];
+  const matchSport = sportData?.name || "Unknown Sport";
+
+  console.log("Match data:", { sender: senderData, sport: sportData }); // For debugging
 
   const animateButton = (scale) => {
     Animated.sequence([
@@ -81,73 +81,53 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
               </View>
 
               <View style={styles.sportsContainer}>
-                <Text style={styles.sportsTitle}>Interested in:</Text>
+                <Text style={styles.sportsTitle}>Match request for:</Text>
+                <View style={styles.sportBadge}>
+                  <Ionicons name="football-outline" size={16} color="#fff" />
+                  <Text style={styles.sportText}>{matchSport}</Text>
+                </View>
+
+                <Text style={styles.sportsTitle}>Also interested in:</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   style={styles.sportsList}
                 >
-                  {senderSports.map((sport, index) => (
-                    <View key={index} style={styles.sportBadge}>
-                      <Ionicons
-                        name="football-outline"
-                        size={16}
-                        color="#fff"
-                      />
-                      <Text style={styles.sportText}>{sport}</Text>
-                    </View>
-                  ))}
+                  {senderSports
+                    .filter(sport => sport !== matchSport)
+                    .map((sport, index) => (
+                      <View key={index} style={styles.sportBadge}>
+                        <Ionicons name="football-outline" size={16} color="#fff" />
+                        <Text style={styles.sportText}>{sport}</Text>
+                      </View>
+                    ))}
                 </ScrollView>
               </View>
             </View>
 
-            <Text style={styles.matchText}>
-              Would you like to match with this user?
-            </Text>
-
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.actionButton]}
-                onPress={handleReject}
-                activeOpacity={0.9}
-              >
-                <LinearGradient
-                  colors={["#FF0000", "#FF69B4"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.gradientButton}
+              <TouchableOpacity onPress={handleReject}>
+                <Animated.View
+                  style={[
+                    styles.actionButton,
+                    styles.rejectButton,
+                    { transform: [{ scale: dislikeScale }] },
+                  ]}
                 >
-                  <Animated.View
-                    style={[
-                      styles.buttonContent,
-                      { transform: [{ scale: dislikeScale }] },
-                    ]}
-                  >
-                    <Ionicons name="close" size={35} color="#fff" />
-                  </Animated.View>
-                </LinearGradient>
+                  <Ionicons name="close" size={40} color="#FF3B30" />
+                </Animated.View>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.actionButton]}
-                onPress={handleAccept}
-                activeOpacity={0.9}
-              >
-                <LinearGradient
-                  colors={["#4CAF50", "#FFEB3B"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.gradientButton}
+              <TouchableOpacity onPress={handleAccept}>
+                <Animated.View
+                  style={[
+                    styles.actionButton,
+                    styles.acceptButton,
+                    { transform: [{ scale: likeScale }] },
+                  ]}
                 >
-                  <Animated.View
-                    style={[
-                      styles.buttonContent,
-                      { transform: [{ scale: likeScale }] },
-                    ]}
-                  >
-                    <Ionicons name="heart" size={35} color="#fff" />
-                  </Animated.View>
-                </LinearGradient>
+                  <Ionicons name="heart" size={40} color="#4CD964" />
+                </Animated.View>
               </TouchableOpacity>
             </View>
           </View>
@@ -244,17 +224,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 14,
   },
-  matchText: {
-    fontSize: 18,
-    color: "#fff",
-    textAlign: "center",
-    opacity: 0.9,
-    marginTop: 15,
-    marginBottom: 20,
-    textShadowColor: "rgba(0, 0, 0, 0.75)",
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
-  },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -279,16 +248,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 2,
   },
-  gradientButton: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 28,
+  rejectButton: {
+    backgroundColor: "#FF3B30",
   },
-  buttonContent: {
-    justifyContent: "center",
-    alignItems: "center",
+  acceptButton: {
+    backgroundColor: "#4CD964",
   },
 });
 
