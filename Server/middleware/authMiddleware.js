@@ -18,10 +18,17 @@ const verifyToken = async (req, res, next) => {
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
+        if (!decoded || !decoded.userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid token format'
+            });
+        }
+
         // Get user from database
         const user = await prisma.user.findUnique({
             where: {
-                user_id: decoded.user_id
+                user_id: decoded.userId
             }
         });
 

@@ -985,7 +985,16 @@ const Marketplace = () => {
       setProducts(allProductsResponse.data);
       setDiscounts(topDiscountedResponse.data);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      // Don't show error for empty favorites
+      if (error.response?.status === 404 && error.config?.url.includes('favorites')) {
+        return;
+      }
+      console.error("Error fetching products:", {
+        message: error.message,
+        url: error.config?.url,
+        status: error.response?.status,
+        data: error.response?.data
+      });
       setNotification({ message: "Failed to load products. Please try again.", type: 'error' });
     } finally {
       setLoading(false);

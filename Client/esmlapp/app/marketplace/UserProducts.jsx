@@ -363,19 +363,55 @@ const UserProducts = () => {
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.5,
+          base64: true,
         });
 
-        if (!result.canceled) {
+        if (!result.canceled && result.assets[0]) {
           setLoading(true);
-          const imageUri = result.assets[0].uri;
-          await handleImageUpload(imageUri);
+          const asset = result.assets[0];
+          const imageUri = asset.uri;
+          const base64Data = asset.base64;
+          
+          // Create form data with base64
+          const formData = new FormData();
+          formData.append('image', {
+            uri: `data:image/jpeg;base64,${base64Data}`,
+            type: 'image/jpeg',
+            name: 'photo.jpg'
+          });
+
+          // Upload directly here instead of calling handleImageUpload
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+            throw new Error('Authentication required');
+          }
+
+          const response = await axios.post(
+            `${BASE_URL}/upload`,
+            formData,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json',
+              },
+              timeout: 60000,
+            }
+          );
+
+          if (response.data && response.data.url) {
+            setFormData(prev => ({...prev, image_url: response.data.url}));
+          } else {
+            throw new Error('Invalid response from server');
+          }
+
           setLoading(false);
         }
       } catch (error) {
         console.error('Image picker error:', error);
         showAlert(
           'Error',
-          'Failed to pick image. Please try again.',
+          'Failed to upload image. Please try again.',
           [{ text: 'OK', style: 'default' }]
         );
         setLoading(false);
@@ -399,70 +435,58 @@ const UserProducts = () => {
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.5,
+          base64: true,
         });
 
-        if (!result.canceled) {
+        if (!result.canceled && result.assets[0]) {
           setLoading(true);
-          const imageUri = result.assets[0].uri;
-          await handleImageUpload(imageUri);
+          const asset = result.assets[0];
+          const imageUri = asset.uri;
+          const base64Data = asset.base64;
+          
+          // Create form data with base64
+          const formData = new FormData();
+          formData.append('image', {
+            uri: `data:image/jpeg;base64,${base64Data}`,
+            type: 'image/jpeg',
+            name: 'photo.jpg'
+          });
+
+          // Upload directly here instead of calling handleImageUpload
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+            throw new Error('Authentication required');
+          }
+
+          const response = await axios.post(
+            `${BASE_URL}/upload`,
+            formData,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json',
+              },
+              timeout: 60000,
+            }
+          );
+
+          if (response.data && response.data.url) {
+            setFormData(prev => ({...prev, image_url: response.data.url}));
+          } else {
+            throw new Error('Invalid response from server');
+          }
+
           setLoading(false);
         }
       } catch (error) {
         console.error('Camera error:', error);
         showAlert(
           'Error',
-          'Failed to take photo. Please try again.',
+          'Failed to upload photo. Please try again.',
           [{ text: 'OK', style: 'default' }]
         );
         setLoading(false);
-      }
-    };
-
-    const handleImageUpload = async (imageUri) => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          showAlert(
-            'Error',
-            'Please log in to continue',
-            [{ text: 'OK', style: 'default' }]
-          );
-          return;
-        }
-
-        const formData = new FormData();
-        const filename = imageUri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image';
-        
-        formData.append('image', {
-          uri: imageUri,
-          name: filename,
-          type
-        });
-
-        const response = await axios.post(
-          `${BASE_URL}/upload`, 
-          formData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
-
-        if (response.data && response.data.url) {
-          setFormData(prev => ({...prev, image_url: response.data.url}));
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        showAlert(
-          'Upload Failed',
-          error.response?.data?.message || 'Failed to upload image. Please try again.',
-          [{ text: 'OK', style: 'default' }]
-        );
-        throw error;
       }
     };
 
@@ -656,7 +680,49 @@ const UserProducts = () => {
         </KeyboardAvoidingView>
       </Modal>
     );
-  };
+  }; // End of ProductModal
+
+  const renderItem = useCallback(({ item }) => (
+    <View style={styles.productCard}>
+      <Image
+        source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
+        style={styles.productImage}
+      />
+      <View style={styles.productOverlay}>
+        <View style={styles.productInfo}>
+          <Text style={styles.productName}>{item.name}</Text>
+          <Text style={styles.productPrice}>
+            ${parseFloat(item.price).toFixed(2)}
+            {item.discount > 0 && (
+              <Text style={styles.discountTag}> -{item.discount}%</Text>
+            )}
+          </Text>
+          {item.sport && (
+            <View style={styles.sportTag}>
+              <MaterialIcons name="sports" size={16} color="#fff" />
+              <Text style={styles.sportText}>{item.sport.name}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.editButton]}
+          onPress={() => handleUpdate(item)}
+        >
+          <MaterialIcons name="edit" size={20} color="#fff" />
+          <Text style={styles.buttonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.deleteButton]}
+          onPress={() => handleDelete(item)}
+        >
+          <MaterialIcons name="delete" size={20} color="#fff" />
+          <Text style={styles.buttonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ), [handleUpdate, handleDelete]);
 
   const handleUpdate = (product) => {
     setFormData({
@@ -898,48 +964,6 @@ const UserProducts = () => {
       </Modal>
     );
   });
-
-  const renderItem = useCallback(({ item }) => (
-    <View style={styles.productCard}>
-      <Image
-        source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
-        style={styles.productImage}
-      />
-      <View style={styles.productOverlay}>
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{item.name}</Text>
-          <Text style={styles.productPrice}>
-            ${parseFloat(item.price).toFixed(2)}
-            {item.discount > 0 && (
-              <Text style={styles.discountTag}> -{item.discount}%</Text>
-            )}
-          </Text>
-          {item.sport && (
-            <View style={styles.sportTag}>
-              <MaterialIcons name="sports" size={16} color="#fff" />
-              <Text style={styles.sportText}>{item.sport.name}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-      <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
-          onPress={() => handleUpdate(item)}
-        >
-          <MaterialIcons name="edit" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={() => handleDelete(item)}
-        >
-          <MaterialIcons name="delete" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  ), [handleUpdate, handleDelete]);
 
   const handleSearch = useCallback((text) => {
     setSearchQuery(text);
