@@ -22,7 +22,7 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
   const matchData = notification?.match || {};
   const senderData = matchData?.user_1 || {};
   const sportData = matchData?.sport || {};
-  
+
   const senderName = senderData?.username || "Unknown User";
   const senderImage = senderData?.profile_picture || "default_image_url";
   const senderLocation = senderData?.location || "Location not specified";
@@ -94,7 +94,7 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
                   style={styles.sportsList}
                 >
                   {senderSports
-                    .filter(sport => sport !== matchSport)
+                    .filter((sport) => sport !== matchSport)
                     .map((sport, index) => (
                       <View key={index} style={styles.sportBadge}>
                         <Ionicons name="football-outline" size={16} color="#fff" />
@@ -106,28 +106,38 @@ const MatchNotification = ({ notification, onAccept, onReject }) => {
             </View>
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity onPress={handleReject}>
-                <Animated.View
-                  style={[
-                    styles.actionButton,
-                    styles.rejectButton,
-                    { transform: [{ scale: dislikeScale }] },
-                  ]}
+              <TouchableOpacity
+                style={[styles.actionButton]}
+                onPress={handleReject}
+                activeOpacity={0.9}
+              >
+                <LinearGradient
+                  colors={['#FF0000', '#FF69B4']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.gradientButton}
                 >
-                  <Ionicons name="close" size={40} color="#FF3B30" />
-                </Animated.View>
+                  <Animated.View style={[styles.buttonContent, { transform: [{ scale: dislikeScale }] }]}>
+                    <Ionicons name="close" size={35} color="#fff" />
+                  </Animated.View>
+                </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleAccept}>
-                <Animated.View
-                  style={[
-                    styles.actionButton,
-                    styles.acceptButton,
-                    { transform: [{ scale: likeScale }] },
-                  ]}
+              <TouchableOpacity
+                style={[styles.actionButton]}
+                onPress={handleAccept}
+                activeOpacity={0.9}
+              >
+                <LinearGradient
+                  colors={['#4CAF50', '#FFEB3B']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.gradientButton}
                 >
-                  <Ionicons name="heart" size={40} color="#4CD964" />
-                </Animated.View>
+                  <Animated.View style={[styles.buttonContent, { transform: [{ scale: likeScale }] }]}>
+                    <Ionicons name="heart" size={35} color="#fff" />
+                  </Animated.View>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
@@ -229,6 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
     paddingHorizontal: 30,
+    marginTop: 20,
   },
   actionButton: {
     width: 60,
@@ -248,11 +259,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 2,
   },
-  rejectButton: {
-    backgroundColor: "#FF3B30",
+  gradientButton: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 28,
   },
-  acceptButton: {
-    backgroundColor: "#4CD964",
+  buttonContent: {
+    justifyContent: "center",
+    alignItems: "center",
+    transform: [{ scale: 1 }],
   },
 });
 

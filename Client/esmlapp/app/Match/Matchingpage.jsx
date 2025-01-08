@@ -15,9 +15,6 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Buffer } from 'buffer';
 import { BASE_URL } from "../../Api";
-import { Import } from 'lucide-react';
-import MatchNotification from '../components/MatchNotification';
-import NotificationsModal from '../components/NotificationsModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomAlert from '../../Alerts/CustomAlert';
 
@@ -33,12 +30,10 @@ const Match = () => {
   const [users, setUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const [notifications, setNotifications] = useState([]);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
+  const [swipeDirection, setSwipeDirection] = useState(null);
   const position = useRef(new Animated.ValueXY()).current;
   const likeScale = useRef(new Animated.Value(1)).current;
   const dislikeScale = useRef(new Animated.Value(1)).current;
@@ -61,7 +56,6 @@ const Match = () => {
         const decodedToken = decodeJWT(token);
         if (decodedToken?.userId) {
           setCurrentUserId(decodedToken.userId);
-          fetchNotifications(decodedToken.userId);
         } else {
           throw new Error('User ID not found in token');
         }
@@ -98,61 +92,6 @@ const Match = () => {
     }
   }, [currentUserId]);
 
-  useEffect(() => {
-    if (currentUserId) {
-      // Fetch unread notifications count
-      const fetchUnreadCount = async () => {
-        try {
-          const response = await axios.get(`${BASE_URL}/notifications/${currentUserId}/unread/count`);
-          setUnreadNotifications(response.data.count || 0);
-        } catch (error) {
-          console.error('Error fetching unread notifications:', error);
-          setUnreadNotifications(0);
-        }
-      };
-
-      fetchUnreadCount();
-    }
-  }, [currentUserId, showNotifications]);
-
-  const fetchNotifications = async (userId) => {
-    if (!userId) return;
-    
-    try {
-      const response = await axios.get(`${BASE_URL}/notifications/${userId}`);
-      if (response.data && Array.isArray(response.data)) {
-        setNotifications(response.data);
-        setUnreadNotifications(response.data.filter(n => !n.read).length);
-      } else {
-        console.warn('Unexpected notifications response format:', response.data);
-        setNotifications([]);
-        setUnreadNotifications(0);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      setNotifications([]);
-      setUnreadNotifications(0);
-    }
-  };
-
-  const handleAcceptMatch = async (matchId) => {
-    try {
-      await axios.patch(`${BASE_URL}/match/accept/${matchId}`);
-      fetchNotifications(currentUserId);
-    } catch (error) {
-      console.error('Error accepting match:', error);
-    }
-  };
-
-  const handleRejectMatch = async (matchId) => {
-    try {
-      await axios.patch(`${BASE_URL}/match/reject/${matchId}`);
-      fetchNotifications(currentUserId);
-    } catch (error) {
-      console.error('Error rejecting match:', error);
-    }
-  };
-
   const handleNextUser = () => {
     if (currentUserIndex < users.length - 1) {
       setCurrentUserIndex((prev) => prev + 1);
@@ -160,12 +99,12 @@ const Match = () => {
       showCustomAlert('Finished', 'You have viewed all available users.');
     }
     position.setValue({ x: 0, y: 0 });
+    setSwipeDirection(null);
   };
 
   const handleLike = async () => {
     if (!users[currentUserIndex]) return;
 
-    // Animate the button press
     Animated.sequence([
       Animated.spring(likeScale, {
         toValue: 0.8,
@@ -202,7 +141,6 @@ const Match = () => {
   };
 
   const handleDislike = () => {
-    // Animate the button press
     Animated.sequence([
       Animated.spring(dislikeScale, {
         toValue: 0.8,
@@ -225,20 +163,28 @@ const Match = () => {
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    onPanResponderMove: Animated.event(
-      [null, { dx: position.x, dy: position.y }],
-      { useNativeDriver: false }
-    ),
-    onPanResponderRelease: (_, gesture) => {
-      if (gesture.dx > 120) {
+    onPanResponderMove: (_, gestureState) => {
+      position.setValue({ x: gestureState.dx, y: gestureState.dy });
+      if (gestureState.dx > 50) {
+        setSwipeDirection('right');
+      } else if (gestureState.dx < -50) {
+        setSwipeDirection('left');
+      } else {
+        setSwipeDirection(null);
+      }
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      if (gestureState.dx > 120) {
         handleLike();
-      } else if (gesture.dx < -120) {
+      } else if (gestureState.dx < -120) {
         handleDislike();
       } else {
         Animated.spring(position, {
           toValue: { x: 0, y: 0 },
+          friction: 4,
           useNativeDriver: false,
         }).start();
+        setSwipeDirection(null);
       }
     },
   });
@@ -257,7 +203,6 @@ const Match = () => {
     return (
       <View style={styles.container}>
         <Text>Loading users...</Text>
-        <Text>Utilisez la photo de profil</Text>
       </View>
     );
   }
@@ -288,8 +233,25 @@ const Match = () => {
             style={styles.imageBackground}
             imageStyle={styles.image}
           >
+            {swipeDirection && (
+              <Animated.Text 
+                style={[
+                  styles.matchMessage,
+                  swipeDirection === 'right' ? styles.matchMessageText : styles.rejectMessageText,
+                  swipeDirection === 'right' ? styles.leftPosition : styles.rightPosition,
+                  {
+                    opacity: position.x.interpolate({
+                      inputRange: [-200, -50, 50, 200],
+                      outputRange: [1, 0, 0, 1],
+                    }),
+                  }
+                ]}
+              >
+                {swipeDirection === 'right' ? 'LIKE' : 'NOPE'}
+              </Animated.Text>
+            )}
             <LinearGradient
-              colors={['transparent', 'rgba(0, 0, 0, 0.95)']}
+              colors={['transparent', 'rgba(0,0,0,0.8)']}
               style={styles.gradient}
             >
               <View style={styles.userInfo}>
@@ -326,7 +288,7 @@ const Match = () => {
                       end={{ x: 1, y: 1 }}
                       style={styles.gradientButton}
                     >
-                      <Animated.View style={[styles.buttonContent, { transform: [{ scale: dislikeScale }] }]}>
+                      <Animated.View style={[styles.buttonContent, { transform: [{ scale: dislikeScale }] }]} >
                         <Ionicons name="close" size={35} color="#fff" />
                       </Animated.View>
                     </LinearGradient>
@@ -342,7 +304,7 @@ const Match = () => {
                       end={{ x: 1, y: 1 }}
                       style={styles.gradientButton}
                     >
-                      <Animated.View style={[styles.buttonContent, { transform: [{ scale: likeScale }] }]}>
+                      <Animated.View style={[styles.buttonContent, { transform: [{ scale: likeScale }] }]} >
                         <Ionicons name="heart" size={35} color="#fff" />
                       </Animated.View>
                     </LinearGradient>
@@ -354,14 +316,6 @@ const Match = () => {
         </Animated.View>
       </View>
 
-      <NotificationsModal
-        visible={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        notifications={notifications}
-        onAccept={handleAcceptMatch}
-        onReject={handleRejectMatch}
-        currentUserId={currentUserId}
-      />
       <CustomAlert
         visible={alertVisible}
         title={alertTitle}
@@ -377,10 +331,48 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  matchMessage: {
+    position: 'absolute',
+    top: '10%',
+    fontSize: 42,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: 2,
+    zIndex: 999,
+    textTransform: 'uppercase',
+    borderWidth: 3,
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    backgroundColor: 'transparent',
+  },
+  leftPosition: {
+    left: '10%',
+    transform: [{ rotate: '-15deg' }],
+  },
+  rightPosition: {
+    right: '10%',
+    transform: [{ rotate: '15deg' }],
+  },
+  matchMessageText: {
+    color: '#4CAF50',
+    borderColor: '#4CAF50',
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  rejectMessageText: {
+    color: '#FF1493',
+    borderColor: '#FF1493',
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
   cardContainer: {
     flex: 1,
     margin: 16,
     backgroundColor: '#fff',
+    marginBottom: 100
   },
   card: {
     flex: 1,

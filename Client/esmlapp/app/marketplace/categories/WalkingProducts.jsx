@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   View, 
@@ -15,6 +14,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { BASE_URL } from '../../../Api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,7 +25,7 @@ import { BlurView } from 'expo-blur';
 import Toast from 'react-native-toast-message';
 import { Easing } from 'react-native';
 
-const SPORT_ID = 15; 
+const SPORT_ID = 3; // Walking ID
 
 const WalkingProducts= () => {
   const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
@@ -54,13 +54,9 @@ const WalkingProducts= () => {
   const [showQuickView, setShowQuickView] = useState(false);
   const [lastAddedProduct, setLastAddedProduct] = useState(null);
   const isFocused = useIsFocused();
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
-  const [notificationMessage, setNotificationMessage] = useState("");
-  const [notificationType, setNotificationType] = useState("info");
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertType, setAlertType] = useState("info");
-
+  // Quick view and sorting states
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [showSortFilter, setShowSortFilter] = useState(false);
@@ -166,18 +162,10 @@ const WalkingProducts= () => {
       let newAlerts = [...stockAlerts];
       if (newAlerts.includes(productId)) {
         newAlerts = newAlerts.filter(id => id !== productId);
-        Toast.show({
-          type: 'success',
-          text1: 'Stock alert removed',
-          text2: 'You will no longer receive notifications for this product'
-        });
+        setToast({ visible: true, message: 'Stock alert removed', type: 'success' });
       } else {
         newAlerts.push(productId);
-        Toast.show({
-          type: 'success',
-          text1: 'Stock alert set',
-          text2: 'You will be notified when this product is back in stock'
-        });
+        setToast({ visible: true, message: 'Stock alert set', type: 'success' });
       }
       setStockAlerts(newAlerts);
       await AsyncStorage.setItem('stockAlerts', JSON.stringify(newAlerts));
@@ -202,25 +190,13 @@ const WalkingProducts= () => {
       const userId = userData?.user_id;
       
       if (!token || !userId) {
-        setNotificationMessage('Please login to add items to cart');
-        setNotificationType('warning');
-        Toast.show({
-          type: 'warning',
-          text1: 'Please login',
-          text2: 'You need to be logged in to add items to cart'
-        });
+        setToast({ visible: true, message: 'Please login to add items to cart', type: 'warning' });
         navigation.navigate('Login');
         return;
       }
 
       if (!product?.product_id) {
-        setNotificationMessage('Invalid product');
-        setNotificationType('error');
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Invalid product'
-        });
+        setToast({ visible: true, message: 'Invalid product', type: 'error' });
         return;
       }
 
@@ -229,13 +205,7 @@ const WalkingProducts= () => {
       setShowQuantityModal(true);
     } catch (error) {
       console.error("Error preparing to add to cart:", error);
-      setNotificationMessage('Failed to prepare cart addition');
-      setNotificationType('error');
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to prepare cart addition'
-      });
+      setToast({ visible: true, message: 'Failed to prepare cart addition', type: 'error' });
     }
   };
 
@@ -274,24 +244,11 @@ const WalkingProducts= () => {
         setLastAddedProduct(productWithQuantity);
         
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setAlertMessage(`${quantity}x ${selectedProduct.name} added to your cart`);
-        setAlertType('success');
-        setAlertVisible(true);
-        Toast.show({
-          type: 'success',
-          text1: 'Added to cart',
-          text2: `${quantity}x ${selectedProduct.name} added to your cart`
-        });
+        setToast({ visible: true, message: `${quantity}x ${selectedProduct.name} added to your cart`, type: 'success' });
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
-      setNotificationMessage('Failed to add item to cart');
-      setNotificationType('error');
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to add item to cart'
-      });
+      setToast({ visible: true, message: 'Failed to add item to cart', type: 'error' });
     } finally {
       setShowQuantityModal(false);
       setQuantity(1);
@@ -307,11 +264,7 @@ const WalkingProducts= () => {
       const userId = userData?.user_id;
 
       if (!token || !userId) {
-        Toast.show({
-          type: 'warning',
-          text1: 'Please login',
-          text2: 'You need to be logged in to manage favorites'
-        });
+        setToast({ visible: true, message: 'Please login to manage favorites', type: 'warning' });
         navigation.navigate('Login');
         return;
       }
@@ -332,11 +285,7 @@ const WalkingProducts= () => {
         const favorite = favoritesResponse.data.find(fav => fav.product_id === productId);
         
         if (!favorite) {
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: 'Could not find favorite to remove'
-          });
+          setToast({ visible: true, message: 'Error', type: 'error' });
           return;
         }
 
@@ -352,11 +301,7 @@ const WalkingProducts= () => {
         );
 
         newFavorites = newFavorites.filter(id => id !== productId);
-        Toast.show({
-          type: 'success',
-          text1: 'Removed from favorites',
-          text2: 'Item has been removed from your favorites'
-        });
+        setToast({ visible: true, message: 'Removed from favorites', type: 'success' });
       } else {
         // Add to favorites
         await axios.post(
@@ -374,11 +319,7 @@ const WalkingProducts= () => {
         );
 
         newFavorites.push(productId);
-        Toast.show({
-          type: 'success',
-          text1: 'Added to favorites',
-          text2: 'Item has been added to your favorites'
-        });
+        setToast({ visible: true, message: 'Added to favorites', type: 'success' });
       }
       
       setFavorites(newFavorites);
@@ -387,18 +328,10 @@ const WalkingProducts= () => {
     } catch (error) {
       console.error('Error updating favorites:', error);
       if (error.response?.status === 401) {
-        Toast.show({
-          type: 'warning',
-          text1: 'Please login',
-          text2: 'You need to be logged in to manage favorites'
-        });
+        setToast({ visible: true, message: 'Please login', type: 'warning' });
         navigation.navigate('Login');
       } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Failed to update favorites'
-        });
+        setToast({ visible: true, message: 'Failed to update favorites', type: 'error' });
       }
     }
   };
@@ -451,7 +384,7 @@ const WalkingProducts= () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      console.log('Fetching Baseball products');
+      console.log('Fetching Walking products');
       
       // Updated endpoint with sport_id
       const response = await axios.get(`${BASE_URL}/category/products/${SPORT_ID}`);
@@ -603,6 +536,84 @@ const WalkingProducts= () => {
     </View>
   );
 
+  const RecentlyViewedSection = () => {
+    if (!recentlyViewed.length) return null;
+
+    return (
+      <View style={styles.recentlyViewedSection}>
+        <View style={styles.recentlyViewedHeader}>
+          <View style={styles.recentlyViewedTitleContainer}>
+            <MaterialIcons name="history" size={24} color="#4FA5F5" />
+            <Text style={styles.recentlyViewedTitle}>Recently Viewed</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.clearHistoryButton}
+            onPress={() => {
+              setRecentlyViewed([]);
+              AsyncStorage.removeItem('recentlyViewed');
+            }}
+          >
+            <Text style={styles.clearHistoryText}>Clear History</Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          horizontal
+          data={recentlyViewed}
+          keyExtractor={(item) => `recent-${item.product_id}`}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.recentlyViewedItem}
+              onPress={() => navigation.navigate('ProductDetail', { productId: item.product_id })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.recentlyViewedImageContainer}>
+                <Image
+                  source={{ uri: item.image_url }}
+                  style={styles.recentlyViewedImage}
+                  resizeMode="cover"
+                />
+                {item.discount > 0 && (
+                  <View style={styles.recentlyViewedDiscountBadge}>
+                    <Text style={styles.recentlyViewedDiscountText}>
+                      -{item.discount}%
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.recentlyViewedInfo}>
+                <Text style={styles.recentlyViewedName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <View style={styles.recentlyViewedRating}>
+                  {[...Array(5)].map((_, index) => (
+                    <MaterialIcons
+                      key={index}
+                      name={index < item.rating ? 'star' : 'star-border'}
+                      size={14}
+                      color="#FFD700"
+                    />
+                  ))}
+                </View>
+                <View style={styles.recentlyViewedPriceContainer}>
+                  <Text style={styles.recentlyViewedPrice}>
+                    ${item.price.toFixed(2)}
+                  </Text>
+                  {item.original_price && ( 
+                    <Text style={styles.recentlyViewedOriginalPrice}>
+                      ${item.original_price.toFixed(2)}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.recentlyViewedList}
+        />
+      </View>
+    );
+  };
+
   const renderProductItem = ({ item: product }) => {
     const isFavorite = favorites.includes(product.product_id);
     const hasStockAlert = stockAlerts.includes(product.product_id);
@@ -610,7 +621,7 @@ const WalkingProducts= () => {
 
     return (
       <TouchableOpacity
-        style={styles.productCard}
+        key={product.product_id}
         onPress={() => {
           addToRecentlyViewed(product);
           navigation.navigate('ProductDetail', { 
@@ -618,102 +629,87 @@ const WalkingProducts= () => {
             productName: product.name 
           });
         }}
-        onLongPress={() => {
-          setQuickViewProduct(product);
-          setShowQuickViewModal(true);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        }}
+        activeOpacity={0.7}
       >
-        <Image 
-          source={{ uri: product.image_url }} 
-          style={styles.productImage}
-          resizeMode="cover"
-        />
-        <BlurView intensity={80} style={styles.productOverlay}>
-          <View style={styles.actionButtons}>
+        <Animated.View style={styles.productCard}>
+          <View style={styles.imageContainer}>
+            {product?.discount > 0 && (
+              <View style={styles.discountBadge}>
+                <Text style={styles.discountText}>
+                  -{product.discount}% OFF
+                </Text>
+              </View>
+            )}
+            <Image
+              source={{ uri: product?.image_url }}
+              style={styles.productImage}
+              resizeMode="cover"
+            />
             <TouchableOpacity
-              style={styles.actionButton}
+              style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
               onPress={() => toggleFavorite(product.product_id)}
             >
-              <MaterialIcons
-                name={isFavorite ? 'favorite' : 'favorite-border'}
-                size={24}
-                color={isFavorite ? 'red' : 'black'}
+              <FontAwesome 
+                name={isFavorite ? "heart" : "heart-o"} 
+                size={20} 
+                color={isFavorite ? "#DC2626" : "#666666"} 
               />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => toggleStockAlert(product.product_id)}
-            >
-              <MaterialIcons
-                name={hasStockAlert ? 'notifications-active' : 'notifications-none'}
-                size={24}
-                color={hasStockAlert ? '#4CAF50' : 'black'}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
+              style={styles.shareButton}
               onPress={() => shareProduct(product)}
             >
-              <MaterialIcons name="share" size={24} color="black" />
+              <MaterialIcons name="share" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-        </BlurView>
-        
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{product.name}</Text>
-          <Text style={styles.productDescription} numberOfLines={2}>
-            {product.description}
-          </Text>
-          <View style={styles.priceContainer}>
-            {product.discount > 0 ? (
-              <>
-                <Text style={styles.discountedPrice}>
-                  {product.formatted_discounted_price}
-                </Text>
-                <Text style={styles.originalPrice}>
-                  {product.formatted_price}
-                </Text>
-              </>
-            ) : (
-              <Text style={styles.price}>{product.formatted_price}</Text>
-            )}
-          </View>
-          {product.discount > 0 && (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>{product.discount}% OFF</Text>
-            </View>
-          )}
-          <View style={styles.ratingContainer}>
-            {[...Array(5)].map((_, index) => (
-              <MaterialIcons
-                key={index}
-                name={index < product.rating ? 'star' : 'star-border'}
-                size={16}
-                color="#FFD700"
-              />
-            ))}
-            <Text style={styles.ratingText}>{product.rating}/5</Text>
-          </View>
           
-          <TouchableOpacity
-            style={[
-              styles.addToCartButton,
-              isInCart ? styles.addToCartButtonDisabled : styles.addToCartButtonEnabled
-            ]}
-            onPress={() => handleAddToCart(product)}
-            disabled={isInCart}
-          >
-            <MaterialIcons 
-              name={isInCart ? 'shopping-cart' : 'add-shopping-cart'} 
-              size={20} 
-              color="white" 
-            />
-            <Text style={styles.addToCartText}>
-              {isInCart ? 'In Cart' : 'Add to Cart'}
+          <View style={styles.productInfo}>
+            <Text style={styles.productName} numberOfLines={2}>
+              {product?.name}
             </Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.ratingContainer}>
+              <View style={styles.ratingStars}>
+                {[...Array(5)].map((_, index) => (
+                  <MaterialIcons
+                    key={index}
+                    name={index < product.rating ? 'star' : 'star-border'}
+                    size={16}
+                    color="#FFD700"
+                  />
+                ))}
+              </View>
+              <Text style={styles.ratingCount}>
+                ({product?.rating_count || 0})
+              </Text>
+            </View>
+            <View style={styles.priceContainer}>
+              <View style={styles.priceInfo}>
+                <Text style={styles.discountedPrice}>
+                  ${product?.price.toFixed(2)}
+                </Text>
+                {product?.original_price && (
+                  <Text style={styles.originalPrice}>
+                    ${product.original_price.toFixed(2)}
+                  </Text>
+                )}
+              </View>
+              {product?.discount > 0 && (
+                <View style={styles.savingsContainer}>
+                  <Text style={styles.savingsText}>
+                    {product.discount}% off
+                  </Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              style={styles.addToCartButton}
+              onPress={() => handleAddToCart(product)}
+            >
+              <MaterialIcons name="shopping-cart" size={20} color="#FFFFFF" />
+              <Text style={styles.buttonText}>Add to Cart</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </TouchableOpacity>
     );
   };
@@ -819,92 +815,206 @@ const WalkingProducts= () => {
     );
   };
 
-  const NotificationBanner = ({ message, type = 'info', onClose }) => {
-    const getBannerStyle = () => {
+  const CustomToast = ({ message, type, onHide }) => {
+    const translateY = useRef(new Animated.Value(-100)).current;
+    const opacity = useRef(new Animated.Value(0)).current;
+    const scale = useRef(new Animated.Value(0.9)).current;
+    const navigation = useNavigation();
+
+    useEffect(() => {
+      // Play haptic feedback
+      Haptics.notificationAsync(
+        type === 'error' 
+          ? Haptics.NotificationFeedbackType.Error 
+          : Haptics.NotificationFeedbackType.Success
+      );
+
+      // Show animation
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          tension: 80,
+          friction: 10,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          tension: 80,
+          friction: 10,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Hide after delay (longer for success with buttons)
+      const timer = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(translateY, {
+            toValue: -100,
+            duration: 200,
+            easing: Easing.in(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 0.9,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start(() => onHide());
+      }, type === 'success' ? 4000 : 2500); // Longer duration for success toast
+
+      return () => clearTimeout(timer);
+    }, []);
+
+    const getToastStyle = () => {
       switch (type) {
         case 'success':
-          return { backgroundColor: '#4CAF50' };
+          return {
+            backgroundColor: '#4FA5F5',
+            icon: 'check-circle-outline',
+            title: 'Success',
+            gradient: ['#4FA5F5', '#6366F1']
+          };
         case 'error':
-          return { backgroundColor: '#f44336' };
+          return {
+            backgroundColor: '#DC2626',
+            icon: 'error-outline',
+            title: 'Error',
+            gradient: ['#DC2626', '#EF4444']
+          };
         case 'warning':
-          return { backgroundColor: '#ff9800' };
+          return {
+            backgroundColor: '#F59E0B',
+            icon: 'warning',
+            title: 'Warning',
+            gradient: ['#F59E0B', '#F97316']
+          };
         default:
-          return { backgroundColor: '#2196F3' };
+          return {
+            backgroundColor: '#4FA5F5',
+            icon: 'info-outline',
+            title: 'Info',
+            gradient: ['#4FA5F5', '#6366F1']
+          };
       }
     };
 
+    const toastStyle = getToastStyle();
+
     return (
-      <Animated.View style={[styles.notificationBanner, getBannerStyle()]}>
-        <Text style={styles.notificationText}>{message}</Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <MaterialIcons name="close" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.toastContainer,
+          {
+            transform: [
+              { translateY },
+              { scale }
+            ],
+            opacity,
+          },
+        ]}
+      >
+        <View style={[styles.toast, type === 'error' && styles.toastError]}>
+          <MaterialIcons
+            name={toastStyle.icon}
+            size={24}
+            color="#FFFFFF"
+            style={styles.toastIcon}
+          />
+          <View style={styles.toastContent}>
+            <Text style={styles.toastTitle}>{toastStyle.title}</Text>
+            <Text style={styles.toastMessage}>{message}</Text>
+            {type === 'success' && message.includes('added to your cart') && (
+              <View style={styles.toastButtons}>
+                <TouchableOpacity
+                  style={styles.toastButton}
+                  onPress={() => {
+                    onHide();
+                    navigation.navigate('Cart');
+                  }}
+                >
+                  <Text style={styles.toastButtonText}>View Cart</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toastButton, styles.toastButtonOutline]}
+                  onPress={() => {
+                    onHide();
+                  }}
+                >
+                  <Text style={[styles.toastButtonText, styles.toastButtonTextOutline]}>
+                    Continue Shopping
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
       </Animated.View>
     );
   };
 
-  const CustomAlert = ({ visible, message, type, onClose, onAction }) => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={visible}
-        onRequestClose={onClose}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.alertContainer}>
-            <Text style={styles.alertTitle}>
-              {type === 'success' ? 'Success!' : type === 'error' ? 'Error' : 'Notification'}
-            </Text>
-            <Text style={styles.alertMessage}>{message}</Text>
-            <View style={styles.alertButtons}>
-              <TouchableOpacity
-                style={[styles.alertButton, styles.alertButtonClose]}
-                onPress={onClose}
-              >
-                <Text style={styles.alertButtonText}>Close</Text>
-              </TouchableOpacity>
-              {onAction && (
-                <TouchableOpacity
-                  style={[styles.alertButton, styles.alertButtonAction]}
-                  onPress={() => {
-                    onClose();
-                    onAction();
-                  }}
-                >
-                  <Text style={styles.alertButtonText}>View Cart</Text>
-                </TouchableOpacity>
-              )}
+  const HeaderSection = () => (
+    <View style={styles.headerContainer}>
+      <View style={styles.headerContent}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerCategory}>Walking & Hiking Equipment</Text>
+          <Text style={styles.headerTitle}>Professional Walking Gear</Text>
+          <Text style={styles.headerSubtitle}>
+            Step into adventure with premium walking equipment
+          </Text>
+          <View style={styles.headerStats}>
+            <View style={styles.statItem}>
+              <MaterialIcons name="directions-walk" size={18} color="#FFFFFF" style={styles.statIcon} />
+              <Text style={styles.statValue}>{products.length}</Text>
+              <Text style={styles.statLabel}>Products</Text>
+            </View>
+            <View style={styles.statItem}>
+              <MaterialIcons name="local-fire-department" size={18} color="#FFFFFF" style={styles.statIcon} />
+              <Text style={styles.statValue}>{products.filter(p => p.discount > 0).length}</Text>
+              <Text style={styles.statLabel}>On Sale</Text>
+            </View>
+            <View style={styles.statItem}>
+              <MaterialIcons name="star" size={18} color="#FFFFFF" style={styles.statIcon} />
+              <Text style={styles.statValue}>{products.filter(p => p.rating >= 4.5).length}</Text>
+              <Text style={styles.statLabel}>Top Rated</Text>
             </View>
           </View>
         </View>
-      </Modal>
-    );
-  };
+        <View style={styles.headerImageContainer}>
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1501554728187-ce583db33af7?ixlib=rb-4.0.3' }}
+            style={styles.headerImage}
+          />
+          <View style={styles.headerImageOverlay} />
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      {notificationMessage && (
-        <NotificationBanner 
-          message={notificationMessage}
-          type={notificationType}
-          onClose={() => setNotificationMessage('')}
+      {toast.visible && (
+        <CustomToast 
+          message={toast.message}
+          type={toast.type}
+          onHide={() => setToast({ visible: false, message: '', type: 'success' })}
         />
       )}
-      
-      <CustomAlert
-        visible={alertVisible}
-        message={alertMessage}
-        type={alertType}
-        onClose={() => setAlertVisible(false)}
-        onAction={() => navigation.navigate('Cart')}
-      />
       
       <QuantityModal />
       <QuickViewModal />
       <LastAddedNotification />
       
-      <SortFilterBar />
+      <HeaderSection />
       
       <AnimatedFlatList
         data={products}
@@ -913,6 +1023,13 @@ const WalkingProducts= () => {
         numColumns={2}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.productList}
+        columnWrapperStyle={styles.columnWrapper}
+        ListFooterComponent={() => (
+          <>
+            <RecentlyViewedSection />
+            <View style={styles.listFooter} />
+          </>
+        )}
         refreshControl={
           <RefreshControl 
             refreshing={refreshing} 
@@ -921,78 +1038,6 @@ const WalkingProducts= () => {
             colors={['#007AFF']}
           />
         }
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
-        ListHeaderComponent={() => (
-          <View>
-            <Animated.View
-              style={[
-                styles.header,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ scale: scaleAnim }],
-                },
-              ]}
-            >
-              <Text style={styles.headerTitle}>Baseball Equipment</Text>
-              <Text style={styles.headerSubtitle}>
-                Professional gear for baseball players
-              </Text>
-              <ProductCountBadge />
-            </Animated.View>
-            
-            {recentlyViewed.length > 0 && (
-              <View style={styles.recentlyViewedSection}>
-                <Text style={styles.sectionTitle}>Recently Viewed</Text>
-                <FlatList
-                  horizontal
-                  data={recentlyViewed}
-                  keyExtractor={(item) => `recent-${item.product_id}`}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.recentlyViewedItem}
-                      onPress={() => navigation.navigate('ProductDetail', { productId: item.product_id })}
-                    >
-                      <Image
-                        source={{ uri: item.image_url }}
-                        style={styles.recentlyViewedImage}
-                      />
-                      <Text style={styles.recentlyViewedName} numberOfLines={1}>
-                        {item.name}
-                      </Text>
-                      <Text style={styles.recentlyViewedPrice}>
-                        ${item.price.toFixed(2)}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.recentlyViewedList}
-                />
-              </View>
-            )}
-          </View>
-        )}
-        ListEmptyComponent={() => (
-          loading ? (
-            <View style={styles.skeletonContainer}>
-              {[...Array(4)].map((_, index) => (
-                <View key={index} style={styles.skeletonCard}>
-                  <View style={styles.skeletonImage} />
-                  <View style={styles.skeletonInfo}>
-                    <View style={styles.skeletonText} />
-                    <View style={styles.skeletonPrice} />
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No products found</Text>
-            </View>
-          )
-        )}
       />
     </View>
   );
@@ -1001,240 +1046,171 @@ const WalkingProducts= () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FFFFFF',
   },
-  header: {
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    marginTop: 20, // Increased margin
+  headerContainer: {
+    backgroundColor: '#4FA5F5',
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    elevation: 3,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+  },
+  headerLeft: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  headerImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 4,
+  },
+  headerImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  headerImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  headerCategory: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 4,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 10,
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 12,
   },
-  productList: {
-    padding: 10,
-    paddingBottom: 100, // Increased bottom padding
-  },
-  recentlyViewedList: {
-    paddingHorizontal: 10,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  headerStats: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 8,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  statIcon: {
+    marginRight: 4,
+    opacity: 0.9,
+  },
+  statValue: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginRight: 4,
+  },
+  statLabel: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   productCard: {
-    flex: 1,
-    margin: 8,
-    backgroundColor: 'white',
-    borderRadius: 15,
-    elevation: 3,
+    width: 170,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     overflow: 'hidden',
-    minHeight: 320, // Fixed height for consistent cards
-    maxWidth: Dimensions.get('window').width / 2 - 16, // Fixed width for 2 columns
+    margin: 8,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#F7FAFC',
+    position: 'relative',
   },
   productImage: {
     width: '100%',
-    height: 180, // Fixed height for images
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-  },
-  productInfo: {
-    padding: 10,
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 5,
-    color: '#333',
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  price: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  discountedPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#e41e31',
-    marginRight: 5,
-  },
-  originalPrice: {
-    fontSize: 14,
-    textDecorationLine: 'line-through',
-    color: '#666',
+    height: '100%',
+    resizeMode: 'cover',
   },
   discountBadge: {
     position: 'absolute',
-    top: -10,
-    right: -10,
-    backgroundColor: '#e41e31',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  discountText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  ratingText: {
-    marginLeft: 4,
-    fontSize: 12,
-    color: '#666',
-  },
-  productOverlay: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    padding: 5,
-  },
-  actionButton: {
-    padding: 5,
-    marginHorizontal: 2,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 15,
-  },
-  addToCartButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
+    top: 12,
+    left: 12,
+    backgroundColor: '#FF4B4B',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 8,
-    marginTop: 8,
-  },
-  addToCartButtonEnabled: {
-    backgroundColor: '#007AFF',
-  },
-  addToCartButtonDisabled: {
-    backgroundColor: '#B0B0B0',
-  },
-  addToCartText: {
-    color: 'white',
-    marginLeft: 4,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  recentlyViewedSection: {
-    padding: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  recentlyViewedItem: {
-    width: 100,
-    marginRight: 10,
-  },
-  recentlyViewedImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-  },
-  recentlyViewedName: {
-    fontSize: 12,
-    marginTop: 5,
-    textAlign: 'center',
-  },
-  recentlyViewedPrice: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  productDescription: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 5,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end', 
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    padding: 20,
-    width: '100%',
-    height: 280,
+    flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: -3,
+      height: 2,
     },
-    shadowOpacity: 0.4,
-    shadowRadius: 5,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 10,
-    marginBottom: 25,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+  discountText: {
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    fontSize: 14,
   },
-  closeButton: {
-    padding: 10,
-  },
-  quantityContainer: {
-    flexDirection: 'row',
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
-    borderRadius: 20,
-    padding: 8,
-    width: '70%',
-    justifyContent: 'space-between',
-    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 2,
   },
-  quantityButton: {
-    backgroundColor: '#3a3a3a',
-    borderRadius: 15,
-    width: 35,
-    height: 35,
+  favoriteButtonActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  shareButton: {
+    position: 'absolute',
+    top: 12,
+    right: 56,
+    backgroundColor: '#4FA5F5',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -1243,125 +1219,158 @@ const styles = StyleSheet.create({
       height: 2,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 2,
   },
-  quantityButtonDisabled: {
-    backgroundColor: '#666666',
+  productInfo: {
+    padding: 16,
   },
-  quantityText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginHorizontal: 15,
+  productName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A202C',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    marginRight: 4,
+  },
+  ratingCount: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 4,
   },
   priceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '85%',
-    marginBottom: 25,
-    paddingHorizontal: 10,
+    marginBottom: 16,
   },
-  priceLabel: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.8,
+  priceInfo: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
-  priceValue: {
+  discountedPrice: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '700',
+    color: '#1A202C',
+    marginBottom: 4,
   },
-  confirmButton: {
-    backgroundColor: '#007AFF',
+  originalPrice: {
+    fontSize: 14,
+    color: '#A0AEC0',
+    textDecorationLine: 'line-through',
+  },
+  savingsContainer: {
+    backgroundColor: '#C6F6D5',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  savingsText: {
+    color: '#2F855A',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  addToCartButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 25,
-    paddingVertical: 12,
-    borderRadius: 25,
-    width: '85%',
-    position: 'absolute',
-    bottom: 25,
+    shadowColor: '#4FA5F5',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  confirmButtonText: {
+  buttonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600',
     marginLeft: 8,
   },
-  cartIcon: {
-    marginRight: 5,
-  },
-  lastAddedNotification: {
+  toastContainer: {
     position: 'absolute',
-    bottom: 20,
-    left: 15,
-    right: 15,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    padding: 15,
+    top: 0,
+    left: 16,
+    right: 16,
+    zIndex: 1000,
+  },
+  toast: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    padding: 16,
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     elevation: 8,
-    zIndex: 1000,
   },
-  lastAddedImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 15,
-    backgroundColor: '#2a2a2a',
+  toastError: {
+    backgroundColor: '#DC2626',
   },
-  lastAddedInfo: {
+  toastIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  toastContent: {
     flex: 1,
-    marginLeft: 15,
   },
-  lastAddedTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  lastAddedDetails: {
-    fontSize: 15,
-    color: '#999999',
-  },
-  viewCartButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginLeft: 10,
-  },
-  viewCartText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  notificationBanner: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 1000,
-  },
-  notificationText: {
+  toastTitle: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  toastMessage: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    opacity: 0.9,
+    marginBottom: 12,
+  },
+  toastButtons: {
+    flexDirection: 'row',
+    marginTop: 8,
+    gap: 8,
+  },
+  toastButton: {
     flex: 1,
-    marginRight: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toastButtonOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  toastButtonText: {
+    color: '#4FA5F5',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  toastButtonTextOutline: {
+    color: '#FFFFFF',
   },
   modalOverlay: {
     flex: 1,
@@ -1369,205 +1378,273 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  alertContainer: {
+  modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    width: '80%',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  alertTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  alertMessage: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#666',
-  },
-  alertButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  alertButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  alertButtonClose: {
-    backgroundColor: '#666',
-    marginRight: 10,
-  },
-  alertButtonAction: {
-    backgroundColor: '#007AFF',
-  },
-  alertButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  quickViewContent: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 25,
+    borderRadius: 16,
+    padding: 24,
     width: '90%',
-    maxHeight: '80%',
-    overflow: 'hidden',
+    maxWidth: 400,
   },
-  quickViewImage: {
-    width: '100%',
-    height: 250,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-  },
-  quickViewInfo: {
-    padding: 20,
-  },
-  quickViewName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 10,
-  },
-  quickViewDescription: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    marginBottom: 15,
-  },
-  quickViewPriceRating: {
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
-  quickViewPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1A202C',
   },
-  quickViewButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    borderRadius: 25,
+  closeButton: {
+    padding: 8,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  quantityButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  quickViewButtonText: {
+  quantityButtonDisabled: {
+    opacity: 0.5,
+  },
+  quantityText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1A202C',
+  },
+  confirmButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: 8,
   },
-  sortFilterBar: {
+  lastAddedNotification: {
+    position: 'absolute',
+    bottom: 24,
+    left: 16,
+    right: 16,
     backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 1000,
   },
-  sortOption: {
-    paddingHorizontal: 15,
+  lastAddedImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  lastAddedInfo: {
+    flex: 1,
+  },
+  lastAddedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A202C',
+    marginBottom: 4,
+  },
+  lastAddedDetails: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  viewCartButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 8,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 10,
-    backgroundColor: '#F5F5F5',
+    marginLeft: 12,
   },
-  sortOptionSelected: {
-    backgroundColor: '#007AFF',
-  },
-  sortOptionText: {
-    color: '#666666',
-    fontSize: 14,
-  },
-  sortOptionTextSelected: {
+  viewCartText: {
     color: '#FFFFFF',
-  },
-  productCountBadge: {
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    alignSelf: 'flex-start',
-    marginTop: 10,
-  },
-  productCountText: {
-    color: '#666666',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   skeletonContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 8,
+    justifyContent: 'space-between',
+    padding: 16,
   },
   skeletonCard: {
-    flex: 1,
-    margin: 8,
+    width: 170,
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    minHeight: 250,
-    maxWidth: Dimensions.get('window').width / 2 - 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
   },
   skeletonImage: {
     width: '100%',
-    height: 180,
-    backgroundColor: '#F0F0F0',
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
+    height: 200,
+    backgroundColor: '#E2E8F0',
   },
   skeletonInfo: {
-    padding: 10,
+    padding: 16,
   },
   skeletonText: {
     height: 20,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#E2E8F0',
     borderRadius: 4,
     marginBottom: 8,
   },
   skeletonPrice: {
     height: 24,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#E2E8F0',
     borderRadius: 4,
     width: '60%',
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  listFooter: {
+    height: 120, // Increased height for better spacing
+  },
+  recentlyViewedSection: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  recentlyViewedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  recentlyViewedTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recentlyViewedTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A202C',
+    marginLeft: 8,
+  },
+  clearHistoryButton: {
+    padding: 8,
+  },
+  clearHistoryText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  recentlyViewedItem: {
+    width: 120,
+    marginRight: 16,
+  },
+  recentlyViewedImageContainer: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#F7FAFC',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  recentlyViewedImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  recentlyViewedDiscountBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#FF4B4B',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1,
+  },
+  recentlyViewedDiscountText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  recentlyViewedInfo: {
+    padding: 8,
+  },
+  recentlyViewedName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A202C',
+    marginBottom: 4,
+  },
+  recentlyViewedRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  recentlyViewedPriceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recentlyViewedPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A202C',
+  },
+  recentlyViewedOriginalPrice: {
+    fontSize: 14,
+    color: '#A0AEC0',
+    textDecorationLine: 'line-through',
+    marginLeft: 8,
+  },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export default WalkingProducts;

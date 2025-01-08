@@ -1,4 +1,11 @@
-import React, { useEffect, useState, memo, useMemo, useCallback } from 'react';
+import React, { 
+  useEffect, 
+  useState, 
+  memo, 
+  useMemo, 
+  useCallback,
+  useRef
+} from 'react';
 import { 
   View, 
   Text, 
@@ -15,6 +22,7 @@ import {
   TouchableWithoutFeedback,
   Platform,
   Keyboard,
+  Animated
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -23,6 +31,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import debounce from 'lodash.debounce';
 
 const CustomAlert = ({ visible, title, message, buttons, onClose }) => {
   if (!visible) return null;
@@ -132,36 +141,48 @@ const DeleteConfirmationModal = ({ visible, product, onClose, onConfirm }) => {
   );
 };
 
-const FormInput = memo(({ label, icon, value, onChangeText, placeholder, keyboardType = "default", multiline = false, numberOfLines = 1 }) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.inputLabel}>{label}</Text>
-    <View style={styles.inputWrapper}>
-      {icon && (
-        <MaterialIcons 
-          name={icon} 
-          size={20} 
-          color="#718096" 
-          style={styles.inputIcon}
-        />
-      )}
+const FormInput = memo(({ 
+  label, 
+  value, 
+  onChangeText, 
+  placeholder, 
+  keyboardType = "default", 
+  multiline = false, 
+  numberOfLines = 1,
+  required = false
+}) => {
+  const handleChangeText = useCallback((text) => {
+    onChangeText?.(text);
+  }, [onChangeText]);
+
+  return (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>
+        {label} {required && <Text style={styles.requiredStar}>*</Text>}
+      </Text>
       <TextInput
-        style={[
-          styles.input,
-          icon && styles.inputWithIcon,
-          value && styles.inputFilled,
-          multiline && styles.textArea
-        ]}
+        style={[styles.input, multiline && styles.textArea]}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={handleChangeText}
         placeholder={placeholder}
-        keyboardType={keyboardType}
         placeholderTextColor="#A0AEC0"
+        keyboardType={keyboardType}
         multiline={multiline}
         numberOfLines={numberOfLines}
+        maxLength={1000}
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
+        enablesReturnKeyAutomatically={false}
+        keyboardShouldPersistTaps="always"
       />
     </View>
-  </View>
-));
+  );
+}, (prevProps, nextProps) => {
+  return prevProps.value === nextProps.value && 
+         prevProps.label === nextProps.label &&
+         prevProps.placeholder === nextProps.placeholder;
+});
 
 const UserProducts = () => {
   const [products, setProducts] = useState([]);
@@ -196,6 +217,19 @@ const UserProducts = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const router = useRouter();
+
+  const formRef = useRef({
+    name: '',
+    price: '',
+    discount: '',
+    description: '',
+    category: '',
+    condition: ''
+  });
+
+  const handleChange = useCallback((field, value) => {
+    formRef.current[field] = value;
+  }, []);
 
   useEffect(() => {
     const loadAuthData = async () => {
@@ -344,7 +378,45 @@ const UserProducts = () => {
     setIsModalVisible(false);
   };
 
-  const ProductModal = () => {
+  const handleInputChange = useCallback((field, value) => {
+    if (field === 'discount') {
+      const numValue = value.replace(/[^0-9.]/g, '');
+      const discount = Math.min(Math.max(parseFloat(numValue) || 0, 0), 100);
+      setFormData(prev => ({...prev, [field]: discount.toString()}));
+    } else if (field === 'price') {
+      const numValue = value.replace(/[^0-9.]/g, '');
+      setFormData(prev => ({...prev, [field]: numValue}));
+    } else {
+      setFormData(prev => ({...prev, [field]: value}));
+    }
+  }, []);
+
+  const isFormValid = useMemo(() => {
+    return formData.name?.trim() && 
+           formData.price?.trim() && 
+           selectedSport?.sport_id;
+  }, [formData.name, formData.price, selectedSport]);
+
+  const ProductModal = useCallback(() => {
+    const [localFormState, setLocalFormState] = useState({
+      name: formData.name,
+      price: formData.price,
+      description: formData.description,
+      discount: formData.discount
+    });
+
+    const debouncedUpdate = useCallback(
+      debounce((field, value) => {
+        handleInputChange(field, value);
+      }, 300),
+      []
+    );
+
+    const handleLocalChange = useCallback((field, value) => {
+      setLocalFormState(prev => ({...prev, [field]: value}));
+      debouncedUpdate(field, value);
+    }, []);
+
     const pickImage = async () => {
       try {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -362,19 +434,55 @@ const UserProducts = () => {
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.5,
+          base64: true,
         });
 
-        if (!result.canceled) {
+        if (!result.canceled && result.assets[0]) {
           setLoading(true);
-          const imageUri = result.assets[0].uri;
-          await handleImageUpload(imageUri);
+          const asset = result.assets[0];
+          const imageUri = asset.uri;
+          const base64Data = asset.base64;
+          
+          // Create form data with base64
+          const formData = new FormData();
+          formData.append('image', {
+            uri: `data:image/jpeg;base64,${base64Data}`,
+            type: 'image/jpeg',
+            name: 'photo.jpg'
+          });
+
+          // Upload directly here instead of calling handleImageUpload
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+            throw new Error('Authentication required');
+          }
+
+          const response = await axios.post(
+            `${BASE_URL}/upload`,
+            formData,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json',
+              },
+              timeout: 60000,
+            }
+          );
+
+          if (response.data && response.data.url) {
+            setFormData(prev => ({...prev, image_url: response.data.url}));
+          } else {
+            throw new Error('Invalid response from server');
+          }
+
           setLoading(false);
         }
       } catch (error) {
         console.error('Image picker error:', error);
         showAlert(
           'Error',
-          'Failed to pick image. Please try again.',
+          'Failed to upload image. Please try again.',
           [{ text: 'OK', style: 'default' }]
         );
         setLoading(false);
@@ -398,81 +506,60 @@ const UserProducts = () => {
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.5,
+          base64: true,
         });
 
-        if (!result.canceled) {
+        if (!result.canceled && result.assets[0]) {
           setLoading(true);
-          const imageUri = result.assets[0].uri;
-          await handleImageUpload(imageUri);
+          const asset = result.assets[0];
+          const imageUri = asset.uri;
+          const base64Data = asset.base64;
+          
+          // Create form data with base64
+          const formData = new FormData();
+          formData.append('image', {
+            uri: `data:image/jpeg;base64,${base64Data}`,
+            type: 'image/jpeg',
+            name: 'photo.jpg'
+          });
+
+          // Upload directly here instead of calling handleImageUpload
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+            throw new Error('Authentication required');
+          }
+
+          const response = await axios.post(
+            `${BASE_URL}/upload`,
+            formData,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json',
+              },
+              timeout: 60000,
+            }
+          );
+
+          if (response.data && response.data.url) {
+            setFormData(prev => ({...prev, image_url: response.data.url}));
+          } else {
+            throw new Error('Invalid response from server');
+          }
+
           setLoading(false);
         }
       } catch (error) {
         console.error('Camera error:', error);
         showAlert(
           'Error',
-          'Failed to take photo. Please try again.',
+          'Failed to upload photo. Please try again.',
           [{ text: 'OK', style: 'default' }]
         );
         setLoading(false);
       }
     };
-
-    const handleImageUpload = async (imageUri) => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          showAlert(
-            'Error',
-            'Please log in to continue',
-            [{ text: 'OK', style: 'default' }]
-          );
-          return;
-        }
-
-        const formData = new FormData();
-        const filename = imageUri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image';
-        
-        formData.append('image', {
-          uri: imageUri,
-          name: filename,
-          type
-        });
-
-        const response = await axios.post(
-          `${BASE_URL}/upload`, 
-          formData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
-
-        if (response.data && response.data.url) {
-          setFormData(prev => ({...prev, image_url: response.data.url}));
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        showAlert(
-          'Upload Failed',
-          error.response?.data?.message || 'Failed to upload image. Please try again.',
-          [{ text: 'OK', style: 'default' }]
-        );
-        throw error;
-      }
-    };
-
-    const handleInputChange = useCallback((field, value) => {
-      if (field === 'discount') {
-        const discount = Math.min(Math.max(parseFloat(value) || 0, 0), 100);
-        setFormData(prev => ({...prev, [field]: discount.toString()}));
-      } else {
-        setFormData(prev => ({...prev, [field]: value}));
-      }
-    }, []);
 
     return (
       <Modal
@@ -505,6 +592,7 @@ const UserProducts = () => {
                   showsVerticalScrollIndicator={false}
                   bounces={false}
                   keyboardDismissMode="on-drag"
+                  removeClippedSubviews={true}
                 >
                   <View style={styles.formSection}>
                     <View style={styles.sectionHeader}>
@@ -520,34 +608,33 @@ const UserProducts = () => {
 
                   <FormInput
                     label="Product Name *"
-                    icon="shopping-bag"
-                    value={formData.name}
-                    onChangeText={(text) => handleInputChange('name', text)}
+                    value={localFormState.name}
+                    onChangeText={(text) => handleLocalChange('name', text)}
                     placeholder="Enter product name"
+                    required={true}
                   />
 
                   <FormInput
                     label="Price *"
-                    icon="attach-money"
-                    value={formData.price}
-                    onChangeText={(text) => handleInputChange('price', text)}
+                    value={localFormState.price}
+                    onChangeText={(text) => handleLocalChange('price', text)}
                     placeholder="0.00"
                     keyboardType="decimal-pad"
+                    required={true}
                   />
 
                   <FormInput
                     label="Discount (%)"
-                    icon="local-offer"
-                    value={formData.discount}
-                    onChangeText={(text) => handleInputChange('discount', text)}
+                    value={localFormState.discount}
+                    onChangeText={(text) => handleLocalChange('discount', text)}
                     placeholder="Enter discount percentage"
                     keyboardType="decimal-pad"
                   />
 
                   <FormInput
                     label="Description"
-                    value={formData.description}
-                    onChangeText={(text) => handleInputChange('description', text)}
+                    value={localFormState.description}
+                    onChangeText={(text) => handleLocalChange('description', text)}
                     placeholder="Enter product description"
                     multiline={true}
                     numberOfLines={4}
@@ -583,49 +670,49 @@ const UserProducts = () => {
                     </TouchableOpacity>
                   </View>
 
-                  <View style={styles.formSection}>
-                    <View style={styles.sectionHeader}>
-                      <View style={styles.sectionHeaderIcon}>
-                        <MaterialIcons name="photo-library" size={24} color="#4FA5F5" />
-                      </View>
-                      <Text style={styles.sectionHeaderText}>Product Image</Text>
+                  <View style={styles.productImageSection}>
+                    <View style={styles.imageDropZone}>
+                      {formData.image_url ? (
+                        <View style={styles.imagePreviewGrid}>
+                          <View style={styles.imagePreviewItem}>
+                            <Image
+                              source={{ uri: formData.image_url }}
+                              style={styles.previewImage}
+                            />
+                            <View style={styles.imageOverlay}>
+                              <TouchableOpacity 
+                                style={styles.removeImageButton}
+                                onPress={() => setFormData(prev => ({...prev, image_url: ''}))}
+                              >
+                                <MaterialIcons name="close" size={20} color="#fff" />
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={styles.dropZoneContent}>
+                          <MaterialIcons name="cloud-upload" size={48} color="#A0AEC0" style={styles.uploadIcon} />
+                          <Text style={styles.uploadInstructions}>Upload Product Image</Text>
+                          <Text style={styles.uploadSubInstructions}>Select an image from your gallery or take a new photo</Text>
+                          <View style={styles.uploadButtons}>
+                            <TouchableOpacity 
+                              style={styles.uploadButton}
+                              onPress={pickImage}
+                            >
+                              <MaterialIcons name="photo-library" size={24} color="#4FA5F5" />
+                              <Text style={styles.uploadButtonText}>Choose from Gallery</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                              style={styles.uploadButton}
+                              onPress={takePhoto}
+                            >
+                              <MaterialIcons name="photo-camera" size={24} color="#4FA5F5" />
+                              <Text style={styles.uploadButtonText}>Take Photo</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      )}
                     </View>
-                    
-                    {formData.image_url ? (
-                      <View style={styles.imagePreviewContainer}>
-                        <Image
-                          source={{ uri: formData.image_url }}
-                          style={styles.previewImage}
-                        />
-                        <View style={styles.imageOverlay}>
-                          <TouchableOpacity 
-                            style={styles.removeImageButton}
-                            onPress={() => setFormData(prev => ({...prev, image_url: ''}))}
-                          >
-                            <MaterialIcons name="close" size={20} color="#fff" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
-                      <View style={styles.imageUploadContainer}>
-                        <View style={styles.uploadButtons}>
-                          <TouchableOpacity 
-                            style={styles.uploadButton}
-                            onPress={pickImage}
-                          >
-                            <MaterialIcons name="photo-library" size={24} color="#4FA5F5" />
-                            <Text style={styles.uploadButtonText}>Choose from Gallery</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            style={styles.uploadButton}
-                            onPress={takePhoto}
-                          >
-                            <MaterialIcons name="photo-camera" size={24} color="#4FA5F5" />
-                            <Text style={styles.uploadButtonText}>Take Photo</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    )}
                   </View>
                 </ScrollView>
 
@@ -639,10 +726,10 @@ const UserProducts = () => {
                   <TouchableOpacity 
                     style={[
                       styles.submitButton,
-                      (!formData.name || !formData.price || !selectedSport) && styles.submitButtonDisabled
+                      !isFormValid && styles.submitButtonDisabled
                     ]}
                     onPress={handleSubmit}
-                    disabled={!formData.name || !formData.price || !selectedSport}
+                    disabled={!isFormValid}
                   >
                     <Text style={styles.submitButtonText}>
                       {modalMode === 'add' ? 'Add Product' : 'Save Changes'}
@@ -655,7 +742,49 @@ const UserProducts = () => {
         </KeyboardAvoidingView>
       </Modal>
     );
-  };
+  }, [isModalVisible, formData, modalMode, isFormValid]);
+
+  const renderItem = useCallback(({ item }) => (
+    <View style={styles.productCard}>
+      <Image
+        source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
+        style={styles.productImage}
+      />
+      <View style={styles.productOverlay}>
+        <View style={styles.productInfo}>
+          <Text style={styles.productName}>{item.name}</Text>
+          <Text style={styles.productPrice}>
+            ${parseFloat(item.price).toFixed(2)}
+            {item.discount > 0 && (
+              <Text style={styles.discountTag}> -{item.discount}%</Text>
+            )}
+          </Text>
+          {item.sport && (
+            <View style={styles.sportTag}>
+              <MaterialIcons name="sports" size={16} color="#fff" />
+              <Text style={styles.sportText}>{item.sport.name}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.editButton]}
+          onPress={() => handleUpdate(item)}
+        >
+          <MaterialIcons name="edit" size={20} color="#fff" />
+          <Text style={styles.buttonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.deleteButton]}
+          onPress={() => handleDelete(item)}
+        >
+          <MaterialIcons name="delete" size={20} color="#fff" />
+          <Text style={styles.buttonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ), [handleUpdate, handleDelete]);
 
   const handleUpdate = (product) => {
     setFormData({
@@ -753,6 +882,44 @@ const UserProducts = () => {
     }
   };
 
+  const sportCategories = {
+    'Team Sports': [
+      { name: 'Football', icon: 'sports-soccer', color: '#FF6B6B', bgColor: '#FFE8E8' },
+      { name: 'Basketball', icon: 'sports-basketball', color: '#4ECDC4', bgColor: '#E8F8F7' },
+      { name: 'Baseball', icon: 'sports-baseball', color: '#45B7D1', bgColor: '#E6F6FA' },
+      { name: 'Rugby', icon: 'sports-rugby', color: '#96C93D', bgColor: '#F0F7E6' },
+      { name: 'Hockey', icon: 'sports-hockey', color: '#845EC2', bgColor: '#F1EAFA' },
+    ],
+    'Individual Sports': [
+      { name: 'Tennis', icon: 'sports-tennis', color: '#FFB800', bgColor: '#FFF8E6' },
+      { name: 'Golf', icon: 'sports-golf', color: '#00C9A7', bgColor: '#E6F8F5' },
+      { name: 'Skating', icon: 'skateboarding', color: '#FF9671', bgColor: '#FFE8E3' },
+      { name: 'MMA', icon: 'sports-mma', color: '#FFC75F', bgColor: '#FFF4E6' },
+      { name: 'Boxing', icon: 'sports-kabaddi', color: '#F9F871', bgColor: '#FAFDE6' },
+    ],
+    'Fitness & Training': [
+      { name: 'Gym', icon: 'fitness-center', color: '#C34A36', bgColor: '#FAE8E6' },
+      { name: 'Yoga', icon: 'self-improvement', color: '#FF8066', bgColor: '#FFE8E6' },
+      { name: 'Running', icon: 'directions-run', color: '#4FA5F5', bgColor: '#E6F0FA' },
+      { name: 'Swimming', icon: 'pool', color: '#6C5CE7', bgColor: '#EEEAFC' },
+      { name: 'CrossFit', icon: 'whatshot', color: '#FF6B6B', bgColor: '#FFE8E8' },
+    ],
+    'Outdoor Activities': [
+      { name: 'Hiking', icon: 'terrain', color: '#4ECDC4', bgColor: '#E8F8F7' },
+      { name: 'Cycling', icon: 'directions-bike', color: '#45B7D1', bgColor: '#E6F6FA' },
+      { name: 'Climbing', icon: 'landscape', color: '#96C93D', bgColor: '#F0F7E6' },
+      { name: 'Camping', icon: 'outdoor-grill', color: '#845EC2', bgColor: '#F1EAFA' },
+      { name: 'Fishing', icon: 'waves', color: '#FFB800', bgColor: '#FFF8E6' },
+    ],
+    'Other': [
+      { name: 'E-Sports', icon: 'sports-esports', color: '#00C9A7', bgColor: '#E6F8F5' },
+      { name: 'Dance', icon: 'music-note', color: '#FF9671', bgColor: '#FFE8E3' },
+      { name: 'Chess', icon: 'extension', color: '#FFC75F', bgColor: '#FFF4E6' },
+      { name: 'Archery', icon: 'gps-fixed', color: '#F9F871', bgColor: '#FAFDE6' },
+      { name: 'Bowling', icon: 'sports', color: '#C34A36', bgColor: '#FAE8E6' },
+    ]
+  };
+
   const SportSelectionModal = memo(() => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredSports, setFilteredSports] = useState(sports);
@@ -835,110 +1002,52 @@ const UserProducts = () => {
                 )}
               </View>
 
-              {filteredSports.length === 0 ? (
-                <View style={styles.sportModalEmptyState}>
-                  <MaterialIcons name="search-off" size={48} color="#A0AEC0" />
-                  <Text style={styles.sportModalEmptyStateTitle}>No Sports Found</Text>
-                  <Text style={styles.sportModalEmptyStateText}>
-                    Try searching with different keywords
-                  </Text>
-                </View>
-              ) : (
-                <FlatList
-                  data={filteredSports}
-                  keyExtractor={(item) => item.sport_id.toString()}
-                  numColumns={2}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.sportModalGrid}
-                  keyboardShouldPersistTaps="handled"
-                  renderItem={({ item }) => {
-                    const style = sportStyles[item.name] || { 
-                      icon: 'sports', 
-                      color: '#718096', 
-                      bgColor: '#F8FAFC', 
-                      gradient: ['#718096', '#A0AEC0'] 
-                    };
-                    return (
-                      <TouchableOpacity
-                        style={[
-                          styles.sportModalItem,
-                          { backgroundColor: style.bgColor },
-                          selectedSport?.sport_id === item.sport_id && styles.sportModalItemSelected
-                        ]}
-                        onPress={() => {
-                          setSelectedSport(item);
-                          setFormData(prev => ({...prev, sport_id: item.sport_id}));
-                          setIsSportsModalVisible(false);
-                          clearSearch();
-                        }}
-                      >
-                        <View style={[styles.sportModalIconContainer, { backgroundColor: style.color }]}>
-                          <MaterialIcons name={style.icon} size={28} color="#FFF" />
-                        </View>
-                        <Text style={[
-                          styles.sportModalItemText,
-                          selectedSport?.sport_id === item.sport_id && { color: style.color }
-                        ]}>
-                          {item.name}
-                        </Text>
-                        {selectedSport?.sport_id === item.sport_id && (
-                          <View style={[styles.sportModalCheckmark, { backgroundColor: style.color }]}>
-                            <MaterialIcons name="check" size={16} color="#FFF" />
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {Object.entries(sportCategories).map(([category, sports]) => (
+                  <View key={category} style={styles.sportCategorySection}>
+                    <Text style={styles.sportCategoryTitle}>{category}</Text>
+                    <View style={styles.sportModalGrid}>
+                      {sports.map((sport) => (
+                        <TouchableOpacity
+                          key={sport.name}
+                          style={[
+                            styles.sportModalItem,
+                            { backgroundColor: sport.bgColor },
+                            selectedSport?.name === sport.name && styles.sportModalItemSelected
+                          ]}
+                          onPress={() => {
+                            setSelectedSport({ ...sport, sport_id: sports.findIndex(s => s.name === sport.name) + 1 });
+                            setFormData(prev => ({...prev, sport_id: sports.findIndex(s => s.name === sport.name) + 1}));
+                            setIsSportsModalVisible(false);
+                            clearSearch();
+                          }}
+                        >
+                          <View style={[styles.sportModalIconContainer, { backgroundColor: sport.color }]}>
+                            <MaterialIcons name={sport.icon} size={28} color="#FFF" />
                           </View>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  }}
-                />
-              )}
+                          <Text style={[
+                            styles.sportModalItemText,
+                            selectedSport?.name === sport.name && { color: sport.color }
+                          ]}>
+                            {sport.name}
+                          </Text>
+                          {selectedSport?.name === sport.name && (
+                            <View style={[styles.sportModalCheckmark, { backgroundColor: sport.color }]}>
+                              <MaterialIcons name="check" size={16} color="#FFF" />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
     );
   });
-
-  const renderItem = useCallback(({ item }) => (
-    <View style={styles.productCard}>
-      <Image
-        source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
-        style={styles.productImage}
-      />
-      <View style={styles.productOverlay}>
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{item.name}</Text>
-          <Text style={styles.productPrice}>
-            ${parseFloat(item.price).toFixed(2)}
-            {item.discount > 0 && (
-              <Text style={styles.discountTag}> -{item.discount}%</Text>
-            )}
-          </Text>
-          {item.sport && (
-            <View style={styles.sportTag}>
-              <MaterialIcons name="sports" size={16} color="#fff" />
-              <Text style={styles.sportText}>{item.sport.name}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-      <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
-          onPress={() => handleUpdate(item)}
-        >
-          <MaterialIcons name="edit" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={() => handleDelete(item)}
-        >
-          <MaterialIcons name="delete" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  ), [handleUpdate, handleDelete]);
 
   const handleSearch = useCallback((text) => {
     setSearchQuery(text);
@@ -1341,233 +1450,30 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 120, // Extra space for the form footer
   },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    fontSize: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-    color: '#2D3748',
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-    position: 'relative',
-    zIndex: 1,
-  },
-  inputFocused: {
-    borderColor: '#4FA5F5',
-    backgroundColor: '#F8FAFC',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  inputContainer: {
+    marginBottom: 16,
   },
   inputLabel: {
-    position: 'absolute',
-    left: 16,
-    top: -10,
-    backgroundColor: '#fff',
-    paddingHorizontal: 8,
-    fontSize: 12,
-    color: '#4A5568',
-    fontWeight: '600',
-    zIndex: 2,
-  },
-  inputLabelFocused: {
-    color: '#4FA5F5',
-  },
-  inputError: {
-    borderColor: '#FF4444',
-    backgroundColor: '#FFF5F5',
-  },
-  errorText: {
-    color: '#FF4444',
-    fontSize: 12,
-    marginTop: -16,
-    marginBottom: 16,
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  formSection: {
-    marginBottom: 20,
-  },
-  formSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 16,
-    letterSpacing: 0.5,
-  },
-  formSectionDescription: {
     fontSize: 14,
-    color: '#718096',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  imageUploadSection: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderStyle: 'dashed',
-  },
-  imageUploadTitle: {
-    fontSize: 16,
     fontWeight: '600',
     color: '#2D3748',
     marginBottom: 8,
-    textAlign: 'center',
   },
-  imageUploadDescription: {
-    fontSize: 14,
-    color: '#718096',
-    marginBottom: 16,
-    textAlign: 'center',
-    lineHeight: 20,
+  requiredStar: {
+    color: '#F56565',
   },
-  imagePreviewContainer: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#F7FAFC',
-    position: 'relative',
-    marginTop: 10,
+  input: {
     borderWidth: 1,
     borderColor: '#E2E8F0',
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    padding: 10,
-  },
-  removeImageButton: {
-    backgroundColor: 'rgba(255, 68, 68, 0.9)',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  imageUploadContainer: {
-    width: '100%',
-    height: 200,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    borderStyle: 'dashed',
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-    padding: 20,
-  },
-  uploadButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-  },
-  uploadButton: {
+    padding: 16,
+    fontSize: 16,
+    color: '#2D3748',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 140,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
-  uploadButtonText: {
-    color: '#4A5568',
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 8,
-  },
-  modalContent: {
-    flex: 1,
-    maxHeight: '100%',
-  },
-  modalHeaderText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1A202C',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    right: 20,
-    top: 20,
-    zIndex: 1,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E2E8F0',
-    marginVertical: 20,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  priceInput: {
-    flex: 2,
-  },
-  discountInput: {
-    flex: 1,
-  },
-  inputPrefix: {
-    position: 'absolute',
-    left: 16,
-    top: '50%',
-    transform: [{ translateY: -10 }],
-    fontSize: 16,
-    color: '#718096',
-    fontWeight: '500',
-  },
-  inputSuffix: {
-    position: 'absolute',
-    right: 16,
-    top: '50%',
-    transform: [{ translateY: -10 }],
-    fontSize: 16,
-    color: '#718096',
-    fontWeight: '500',
-  },
-  inputWithPrefix: {
-    paddingLeft: 32,
-  },
-  inputWithSuffix: {
-    paddingRight: 32,
+  textArea: {
+    height: 120,
+    textAlignVertical: 'top',
   },
   alertOverlay: {
     flex: 1,
@@ -1749,417 +1655,88 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
-  formAnimatedContainer: {
-    opacity: 1,
-    transform: [{ scale: 1 }],
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  inputWrapper: {
-    position: 'relative',
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: 16,
-    top: '50%',
-    transform: [{ translateY: -12 }],
-    zIndex: 2,
-  },
-  inputWithIcon: {
-    paddingLeft: 48,
-  },
-  inputCounter: {
-    position: 'absolute',
-    right: 16,
-    bottom: -20,
-    fontSize: 12,
-    color: '#718096',
-  },
-  characterLimit: {
-    fontSize: 12,
-    color: '#A0AEC0',
-    textAlign: 'right',
-    marginTop: 4,
-  },
-  characterLimitWarning: {
-    color: '#F6AD55',
-  },
-  characterLimitExceeded: {
-    color: '#FF4444',
-  },
-  tooltipContainer: {
-    position: 'absolute',
-    right: -8,
-    top: '50%',
-    transform: [{ translateY: -12 }],
-    zIndex: 2,
-  },
-  tooltip: {
-    position: 'absolute',
-    right: 32,
-    top: '50%',
-    transform: [{ translateY: -16 }],
-    backgroundColor: '#2D3748',
-    padding: 8,
-    borderRadius: 8,
-    width: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  tooltipText: {
-    color: '#fff',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  tooltipArrow: {
-    position: 'absolute',
-    right: -8,
-    top: '50%',
-    transform: [{ translateY: -8 }],
-    width: 0,
-    height: 0,
-    borderTopWidth: 8,
-    borderTopColor: 'transparent',
-    borderBottomWidth: 8,
-    borderBottomColor: 'transparent',
-    borderLeftWidth: 8,
-    borderLeftColor: '#2D3748',
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 2,
-    marginTop: 8,
+  productImageSection: {
+    marginTop: 24,
+    borderRadius: 16,
     overflow: 'hidden',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#4FA5F5',
-    borderRadius: 2,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EBF4FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
-  },
-  chipText: {
-    color: '#4A5568',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  chipIcon: {
-    width: 16,
-    height: 16,
-    tintColor: '#4A5568',
-  },
-  tagInput: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
+  imageDropZone: {
     backgroundColor: '#fff',
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EDF2F7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 16,
-    gap: 4,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    minHeight: 250,
   },
-  tagText: {
-    color: '#4A5568',
-    fontSize: 14,
-  },
-  tagRemove: {
-    padding: 2,
-  },
-  tagInput: {
-    flex: 1,
-    minWidth: 100,
-    fontSize: 14,
-    padding: 0,
-    color: '#2D3748',
-  },
-  submitButtonContainer: {
-    marginTop: 24,
-  },
-  submitButton: {
-    backgroundColor: '#4FA5F5',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#4FA5F5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  submitButtonIcon: {
-    marginLeft: 8,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  dropZoneContent: {
+    padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
   },
-  loadingContainer: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#4A5568',
-    fontWeight: '500',
-  },
-  successAnimation: {
-    width: 100,
-    height: 100,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  uploadIcon: {
     marginBottom: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: '#E2E8F0',
   },
-  sectionHeaderIcon: {
-    marginRight: 8,
-    backgroundColor: '#EBF8FF',
-    padding: 8,
-    borderRadius: 8,
-  },
-  sectionHeaderText: {
+  uploadInstructions: {
     fontSize: 18,
     fontWeight: '600',
     color: '#2D3748',
-    flex: 1,
-  },
-  inputLabel: {
-    position: 'absolute',
-    left: 16,
-    top: -10,
-    backgroundColor: '#fff',
-    paddingHorizontal: 8,
-    fontSize: 12,
-    color: '#4A5568',
-    fontWeight: '600',
-    zIndex: 2,
-  },
-  inputFilled: {
-    borderColor: '#4FA5F5',
-  },
-  categoryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F7FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  categoryButtonSelected: {
-    borderColor: '#4FA5F5',
-    backgroundColor: '#EBF8FF',
-  },
-  categoryButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EBF8FF',
-  },
-  categoryButtonText: {
-    fontSize: 16,
-    color: '#718096',
-    fontWeight: '500',
-  },
-  categoryButtonTextSelected: {
-    color: '#4FA5F5',
-    fontWeight: '600',
-  },
-  sportModalContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    height: '80%',
-    width: '100%',
-    position: 'absolute',
-    bottom: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  sportModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-  },
-  sportModalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2D3748',
-    letterSpacing: 0.5,
-  },
-  sportModalCloseButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F7FAFC',
-  },
-  sportModalSearchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#F7FAFC',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  sportModalSearchIcon: {
-    marginRight: 12,
-  },
-  sportModalSearchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#2D3748',
-    paddingVertical: 0,
-  },
-  sportModalSearchClear: {
-    padding: 4,
-    marginLeft: 8,
-  },
-  sportModalEmptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  sportModalEmptyStateTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginTop: 16,
     marginBottom: 8,
+    textAlign: 'center',
   },
-  sportModalEmptyStateText: {
+  uploadSubInstructions: {
     fontSize: 14,
     color: '#718096',
+    marginBottom: 24,
     textAlign: 'center',
   },
-  sportModalGrid: {
-    padding: 12,
+  uploadButtons: {
+    flexDirection: 'row',
+    gap: 16,
   },
-  sportModalItem: {
-    flex: 1,
-    margin: 8,
-    padding: 16,
-    borderRadius: 16,
+  uploadButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    minHeight: 120,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#EBF8FF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#4FA5F5',
   },
-  sportModalItemSelected: {
-    transform: [{ scale: 1.05 }],
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  sportModalIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  sportModalItemText: {
+  uploadButtonText: {
+    color: '#4FA5F5',
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A5568',
-    textAlign: 'center',
-    marginTop: 8,
   },
-  sportModalCheckmark: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    width: 24,
-    height: 24,
+  imagePreviewGrid: {
+    padding: 16,
+  },
+  imagePreviewItem: {
+    position: 'relative',
     borderRadius: 12,
-    alignItems: 'center',
+    overflow: 'hidden',
+    aspectRatio: 4/3,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    padding: 8,
+  },
+  removeImageButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    alignItems: 'center',
   },
   formFooter: {
     flexDirection: 'row',
@@ -2274,6 +1851,236 @@ const styles = StyleSheet.create({
   },
   filterChipTextSelected: {
     color: '#fff',
+  },
+  inputWrapperFocused: {
+    borderColor: '#4FA5F5',
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  inputWrapperError: {
+    borderColor: '#F56565',
+    backgroundColor: '#FFF5F5',
+  },
+  inputWrapperSuccess: {
+    borderColor: '#48BB78',
+    backgroundColor: '#F0FFF4',
+  },
+  inputFocused: {
+    color: '#2D3748',
+  },
+  requiredLabel: {
+    color: '#2D3748',
+    fontWeight: '600',
+  },
+  requiredStar: {
+    color: '#F56565',
+  },
+  errorMessage: {
+    color: '#F56565',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  inputIndicator: {
+    position: 'absolute',
+    right: 12,
+    alignSelf: 'center',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingIndicator: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#2D3748',
+    marginTop: 12,
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 20,
+  },
+  categoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  categoryButtonSelected: {
+    borderColor: '#4FA5F5',
+    backgroundColor: '#EBF8FF',
+  },
+  categoryButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  categoryButtonText: {
+    fontSize: 16,
+    color: '#718096',
+    fontWeight: '500',
+  },
+  categoryButtonTextSelected: {
+    color: '#4FA5F5',
+    fontWeight: '600',
+  },
+  sportModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: '80%',
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  sportModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  sportModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2D3748',
+  },
+  sportModalCloseButton: {
+    padding: 8,
+  },
+  sportModalSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7FAFC',
+    margin: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  sportModalSearchIcon: {
+    marginRight: 12,
+  },
+  sportModalSearchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#2D3748',
+  },
+  sportModalSearchClear: {
+    padding: 8,
+  },
+  sportModalGrid: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  sportModalItem: {
+    flex: 1,
+    margin: 8,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    minHeight: 120,
+    position: 'relative',
+  },
+  sportModalItemSelected: {
+    borderColor: '#4FA5F5',
+    backgroundColor: '#EBF8FF',
+  },
+  sportModalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#4FA5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  sportModalItemText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4A5568',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  sportModalCheckmark: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#4FA5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sportModalEmptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  sportModalEmptyStateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D3748',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  sportModalEmptyStateText: {
+    fontSize: 14,
+    color: '#718096',
+    textAlign: 'center',
+  },
+  sportCategorySection: {
+    marginBottom: 24,
+  },
+  sportCategoryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D3748',
+    marginBottom: 12,
   },
 });
 

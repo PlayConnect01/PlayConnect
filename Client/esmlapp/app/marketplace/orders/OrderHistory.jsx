@@ -14,10 +14,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../../../Api";
 import PageContainer from '../../components/PageContainer';
 
-const OrderHistory = () => {
+const OrderHistory = ({ route, navigation }) => {
+  const { orderId: selectedOrderId } = route?.params || {};
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [expandedOrder, setExpandedOrder] = useState(selectedOrderId);
   const [updating, setUpdating] = useState(false);
 
   const fetchOrderHistory = async () => {
@@ -117,7 +118,10 @@ const OrderHistory = () => {
 
   useEffect(() => {
     fetchOrderHistory();
-  }, []);
+    if (selectedOrderId) {
+      setExpandedOrder(selectedOrderId);
+    }
+  }, [selectedOrderId]);
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {

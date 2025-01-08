@@ -22,15 +22,89 @@ const Reports = () => {
     } catch (error) {
       console.error('Error fetching reports:', error);
       setLoading(false);
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to fetch reports. Please try again.',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content'
+        }
+      });
     }
   };
 
   const handleCheckUser = (userId, username) => {
-    // Navigate to users page with query parameter
     navigate(`/admin/users?highlight=${userId}`);
-    
-    // Store the username in sessionStorage for the animation
     sessionStorage.setItem('highlightedUser', username);
+  };
+
+  const handleResolveReport = async (reportId, action) => {
+    try {
+      const result = await Swal.fire({
+        title: `${action === 'approve' ? 'Resolve' : 'Dismiss'} Report`,
+        text: `Are you sure you want to ${action === 'approve' ? 'resolve' : 'dismiss'} this report?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: action === 'approve' ? '#28a745' : '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: `Yes, ${action === 'approve' ? 'resolve' : 'dismiss'} it`,
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
+      });
+
+      if (result.isConfirmed) {
+        await axios.put(`http://localhost:3000/reports/${reportId}`, {
+          status: action === 'approve' ? 'RESOLVED' : 'DISMISSED'
+        });
+
+        setReports(reports.map(report => 
+          report.report_id === reportId 
+            ? { ...report, status: action === 'approve' ? 'RESOLVED' : 'DISMISSED' } 
+            : report
+        ));
+
+        await Swal.fire({
+          title: `${action === 'approve' ? 'Resolved' : 'Dismissed'}!`,
+          text: `Report has been ${action === 'approve' ? 'resolved' : 'dismissed'}.`,
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          width: '400px',
+          customClass: {
+            popup: 'large-popup',
+            title: 'large-title',
+            content: 'large-content'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating report:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to update report status.',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content'
+        }
+      });
+    }
   };
 
   if (loading) return <div className="loading">Loading reports...</div>;
@@ -87,6 +161,22 @@ const Reports = () => {
                 >
                   <MdPerson /> Check User
                 </button>
+                {report.status === 'PENDING' && (
+                  <>
+                    <button 
+                      className="resolve-btn"
+                      onClick={() => handleResolveReport(report.report_id, 'approve')}
+                    >
+                      <MdCheck /> Resolve
+                    </button>
+                    <button 
+                      className="dismiss-btn"
+                      onClick={() => handleResolveReport(report.report_id, 'dismiss')}
+                    >
+                      <MdClose /> Dismiss
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, Text } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import CustomAlert from '../../Alerts/CustomAlert';
 
 const MapPicker = ({ onLocationSelect, initialLocation }) => {
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
@@ -8,8 +9,31 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
   const [address, setAddress] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    timeout: 3000
+  });
 
-  // Add debounce for search
+  const showAlert = (title, message, timeout = 3000) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      timeout
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({
+      visible: false,
+      title: '',
+      message: '',
+      timeout: 3000
+    });
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.length > 3) {
@@ -22,9 +46,14 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
 
   const performSearch = async (text) => {
     setIsSearching(true);
-    const results = await searchLocation(text);
-    setSearchResults(results);
-    setIsSearching(false);
+    try {
+      const results = await searchLocation(text);
+      setSearchResults(results);
+    } catch (error) {
+      showAlert('Error', 'Failed to search for location');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleSearch = (text) => {
@@ -36,7 +65,7 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
 
   const handleSelectResult = async (result) => {
     const newLocation = {
-      address: result.formatted, // Address from OpenCage API
+      address: result.formatted,
       latitude: result.geometry.lat,
       longitude: result.geometry.lng,
     };
@@ -66,7 +95,7 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
       }
     } catch (error) {
       console.error('Error reverse geocoding:', error);
-      Alert.alert('Error', 'Failed to retrieve address from coordinates.');
+      showAlert('Error', 'Failed to retrieve address from coordinates');
     }
   };
 
@@ -77,7 +106,7 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
         throw new Error('Failed to fetch address');
       }
       const data = await response.json();
-      return data.results[0]?.formatted; // Adjust based on OpenCage API response structure
+      return data.results[0]?.formatted;
     } catch (error) {
       console.error('Error reverse geocoding:', error);
       throw error;
@@ -91,7 +120,7 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
         throw new Error('Failed to fetch search results');
       }
       const data = await response.json();
-      return data.results; // Assuming OpenCage returns results here
+      return data.results;
     } catch (error) {
       console.error('Error searching location:', error);
       throw error;
@@ -106,50 +135,51 @@ const MapPicker = ({ onLocationSelect, initialLocation }) => {
           placeholder="Search for a location..."
           value={searchQuery}
           onChangeText={handleSearch}
-          onFocus={() => {
-            if (searchQuery.length > 3) {
-              performSearch(searchQuery);
-            }
-          }}
         />
-        {searchResults.length > 0 && (
-          <View style={styles.searchResults}>
-            {searchResults.map((result, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.searchResultItem}
-                onPress={() => handleSelectResult(result)}
-              >
-                <Text style={styles.searchResultText}>{result.formatted}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+        {isSearching && <Text style={styles.searchingText}>Searching...</Text>}
       </View>
+
+      {searchResults.length > 0 && (
+        <View style={styles.resultsContainer}>
+          {searchResults.map((result, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.resultItem}
+              onPress={() => handleSelectResult(result)}
+            >
+              <Text style={styles.resultText}>{result.formatted}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       <MapView
         style={styles.map}
-        region={{
-          latitude: selectedLocation.latitude,
-          longitude: selectedLocation.longitude,
+        onPress={handleMapPress}
+        initialRegion={{
+          latitude: selectedLocation?.latitude || 0,
+          longitude: selectedLocation?.longitude || 0,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         }}
-        onPress={handleMapPress}
       >
         {selectedLocation && (
-          <Marker 
-            coordinate={selectedLocation}
-            title={address || "Selected Location"}
+          <Marker
+            coordinate={{
+              latitude: selectedLocation.latitude,
+              longitude: selectedLocation.longitude,
+            }}
           />
         )}
       </MapView>
-      {address && (
-        <View style={styles.addressContainer}>
-          <Text style={styles.addressText} numberOfLines={2}>
-            Selected Location: {address}
-          </Text>
-        </View>
-      )}
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+        timeout={alertConfig.timeout}
+      />
     </View>
   );
 };
@@ -158,64 +188,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  map: {
+    flex: 1,
+  },
   searchContainer: {
-    zIndex: 2,
     position: 'absolute',
     top: 10,
     left: 10,
     right: 10,
-  },
-  searchInput: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+    zIndex: 1,
     backgroundColor: 'white',
+    borderRadius: 5,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
-  map: {
-    flex: 1,
+  searchInput: {
+    padding: 10,
+    fontSize: 16,
   },
-  addressContainer: {
+  searchingText: {
+    padding: 10,
+    textAlign: 'center',
+    color: '#666',
+  },
+  resultsContainer: {
     position: 'absolute',
-    bottom: 20,
+    top: 60,
     left: 10,
     right: 10,
     backgroundColor: 'white',
-    padding: 15,
     borderRadius: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  addressText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  searchResults: {
-    backgroundColor: 'white',
-    borderRadius: 5,
-    marginTop: 5,
+    elevation: 3,
+    zIndex: 1,
     maxHeight: 200,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
-  searchResultItem: {
-    padding: 15,
+  resultItem: {
+    padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  searchResultText: {
+  resultText: {
     fontSize: 14,
   },
 });

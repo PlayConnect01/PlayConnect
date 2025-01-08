@@ -7,14 +7,14 @@ import {
   ActivityIndicator,
   Image,
   TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome5 } from '@expo/vector-icons';
 import axios from 'axios';
 import { BASE_URL } from "../../../Api";
 
 const OrderDetails = ({ route, navigation }) => {
-  const { orderId } = route.params;
+  const { orderId } = route?.params || {};
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,75 +49,90 @@ const OrderDetails = ({ route, navigation }) => {
       case 'completed':
         return '#4CAF50';
       case 'processing':
-        return '#2196F3';
+        return '#4FA5F5';
       case 'cancelled':
         return '#F44336';
       default:
-        return '#757575';
+        return '#6B7280';
     }
   };
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4FA5F5" />
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!order) {
     return (
-      <View style={styles.errorContainer}>
-        <FontAwesome5 name="exclamation-circle" size={50} color="#F44336" />
-        <Text style={styles.errorText}>Order not found</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.errorContainer}>
+          <FontAwesome5 name="exclamation-circle" size={50} color="#F44336" />
+          <Text style={styles.errorText}>Order not found</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <LinearGradient
-      colors={['#1a1a1a', '#2d2d2d']}
-      style={styles.container}
-    >
-      <ScrollView style={styles.scrollView}>
-        {/* Order Header */}
-        <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <FontAwesome5 name="arrow-left" size={20} color="#4FA5F5" />
+      </TouchableOpacity>
+
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>Order Details</Text>
+
+        <View style={styles.orderCard}>
           <View style={styles.headerTop}>
             <Text style={styles.orderId}>Order #{orderId}</Text>
-            <Text style={[styles.status, { color: getStatusColor(order.status) }]}>
-              {order.status}
-            </Text>
+            <View style={[styles.statusContainer, { backgroundColor: getStatusColor(order.status) + '15' }]}>
+              <FontAwesome5 
+                name={order.status === 'completed' ? 'check-circle' : 'clock'} 
+                size={16} 
+                color={getStatusColor(order.status)}
+                style={styles.statusIcon}
+              />
+              <Text style={[styles.status, { color: getStatusColor(order.status) }]}>
+                {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
+              </Text>
+            </View>
           </View>
           <Text style={styles.date}>
             Placed on {formatDate(order.created_at)}
           </Text>
         </View>
 
-        {/* Order Items */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Items</Text>
-          {order.items.map((item, index) => (
+          {order?.items?.map((item, index) => (
             <View key={index} style={styles.itemCard}>
               <Image
-                source={{ uri: item.product.image }}
+                source={{ uri: item?.product?.image || 'https://via.placeholder.com/80' }}
                 style={styles.itemImage}
+                onError={(e) => console.log('Image loading error:', e.nativeEvent.error)}
               />
               <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.product.name}</Text>
-                <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
-                <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                <Text style={styles.itemName}>{item?.product?.name || 'Unknown Product'}</Text>
+                <Text style={styles.itemQuantity}>Quantity: {item?.quantity || 0}</Text>
+                <Text style={styles.itemPrice}>${(item?.price || 0).toFixed(2)}</Text>
               </View>
             </View>
           ))}
         </View>
 
-        {/* Order Summary */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+        <View style={styles.summaryContainer}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Items Total</Text>
             <Text style={styles.summaryValue}>
-              ${order.total_amount.toFixed(2)}
+              ${(order?.total_amount || 0).toFixed(2)}
             </Text>
           </View>
           <View style={styles.summaryRow}>
@@ -125,157 +140,230 @@ const OrderDetails = ({ route, navigation }) => {
             <Text style={styles.summaryValue}>$0.00</Text>
           </View>
           <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={[styles.summaryLabel, styles.totalLabel]}>Total</Text>
-            <Text style={[styles.summaryValue, styles.totalValue]}>
-              ${order.total_amount.toFixed(2)}
+            <Text style={styles.totalLabel}>Total Amount</Text>
+            <Text style={styles.totalValue}>
+              ${(order?.total_amount || 0).toFixed(2)}
             </Text>
           </View>
         </View>
 
-        {/* Back to Orders Button */}
         <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.goBack()}
+          style={styles.continueButton}
+          onPress={() => navigation.navigate('Cart', { orderId })}
         >
-          <Text style={styles.buttonText}>Back to Orders</Text>
+          <View style={styles.buttonContent}>
+            <FontAwesome5 name="history" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+            <Text style={styles.continueButtonText}>View History & Comments</Text>
+          </View>
         </TouchableOpacity>
       </ScrollView>
-    </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8FAFF',
+  },
   container: {
     flex: 1,
+    padding: 16,
   },
-  scrollView: {
-    flex: 1,
+  backButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 10,
+    backgroundColor: '#FFFFFF',
+    padding: 10,
+    borderRadius: 12,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  header: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginTop: 60,
+    marginBottom: 24,
+  },
+  orderCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#EEF2FF',
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   orderId: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  statusIcon: {
+    marginRight: 6,
   },
   status: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
   date: {
-    color: '#e0e0e0',
     fontSize: 14,
+    color: '#6B7280',
   },
   section: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 16,
   },
   itemCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#EEF2FF',
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   itemImage: {
     width: 80,
     height: 80,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   itemDetails: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 12,
     justifyContent: 'center',
   },
   itemName: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 5,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
   },
   itemQuantity: {
-    color: '#e0e0e0',
     fontSize: 14,
-    marginBottom: 5,
+    color: '#6B7280',
+    marginBottom: 4,
   },
   itemPrice: {
-    color: '#4CAF50',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#4FA5F5',
+  },
+  summaryContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 8,
   },
   summaryLabel: {
-    color: '#e0e0e0',
-    fontSize: 16,
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   summaryValue: {
-    color: '#fff',
     fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '600',
   },
   totalRow: {
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: 8,
+    paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: '#EEF2FF',
   },
   totalLabel: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
   },
   totalValue: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
     fontSize: 18,
+    fontWeight: '700',
+    color: '#4FA5F5',
   },
-  button: {
-    backgroundColor: '#4CAF50',
-    margin: 20,
-    padding: 15,
-    borderRadius: 10,
+  continueButton: {
+    backgroundColor: '#4FA5F5',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  buttonContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: {
-    color: '#fff',
+  buttonIcon: {
+    marginRight: 8,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
   },
   errorText: {
-    color: '#fff',
-    fontSize: 18,
-    marginTop: 10,
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 12,
   },
 });
 
