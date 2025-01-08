@@ -33,6 +33,7 @@ const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const userproductRoutes = require('./routes/userproduct');
 const sportsProductRoutes = require('./routes/sportsProduct');
 const categoryProductRoutes = require('./routes/categoryRoutes');
+const userSportRoutes = require('./routes/userSport');
 const app = express();
 
 // Middleware
@@ -107,10 +108,12 @@ app.use('/userproduct', userproductRoutes);
 app.use('/sportsproduct', sportsProductRoutes);
 app.use('/api/sports', sportsProductRoutes);
 app.use('/category', categoryProductRoutes);
+app.use('/api/user-sport', userSportRoutes);
+
 // Admin routes with prefix
 
 // Start the Server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-}); 
+});

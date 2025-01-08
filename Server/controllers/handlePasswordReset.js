@@ -14,8 +14,8 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: "ahmedboukottaya@zohomail.com",
-    pass: "53nDUtDC4CKF",
+    user: "sportsmate@zohomail.com",
+    pass: "8eKtt1FyR4Qa",
   },
 });
 
@@ -42,7 +42,7 @@ const sendCode = async (req, res) => {
     recoveryCodes[email] = code;
 
     const mailOptions = {
-      from: "ahmedboukottaya@zohomail.com",
+      from: "sportsmate@zohomail.com",
       to: email,
       subject: "Password Recovery Code",
       html: `

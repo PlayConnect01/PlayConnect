@@ -31,7 +31,7 @@ const UserProfilePage = () => {
       try {
         const response = await fetch(`${BASE_URL}/users/${userId}`);
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         setUserData(data);
@@ -42,20 +42,27 @@ const UserProfilePage = () => {
 
     const fetchUserEvents = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/users/${userId}/events`);
+        // Change the endpoint to match your backend API
+        const response = await fetch(`${BASE_URL}/events/user/${userId}`);
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         setEvents(data);
       } catch (error) {
         console.error('Error fetching user events:', error);
+        setEvents([]); // Set empty array on error
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserData();
-    fetchUserEvents();
-    setLoading(false);
+    if (userId) {
+      fetchUserData();
+      fetchUserEvents();
+    } else {
+      setLoading(false);
+    }
   }, [userId]);
 
   const toggleModal = () => {
