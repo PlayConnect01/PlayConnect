@@ -7,10 +7,10 @@ import {
   Animated,
   SafeAreaView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 const OrderConfirmation = ({ route, navigation }) => {
-  const { amount, method } = route.params || {};
+  const { amount, method, orderId } = route.params || {};
   const fadeAnim = new Animated.Value(0);
 
   useEffect(() => {
@@ -50,11 +50,15 @@ const OrderConfirmation = ({ route, navigation }) => {
           <View style={styles.orderDetails}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Amount Paid</Text>
-              <Text style={styles.detailValue}>${amount.toFixed(2)}</Text>
+              <Text style={styles.detailValue}>${amount?.toFixed(2) || '0.00'}</Text>
             </View>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Payment Method</Text>
-              <Text style={styles.detailValue}>{method}</Text>
+              <Text style={styles.detailValue}>{method || 'Card'}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Order ID</Text>
+              <Text style={styles.detailValue}>{orderId || 'N/A'}</Text>
             </View>
           </View>
 
@@ -65,6 +69,14 @@ const OrderConfirmation = ({ route, navigation }) => {
             >
               <Ionicons name="cube-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>View Orders</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.historyButton}
+              onPress={() => navigation.navigate('OrderHistory', { orderId })}
+            >
+              <MaterialIcons name="history" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>Order History & Comments</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -165,6 +177,19 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     shadowColor: '#4FA5F5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  historyButton: {
+    backgroundColor: '#6366F1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#6366F1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

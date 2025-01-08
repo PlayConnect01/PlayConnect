@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { BASE_URL } from "../../Api";
 import { Share, Platform, Modal, TextInput } from "react-native";
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Easing } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const cardWidth = width / 2 - 24;
@@ -37,6 +38,7 @@ const FavoritesScreen = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   const fetchFavorites = useCallback(async () => {
     try {
@@ -47,7 +49,7 @@ const FavoritesScreen = () => {
       const userId = userData?.user_id;
 
       if (!token || !userId) {
-        setShowMessage("Please login to view favorites");
+        setToast({ visible: true, message: "Please login to view favorites", type: 'error' });
         navigation.navigate('Login');
         return;
       }
@@ -65,7 +67,7 @@ const FavoritesScreen = () => {
       setFavorites(response.data);
     } catch (error) {
       console.error("Error fetching favorites:", error);
-      setShowMessage("Failed to load favorites");
+      setToast({ visible: true, message: "Failed to load favorites", type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ const FavoritesScreen = () => {
       const userId = userData?.user_id;
 
       if (!token || !userId) {
-        setShowMessage("Please login to manage favorites");
+        setToast({ visible: true, message: "Please login to manage favorites", type: 'error' });
         navigation.navigate('Login');
         return;
       }
@@ -106,12 +108,12 @@ const FavoritesScreen = () => {
       setFavorites(prevFavorites => 
         prevFavorites.filter(fav => fav.favorite_id !== favorite.favorite_id)
       );
-      setShowMessage("Removed from favorites!");
-      setTimeout(() => setShowMessage(""), 2000);
+      setToast({ visible: true, message: "Removed from favorites!", type: 'success' });
+      setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 2000);
     } catch (error) {
       console.error("Error removing from favorites:", error);
-      setShowMessage("Failed to remove from favorites");
-      setTimeout(() => setShowMessage(""), 2000);
+      setToast({ visible: true, message: "Failed to remove from favorites", type: 'error' });
+      setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 2000);
     }
   }, [navigation]);
 
@@ -131,13 +133,13 @@ const FavoritesScreen = () => {
       }
       
       await Share.share({
-        message: `Check out ${product.name} on PlayConnect! Price: $${product.price}`,
+        message: `Check out ${product.name} on SportsMate! Price: $${product.price}`,
         url: product.image_url,
         title: 'Share Product'
       });
     } catch (error) {
       console.error('Error sharing product:', error);
-      setShowMessage('Failed to share product');
+      setToast({ visible: true, message: 'Failed to share product', type: 'error' });
     }
   };
 
@@ -149,7 +151,7 @@ const FavoritesScreen = () => {
       const userId = userData?.user_id;
 
       if (!token || !userId) {
-        setShowMessage("Please login to add to cart");
+        setToast({ visible: true, message: "Please login to add to cart", type: 'error' });
         navigation.navigate('Login');
         return;
       }
@@ -171,14 +173,14 @@ const FavoritesScreen = () => {
       );
 
       if (response.status === 201) {
-        setShowMessage('Added to cart successfully!');
         if (Platform.OS === 'ios') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
+        setToast({ visible: true, message: 'Added to cart successfully!', type: 'success' });
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      setShowMessage('Failed to add to cart');
+      setToast({ visible: true, message: 'Failed to add to cart', type: 'error' });
     }
   };
 
@@ -223,6 +225,161 @@ const FavoritesScreen = () => {
     });
   };
 
+  const CustomToast = ({ message, type, onHide }) => {
+    const translateY = useRef(new Animated.Value(-100)).current;
+    const opacity = useRef(new Animated.Value(0)).current;
+    const scale = useRef(new Animated.Value(0.9)).current;
+
+    useEffect(() => {
+      // Play haptic feedback
+      Haptics.notificationAsync(
+        type === 'error' 
+          ? Haptics.NotificationFeedbackType.Error 
+          : Haptics.NotificationFeedbackType.Success
+      );
+
+      // Show animation
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          tension: 80,
+          friction: 10,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          tension: 80,
+          friction: 10,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Hide after delay
+      const timer = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(translateY, {
+            toValue: -100,
+            duration: 200,
+            easing: Easing.in(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 0.9,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start(() => onHide());
+      }, 2500);
+
+      return () => clearTimeout(timer);
+    }, []);
+
+    const getToastStyle = () => {
+      switch (type) {
+        case 'success':
+          return {
+            backgroundColor: '#4FA5F5',
+            icon: 'check-circle-outline',
+            title: 'Success',
+            gradient: ['#4FA5F5', '#6366F1']
+          };
+        case 'error':
+          return {
+            backgroundColor: '#DC2626',
+            icon: 'error-outline',
+            title: 'Error',
+            gradient: ['#DC2626', '#EF4444']
+          };
+        case 'info':
+          return {
+            backgroundColor: '#4FA5F5',
+            icon: 'info-outline',
+            title: 'Info',
+            gradient: ['#4FA5F5', '#818CF8']
+          };
+        default:
+          return {
+            backgroundColor: '#4FA5F5',
+            icon: 'check-circle-outline',
+            title: 'Success',
+            gradient: ['#4FA5F5', '#6366F1']
+          };
+      }
+    };
+
+    const toastStyle = getToastStyle();
+
+    return (
+      <Animated.View
+        style={[
+          styles.toastContainer,
+          {
+            transform: [
+              { translateY },
+              { scale }
+            ],
+            opacity,
+          },
+        ]}
+      >
+        <View style={[styles.notificationBar, { backgroundColor: toastStyle.backgroundColor }]}>
+          <View style={styles.notificationHeader}>
+            <MaterialIcons 
+              name="notifications" 
+              size={14} 
+              color="#FFF" 
+              style={styles.notificationIcon} 
+            />
+            <Text style={styles.appName}>SportsMate</Text>
+            <Text style={styles.timeText}>now</Text>
+          </View>
+        </View>
+        <View style={[styles.toastContent, { backgroundColor: toastStyle.backgroundColor }]}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name={toastStyle.icon} size={28} color="#FFFFFF" />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.toastTitle}>{toastStyle.title}</Text>
+            <Text style={styles.toastText}>{message}</Text>
+          </View>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const renderRatingStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(
+          <FontAwesome key={`star-${i}`} name="star" size={14} color="#FFB800" />
+        );
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(
+          <FontAwesome key={`star-${i}`} name="star-half-o" size={14} color="#FFB800" />
+        );
+      } else {
+        stars.push(
+          <FontAwesome key={`star-${i}`} name="star-o" size={14} color="#FFB800" />
+        );
+      }
+    }
+    return stars;
+  };
+
   const renderSortModal = () => (
     <Modal
       visible={showSortModal}
@@ -245,7 +402,7 @@ const FavoritesScreen = () => {
             { id: 'rating', label: 'Rating', icon: 'star' }
           ].map(option => (
             <TouchableOpacity
-              key={option.id}
+              key={`sort-${option.id}`}
               style={[
                 styles.sortOption,
                 sortOption === option.id && styles.sortOptionSelected
@@ -258,7 +415,7 @@ const FavoritesScreen = () => {
               <MaterialIcons
                 name={option.icon}
                 size={24}
-                color={sortOption === option.id ? '#4299E1' : '#666'}
+                color={sortOption === option.id ? '#4FA5F5' : '#666'}
               />
               <Text style={[
                 styles.sortOptionText,
@@ -348,6 +505,14 @@ const FavoritesScreen = () => {
     </Modal>
   );
 
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast({ visible: false, message: '', type: 'success' });
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
@@ -374,23 +539,23 @@ const FavoritesScreen = () => {
               style={styles.actionButton}
               onPress={() => setShowFilterModal(true)}
             >
-              <MaterialIcons name="filter-list" size={24} color="#4F46E5" />
+              <MaterialIcons name="filter-list" size={24} color="#4FA5F5" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => setShowSortModal(true)}
             >
-              <MaterialIcons name="sort" size={24} color="#4F46E5" />
+              <MaterialIcons name="sort" size={24} color="#4FA5F5" />
             </TouchableOpacity>
           </View>
         </View>
         
         {loading ? (
-          <ActivityIndicator size="large" color="#4299e1" />
+          <ActivityIndicator size="large" color="#4FA5F5" />
         ) : favorites.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Animated.View style={[styles.emptyIcon, { transform: [{ scale: 1.2 }] }]} >
-              <FontAwesome name="heart-o" size={80} color="#4299e1" />
+              <FontAwesome name="heart-o" size={80} color="#4FA5F5" />
             </Animated.View>
             <Text style={styles.emptyText}>
               Start building your collection by adding favorites from the marketplace
@@ -413,7 +578,7 @@ const FavoritesScreen = () => {
             <View style={styles.cardContainer}>
               {sortFavorites(filterFavorites(favorites)).map((favorite) => (
                 <TouchableOpacity
-                  key={favorite.favorite_id}
+                  key={`product-${favorite.favorite_id}`}
                   onPress={() => navigateToProduct(favorite.product)}
                   activeOpacity={0.7}
                 >
@@ -449,6 +614,14 @@ const FavoritesScreen = () => {
                       <Text style={styles.productName} numberOfLines={2}>
                         {favorite.product?.name}
                       </Text>
+                      <View style={styles.ratingContainer}>
+                        <View style={styles.ratingStars}>
+                          {renderRatingStars(favorite.product?.rating || 0)}
+                        </View>
+                        <Text style={styles.ratingCount}>
+                          ({favorite.product?.rating_count || 0})
+                        </Text>
+                      </View>
                       <View style={styles.priceContainer}>
                         <View style={styles.priceInfo}>
                           <Text style={styles.discountedPrice}>
@@ -484,18 +657,12 @@ const FavoritesScreen = () => {
         )}
       </View>
       
-      {showMessage && (
-        <Animated.View 
-          style={[
-            styles.messageContainer,
-            {
-              transform: [{ translateY: 0 }]
-            }
-          ]}
-        >
-          <FontAwesome name="check-circle" size={18} color="#ffffff" />
-          <Text style={styles.messageText}>{showMessage}</Text>
-        </Animated.View>
+      {toast.visible && (
+        <CustomToast
+          message={toast.message}
+          type={toast.type}
+          onHide={hideToast}
+        />
       )}
       {renderSortModal()}
       {renderFilterModal()}
@@ -519,11 +686,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#EEF2FF',
-    shadowColor: '#4F46E5',
+    shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   backButton: {
     width: 40,
@@ -532,14 +699,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4F46E5',
+    shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   backButtonIcon: {
-    color: '#4F46E5',
+    color: '#4FA5F5',
   },
   headerTitle: {
     fontSize: 20,
@@ -556,14 +723,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4F46E5',
+    shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   infoIcon: {
-    color: '#4F46E5',
+    color: '#4FA5F5',
   },
   scrollContent: {
     paddingBottom: 24,
@@ -653,7 +820,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 56,
-    backgroundColor: '#4299E1',
+    backgroundColor: '#4FA5F5',
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -678,6 +845,20 @@ const styles = StyleSheet.create({
     color: '#1A202C',
     marginBottom: 8,
     lineHeight: 22,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    marginRight: 4,
+  },
+  ratingCount: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 4,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -712,23 +893,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   addToCartButton: {
-    backgroundColor: '#4299E1',
+    backgroundColor: '#4FA5F5',
     borderRadius: 12,
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  addingToCart: {
-    backgroundColor: '#2B6CB0',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -740,13 +918,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 32,
     alignSelf: 'center',
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#4FA5F5',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#4F46E5',
+    shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -778,11 +956,11 @@ const styles = StyleSheet.create({
   },
   exploreButton: {
     marginTop: 24,
-    backgroundColor: '#4299e1',
+    backgroundColor: '#4FA5F5',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
-    shadowColor: '#4299e1',
+    shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -832,7 +1010,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   sortOptionTextSelected: {
-    color: '#4299E1',
+    color: '#4FA5F5',
     fontWeight: '600',
   },
   filterSectionTitle: {
@@ -857,8 +1035,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   categoryChipSelected: {
-    backgroundColor: '#4299E1',
-    borderColor: '#4299E1',
+    backgroundColor: '#4FA5F5',
+    borderColor: '#4FA5F5',
   },
   categoryChipText: {
     fontSize: 14,
@@ -885,7 +1063,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   applyFilterButton: {
-    backgroundColor: '#4299E1',
+    backgroundColor: '#4FA5F5',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -906,11 +1084,90 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4F46E5',
+    shadowColor: '#4FA5F5',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
+  },
+  toastContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+    shadowColor: '#4FA5F5',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 9999,
+  },
+  notificationBar: {
+    paddingTop: 4,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  notificationIcon: {
+    marginRight: 6,
+    opacity: 0.95,
+  },
+  appName: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    opacity: 0.95,
+  },
+  timeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    marginLeft: 'auto',
+    opacity: 0.8,
+  },
+  toastContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  toastTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 2,
+    opacity: 1,
+  },
+  toastText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+    opacity: 0.95,
+    lineHeight: 18,
   },
 });
 
