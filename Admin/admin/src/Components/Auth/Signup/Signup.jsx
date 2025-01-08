@@ -4,6 +4,17 @@ import axios from 'axios';
 import './Signup.css';
 import Swal from 'sweetalert2';
 
+const sweetAlertConfig = {
+  width: '250px',
+  padding: '0.8rem',
+  customClass: {
+    popup: 'small-popup',
+    title: 'small-title',
+    content: 'small-content',
+    confirmButton: 'small-button'
+  }
+};
+
 const Signup = () => {
   const [formData, setFormData] = useState({
     username: '',
@@ -26,7 +37,6 @@ const Signup = () => {
     e.preventDefault();
     setError('');
 
-    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -41,20 +51,26 @@ const Signup = () => {
       });
 
       Swal.fire({
+        ...sweetAlertConfig,
         icon: 'success',
-        title: 'Registration Successful',
-        text: 'You can now log in with your credentials',
-        confirmButtonColor: '#1976d2'
+        title: 'Success!',
+        text: 'Registration successful',
+        confirmButtonColor: '#4CAF50',
+        timer: 2000,
+        showConfirmButton: false
       }).then(() => {
         navigate('/admin/login');
       });
     } catch (error) {
       setError(error.response?.data?.error || 'Registration failed');
       Swal.fire({
+        ...sweetAlertConfig,
         icon: 'error',
-        title: 'Registration Failed',
-        text: error.response?.data?.error || 'An error occurred during registration',
-        confirmButtonColor: '#d32f2f'
+        title: 'Error',
+        text: error.response?.data?.error || 'Registration failed',
+        confirmButtonColor: '#F44336',
+        timer: 1500,
+        showConfirmButton: false
       });
     }
   };

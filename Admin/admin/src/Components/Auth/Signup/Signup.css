@@ -95,3 +95,48 @@ button:hover {
     padding: 1.5rem;
   }
 }
+
+/* Update your SweetAlert Custom Styles */
+.small-popup {
+  font-size: 0.85rem !important;
+  max-width: 250px !important;
+}
+
+.small-title {
+  font-size: 1rem !important;
+  padding: 0.4rem !important;
+}
+
+.small-content {
+  font-size: 0.85rem !important;
+  margin: 0.4rem 0 !important;
+  padding: 0 0.5rem !important;
+}
+
+.small-button {
+  font-size: 0.8rem !important;
+  padding: 0.3rem 0.6rem !important;
+}
+
+/* Additional SweetAlert2 customizations */
+.swal2-popup {
+  padding: 0.4rem !important;
+  min-width: 250px !important;
+}
+
+.swal2-icon {
+  margin: 0.4rem auto !important;
+  transform: scale(0.6) !important;
+  width: 5em !important;
+  height: 5em !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.swal2-actions {
+  margin: 0.4rem auto !important;
+}
+
+/* Make the icon's inner elements slightly bigger */
+.swal2-icon-content {
+  font-size: 2.75em !important;
+}

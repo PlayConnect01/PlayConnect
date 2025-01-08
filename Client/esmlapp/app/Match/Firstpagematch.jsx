@@ -30,12 +30,10 @@ const App = () => {
   const navigation = useNavigation();
 
   const handleMatchNow = () => {
-    navigation.navigate('Match/Matchingpage');
+    navigation.navigate('Matchingpage');
   };
 
-  const handleHome = () => {
-    navigation.navigate('Homepage/Homep');
-  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -51,11 +49,7 @@ const App = () => {
             onPress={handleMatchNow}
             style={styles.matchButton}
           />
-          <GradientButton
-            title="Go to home page"
-            onPress={handleHome}
-            style={styles.homeButton}
-          />
+        
         </View>
       </View>
     </SafeAreaView>

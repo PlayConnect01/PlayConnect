@@ -22,7 +22,6 @@ const CartScreen = () => {
       const userDataStr = await AsyncStorage.getItem('userData');
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
       const userId = userData?.user_id;
-      console.log("Fetched User Data:", userData);
 
       if (!userId) throw new Error("Please log in to view your cart");
 
@@ -33,7 +32,6 @@ const CartScreen = () => {
           'Content-Type': 'application/json'
         }
       });
-      console.log('Fetch cart response status:', response.status);
 
       if (!response.ok) throw new Error("Failed to fetch cart items");
 
@@ -80,7 +78,6 @@ const CartScreen = () => {
         body: JSON.stringify({ userId, quantity: newQuantity }),
       });
 
-      console.log("Update quantity response status:", response.status);
 
       if (!response.ok) throw new Error("Failed to update item quantity");
 
@@ -98,13 +95,11 @@ const CartScreen = () => {
   };
 
   const deleteProduct = (cartItemId) => {
-    console.log(`Preparing to delete item with ID: ${cartItemId}`);
     setItemToDelete(cartItemId);
     setModalVisible(true);
   };
 
   const confirmDelete = async () => {
-    console.log(`Deleting item with ID: ${itemToDelete}`);
     try {
       if (!itemToDelete) {
         throw new Error("No item selected for deletion");
@@ -119,7 +114,6 @@ const CartScreen = () => {
       }
 
       setCartItems((prevItems) => prevItems.filter((item) => item.cart_item_id !== itemToDelete));
-      console.log(`Item with ID ${itemToDelete} deleted successfully.`);
       setItemToDelete(null); // Reset after successful deletion
     } catch (error) {
       Alert.alert("Error", error.message || "Failed to delete item.");
