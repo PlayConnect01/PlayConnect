@@ -313,7 +313,7 @@ const EditProfile = () => {
 
   const handleSelectMonth = (month) => {
     setFormData((prev) => ({ ...prev, birthdate_month: month }));
-    setShowMonthPicker(false);
+    setShowMonthPicker(false);   
   };
 
   const handleSelectYear = (year) => {

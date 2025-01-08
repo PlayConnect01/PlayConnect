@@ -38,7 +38,16 @@ const UserProducts = () => {
         showCancelButton: true,
         confirmButtonColor: newStatus === 'ACCEPTED' ? '#4caf50' : '#f44336',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: `Yes, ${newStatus.toLowerCase()} it!`
+        confirmButtonText: `Yes, ${newStatus.toLowerCase()} it!`,
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
@@ -50,15 +59,35 @@ const UserProducts = () => {
           product.id === productId ? { ...product, status: newStatus } : product
         ));
 
-        Swal.fire(
-          `${newStatus}!`,
-          `Product has been ${newStatus.toLowerCase()}.`,
-          'success'
-        );
+        await Swal.fire({
+          title: `${newStatus}!`,
+          text: `Product has been ${newStatus.toLowerCase()}.`,
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          width: '400px',
+          customClass: {
+            popup: 'large-popup',
+            title: 'large-title',
+            content: 'large-content'
+          }
+        });
       }
     } catch (error) {
       console.error('Error updating product status:', error);
-      Swal.fire('Error', 'Failed to update product status.', 'error');
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to update product status.',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content'
+        }
+      });
     }
   };
 

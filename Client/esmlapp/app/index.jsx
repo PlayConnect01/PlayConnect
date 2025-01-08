@@ -78,7 +78,6 @@ const WrappedCompetitionPage = withMainLayout(CompetitionPage);
 const WrappedTournamentList = withMainLayout(TournamentList);
 const WrappedTournamentDetail = withMainLayout(TournamentDetail);
 const WrappedCategoryEvents = withMainLayout(CategoryEvents);
-const WrappedMatch = withMainLayout(Match);
 const WrappedMatchingpage = withMainLayout(Matchingpage);
 const WrappedMessagePage = withMainLayout(MessagePage);
 const WrappedCalendarPage = withMainLayout(CalendarPage);
@@ -155,7 +154,7 @@ function App() {
               <Stack.Screen name="CalendarPage" component={WrappedCalendarPage} />
               <Stack.Screen name="EventDetails" component={EventDetails} />
               <Stack.Screen name="AddNewEvent" component={AddNewEvent} />
-              <Stack.Screen name="Match" component={WrappedMatch} />
+              <Stack.Screen name="Match" component={Match} />
               <Stack.Screen name="Matchingpage" component={WrappedMatchingpage} />
               <Stack.Screen name="Messages" component={WrappedMessagePage} />
               <Stack.Screen name="ChatDetails" component={ChatDetails} />

@@ -10,6 +10,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { Camera } from 'expo-camera';
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import EventReviews from './EventReviews.jsx';
+import CustomAlert from "../../Alerts/CustomAlert";
 
 const formatTime = (timeString) => {
   if (!timeString) return '';
@@ -86,6 +87,11 @@ const EventDetails = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [stripeKey, setStripeKey] = useState(null);
   const [userId, setUserId] = useState(null); // Add userId state
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: ''
+  });
 
   // Add useEffect to get userId from token
   useEffect(() => {
@@ -112,7 +118,11 @@ const EventDetails = () => {
         setStripeKey(response.data.publishableKey);
       } catch (err) {
         console.error('Error fetching Stripe key:', err);
-        Alert.alert('Error', 'Failed to initialize payment system');
+        setAlertConfig({
+          visible: true,
+          title: 'Error',
+          message: 'Failed to initialize payment system'
+        });
       }
     };
     fetchStripeKey();
@@ -142,6 +152,11 @@ const EventDetails = () => {
       } catch (err) {
         setError(err.response ? err.response.data : err.message);
         setLoading(false);
+        setAlertConfig({
+          visible: true,
+          title: 'Error',
+          message: err.response ? err.response.data : err.message
+        });
       }
     };
 
@@ -247,11 +262,11 @@ const initializePayment = async (amount, userId) => {
       setUserJoined(true);
 
       // Show success message with points
-      Alert.alert(
-        "Success",
-        "You have joined the event and earned 100 points!",
-        [{ text: "OK" }]
-      );
+      setAlertConfig({
+        visible: true,
+        title: "Success",
+        message: "You have joined the event and earned 100 points!"
+      });
 
       return true;
     } catch (error) {
@@ -286,19 +301,19 @@ const initializePayment = async (amount, userId) => {
                   )
                 }));
                 setUserJoined(false);
-                Alert.alert(
-                  "Success",
-                  "You have left the event and lost 100 points",
-                  [{ text: "OK" }]
-                );
+                setAlertConfig({
+                  visible: true,
+                  title: "Success",
+                  message: "You have left the event and lost 100 points"
+                });
               }
             } catch (error) {
               console.error("Error removing participant:", error);
-              Alert.alert(
-                "Error",
-                "Failed to remove you from the event. Please try again.",
-                [{ text: "OK" }]
-              );
+              setAlertConfig({
+                visible: true,
+                title: "Error",
+                message: "Failed to remove you from the event. Please try again."
+              });
             }
           }
         }
@@ -311,7 +326,11 @@ const initializePayment = async (amount, userId) => {
       setIsProcessingPayment(true);
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert('Error', 'Please login to join events');
+        setAlertConfig({
+          visible: true,
+          title: 'Error',
+          message: 'Please login to join events'
+        });
         return;
       }
 
@@ -322,22 +341,42 @@ const initializePayment = async (amount, userId) => {
         try {
           const paymentSuccess = await initializePayment(event.price, userId);
           if (!paymentSuccess) {
-            Alert.alert('Notice', 'Payment was cancelled');
+            setAlertConfig({
+              visible: true,
+              title: 'Notice',
+              message: 'Payment was cancelled'
+            });
             return;
           }
           
           await handleAddParticipant();
-          Alert.alert('Success', 'Payment successful and you have joined the event!');
+          setAlertConfig({
+            visible: true,
+            title: 'Success',
+            message: 'Payment successful and you have joined the event!'
+          });
         } catch (error) {
-          Alert.alert('Error', error.message || 'Payment failed. Please try again.');
+          setAlertConfig({
+            visible: true,
+            title: 'Error',
+            message: error.message || 'Payment failed. Please try again.'
+          });
           return;
         }
       } else {
         await handleAddParticipant();
-        Alert.alert('Success', 'You have joined the event!');
+        setAlertConfig({
+          visible: true,
+          title: 'Success',
+          message: 'You have joined the event!'
+        });
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to join event. Please try again.');
+      setAlertConfig({
+        visible: true,
+        title: 'Error',
+        message: error.message || 'Failed to join event. Please try again.'
+      });
     } finally {
       setIsProcessingPayment(false);
     }
@@ -403,7 +442,11 @@ const initializePayment = async (amount, userId) => {
               if (hasPermission) {
                 setModalVisible(true);
               } else {
-                Alert.alert('Error', 'Camera permission is not granted.');
+                setAlertConfig({
+                  visible: true,
+                  title: 'Error',
+                  message: 'Camera permission is not granted.'
+                });
               }
             }}>
               <MaterialCommunityIcons name="qrcode-scan" size={30} color="black" />
@@ -603,6 +646,13 @@ const initializePayment = async (amount, userId) => {
         </Modal>
       )}
 
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+        timeout={3000}
+      />
     </View>
   </StripeProvider>
 );
