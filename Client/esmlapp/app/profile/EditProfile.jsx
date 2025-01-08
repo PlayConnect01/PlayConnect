@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native'; // Import useNavigatio
 import CountryPicker from 'react-native-country-picker-modal';
 import { BASE_URL } from '../../Api.js';
 import Navbar from '../navbar/Navbar.jsx';
-
+import CustomAlert from '../../Alerts/CustomAlert';
 
 global.Buffer = Buffer;
 
@@ -28,6 +28,9 @@ const EditProfile = () => {
   const navigation = useNavigation();
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('');
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -102,7 +105,9 @@ const EditProfile = () => {
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        alert("Failed to load user data. Please try again.");
+        setAlertTitle('Error');
+        setAlertMessage('Failed to load user data. Please try again.');
+        setAlertVisible(true);
       } finally {
         setIsLoading(false);
       }
@@ -180,12 +185,11 @@ const EditProfile = () => {
 
   const handleImagePick = async () => {
     try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        alert(
-          "Sorry, we need camera roll permissions to change your profile picture."
-        );
+        setAlertTitle('Error');
+        setAlertMessage('Sorry, we need camera roll permissions to change your profile picture.');
+        setAlertVisible(true);
         return;
       }
 
@@ -193,7 +197,7 @@ const EditProfile = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.5, // Reduced quality for smaller file size
+        quality: 0.5,
         base64: true,
       });
 
@@ -203,73 +207,79 @@ const EditProfile = () => {
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      alert("Error selecting image. Please try again.");
+      setAlertTitle('Error');
+      setAlertMessage('Error selecting image. Please try again.');
+      setAlertVisible(true);
     }
   };
 
- // In EditProfile.jsx, modify the handleSubmit function:
-
-const handleSubmit = async () => {
-  if (!validateForm()) {
-    return;
-  }
-
-  setIsSubmitting(true);
-  try {
-    const token = await AsyncStorage.getItem('userToken');
-    if (!token) {
-      alert('Please log in again to continue.');
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       return;
     }
 
-    const decodedToken = decodeToken(token);
-    const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+    setIsSubmitting(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        setAlertTitle('Error');
+        setAlertMessage('Please log in again to continue.');
+        setAlertVisible(true);
+        return;
+      }
 
-    // Combine the date fields into a single birthdate if all fields are present
-    let birthdateToSend = null;
-    if (formData.birthdate_day && formData.birthdate_month && formData.birthdate_year) {
-      const formattedMonth = formData.birthdate_month.padStart(2, '0');
-      const formattedDay = formData.birthdate_day.padStart(2, '0');
-      birthdateToSend = `${formData.birthdate_year}-${formattedMonth}-${formattedDay}`;
-    }
+      const decodedToken = decodeToken(token);
+      const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
 
-    // Format the request data
-    const requestData = {
-      username: formData.username.trim(),
-      email: formData.email.trim(),
-      location: formData.location.trim() || null,
-      phone_number: formData.phone_number,
-      phone_country_code: formData.phone_country_code,
-      birthdate: birthdateToSend, // Send as a single field
-      ...(formData.profile_picture?.startsWith('data:image') && {
-        profile_picture: formData.profile_picture
-      })
-    };
+      let birthdateToSend = null;
+      if (formData.birthdate_day && formData.birthdate_month && formData.birthdate_year) {
+        const formattedMonth = formData.birthdate_month.padStart(2, '0');
+        const formattedDay = formData.birthdate_day.padStart(2, '0');
+        birthdateToSend = `${formData.birthdate_year}-${formattedMonth}-${formattedDay}`;
+      }
+
+      const requestData = {
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        location: formData.location.trim() || null,
+        phone_number: formData.phone_number,
+        phone_country_code: formData.phone_country_code,
+        birthdate: birthdateToSend,
+        ...(formData.profile_picture?.startsWith('data:image') && {
+          profile_picture: formData.profile_picture
+        })
+      };
     
       const response = await axios.put(
-      `${BASE_URL}/users/${userId}`,
-      requestData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+        `${BASE_URL}/users/${userId}`,
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
         }
-      }
-    );
+      );
 
-    if (response.data.success) {
-      alert('Profile updated successfully!');
-      navigation.navigate('Profile');
-    } else {
-      throw new Error(response.data.error || 'Failed to update profile');
+      if (response.data.success) {
+        setAlertTitle('Success');
+        setAlertMessage('Profile updated successfully!');
+        setAlertVisible(true);
+        setTimeout(() => {
+          navigation.navigate('profile/ProfilePage');
+        }, 2000);
+      } else {
+        throw new Error(response.data.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setAlertTitle('Error');
+      setAlertMessage(error.response?.data?.error || error.message || 'Failed to update profile. Please try again.');
+      setAlertVisible(true);
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    alert(error.response?.data?.error || error.message || 'Failed to update profile. Please try again.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   const renderInput = (
     field,
@@ -556,6 +566,12 @@ const handleSubmit = async () => {
         </TouchableOpacity>
       </ScrollView>
       <Navbar />
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </View>
   );
 };

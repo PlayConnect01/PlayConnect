@@ -1,43 +1,48 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TouchableOpacity, 
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
   FlatList,
   Animated,
   Modal,
   RefreshControl,
   ScrollView,
-  Dimensions
-} from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FontAwesome } from '@expo/vector-icons';
-import axios from 'axios';
-import { BASE_URL } from '../../../Api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation, useFocusEffect, useIsFocused } from '@react-navigation/native';
-import * as Haptics from 'expo-haptics';
-import { useCart } from '../../../contexts/CartContext';
-import { BlurView } from 'expo-blur';
-import Toast from 'react-native-toast-message';
-import { Easing } from 'react-native';
+  Dimensions,
+  Platform,
+} from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
+import axios from "axios";
+import { BASE_URL } from "../../../Api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  useNavigation,
+  useFocusEffect,
+  useIsFocused,
+} from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
+import { useCart } from "../../../contexts/CartContext";
+import { BlurView } from "expo-blur";
+import Toast from "react-native-toast-message";
+import { Easing } from "react-native";
 
 const SPORT_ID = 2; // Gym ID
 
-const  GymProducts= () => {
+const GymProducts = () => {
   const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
-  
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [favorites, setFavorites] = useState([]);
-  const [sortBy, setSortBy] = useState('default');
+  const [sortBy, setSortBy] = useState("default");
   const [filterRating, setFilterRating] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [stockAlerts, setStockAlerts] = useState([]);
   const navigation = useNavigation();
@@ -54,19 +59,23 @@ const  GymProducts= () => {
   const [showQuickView, setShowQuickView] = useState(false);
   const [lastAddedProduct, setLastAddedProduct] = useState(null);
   const isFocused = useIsFocused();
-  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
 
   // Quick view and sorting states
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [showSortFilter, setShowSortFilter] = useState(false);
   const [sortOptions] = useState([
-    { label: 'Newest', value: 'newest' },
-    { label: 'Price: Low to High', value: 'price-asc' },
-    { label: 'Price: High to Low', value: 'price-desc' },
-    { label: 'Rating', value: 'rating' }
+    { label: "Newest", value: "newest" },
+    { label: "Price: Low to High", value: "price-asc" },
+    { label: "Price: High to Low", value: "price-desc" },
+    { label: "Rating", value: "rating" },
   ]);
-  const [selectedSort, setSelectedSort] = useState('newest');
+  const [selectedSort, setSelectedSort] = useState("newest");
   const refreshAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -122,38 +131,38 @@ const  GymProducts= () => {
 
   const loadRecentlyViewed = async () => {
     try {
-      const viewed = await AsyncStorage.getItem('recentlyViewed');
+      const viewed = await AsyncStorage.getItem("recentlyViewed");
       if (viewed) {
         setRecentlyViewed(JSON.parse(viewed));
       }
     } catch (error) {
-      console.error('Error loading recently viewed:', error);
+      console.error("Error loading recently viewed:", error);
     }
   };
 
   const addToRecentlyViewed = async (product) => {
     try {
       const viewed = [...recentlyViewed];
-      const exists = viewed.find(p => p.product_id === product.product_id);
+      const exists = viewed.find((p) => p.product_id === product.product_id);
       if (!exists) {
         viewed.unshift(product);
         if (viewed.length > 10) viewed.pop();
         setRecentlyViewed(viewed);
-        await AsyncStorage.setItem('recentlyViewed', JSON.stringify(viewed));
+        await AsyncStorage.setItem("recentlyViewed", JSON.stringify(viewed));
       }
     } catch (error) {
-      console.error('Error updating recently viewed:', error);
+      console.error("Error updating recently viewed:", error);
     }
   };
 
   const loadStockAlerts = async () => {
     try {
-      const alerts = await AsyncStorage.getItem('stockAlerts');
+      const alerts = await AsyncStorage.getItem("stockAlerts");
       if (alerts) {
         setStockAlerts(JSON.parse(alerts));
       }
     } catch (error) {
-      console.error('Error loading stock alerts:', error);
+      console.error("Error loading stock alerts:", error);
     }
   };
 
@@ -161,22 +170,30 @@ const  GymProducts= () => {
     try {
       let newAlerts = [...stockAlerts];
       if (newAlerts.includes(productId)) {
-        newAlerts = newAlerts.filter(id => id !== productId);
-        setToast({ visible: true, message: 'Stock alert removed', type: 'success' });
+        newAlerts = newAlerts.filter((id) => id !== productId);
+        setToast({
+          visible: true,
+          message: "Stock alert removed",
+          type: "success",
+        });
       } else {
         newAlerts.push(productId);
-        setToast({ visible: true, message: 'Stock alert set', type: 'success' });
+        setToast({
+          visible: true,
+          message: "Stock alert set",
+          type: "success",
+        });
       }
       setStockAlerts(newAlerts);
-      await AsyncStorage.setItem('stockAlerts', JSON.stringify(newAlerts));
+      await AsyncStorage.setItem("stockAlerts", JSON.stringify(newAlerts));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('Error updating stock alerts:', error);
+      console.error("Error updating stock alerts:", error);
     }
   };
 
   const handleQuantityChange = (increment) => {
-    setQuantity(prev => {
+    setQuantity((prev) => {
       const newQuantity = prev + increment;
       return newQuantity >= 1 && newQuantity <= 10 ? newQuantity : prev;
     });
@@ -184,19 +201,23 @@ const  GymProducts= () => {
 
   const handleAddToCart = async (product) => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userDataStr = await AsyncStorage.getItem('userData');
+      const token = await AsyncStorage.getItem("userToken");
+      const userDataStr = await AsyncStorage.getItem("userData");
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
       const userId = userData?.user_id;
-      
+
       if (!token || !userId) {
-        setToast({ visible: true, message: 'Please login to add items to cart', type: 'warning' });
-        navigation.navigate('Login');
+        setToast({
+          visible: true,
+          message: "Please login to add items to cart",
+          type: "warning",
+        });
+        navigation.navigate("Login");
         return;
       }
 
       if (!product?.product_id) {
-        setToast({ visible: true, message: 'Invalid product', type: 'error' });
+        setToast({ visible: true, message: "Invalid product", type: "error" });
         return;
       }
 
@@ -205,7 +226,11 @@ const  GymProducts= () => {
       setShowQuantityModal(true);
     } catch (error) {
       console.error("Error preparing to add to cart:", error);
-      setToast({ visible: true, message: 'Failed to prepare cart addition', type: 'error' });
+      setToast({
+        visible: true,
+        message: "Failed to prepare cart addition",
+        type: "error",
+      });
     }
   };
 
@@ -213,8 +238,8 @@ const  GymProducts= () => {
     if (!selectedProduct) return;
 
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userDataStr = await AsyncStorage.getItem('userData');
+      const token = await AsyncStorage.getItem("userToken");
+      const userDataStr = await AsyncStorage.getItem("userData");
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
       const userId = userData?.user_id;
 
@@ -226,29 +251,37 @@ const  GymProducts= () => {
           quantity: quantity,
           price: selectedProduct.price,
         },
-        { 
-          headers: { 
+        {
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          } 
+            "Content-Type": "application/json",
+          },
         }
       );
 
       if (response.status === 201 || response.status === 200) {
         const productWithQuantity = {
           ...selectedProduct,
-          quantity: quantity
+          quantity: quantity,
         };
-        
+
         await addToCart(productWithQuantity);
         setLastAddedProduct(productWithQuantity);
-        
+
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setToast({ visible: true, message: `${quantity}x ${selectedProduct.name} added to your cart`, type: 'success' });
+        setToast({
+          visible: true,
+          message: `${quantity}x ${selectedProduct.name} added to your cart`,
+          type: "success",
+        });
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
-      setToast({ visible: true, message: 'Failed to add item to cart', type: 'error' });
+      setToast({
+        visible: true,
+        message: "Failed to add item to cart",
+        type: "error",
+      });
     } finally {
       setShowQuantityModal(false);
       setQuantity(1);
@@ -258,14 +291,18 @@ const  GymProducts= () => {
 
   const toggleFavorite = async (productId) => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      const userDataStr = await AsyncStorage.getItem('userData');
+      const token = await AsyncStorage.getItem("userToken");
+      const userDataStr = await AsyncStorage.getItem("userData");
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
       const userId = userData?.user_id;
 
       if (!token || !userId) {
-        setToast({ visible: true, message: 'Please login to manage favorites', type: 'warning' });
-        navigation.navigate('Login');
+        setToast({
+          visible: true,
+          message: "Please login to manage favorites",
+          type: "warning",
+        });
+        navigation.navigate("Login");
         return;
       }
 
@@ -277,15 +314,17 @@ const  GymProducts= () => {
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              "Content-Type": "application/json",
+            },
           }
         );
-        
-        const favorite = favoritesResponse.data.find(fav => fav.product_id === productId);
-        
+
+        const favorite = favoritesResponse.data.find(
+          (fav) => fav.product_id === productId
+        );
+
         if (!favorite) {
-          setToast({ visible: true, message: 'Error', type: 'error' });
+          setToast({ visible: true, message: "Error", type: "error" });
           return;
         }
 
@@ -293,45 +332,57 @@ const  GymProducts= () => {
         await axios.delete(
           `${BASE_URL}/favorites/favorites/item/${favorite.favorite_id}`,
           {
-            headers: { 
+            headers: {
               Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              "Content-Type": "application/json",
+            },
           }
         );
 
-        newFavorites = newFavorites.filter(id => id !== productId);
-        setToast({ visible: true, message: 'Removed from favorites', type: 'success' });
+        newFavorites = newFavorites.filter((id) => id !== productId);
+        setToast({
+          visible: true,
+          message: "Removed from favorites",
+          type: "success",
+        });
       } else {
         // Add to favorites
         await axios.post(
           `${BASE_URL}/favorites/favorites/add`,
           {
             userId: parseInt(userId),
-            productId: productId
+            productId: productId,
           },
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              "Content-Type": "application/json",
+            },
           }
         );
 
         newFavorites.push(productId);
-        setToast({ visible: true, message: 'Added to favorites', type: 'success' });
+        setToast({
+          visible: true,
+          message: "Added to favorites",
+          type: "success",
+        });
       }
-      
+
       setFavorites(newFavorites);
-      await AsyncStorage.setItem('favorites', JSON.stringify(newFavorites));
+      await AsyncStorage.setItem("favorites", JSON.stringify(newFavorites));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('Error updating favorites:', error);
+      console.error("Error updating favorites:", error);
       if (error.response?.status === 401) {
-        setToast({ visible: true, message: 'Please login', type: 'warning' });
-        navigation.navigate('Login');
+        setToast({ visible: true, message: "Please login", type: "warning" });
+        navigation.navigate("Login");
       } else {
-        setToast({ visible: true, message: 'Failed to update favorites', type: 'error' });
+        setToast({
+          visible: true,
+          message: "Failed to update favorites",
+          type: "error",
+        });
       }
     }
   };
@@ -341,20 +392,20 @@ const  GymProducts= () => {
       await Share.share({
         message: `Check out ${product.name} on PlayConnect! Price: ${product.formatted_price}`,
         url: product.image_url,
-        title: 'Share Product'
+        title: "Share Product",
       });
     } catch (error) {
-      console.error('Error sharing product:', error);
+      console.error("Error sharing product:", error);
     }
   };
 
   const sortProducts = (products) => {
     switch (sortBy) {
-      case 'price-asc':
+      case "price-asc":
         return [...products].sort((a, b) => a.price - b.price);
-      case 'price-desc':
+      case "price-desc":
         return [...products].sort((a, b) => b.price - a.price);
-      case 'rating':
+      case "rating":
         return [...products].sort((a, b) => b.rating - a.rating);
       default:
         return products;
@@ -362,43 +413,47 @@ const  GymProducts= () => {
   };
 
   const filterProducts = (products) => {
-    return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRating = filterRating === 0 || product.rating >= filterRating;
+    return products.filter((product) => {
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRating =
+        filterRating === 0 || product.rating >= filterRating;
       return matchesSearch && matchesRating;
     });
   };
 
   const loadFavorites = async () => {
     try {
-      const storedFavorites = await AsyncStorage.getItem('favorites');
+      const storedFavorites = await AsyncStorage.getItem("favorites");
       if (storedFavorites) {
         setFavorites(JSON.parse(storedFavorites));
       }
     } catch (error) {
-      console.error('Error loading favorites:', error);
+      console.error("Error loading favorites:", error);
     }
   };
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      console.log('Fetching Gym products');
-      
+      console.log("Fetching Gym products");
+
       // Updated endpoint with sport_id
-      const response = await axios.get(`${BASE_URL}/category/products/${SPORT_ID}`);
-      console.log('API Response:', response.data);
-      
+      const response = await axios.get(
+        `${BASE_URL}/category/products/${SPORT_ID}`
+      );
+      console.log("API Response:", response.data);
+
       if (response.data.success && response.data.products) {
         setProducts(response.data.products);
         setError(null);
       } else {
-        setError(response.data.message || 'No products found');
+        setError(response.data.message || "No products found");
       }
     } catch (err) {
-      console.error('Error fetching products:', err);
-      setError(err.response?.data?.message || 'Failed to load products');
+      console.error("Error fetching products:", err);
+      setError(err.response?.data?.message || "Failed to load products");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -444,7 +499,9 @@ const  GymProducts= () => {
                 resizeMode="cover"
               />
               <View style={styles.quickViewInfo}>
-                <Text style={styles.quickViewName}>{quickViewProduct.name}</Text>
+                <Text style={styles.quickViewName}>
+                  {quickViewProduct.name}
+                </Text>
                 <Text style={styles.quickViewDescription}>
                   {quickViewProduct.description}
                 </Text>
@@ -456,7 +513,11 @@ const  GymProducts= () => {
                     {[...Array(5)].map((_, index) => (
                       <MaterialIcons
                         key={index}
-                        name={index < quickViewProduct.rating ? 'star' : 'star-border'}
+                        name={
+                          index < quickViewProduct.rating
+                            ? "star"
+                            : "star-border"
+                        }
                         size={16}
                         color="#FFD700"
                       />
@@ -467,9 +528,9 @@ const  GymProducts= () => {
                   style={styles.quickViewButton}
                   onPress={() => {
                     setShowQuickViewModal(false);
-                    navigation.navigate('ProductDetail', {
+                    navigation.navigate("ProductDetail", {
                       productId: quickViewProduct.product_id,
-                      productName: quickViewProduct.name
+                      productName: quickViewProduct.name,
                     });
                   }}
                 >
@@ -484,30 +545,37 @@ const  GymProducts= () => {
   );
 
   const SortFilterBar = () => (
-    <Animated.View style={[styles.sortFilterBar, {
-      transform: [{
-        translateY: showSortFilter ? 0 : -50
-      }]
-    }]}>
+    <Animated.View
+      style={[
+        styles.sortFilterBar,
+        {
+          transform: [
+            {
+              translateY: showSortFilter ? 0 : -50,
+            },
+          ],
+        },
+      ]}
+    >
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {sortOptions.map((option) => (
           <TouchableOpacity
             key={option.value}
             style={[
               styles.sortOption,
-              selectedSort === option.value && styles.sortOptionSelected
+              selectedSort === option.value && styles.sortOptionSelected,
             ]}
             onPress={() => {
               setSelectedSort(option.value);
               const sorted = [...products].sort((a, b) => {
                 switch (option.value) {
-                  case 'newest':
+                  case "newest":
                     return new Date(b.created_at) - new Date(a.created_at);
-                  case 'price-asc':
+                  case "price-asc":
                     return a.price - b.price;
-                  case 'price-desc':
+                  case "price-desc":
                     return b.price - a.price;
-                  case 'rating':
+                  case "rating":
                     return b.rating - a.rating;
                   default:
                     return 0;
@@ -516,10 +584,12 @@ const  GymProducts= () => {
               setProducts(sorted);
             }}
           >
-            <Text style={[
-              styles.sortOptionText,
-              selectedSort === option.value && styles.sortOptionTextSelected
-            ]}>
+            <Text
+              style={[
+                styles.sortOptionText,
+                selectedSort === option.value && styles.sortOptionTextSelected,
+              ]}
+            >
               {option.label}
             </Text>
           </TouchableOpacity>
@@ -531,7 +601,7 @@ const  GymProducts= () => {
   const ProductCountBadge = () => (
     <View style={styles.productCountBadge}>
       <Text style={styles.productCountText}>
-        {products.length} {products.length === 1 ? 'Product' : 'Products'}
+        {products.length} {products.length === 1 ? "Product" : "Products"}
       </Text>
     </View>
   );
@@ -550,7 +620,7 @@ const  GymProducts= () => {
             style={styles.clearHistoryButton}
             onPress={() => {
               setRecentlyViewed([]);
-              AsyncStorage.removeItem('recentlyViewed');
+              AsyncStorage.removeItem("recentlyViewed");
             }}
           >
             <Text style={styles.clearHistoryText}>Clear History</Text>
@@ -563,7 +633,11 @@ const  GymProducts= () => {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.recentlyViewedItem}
-              onPress={() => navigation.navigate('ProductDetail', { productId: item.product_id })}
+              onPress={() =>
+                navigation.navigate("ProductDetail", {
+                  productId: item.product_id,
+                })
+              }
               activeOpacity={0.7}
             >
               <View style={styles.recentlyViewedImageContainer}>
@@ -588,7 +662,7 @@ const  GymProducts= () => {
                   {[...Array(5)].map((_, index) => (
                     <MaterialIcons
                       key={index}
-                      name={index < item.rating ? 'star' : 'star-border'}
+                      name={index < item.rating ? "star" : "star-border"}
                       size={14}
                       color="#FFD700"
                     />
@@ -598,7 +672,7 @@ const  GymProducts= () => {
                   <Text style={styles.recentlyViewedPrice}>
                     ${item.price.toFixed(2)}
                   </Text>
-                  {item.original_price && ( 
+                  {item.original_price && (
                     <Text style={styles.recentlyViewedOriginalPrice}>
                       ${item.original_price.toFixed(2)}
                     </Text>
@@ -617,16 +691,18 @@ const  GymProducts= () => {
   const renderProductItem = ({ item: product }) => {
     const isFavorite = favorites.includes(product.product_id);
     const hasStockAlert = stockAlerts.includes(product.product_id);
-    const isInCart = cartItems.some(cartItem => cartItem.product_id === product.product_id);
+    const isInCart = cartItems.some(
+      (cartItem) => cartItem.product_id === product.product_id
+    );
 
     return (
       <TouchableOpacity
         key={product.product_id}
         onPress={() => {
           addToRecentlyViewed(product);
-          navigation.navigate('ProductDetail', { 
+          navigation.navigate("ProductDetail", {
             productId: product.product_id,
-            productName: product.name 
+            productName: product.name,
           });
         }}
         activeOpacity={0.7}
@@ -646,13 +722,16 @@ const  GymProducts= () => {
               resizeMode="cover"
             />
             <TouchableOpacity
-              style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
+              style={[
+                styles.favoriteButton,
+                isFavorite && styles.favoriteButtonActive,
+              ]}
               onPress={() => toggleFavorite(product.product_id)}
             >
-              <FontAwesome 
-                name={isFavorite ? "heart" : "heart-o"} 
-                size={20} 
-                color={isFavorite ? "#DC2626" : "#666666"} 
+              <FontAwesome
+                name={isFavorite ? "heart" : "heart-o"}
+                size={20}
+                color={isFavorite ? "#DC2626" : "#666666"}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -662,7 +741,7 @@ const  GymProducts= () => {
               <MaterialIcons name="share" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.productInfo}>
             <Text style={styles.productName} numberOfLines={2}>
               {product?.name}
@@ -672,7 +751,7 @@ const  GymProducts= () => {
                 {[...Array(5)].map((_, index) => (
                   <MaterialIcons
                     key={index}
-                    name={index < product.rating ? 'star' : 'star-border'}
+                    name={index < product.rating ? "star" : "star-border"}
                     size={16}
                     color="#FFD700"
                   />
@@ -737,29 +816,35 @@ const  GymProducts= () => {
               <MaterialIcons name="close" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.quantityContainer}>
             <TouchableOpacity
-              style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
+              style={[
+                styles.quantityButton,
+                quantity <= 1 && styles.quantityButtonDisabled,
+              ]}
               onPress={() => handleQuantityChange(-1)}
               disabled={quantity <= 1}
             >
-              <MaterialIcons 
-                name="remove" 
-                size={22} 
-                color={quantity <= 1 ? '#666666' : '#007AFF'} 
+              <MaterialIcons
+                name="remove"
+                size={22}
+                color={quantity <= 1 ? "#666666" : "#007AFF"}
               />
             </TouchableOpacity>
             <Text style={styles.quantityText}>{quantity}</Text>
             <TouchableOpacity
-              style={[styles.quantityButton, quantity >= 10 && styles.quantityButtonDisabled]}
+              style={[
+                styles.quantityButton,
+                quantity >= 10 && styles.quantityButtonDisabled,
+              ]}
               onPress={() => handleQuantityChange(1)}
               disabled={quantity >= 10}
             >
-              <MaterialIcons 
-                name="add" 
-                size={22} 
-                color={quantity >= 10 ? '#666666' : '#007AFF'} 
+              <MaterialIcons
+                name="add"
+                size={22}
+                color={quantity >= 10 ? "#666666" : "#007AFF"}
               />
             </TouchableOpacity>
           </View>
@@ -770,12 +855,17 @@ const  GymProducts= () => {
               ${(selectedProduct?.price * quantity || 0).toFixed(2)}
             </Text>
           </View>
-          
+
           <TouchableOpacity
             style={styles.confirmButton}
             onPress={confirmAddToCart}
           >
-            <MaterialCommunityIcons name="cart-plus" size={22} color="#FFFFFF" style={styles.cartIcon} />
+            <MaterialCommunityIcons
+              name="cart-plus"
+              size={22}
+              color="#FFFFFF"
+              style={styles.cartIcon}
+            />
             <Text style={styles.confirmButtonText}>Add to Cart</Text>
           </TouchableOpacity>
         </View>
@@ -791,8 +881,8 @@ const  GymProducts= () => {
         style={[
           styles.lastAddedNotification,
           {
-            transform: [{ scale: cartAnimation }]
-          }
+            transform: [{ scale: cartAnimation }],
+          },
         ]}
       >
         <Image
@@ -807,7 +897,7 @@ const  GymProducts= () => {
         </View>
         <TouchableOpacity
           style={styles.viewCartButton}
-          onPress={() => navigation.navigate('Cart')}
+          onPress={() => navigation.navigate("Cart")}
         >
           <Text style={styles.viewCartText}>View Cart</Text>
         </TouchableOpacity>
@@ -824,8 +914,8 @@ const  GymProducts= () => {
     useEffect(() => {
       // Play haptic feedback
       Haptics.notificationAsync(
-        type === 'error' 
-          ? Haptics.NotificationFeedbackType.Error 
+        type === "error"
+          ? Haptics.NotificationFeedbackType.Error
           : Haptics.NotificationFeedbackType.Success
       );
 
@@ -851,59 +941,62 @@ const  GymProducts= () => {
       ]).start();
 
       // Hide after delay (longer for success with buttons)
-      const timer = setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(translateY, {
-            toValue: -100,
-            duration: 200,
-            easing: Easing.in(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scale, {
-            toValue: 0.9,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]).start(() => onHide());
-      }, type === 'success' ? 4000 : 2500); // Longer duration for success toast
+      const timer = setTimeout(
+        () => {
+          Animated.parallel([
+            Animated.timing(translateY, {
+              toValue: -100,
+              duration: 200,
+              easing: Easing.in(Easing.ease),
+              useNativeDriver: true,
+            }),
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 150,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scale, {
+              toValue: 0.9,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start(() => onHide());
+        },
+        type === "success" ? 4000 : 2500
+      ); // Longer duration for success toast
 
       return () => clearTimeout(timer);
     }, []);
 
     const getToastStyle = () => {
       switch (type) {
-        case 'success':
+        case "success":
           return {
-            backgroundColor: '#4FA5F5',
-            icon: 'check-circle-outline',
-            title: 'Success',
-            gradient: ['#4FA5F5', '#6366F1']
+            backgroundColor: "#4FA5F5",
+            icon: "check-circle-outline",
+            title: "Success",
+            gradient: ["#4FA5F5", "#6366F1"],
           };
-        case 'error':
+        case "error":
           return {
-            backgroundColor: '#DC2626',
-            icon: 'error-outline',
-            title: 'Error',
-            gradient: ['#DC2626', '#EF4444']
+            backgroundColor: "#DC2626",
+            icon: "error-outline",
+            title: "Error",
+            gradient: ["#DC2626", "#EF4444"],
           };
-        case 'warning':
+        case "warning":
           return {
-            backgroundColor: '#F59E0B',
-            icon: 'warning',
-            title: 'Warning',
-            gradient: ['#F59E0B', '#F97316']
+            backgroundColor: "#F59E0B",
+            icon: "warning",
+            title: "Warning",
+            gradient: ["#F59E0B", "#F97316"],
           };
         default:
           return {
-            backgroundColor: '#4FA5F5',
-            icon: 'info-outline',
-            title: 'Info',
-            gradient: ['#4FA5F5', '#6366F1']
+            backgroundColor: "#4FA5F5",
+            icon: "info-outline",
+            title: "Info",
+            gradient: ["#4FA5F5", "#6366F1"],
           };
       }
     };
@@ -915,15 +1008,12 @@ const  GymProducts= () => {
         style={[
           styles.toastContainer,
           {
-            transform: [
-              { translateY },
-              { scale }
-            ],
+            transform: [{ translateY }, { scale }],
             opacity,
           },
         ]}
       >
-        <View style={[styles.toast, type === 'error' && styles.toastError]}>
+        <View style={[styles.toast, type === "error" && styles.toastError]}>
           <MaterialIcons
             name={toastStyle.icon}
             size={24}
@@ -933,13 +1023,13 @@ const  GymProducts= () => {
           <View style={styles.toastContent}>
             <Text style={styles.toastTitle}>{toastStyle.title}</Text>
             <Text style={styles.toastMessage}>{message}</Text>
-            {type === 'success' && message.includes('added to your cart') && (
+            {type === "success" && message.includes("added to your cart") && (
               <View style={styles.toastButtons}>
                 <TouchableOpacity
                   style={styles.toastButton}
                   onPress={() => {
                     onHide();
-                    navigation.navigate('Cart');
+                    navigation.navigate("Cart");
                   }}
                 >
                   <Text style={styles.toastButtonText}>View Cart</Text>
@@ -950,7 +1040,12 @@ const  GymProducts= () => {
                     onHide();
                   }}
                 >
-                  <Text style={[styles.toastButtonText, styles.toastButtonTextOutline]}>
+                  <Text
+                    style={[
+                      styles.toastButtonText,
+                      styles.toastButtonTextOutline,
+                    ]}
+                  >
                     Continue Shopping
                   </Text>
                 </TouchableOpacity>
@@ -973,25 +1068,46 @@ const  GymProducts= () => {
           </Text>
           <View style={styles.headerStats}>
             <View style={styles.statItem}>
-              <MaterialIcons name="fitness-center" size={18} color="#FFFFFF" style={styles.statIcon} />
+              <MaterialIcons
+                name="fitness-center"
+                size={18}
+                color="#FFFFFF"
+                style={styles.statIcon}
+              />
               <Text style={styles.statValue}>{products.length}</Text>
               <Text style={styles.statLabel}>Products</Text>
             </View>
             <View style={styles.statItem}>
-              <MaterialIcons name="local-fire-department" size={18} color="#FFFFFF" style={styles.statIcon} />
-              <Text style={styles.statValue}>{products.filter(p => p.discount > 0).length}</Text>
+              <MaterialIcons
+                name="local-fire-department"
+                size={18}
+                color="#FFFFFF"
+                style={styles.statIcon}
+              />
+              <Text style={styles.statValue}>
+                {products.filter((p) => p.discount > 0).length}
+              </Text>
               <Text style={styles.statLabel}>On Sale</Text>
             </View>
             <View style={styles.statItem}>
-              <MaterialIcons name="star" size={18} color="#FFFFFF" style={styles.statIcon} />
-              <Text style={styles.statValue}>{products.filter(p => p.rating >= 4.5).length}</Text>
+              <MaterialIcons
+                name="star"
+                size={18}
+                color="#FFFFFF"
+                style={styles.statIcon}
+              />
+              <Text style={styles.statValue}>
+                {products.filter((p) => p.rating >= 4.5).length}
+              </Text>
               <Text style={styles.statLabel}>Top Rated</Text>
             </View>
           </View>
         </View>
         <View style={styles.headerImageContainer}>
           <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3' }}
+            source={{
+              uri: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3",
+            }}
             style={styles.headerImage}
           />
           <View style={styles.headerImageOverlay} />
@@ -1003,19 +1119,21 @@ const  GymProducts= () => {
   return (
     <View style={styles.container}>
       {toast.visible && (
-        <CustomToast 
+        <CustomToast
           message={toast.message}
           type={toast.type}
-          onHide={() => setToast({ visible: false, message: '', type: 'success' })}
+          onHide={() =>
+            setToast({ visible: false, message: "", type: "success" })
+          }
         />
       )}
-      
+
       <QuantityModal />
       <QuickViewModal />
       <LastAddedNotification />
-      
+
       <HeaderSection />
-      
+
       <AnimatedFlatList
         data={products}
         keyExtractor={(item) => item.product_id.toString()}
@@ -1031,11 +1149,11 @@ const  GymProducts= () => {
           </>
         )}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
+          <RefreshControl
+            refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor="#007AFF"
-            colors={['#007AFF']}
+            colors={["#007AFF"]}
           />
         }
       />
@@ -1046,10 +1164,10 @@ const  GymProducts= () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   headerContainer: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     paddingTop: 8,
     paddingBottom: 16,
     borderBottomLeftRadius: 16,
@@ -1057,9 +1175,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingHorizontal: 16,
   },
   headerLeft: {
@@ -1070,49 +1188,49 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: "hidden",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     marginTop: 4,
   },
   headerImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   headerImageOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
   headerCategory: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: "rgba(255, 255, 255, 0.9)",
     marginBottom: 4,
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: "rgba(255, 255, 255, 0.8)",
     marginBottom: 12,
   },
   headerStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 12,
     padding: 8,
   },
   statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginRight: 12,
   },
   statIcon: {
@@ -1121,19 +1239,19 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginRight: 4,
   },
   statLabel: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: "rgba(255, 255, 255, 0.8)",
   },
   productCard: {
     width: 170,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1141,31 +1259,31 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
     margin: 8,
   },
   imageContainer: {
-    width: '100%',
+    width: "100%",
     height: 200,
-    backgroundColor: '#F7FAFC',
-    position: 'relative',
+    backgroundColor: "#F7FAFC",
+    position: "relative",
   },
   productImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   discountBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 12,
     left: 12,
-    backgroundColor: '#FF4B4B',
+    backgroundColor: "#FF4B4B",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1176,21 +1294,21 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   discountText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: "#FFFFFF",
+    fontWeight: "700",
     fontSize: 14,
   },
   favoriteButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 12,
     right: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     width: 36,
     height: 36,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1201,19 +1319,19 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   favoriteButtonActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   shareButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 12,
     right: 56,
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     width: 36,
     height: 36,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1228,65 +1346,65 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1A202C',
+    fontWeight: "600",
+    color: "#1A202C",
     marginBottom: 8,
     lineHeight: 22,
   },
   ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   ratingStars: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginRight: 4,
   },
   ratingCount: {
     fontSize: 12,
-    color: '#6B7280',
+    color: "#6B7280",
     marginLeft: 4,
   },
   priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   priceInfo: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
   discountedPrice: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1A202C',
+    fontWeight: "700",
+    color: "#1A202C",
     marginBottom: 4,
   },
   originalPrice: {
     fontSize: 14,
-    color: '#A0AEC0',
-    textDecorationLine: 'line-through',
+    color: "#A0AEC0",
+    textDecorationLine: "line-through",
   },
   savingsContainer: {
-    backgroundColor: '#C6F6D5',
+    backgroundColor: "#C6F6D5",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
   },
   savingsText: {
-    color: '#2F855A',
+    color: "#2F855A",
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   addToCartButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     borderRadius: 12,
     paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#4FA5F5',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#4FA5F5",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1296,25 +1414,25 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 8,
   },
   toastContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 16,
     right: 16,
     zIndex: 1000,
   },
   toast: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     padding: 16,
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1324,7 +1442,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   toastError: {
-    backgroundColor: '#DC2626',
+    backgroundColor: "#DC2626",
   },
   toastIcon: {
     marginRight: 12,
@@ -1334,118 +1452,118 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toastTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
   },
   toastMessage: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
     opacity: 0.9,
     marginBottom: 12,
   },
   toastButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 8,
     gap: 8,
   },
   toastButton: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   toastButtonOutline: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderColor: "#FFFFFF",
   },
   toastButtonText: {
-    color: '#4FA5F5',
+    color: "#4FA5F5",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   toastButtonTextOutline: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 24,
-    width: '90%',
+    width: "90%",
     maxWidth: 400,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#1A202C',
+    fontWeight: "600",
+    color: "#1A202C",
   },
   closeButton: {
     padding: 8,
   },
   quantityContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
   },
   quantityButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
   },
   quantityButtonDisabled: {
     opacity: 0.5,
   },
   quantityText: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#1A202C',
+    fontWeight: "600",
+    color: "#1A202C",
   },
   confirmButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     borderRadius: 12,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   confirmButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 8,
   },
   lastAddedNotification: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 24,
     left: 16,
     right: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1466,72 +1584,72 @@ const styles = StyleSheet.create({
   },
   lastAddedTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1A202C',
+    fontWeight: "600",
+    color: "#1A202C",
     marginBottom: 4,
   },
   lastAddedDetails: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   viewCartButton: {
-    backgroundColor: '#4FA5F5',
+    backgroundColor: "#4FA5F5",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginLeft: 12,
   },
   viewCartText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   skeletonContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     padding: 16,
   },
   skeletonCard: {
     width: 170,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     marginBottom: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   skeletonImage: {
-    width: '100%',
+    width: "100%",
     height: 200,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#E2E8F0",
   },
   skeletonInfo: {
     padding: 16,
   },
   skeletonText: {
     height: 20,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#E2E8F0",
     borderRadius: 4,
     marginBottom: 8,
   },
   skeletonPrice: {
     height: 24,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#E2E8F0",
     borderRadius: 4,
-    width: '60%',
+    width: "60%",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
+    color: "#6B7280",
+    textAlign: "center",
   },
   columnWrapper: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     paddingHorizontal: 8,
   },
   listFooter: {
@@ -1539,10 +1657,10 @@ const styles = StyleSheet.create({
   },
   recentlyViewedSection: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1552,19 +1670,19 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   recentlyViewedHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   recentlyViewedTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   recentlyViewedTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1A202C',
+    fontWeight: "600",
+    color: "#1A202C",
     marginLeft: 8,
   },
   clearHistoryButton: {
@@ -1572,36 +1690,36 @@ const styles = StyleSheet.create({
   },
   clearHistoryText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   recentlyViewedItem: {
     width: 120,
     marginRight: 16,
   },
   recentlyViewedImageContainer: {
-    width: '100%',
+    width: "100%",
     height: 120,
-    backgroundColor: '#F7FAFC',
+    backgroundColor: "#F7FAFC",
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 8,
   },
   recentlyViewedImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   recentlyViewedDiscountBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     left: 8,
-    backgroundColor: '#FF4B4B',
+    backgroundColor: "#FF4B4B",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1612,8 +1730,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   recentlyViewedDiscountText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: "#FFFFFF",
+    fontWeight: "700",
     fontSize: 12,
   },
   recentlyViewedInfo: {
@@ -1621,28 +1739,28 @@ const styles = StyleSheet.create({
   },
   recentlyViewedName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1A202C',
+    fontWeight: "600",
+    color: "#1A202C",
     marginBottom: 4,
   },
   recentlyViewedRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 4,
   },
   recentlyViewedPriceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   recentlyViewedPrice: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1A202C',
+    fontWeight: "700",
+    color: "#1A202C",
   },
   recentlyViewedOriginalPrice: {
     fontSize: 14,
-    color: '#A0AEC0',
-    textDecorationLine: 'line-through',
+    color: "#A0AEC0",
+    textDecorationLine: "line-through",
     marginLeft: 8,
   },
 });

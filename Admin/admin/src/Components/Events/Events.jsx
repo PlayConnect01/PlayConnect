@@ -38,13 +38,22 @@ const Events = () => {
     try {
       const result = await Swal.fire({
         title: 'Delete Event',
-        text: 'Are you sure you want to delete this event? This will also remove all participants.',
+        text: 'Are you sure you want to delete this event?',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Yes, delete it',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
@@ -52,20 +61,34 @@ const Events = () => {
         
         if (response.status === 200) {
           setEvents(events.filter(event => event.event_id !== eventId));
-          await Swal.fire(
-            'Deleted!',
-            'Event has been deleted successfully.',
-            'success'
-          );
+          await Swal.fire({
+            title: 'Deleted!',
+            text: 'Event has been deleted successfully.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            customClass: {
+              popup: 'small-popup',
+              title: 'small-title',
+              content: 'small-content'
+            }
+          });
         }
       }
     } catch (error) {
       console.error('Error deleting event:', error);
-      await Swal.fire(
-        'Error',
-        'Failed to delete event. Please try again.',
-        'error'
-      );
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to delete event. Please try again.',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'small-popup',
+          title: 'small-title',
+          content: 'small-content'
+        }
+      });
     }
   };
 
@@ -82,14 +105,21 @@ const Events = () => {
         showCancelButton: true,
         confirmButtonColor: '#28a745',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, approve it'
+        confirmButtonText: 'Yes, approve it',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
-        // First, approve the event
         const approveResponse = await axios.put(`http://localhost:3000/events/approve/${eventId}`);
         
-        // Find the event to get the creator's ID
         const event = events.find(e => e.event_id === eventId);
         
         if (event && event.creator_id) {
@@ -104,25 +134,39 @@ const Events = () => {
           }
         }
 
-        // Update local state
         setEvents(events.map(event => 
           event.event_id === eventId 
             ? { ...event, status: 'approved' }
             : event
         ));
 
-        // Modified success alert to auto-close
         await Swal.fire({
           title: 'Approved!',
-          text: 'The event has been approved .',
+          text: 'The event has been approved.',
           icon: 'success',
           timer: 2000,
-          showConfirmButton: false
+          showConfirmButton: false,
+          customClass: {
+            popup: 'small-popup',
+            title: 'small-title',
+            content: 'small-content'
+          }
         });
       }
     } catch (error) {
       console.error('Error approving event:', error);
-      Swal.fire('Error', 'Failed to approve event', 'error');
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to approve event',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'small-popup',
+          title: 'small-title',
+          content: 'small-content'
+        }
+      });
     }
   };
 
@@ -135,7 +179,16 @@ const Events = () => {
         showCancelButton: true,
         confirmButtonColor: '#dc3545',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, reject it'
+        confirmButtonText: 'Yes, reject it',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
@@ -146,18 +199,33 @@ const Events = () => {
             : event
         ));
         
-        // Modified success alert to auto-close
         await Swal.fire({
           title: 'Rejected!',
           text: 'The event has been rejected.',
           icon: 'success',
           timer: 2000,
-          showConfirmButton: false
+          showConfirmButton: false,
+          customClass: {
+            popup: 'small-popup',
+            title: 'small-title',
+            content: 'small-content'
+          }
         });
       }
     } catch (error) {
       console.error('Error rejecting event:', error);
-      Swal.fire('Error', 'Failed to reject event', 'error');
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to reject event',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'small-popup',
+          title: 'small-title',
+          content: 'small-content'
+        }
+      });
     }
   };
 
@@ -238,12 +306,14 @@ const Events = () => {
                   </button>
                 </>
               )}
-              <button
-                className="action-button delete"
-                onClick={() => handleDelete(event.event_id)}
-              >
-                Cancel
-              </button>
+              {event.status !== 'pending' && (
+                <button
+                  className="action-button delete"
+                  onClick={() => handleDelete(event.event_id)}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
         ))}

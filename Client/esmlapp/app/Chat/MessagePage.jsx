@@ -45,13 +45,43 @@ const MessagePage = (props) => {
     loadToken();
   }, []);
 
+  const fetchLastMessage = async (chatId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/chats/${chatId}/lastMessage`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching last message:', error);
+      return null;
+    }
+  };
+
   const fetchAcceptedMatches = async (userId) => {
     try {
       const response = await axios.get(`${BASE_URL}/matches/accepted/${userId}`);
-      setMatches(response.data);
+      const matchesWithLastMessage = await Promise.all(
+        response.data.map(async (match) => {
+          const lastMessage = await fetchLastMessage(match.chat_id);
+          return { ...match, lastMessage };
+        })
+      );
+      setMatches(matchesWithLastMessage);
     } catch (error) {
       console.error('Error fetching accepted matches:', error);
       Alert.alert('Error', 'Failed to load accepted matches.');
+    }
+  };
+
+  const renderLastMessage = (lastMessage) => {
+    if (!lastMessage) return 'Start a new conversation!';
+    switch (lastMessage.message_type) {
+      case 'TEXT':
+        return lastMessage.content;
+      case 'IMAGE':
+        return 'You received an image';
+      case 'AUDIO':
+        return 'New voice message';
+      default:
+        return 'Start a new conversation!';
     }
   };
 
@@ -87,15 +117,7 @@ const MessagePage = (props) => {
                 <Text style={styles.messageTime}>{new Date(match.matched_at).toLocaleDateString()}</Text>
               </View>
               <Text style={styles.messageText} numberOfLines={1}>
-                {match.lastMessage ? (
-                  match.lastMessage.message_type === 'IMAGE' 
-                    ? 'You received an image'
-                    : match.lastMessage.message_type === 'AUDIO'
-                    ? 'New voice message'
-                    : match.lastMessage.content || 'New message'
-                ) : (
-                  'Start a new conversation!'
-                )}
+                {renderLastMessage(match.lastMessage)}
               </Text>
             </View>
           </TouchableOpacity>

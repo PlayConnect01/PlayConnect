@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -8,7 +8,9 @@ import {
   Image 
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import axios from 'axios';
 
 const GradientButton = ({ onPress, title, style }) => (
   <TouchableOpacity 
@@ -28,19 +30,33 @@ const GradientButton = ({ onPress, title, style }) => (
 
 const App = () => {
   const navigation = useNavigation();
+  const chatId = 'your-chat-id'; // Replace with your actual chat ID
+  const BASE_URL = 'your-base-url'; // Replace with your actual base URL
+
+
+
 
   const handleMatchNow = () => {
     navigation.navigate('Matchingpage');
   };
 
-
+  const handleBack = () => {
+    navigation.goBack();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <Image 
-        source={require('../../assets/images/find people with same interest.png')} 
-        style={styles.backgroundImage}
+        source={require('../../assets/images/find people with same interest.jpg')} 
+        style={styles.background}
       />
+      
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={handleBack}
+      >
+        <Ionicons name="chevron-back" size={30} color="#fff" />
+      </TouchableOpacity>
 
       <View style={styles.content}>
         <View style={styles.buttonsWrapper}>
@@ -49,7 +65,6 @@ const App = () => {
             onPress={handleMatchNow}
             style={styles.matchButton}
           />
-        
         </View>
       </View>
     </SafeAreaView>
@@ -60,17 +75,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backgroundImage: {
-    position: 'absolute',
+  background: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    position: 'absolute',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-    paddingBottom: 50,
+    backgroundColor: 'rgba(0,0,0,0)',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: '70%',
   },
   buttonsWrapper: {
     width: '100%',
@@ -78,10 +105,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   buttonContainer: {
-    width: '100%',
+    width: '80%',
     borderRadius: 25,
     overflow: 'hidden',
-    marginVertical: 10,
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -89,24 +116,22 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
   gradient: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
+    paddingVertical: 15,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   matchButton: {
-    marginBottom: 15,
-  },
-  homeButton: {
-    marginBottom: 80,
+    width: '100%',
+    maxWidth: 300,
   },
 });
 

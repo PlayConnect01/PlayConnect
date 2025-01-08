@@ -6,17 +6,15 @@ import { MdArrowBack, MdEdit, MdDelete, MdLocalOffer, MdStar, MdSave, MdClose } 
 import Swal from 'sweetalert2';
 
 const sweetAlertConfig = {
-  width: '280px',
-  padding: '0.8rem',
+  width: '400px',
   customClass: {
-    popup: 'small-popup',
-    title: 'small-title',
-    content: 'small-content',
-    confirmButton: 'small-button'
-  },
-  timer: 1500,
-  showConfirmButton: false,
-  timerProgressBar: true
+    popup: 'large-popup',
+    title: 'large-title',
+    content: 'large-content',
+    confirmButton: 'large-button',
+    cancelButton: 'large-button',
+    actions: 'large-actions'
+  }
 };
 
 const ProductDetails = () => {
@@ -68,18 +66,32 @@ const ProductDetails = () => {
       setEditMode(prev => ({ ...prev, [field]: false }));
       
       await Swal.fire({
-        ...sweetAlertConfig,
-        icon: 'success',
         title: 'Success',
-        text: 'Product updated successfully'
+        text: 'Product updated successfully',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'small-popup',
+          title: 'small-title',
+          content: 'small-content'
+        }
       });
     } catch (error) {
       console.error('Error updating product:', error);
       await Swal.fire({
-        ...sweetAlertConfig,
-        icon: 'error',
         title: 'Error',
-        text: 'Failed to update product'
+        text: 'Failed to update product',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'small-popup',
+          title: 'small-title',
+          content: 'small-content'
+        }
       });
     }
   };
@@ -94,27 +106,49 @@ const ProductDetails = () => {
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Delete',
-        width: '280px',
-        padding: '0.8rem'
+        cancelButtonText: 'Cancel',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
         await axios.delete(`http://localhost:3000/product/products/${id}`);
         await Swal.fire({
-          ...sweetAlertConfig,
-          icon: 'success',
           title: 'Deleted!',
-          text: 'Product has been deleted'
+          text: 'Product has been deleted',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          width: '400px',
+          customClass: {
+            popup: 'small-popup',
+            title: 'small-title',
+            content: 'small-content'
+          }
         });
         navigate('/admin/products');
       }
     } catch (error) {
       console.error('Error deleting product:', error);
       await Swal.fire({
-        ...sweetAlertConfig,
-        icon: 'error',
         title: 'Error',
-        text: 'Failed to delete product'
+        text: 'Failed to delete product',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'small-popup',
+          title: 'small-title',
+          content: 'small-content'
+        }
       });
     }
   };
