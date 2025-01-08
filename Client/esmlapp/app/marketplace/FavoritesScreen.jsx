@@ -245,7 +245,7 @@ const FavoritesScreen = () => {
             { id: 'rating', label: 'Rating', icon: 'star' }
           ].map(option => (
             <TouchableOpacity
-              key={option.id}
+              key={`sort-${option.id}`}
               style={[
                 styles.sortOption,
                 sortOption === option.id && styles.sortOptionSelected
@@ -413,7 +413,7 @@ const FavoritesScreen = () => {
             <View style={styles.cardContainer}>
               {sortFavorites(filterFavorites(favorites)).map((favorite) => (
                 <TouchableOpacity
-                  key={favorite.favorite_id}
+                  key={`product-${favorite.favorite_id}`}
                   onPress={() => navigateToProduct(favorite.product)}
                   activeOpacity={0.7}
                 >

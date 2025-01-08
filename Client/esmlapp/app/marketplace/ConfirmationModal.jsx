@@ -33,10 +33,10 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
           ]}
         >
           <View style={styles.iconContainer}>
-            <Ionicons name="trash-bin-outline" size={40} color="#FF4B4B" />
+            <Ionicons name="alert-circle-outline" size={32} color="#DC2626" />
           </View>
           
-          <Text style={styles.title}>Delete Item</Text>
+          <Text style={styles.title}>Remove Item?</Text>
           <Text style={styles.message}>{message}</Text>
           
           <View style={styles.buttonContainer}>
@@ -44,7 +44,6 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
               style={[styles.button, styles.cancelButton]}
               onPress={onCancel}
             >
-              <Ionicons name="close-outline" size={20} color="#4FA5F5" />
               <Text style={[styles.buttonText, styles.cancelText]}>Cancel</Text>
             </TouchableOpacity>
             
@@ -52,8 +51,7 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
               style={[styles.button, styles.deleteButton]}
               onPress={onConfirm}
             >
-              <Ionicons name="trash-outline" size={20} color="#FFF" />
-              <Text style={[styles.buttonText, styles.deleteText]}>Delete</Text>
+              <Text style={[styles.buttonText, styles.deleteText]}>Remove</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -65,46 +63,46 @@ const ConfirmationModal = ({ visible, onConfirm, onCancel, message }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
     width: Dimensions.get('window').width * 0.85,
     alignItems: 'center',
     shadowColor: '#4FA5F5',
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 2,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFF5F5',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FEE2E2',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2D3748',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
     marginBottom: 8,
   },
   message: {
-    fontSize: 16,
-    color: '#4A5568',
+    fontSize: 15,
+    color: '#64748B',
     textAlign: 'center',
     marginBottom: 24,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -113,29 +111,25 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   button: {
-    flexDirection: 'row',
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    flex: 1,
-    gap: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#EDF2F7',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  deleteButton: {
-    backgroundColor: '#FF4B4B',
+    flexDirection: 'row',
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
+  cancelButton: {
+    backgroundColor: '#F1F5F9',
+  },
   cancelText: {
-    color: '#4FA5F5',
+    color: '#64748B',
+  },
+  deleteButton: {
+    backgroundColor: '#DC2626',
   },
   deleteText: {
     color: '#FFFFFF',

@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Image
+  Image,
+  Modal,
+  Animated
 } from 'react-native';
 import { useStripe } from '@stripe/stripe-react-native';
 import { CardField } from '@stripe/stripe-react-native';
@@ -17,12 +19,26 @@ import { BASE_URL } from "../../../Api";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PaymentScreen = ({ route, navigation }) => {
-  const { cartTotal = 0, deliveryFee = 0, cartItems = [], userDetails: routeUserDetails = {} } = route.params || {};
+  // Add default values and ensure numbers
+  const { 
+    cartTotal = 0, 
+    deliveryFee = 0, 
+    cartItems = [], 
+    userDetails: routeUserDetails = {} 
+  } = route?.params || {};
+
+  // Ensure numbers for calculations
+  const safeCartTotal = Number(cartTotal) || 0;
+  const safeDeliveryFee = Number(deliveryFee) || 0;
+  const totalAmount = safeCartTotal + safeDeliveryFee;
+
   const [loading, setLoading] = useState(false);
   const [cardDetails, setCardDetails] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [saveCard, setSaveCard] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const { confirmPayment } = useStripe();
 
   // Get user details from AsyncStorage
@@ -93,30 +109,22 @@ const PaymentScreen = ({ route, navigation }) => {
         itemCount: cartItems.length
       });
 
-      // Show order summary before proceeding
-      const proceed = await new Promise((resolve) => {
-        Alert.alert(
-          'Confirm Order',
-          `Total Amount: $${(cartTotal + deliveryFee).toFixed(2)}\nNumber of Items: ${cartItems.length}\n\nProceed with payment?`,
-          [
-            {
-              text: 'Cancel',
-              style: 'cancel',
-              onPress: () => resolve(false)
-            },
-            {
-              text: 'Proceed',
-              onPress: () => resolve(true)
-            }
-          ]
-        );
-      });
+      // Show custom confirmation modal
+      setModalVisible(true);
+    } catch (error) {
+      console.error('Payment error:', error);
+      Alert.alert(
+        'Payment Failed',
+        error.message || 'Something went wrong with your payment'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (!proceed) {
-        setLoading(false);
-        return;
-      }
-
+  const handleConfirmPayment = async () => {
+    setModalVisible(false);
+    try {
       // First get Stripe config
       const configResponse = await axios.get(`${BASE_URL}/payments/config`);
       const { publishableKey } = configResponse.data;
@@ -133,20 +141,12 @@ const PaymentScreen = ({ route, navigation }) => {
         discount: 0
       }));
 
-      console.log('Sending payment request:', {
-        userId,
-        amount: cartTotal + deliveryFee,
-        items
-      });
-
       // Create payment intent
       const response = await axios.post(`${BASE_URL}/payments/marketplace/process`, {
         userId,
-        amount: cartTotal + deliveryFee,
+        amount: totalAmount,
         items
       });
-
-      console.log('Payment intent response:', response.data);
 
       const { clientSecret, paymentIntentId, orderId, status } = response.data;
 
@@ -154,11 +154,7 @@ const PaymentScreen = ({ route, navigation }) => {
         throw new Error('Payment initialization failed');
       }
 
-      // If payment needs confirmation
       if (status !== 'succeeded') {
-        console.log('Confirming payment with Stripe...');
-        
-        // Confirm payment with Stripe
         const { paymentIntent, error } = await confirmPayment(clientSecret, {
           paymentMethodType: 'Card'
         });
@@ -167,9 +163,6 @@ const PaymentScreen = ({ route, navigation }) => {
           throw new Error(error.message);
         }
 
-        console.log('Payment confirmed with Stripe, confirming with backend...');
-
-        // Confirm on backend
         const confirmResponse = await axios.post(`${BASE_URL}/payments/confirm`, {
           paymentIntentId: paymentIntent.id
         });
@@ -177,38 +170,20 @@ const PaymentScreen = ({ route, navigation }) => {
         if (!confirmResponse.data.success) {
           throw new Error('Payment confirmation failed');
         }
-
-        console.log('Payment fully confirmed:', confirmResponse.data);
-
-        // Clear cart and navigate to success
-        navigation.reset({
-          index: 0,
-          routes: [
-            { 
-              name: 'PaymentSuccess',
-              params: {
-                amount: cartTotal + deliveryFee,
-                orderId
-              }
-            }
-          ],
-        });
-
-      } else {
-        // Clear cart and navigate to success
-        navigation.reset({
-          index: 0,
-          routes: [
-            { 
-              name: 'PaymentSuccess',
-              params: {
-                amount: cartTotal + deliveryFee,
-                orderId
-              }
-            }
-          ],
-        });
       }
+
+      navigation.reset({
+        index: 0,
+        routes: [
+          { 
+            name: 'PaymentSuccess',
+            params: {
+              amount: totalAmount,
+              orderId
+            }
+          }
+        ],
+      });
 
     } catch (error) {
       console.error('Payment error:', error);
@@ -216,8 +191,6 @@ const PaymentScreen = ({ route, navigation }) => {
         'Payment Failed',
         error.message || 'Something went wrong with your payment'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -309,11 +282,11 @@ const PaymentScreen = ({ route, navigation }) => {
         <View style={styles.priceBreakdown}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>${cartTotal.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>${safeCartTotal.toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery Fee</Text>
-            <Text style={styles.summaryValue}>${deliveryFee.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>${safeDeliveryFee.toFixed(2)}</Text>
           </View>
           {/* Tax if applicable */}
           <View style={styles.summaryRow}>
@@ -326,7 +299,7 @@ const PaymentScreen = ({ route, navigation }) => {
         <View style={[styles.summaryRow, styles.totalRow]}>
           <Text style={styles.totalText}>Total Amount</Text>
           <Text style={styles.totalAmount}>
-            ${(cartTotal + deliveryFee).toFixed(2)}
+            ${totalAmount.toFixed(2)}
           </Text>
         </View>
 
@@ -429,7 +402,7 @@ const PaymentScreen = ({ route, navigation }) => {
         ) : (
           <>
             <Text style={styles.payButtonText}>
-              Pay ${(cartTotal + deliveryFee).toFixed(2)}
+              Pay ${totalAmount.toFixed(2)}
             </Text>
             <MaterialIcons name="lock" size={20} color="#fff" />
           </>
@@ -443,6 +416,62 @@ const PaymentScreen = ({ route, navigation }) => {
           Your payment information is secure and encrypted
         </Text>
       </View>
+
+      {/* Confirmation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Confirm Your Order</Text>
+              <MaterialIcons name="shopping-cart" size={24} color="#4FA5F5" />
+            </View>
+
+            <View style={styles.modalDivider} />
+
+            <View style={styles.orderSummaryContainer}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Items</Text>
+                <Text style={styles.summaryValue}>{cartItems?.length || 0}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Subtotal</Text>
+                <Text style={styles.summaryValue}>${safeCartTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Delivery Fee</Text>
+                <Text style={styles.summaryValue}>${safeDeliveryFee.toFixed(2)}</Text>
+              </View>
+              <View style={[styles.summaryItem, styles.totalItem]}>
+                <Text style={styles.totalLabel}>Total Amount</Text>
+                <Text style={styles.totalValue}>
+                  ${totalAmount.toFixed(2)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirmPayment}
+              >
+                <Text style={styles.confirmButtonText}>Confirm Payment</Text>
+                <MaterialIcons name="lock" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -806,6 +835,122 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     letterSpacing: 0.3,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#4FA5F5',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+    letterSpacing: 0.5,
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: 'rgba(79, 165, 245, 0.1)',
+    marginVertical: 16,
+  },
+  orderSummaryContainer: {
+    backgroundColor: '#F8FAFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  summaryLabel: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  summaryValue: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '600',
+  },
+  totalItem: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(79, 165, 245, 0.1)',
+  },
+  totalLabel: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  totalValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4FA5F5',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  confirmButton: {
+    flex: 2,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: '#4FA5F5',
+    shadowColor: '#4FA5F5',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
 
