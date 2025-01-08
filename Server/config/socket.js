@@ -1,7 +1,7 @@
 const { Server } = require('socket.io');
 const prisma = require('../prisma');
 const handleMatchEvents = require('../socket/matchHandler');
-
+const handleVideoCallEvents = require('../socket/videoCall');
 let io;
 
 const initializeSocket = (server) => {
@@ -17,6 +17,7 @@ const initializeSocket = (server) => {
 
     // Initialize match events handler with socket and io instance
     handleMatchEvents(socket, io);
+    handleVideoCallEvents(socket, io);
 
     socket.on('joinChat', async (chatId) => {
       if (!chatId) {
