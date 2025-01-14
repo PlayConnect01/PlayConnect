@@ -20,6 +20,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../Api";
 import { Ionicons } from "@expo/vector-icons";
+import ReviewSection from './ReviewSection';
 
 const CustomAlert = ({ visible, onClose }) => {
   const navigation = useNavigation();
@@ -148,6 +149,10 @@ const ProductDetail = () => {
   const [addingToCartId, setAddingToCartId] = useState(null);
   const [cartAnimation] = useState(new Animated.Value(1));
   const [lastAddedProduct, setLastAddedProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+const [userId, setUserId] = useState(null);
   const notificationTimeout = React.useRef(null);
   const animationValues = React.useRef({
     scale: new Animated.Value(1),
@@ -340,10 +345,10 @@ const ProductDetail = () => {
         if (response.data) {
           setProduct(response.data);
         }
-        setError(null);
+      
       } catch (error) {
         console.error("Error fetching product details:", error);
-        setError("Failed to load product details");
+        Alert.alert('Error', 'Failed to load product details');
         setProduct(null);
       } finally {
         setLoading(false);
@@ -352,7 +357,34 @@ const ProductDetail = () => {
 
     fetchProductDetail();
   }, [productId]);
+  
+ 
+  const fetchReviews = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/marketplacereview/product/${productId}`);
+      setReviews(response.data.reviews || []);
+      setAverageRating(response.data.averageRating || 0);
+      setTotalReviews(response.data.totalReviews || 0);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      showNotification('Failed to fetch reviews', 'error');
+    }
+  };
+  
 
+ useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const userDataStr = await AsyncStorage.getItem("userData");
+        const userData = userDataStr ? JSON.parse(userDataStr) : null;
+        setUserId(userData?.user_id);
+      } catch (error) {
+        console.error('Error getting user data:', error);
+      }
+    };
+    getUserData();
+    fetchReviews();
+  }, []);
   useEffect(() => {
     const checkIfFavorite = async () => {
       try {
@@ -398,6 +430,11 @@ const ProductDetail = () => {
       </View>
     );
   }
+
+
+
+
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -450,6 +487,17 @@ const ProductDetail = () => {
           <Text style={styles.description}>
             {product.description || "No description available"}
           </Text>
+          <Text style={[styles.descriptionTitle, { marginTop: 20 }]}>Reviews</Text>
+<ReviewSection
+  productId={productId}
+  reviews={reviews}
+  averageRating={averageRating}
+  totalReviews={totalReviews}
+  userId={userId}
+  onReviewsUpdate={fetchReviews}
+  showNotification={showNotification}
+  navigation={navigation}
+/>
         </View>
       </ScrollView>
 
@@ -473,7 +521,7 @@ const ProductDetail = () => {
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
-
+     
         <TouchableOpacity
           style={[
             styles.addToCartButton,
@@ -498,6 +546,52 @@ const ProductDetail = () => {
 };
 
 const styles = StyleSheet.create({
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(79, 165, 245, 0.1)',
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F7FAFF',
+  },
+  ratingContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  ratingLabel: {
+    fontSize: 16,
+    color: '#2D3748',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  reviewInput: {
+    backgroundColor: '#F7FAFF',
+    borderRadius: 15,
+    padding: 16,
+    height: 120,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 165, 245, 0.2)',
+    fontSize: 16,
+    color: '#2D3748',
+  },
+  actionButton: {
+    padding: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    shadowColor: "#4FA5F5",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
   container: {
     flex: 1,
     backgroundColor: "#F0F7FF",
@@ -869,7 +963,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: 0.5,
+  
   },
+  
 });
 
 export default ProductDetail;
