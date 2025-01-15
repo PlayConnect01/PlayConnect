@@ -110,7 +110,14 @@ const MessagePage = (props) => {
               });
             }}
           >
-            <Image source={{ uri: match.user_1.profile_picture || match.user_2.profile_picture }} style={styles.userImage} />
+            <Image 
+              source={{ 
+                uri: match.user_1.user_id === currentUserId 
+                  ? match.user_2.profile_picture 
+                  : match.user_1.profile_picture 
+              }} 
+              style={styles.userImage} 
+            />
             <View style={styles.messageContent}>
               <View style={styles.messageHeader}>
                 <Text style={styles.userName}>{match.user_1.user_id === currentUserId ? match.user_2.username : match.user_1.username}</Text>
