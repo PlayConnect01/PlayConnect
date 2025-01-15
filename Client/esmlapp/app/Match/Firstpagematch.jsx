@@ -47,7 +47,7 @@ const App = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Image 
-        source={require('../../assets/images/find people with same interest.jpg')} 
+        source={require('../../assets/images/findpeople.jpg')} 
         style={styles.background}
       />
       
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0)',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingTop: '70%',
+    paddingTop: '130%',
   },
   buttonsWrapper: {
     width: '100%',
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   buttonContainer: {
-    width: '80%',
+    width: '50%',
     borderRadius: 25,
     overflow: 'hidden',
     elevation: 5,

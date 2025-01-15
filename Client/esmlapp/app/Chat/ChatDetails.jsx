@@ -18,17 +18,11 @@ import AudioMessage from "./components/AudioMessage";
 import ImageMessageHandler from "./components/ImageMessageHandler";
 import { BASE_URL } from "../../Api";
 import { useRoute, useNavigation } from '@react-navigation/native';
+
 const ChatDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { user ,  chatId , currentUserId } = route.params
-  
- 
-
-
-
-  // const { user, chatId, currentUserId } = route.params;
-  // console.log(route.params, "salem");
+  const { user, chatId, currentUserId } = route.params;
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -266,18 +260,24 @@ const ChatDetails = () => {
     );
   };
 
+  const handleBackPress = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // If we can't go back (because navigation was reset), navigate to Messages screen
+      navigation.navigate('Messages');
+    }
+  };
+
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <Image
-            source={{ uri: user.profile_picture }}
-            style={styles.profileImage}
-          />
-          <Text style={styles.username}>{user.username}</Text>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{user?.username || 'Chat'}</Text>
         </View>
       </View>
       <ScrollView
@@ -386,26 +386,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginHorizontal: 10,
-  },
-  username: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
   backButton: {
     padding: 8,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(98, 0, 238, 0.05)",
   },
   userInfo: {
     flex: 1,
@@ -413,40 +397,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 4,
   },
-  userNameContainer: {
-    flex: 1,
-  },
-  userStatusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
   userName: {
     fontSize: 17,
     fontWeight: "600",
     color: "#000000",
     letterSpacing: 0.3,
     marginRight: 8,
-  },
-  dotSeparator: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: "#666",
-    marginRight: 8,
-  },
-  userUsername: {
-    fontSize: 13,
-    color: "#666",
-    fontWeight: "500",
-  },
-  headerIcons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  iconButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(98, 0, 238, 0.05)",
   },
   messagesContainer: {
     flex: 1,
