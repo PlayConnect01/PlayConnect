@@ -21,7 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../Api";
 import { Ionicons } from "@expo/vector-icons";
 import ReviewSection from './ReviewSection';
-
+import CustomToast from '../components/CustomToast';
 const CustomAlert = ({ visible, onClose }) => {
   const navigation = useNavigation();
 
@@ -152,6 +152,7 @@ const ProductDetail = () => {
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 const [userId, setUserId] = useState(null);
   const notificationTimeout = React.useRef(null);
   const animationValues = React.useRef({
@@ -446,7 +447,13 @@ const [userId, setUserId] = useState(null);
         />
       )}
       <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
+        <View style={styles.header}>{notification.message && (
+  <NotificationBanner
+    message={notification.message}
+    type={notification.type}
+    onClose={() => setNotification({ message: "", type: "" })}
+  />
+)}
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -487,7 +494,7 @@ const [userId, setUserId] = useState(null);
           <Text style={styles.description}>
             {product.description || "No description available"}
           </Text>
-          <Text style={[styles.descriptionTitle, { marginTop: 20 }]}>Reviews</Text>
+         
 <ReviewSection
   productId={productId}
   reviews={reviews}
