@@ -18,7 +18,6 @@ import AudioMessage from "./components/AudioMessage";
 import ImageMessageHandler from "./components/ImageMessageHandler";
 import { BASE_URL } from "../../Api";
 import { useRoute, useNavigation } from '@react-navigation/native';
-import WebView from 'react-native-webview';
 const ChatDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -37,11 +36,6 @@ const ChatDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const scrollViewRef = useRef(null);
   const socketRef = useRef(null);
-  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
-  const roomName = "Test123";
-  const [isIncomingCall, setIsIncomingCall] = useState(false);
-  const [isOutgoingCall, setIsOutgoingCall] = useState(false);
-  const [currentCallData, setCurrentCallData] = useState(null);
 
   const initializeSocket = useCallback(() => {
     if (socketRef.current) {
@@ -68,30 +62,6 @@ const ChatDetails = () => {
         setMessages((prevMessages) => [...prevMessages, data]);
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }
-    });
-
-    socket.on("receiveVideoCall", (data) => {
-      if (data.receiverId === currentUserId) {
-        setIsIncomingCall(true);
-        setCurrentCallData(data);
-      }
-    });
-
-    socket.on("receiveVideoCallAccepted", (data) => {
-      setIsOutgoingCall(false);
-      setIsVideoCallActive(true);
-    });
-
-    socket.on("receiveVideoCallRejected", (data) => {
-      setIsOutgoingCall(false);
-      Alert.alert("Call Rejected", "The user rejected your call");
-    });
-
-    socket.on("receiveVideoCallEnded", (data) => {
-      setIsVideoCallActive(false);
-      setIsIncomingCall(false);
-      setIsOutgoingCall(false);
-      setCurrentCallData(null);
     });
 
     socket.on("disconnect", () => {
@@ -177,60 +147,6 @@ const ChatDetails = () => {
     },
     [currentUserId, chatId]
   );
-
-  const handleVideoCall = () => {
-    setIsOutgoingCall(true);
-    const callData = {
-      chatId,
-      callerId: currentUserId,
-      callerName: currentUserId.toString(),
-      receiverId: user.user_id,
-      channelName: `call_${chatId}_${Date.now()}`
-    };
-    setCurrentCallData(callData);
-    socketRef.current?.emit("videoCallRequest", callData);
-  
-    // Auto-cancel call after 30 seconds
-    setTimeout(() => {
-      if (isOutgoingCall) {
-        setIsOutgoingCall(false);
-        socketRef.current?.emit("videoCallEnd", callData);
-      }
-    }, 30000);
-  };
-
-  const acceptCall = () => {
-    if (!currentCallData) return;
-    
-    setIsIncomingCall(false);
-    setIsVideoCallActive(true);
-    socketRef.current?.emit("videoCallAccepted", {
-      ...currentCallData,
-      receiverId: currentUserId
-    });
-  };
-
-  const rejectCall = () => {
-    if (!currentCallData) return;
-
-    setIsIncomingCall(false);
-    socketRef.current?.emit("videoCallRejected", {
-      ...currentCallData,
-      receiverId: currentUserId
-    });
-    setCurrentCallData(null);
-  };
-
-  const endCall = () => {
-    if (!currentCallData) return;
-
-    setIsVideoCallActive(false);
-    socketRef.current?.emit("videoCallEnd", {
-      ...currentCallData,
-      callerId: currentUserId
-    });
-    setCurrentCallData(null);
-  };
 
   useEffect(() => {
     const socket = initializeSocket();
@@ -350,125 +266,6 @@ const ChatDetails = () => {
     );
   };
 
-  const VideoCallScreen = ({ channelName, endCall }) => {
-    const domain = 'meet.jit.si';
-    const userInfo = {
-      displayName: user.username,
-      email: user.email,
-      avatarURL: user.profile_picture
-    };
-
-    // Create the Jitsi Meet URL with configuration parameters
-    const url = `https://${domain}/${channelName}`;
-
-    return (
-      <View style={styles.videoCallContainer}>
-        <TouchableOpacity 
-          style={styles.closeButton}
-          onPress={endCall}
-        >
-          <Ionicons name="close" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <WebView
-          source={{ uri: url }}
-          style={styles.webview}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          mediaPlaybackRequiresUserAction={false}
-          allowsInlineMediaPlayback={true}
-          userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
-          onMessage={(event) => {
-            console.log('Received message from Jitsi Meet:', event.nativeEvent.data);
-          }}
-          injectedJavaScript={`
-            // Auto-join the meeting and configure the interface
-            window.onload = () => {
-              const domain = '${domain}';
-              const options = {
-                roomName: '${channelName}',
-                width: '100%',
-                height: '100%',
-                parentNode: document.body,
-                configOverwrite: {
-                  prejoinPageEnabled: false,
-                  startWithAudioMuted: false,
-                  startWithVideoMuted: false,
-                  disableDeepLinking: true,
-                  hideConferenceSubject: true,
-                  hideConferenceTimer: true,
-                  hideParticipantsStats: true,
-                  toolbarButtons: ['hangup', 'camera', 'microphone'],
-                  disableInitialGUM: false,
-                  enableClosePage: false,
-                  readOnlyName: true,
-                  remoteVideoMenu: {
-                    disableKick: true,
-                    disableGrantModerator: true,
-                  },
-                  notifications: [],
-                  buttonsWithNotifyClick: [],
-                },
-                interfaceConfigOverwrite: {
-                  TOOLBAR_BUTTONS: ['hangup', 'camera', 'microphone'],
-                  SHOW_JITSI_WATERMARK: false,
-                  SHOW_WATERMARK_FOR_GUESTS: false,
-                  SHOW_BRAND_WATERMARK: false,
-                  SHOW_POWERED_BY: false,
-                  SHOW_PROMOTIONAL_CLOSE_PAGE: false,
-                  DEFAULT_BACKGROUND: '#000000',
-                  DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-                  DISABLE_VIDEO_BACKGROUND: true,
-                  MOBILE_APP_PROMO: false,
-                  HIDE_INVITE_MORE_HEADER: true,
-                  DISABLE_PRESENCE_STATUS: true,
-                  DISABLE_TRANSCRIPTION_SUBTITLES: true,
-                  DISABLE_RINGING: true,
-                  SETTINGS_SECTIONS: ['devices'],
-                  DEFAULT_LOCAL_DISPLAY_NAME: '${userInfo.displayName}',
-                  DEFAULT_REMOTE_DISPLAY_NAME: '',
-                },
-                userInfo: ${JSON.stringify(userInfo)},
-              };
-
-              const api = new JitsiMeetExternalAPI(domain, options);
-              
-              // Auto-join the conference
-              api.addEventListener('videoConferenceJoined', () => {
-                // Additional configurations after joining
-                api.executeCommand('displayName', '${userInfo.displayName}');
-                api.executeCommand('avatarUrl', '${userInfo.avatarURL}');
-                
-                // Hide various UI elements
-                api.executeCommand('setTileView', true);
-                api.executeCommand('toggleChat', false);
-                api.executeCommand('toggleShareScreen', false);
-                api.executeCommand('toggleRaiseHand', false);
-              });
-
-              // Handle participant left
-              api.addEventListener('participantLeft', () => {
-                window.ReactNativeWebView.postMessage('participantLeft');
-              });
-
-              // Handle connection issues
-              api.addEventListener('connectionEstablished', () => {
-                console.log('Connection established');
-              });
-
-              api.addEventListener('connectionFailed', () => {
-                window.ReactNativeWebView.postMessage('connectionFailed');
-              });
-
-              // Auto-join the room
-              api.executeCommand('joinRoom');
-            }
-            true;
-          `}
-        />
-      </View>
-    );
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -481,20 +278,6 @@ const ChatDetails = () => {
             style={styles.profileImage}
           />
           <Text style={styles.username}>{user.username}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity 
-            style={styles.callIcon} 
-            onPress={() => {/* Handle audio call */}}
-          >
-            <Ionicons name="call" size={22} color="#4FA5F5" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.callIcon} 
-            onPress={handleVideoCall}
-          >
-            <Ionicons name="videocam" size={24} color="#4FA5F5" />
-          </TouchableOpacity>
         </View>
       </View>
       <ScrollView
@@ -578,79 +361,6 @@ const ChatDetails = () => {
           />
         </TouchableOpacity>
       </Modal>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isIncomingCall}
-        onRequestClose={rejectCall}
-      >
-        <View style={styles.callModal}>
-          <View style={styles.callModalContent}>
-            <Image
-              source={{ uri: user.profile_picture }}
-              style={styles.callerImage}
-            />
-            <Text style={styles.callerName}>{user.username}</Text>
-            <Text style={styles.callStatus}>Incoming video call...</Text>
-            <View style={styles.callActions}>
-              <TouchableOpacity 
-                style={[styles.callButton, styles.rejectButton]}
-                onPress={rejectCall}
-              >
-                <Ionicons name="close" size={24} color="#FFF" />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.callButton, styles.acceptButton]}
-                onPress={acceptCall}
-              >
-                <Ionicons name="videocam" size={24} color="#FFF" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isOutgoingCall}
-        onRequestClose={() => {
-          setIsOutgoingCall(false);
-          endCall();
-        }}
-      >
-        <View style={styles.callModal}>
-          <View style={styles.callModalContent}>
-            <Image
-              source={{ uri: user.profile_picture }}
-              style={styles.callerImage}
-            />
-            <Text style={styles.callerName}>{user.username}</Text>
-            <Text style={styles.callStatus}>Calling...</Text>
-            <TouchableOpacity 
-              style={[styles.callButton, styles.rejectButton]}
-              onPress={() => {
-                setIsOutgoingCall(false);
-                endCall();
-              }}
-            >
-              <Ionicons name="close" size={24} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      {isVideoCallActive && (
-        <Modal
-          animationType="slide"
-          transparent={false}
-          visible={isVideoCallActive}
-          onRequestClose={endCall}
-        >
-          <VideoCallScreen 
-            channelName={currentCallData?.channelName}
-            endCall={endCall}
-          />
-        </Modal>
-      )}
     </View>
   );
 };
@@ -680,17 +390,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-    marginLeft: 10,
-  },
-  callIcon: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(79, 165, 245, 0.1)",
   },
   profileImage: {
     width: 40,
@@ -863,6 +562,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "rgba(0,0,0,0.05)",
+    marginBottom:78
   },
   input: {
     flex: 1,
@@ -957,70 +657,6 @@ const styles = StyleSheet.create({
   modalImage: {
     width: "100%",
     height: "90%",
-  },
-  videoCallContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 1,
-    padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-  },
-  webview: {
-    flex: 1,
-  },
-  callModal: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  callModalContent: {
-    backgroundColor: '#FFF',
-    padding: 20,
-    borderRadius: 20,
-    alignItems: 'center',
-    width: '80%',
-  },
-  callerImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
-  },
-  callerName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  callStatus: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-  },
-  callActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  callButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 20,
-  },
-  acceptButton: {
-    backgroundColor: '#4CAF50',
-  },
-  rejectButton: {
-    backgroundColor: '#F44336',
   },
 });
 

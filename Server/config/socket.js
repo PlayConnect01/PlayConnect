@@ -1,7 +1,7 @@
 const { Server } = require('socket.io');
 const prisma = require('../prisma');
 const handleMatchEvents = require('../socket/matchHandler');
-const handleVideoCallEvents = require('../socket/videoCall');
+
 let io;
 
 const initializeSocket = (server) => {
@@ -16,8 +16,9 @@ const initializeSocket = (server) => {
     console.log(`New socket connection: ${socket.id}`);
 
     // Initialize match events handler with socket and io instance
+  
     handleMatchEvents(socket, io);
-    handleVideoCallEvents(socket, io);
+
 
     socket.on('joinChat', async (chatId) => {
       if (!chatId) {
@@ -33,10 +34,10 @@ const initializeSocket = (server) => {
     socket.on('newMessage', async (messageData) => {
       console.log('New message received on server:', messageData);
       const { chatId, senderId } = messageData;
-      
+
       // Émettre le message uniquement aux autres membres du chat
       socket.to(`chat_${chatId}`).emit('receiveMessage', messageData);
-      
+
       // Émettre une notification globale pour le Navbar
       socket.broadcast.emit('newNotification', {
         chatId,
