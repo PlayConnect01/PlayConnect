@@ -516,74 +516,63 @@ export const getStyles = (isSidebarVisible, isDarkMode) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
-  specialOffersSection: {
-    marginVertical: 20,
-    paddingHorizontal: 15,
-  },
   specialOffersHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   specialOffersTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: isDarkMode ? '#FFFFFF' : '#1F2937',
-  },
-  specialOffersBadge: {
-    backgroundColor: '#FF4B4B',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
-    marginLeft: 10,
-  },
-  specialOffersBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
+    color: isDarkMode ? '#FFFFFF' : '#2D3748',
   },
   specialOffersContainer: {
-    paddingVertical: 10,
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  specialOffersScrollContent: {
+    paddingVertical: 16,
   },
   specialOfferCard: {
-    width: 250,
-    backgroundColor: isDarkMode ? '#2D3748' : '#FFFFFF',
-    borderRadius: 15,
-    marginRight: 15,
-    shadowColor: '#000',
+    width: 280,
+    marginRight: 16,
+    backgroundColor: isDarkMode ? '#1F1F1F' : '#FFFFFF',
+    borderRadius: 12,
+    shadowColor: isDarkMode ? '#000' : '#4FA5F5',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 4,
+    overflow: 'hidden',
   },
   specialOfferImageContainer: {
     width: '100%',
     height: 180,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    overflow: 'hidden',
     position: 'relative',
   },
   specialOfferImage: {
     width: '100%',
     height: '100%',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   discountBadge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#FF4B4B',
+    top: 12,
+    right: 12,
+    backgroundColor: '#4FA5F5',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 8,
   },
-  discountBadgeText: {
+  discountText: {
     color: '#FFFFFF',
+    fontWeight: '700',
     fontSize: 14,
-    fontWeight: 'bold',
   },
-  specialOfferContent: {
-    padding: 15,
+  specialOfferInfo: {
+    padding: 16,
   },
   specialOfferName: {
     fontSize: 16,
@@ -591,14 +580,14 @@ export const getStyles = (isSidebarVisible, isDarkMode) => StyleSheet.create({
     color: isDarkMode ? '#FFFFFF' : '#1F2937',
     marginBottom: 8,
   },
-  specialOfferPricing: {
+  specialOfferPriceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
-  specialOfferCurrentPrice: {
+  specialOfferPrice: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#4FA5F5',
     marginRight: 8,
   },
@@ -607,19 +596,19 @@ export const getStyles = (isSidebarVisible, isDarkMode) => StyleSheet.create({
     color: isDarkMode ? '#9CA3AF' : '#6B7280',
     textDecorationLine: 'line-through',
   },
-  specialOfferAddButton: {
+  specialOfferButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4FA5F5',
     paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
   },
-  specialOfferAddButtonText: {
+  specialOfferButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '600',
-    marginLeft: 6,
+    marginLeft: 8,
   },
   loadingContainer: {
     position: 'absolute',
