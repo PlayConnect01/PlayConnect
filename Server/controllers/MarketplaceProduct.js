@@ -4,11 +4,18 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function getProductsBySportId(req, res) {
-    const { sportId } = req.params; // Get the sport ID from the request parameters
+    const { sportId } = req.params;
 
     try {
         const products = await prisma.marketplaceProduct.findMany({
-            where: { sport_id: parseInt(sportId) }, // Find products by sport ID
+            where: { sport_id: parseInt(sportId) },
+            include: {
+                sport: true,
+                reviews: true
+            },
+            orderBy: {
+                rating: 'desc'
+            }
         });
 
         if (products.length === 0) {
@@ -21,6 +28,7 @@ async function getProductsBySportId(req, res) {
         res.status(500).json({ error: 'An error occurred while fetching products.' });
     }
 }
+
 async function getLimitedProductsBySport(req, res) {
     try {
         // Fetch all sports
@@ -33,14 +41,22 @@ async function getLimitedProductsBySport(req, res) {
         for (const sport of sports) {
             const products = await prisma.marketplaceProduct.findMany({
                 where: { sport_id: sport.sport_id },
-                take: 2, // Limit to 2 products per sport
+                take: 2,
+                orderBy: {
+                    rating: 'desc'
+                },
+                include: {
+                    sport: true,
+                    reviews: true
+                }
             });
 
-            // Add the sport and its products to the results
-            results.push({
-                sport: sport,
-                products: products,
-            });
+            if (products.length > 0) {
+                results.push({
+                    sport: sport,
+                    products: products,
+                });
+            }
 
             // Stop if we have collected 6 products in total
             if (results.reduce((acc, curr) => acc + curr.products.length, 0) >= 6) {
@@ -48,10 +64,7 @@ async function getLimitedProductsBySport(req, res) {
             }
         }
 
-        // Flatten the results to return only the products
-        const limitedProducts = results.flatMap(item => item.products);
-
-        res.json(limitedProducts);
+        res.json(results);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'An error occurred while fetching products.' });
@@ -59,14 +72,18 @@ async function getLimitedProductsBySport(req, res) {
 }
 
 async function getLowestPriceProduct(req, res) {
-    const { sportId } = req.params; // Get the sport ID from the request parameters
+    const { sportId } = req.params;
 
     try {
         const lowestPriceProduct = await prisma.marketplaceProduct.findFirst({
-            where: { sport_id: parseInt(sportId) }, // Filter by sport ID
+            where: { sport_id: parseInt(sportId) },
             orderBy: {
-                price: 'asc', // Order by price in ascending order
+                price: 'asc'
             },
+            include: {
+                sport: true,
+                reviews: true
+            }
         });
 
         if (!lowestPriceProduct) {
@@ -79,16 +96,21 @@ async function getLowestPriceProduct(req, res) {
         res.status(500).json({ error: 'An error occurred while fetching the lowest price product.' });
     }
 }
+
 async function getTwoLowestPriceProducts(req, res) {
-    const { sportId } = req.params; // Get the sport ID from the request parameters
+    const { sportId } = req.params;
 
     try {
         const lowestPriceProducts = await prisma.marketplaceProduct.findMany({
-            where: { sport_id: parseInt(sportId) }, // Filter by sport ID
+            where: { sport_id: parseInt(sportId) },
             orderBy: {
-                price: 'asc', // Order by price in ascending order
+                price: 'asc'
             },
-            take: 2, // Limit to 2 products
+            take: 2,
+            include: {
+                sport: true,
+                reviews: true
+            }
         });
 
         if (lowestPriceProducts.length === 0) {
@@ -107,7 +129,7 @@ async function getAllProductsBySport(req, res) {
     const { sportId } = req.params;
 
     try {
-        const allProducts = await prisma.marketplaceProduct.findMany({
+        const allProducts = await prisma.product.findMany({
             where: { sport_id: Number(sportId) }, // Filter by sport ID
             orderBy: { rating: 'desc' }, // Order by rating in descending order
         });
@@ -123,7 +145,7 @@ async function getTopTwoRatedProductsBySport(req, res) {
     const { sportId } = req.params;
 
     try {
-        const topTwoProducts = await prisma.marketplaceProduct.findMany({
+        const topTwoProducts = await prisma.product.findMany({
             where: { sport_id: Number(sportId) }, // Filter by sport ID
             orderBy: { rating: 'desc' },
             take: 2, // Limit to the top two products
@@ -134,42 +156,62 @@ async function getTopTwoRatedProductsBySport(req, res) {
         res.status(500).json({ error: 'An error occurred while fetching top rated products for the specified sport.' });
     }
 }
+
 // Function to get all products with discounts
 async function getAllDiscountedProducts(req, res) {
     try {
         const discountedProducts = await prisma.marketplaceProduct.findMany({
             where: {
                 discount: {
-                    gt: 0, // Only products with a discount greater than 0
-                },
+                    gt: 0
+                }
             },
             orderBy: {
-                discount: 'desc', // Order by discount in descending order
+                discount: 'desc'
             },
+            include: {
+                sport: true,
+                reviews: true
+            }
         });
+
+        if (discountedProducts.length === 0) {
+            return res.status(404).json({ error: 'No discounted products found.' });
+        }
 
         res.json(discountedProducts);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'An error occurred while fetching discounted products.' });
     }
 }
+
 // Function to get the top three products with the highest discounts
 async function getTopThreeDiscountedProducts(req, res) {
     try {
         const topDiscountedProducts = await prisma.marketplaceProduct.findMany({
             where: {
                 discount: {
-                    gt: 0, // Only products with a discount greater than 0
-                },
+                    gt: 0
+                }
             },
             orderBy: {
-                discount: 'desc', // Order by discount in descending order
+                discount: 'desc'
             },
-            take: 3, // Limit to the top three products
+            take: 3,
+            include: {
+                sport: true,
+                reviews: true
+            }
         });
+
+        if (topDiscountedProducts.length === 0) {
+            return res.status(404).json({ error: 'No discounted products found.' });
+        }
 
         res.json(topDiscountedProducts);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'An error occurred while fetching top discounted products.' });
     }
 }
@@ -179,7 +221,7 @@ async function getProductsByDiscount(req, res) {
     const { discount } = req.params;
 
     try {
-        const products = await prisma.marketplaceProduct.findMany({
+        const products = await prisma.product.findMany({
             where: {
                 discount: {
                     gte: Number(discount), // Get products with a discount greater than or equal to the specified value
@@ -190,20 +232,21 @@ async function getProductsByDiscount(req, res) {
         res.json(products);
     } catch (error) {
         res.status(500).json({ error: 'An error occurred while fetching products by discount.' });
-    }}
+    }
+}
 
 // Function to get a product by its ID
 async function getProductById(req, res) {
-    const { id } = req.params; // Get the product ID from the request parameters
+    const { id } = req.params;
 
     try {
         const product = await prisma.marketplaceProduct.findUnique({
-            where: { product_id: parseInt(id) }, // Find the product by ID
+            where: { product_id: parseInt(id) },
             include: {
-                sport: true, // Include related sport data if needed
-                cart_items: true, // Include cart items if needed
-                favorites: true, // Include favorites if needed
-            },
+                sport: true,
+                reviews: true,
+                userProducts: true
+            }
         });
 
         if (!product) {
@@ -216,33 +259,59 @@ async function getProductById(req, res) {
         res.status(500).json({ error: 'An error occurred while fetching the product.' });
     }
 }
+
 async function searchProductByName(req, res) {
-const { productName } = req.query; // Extract productName from query parameters
-try {
+  const { productName } = req.query;
+  
+  if (!productName) {
+    return res.status(400).json({ error: "Product name is required" });
+  }
+
+  try {
     const products = await prisma.marketplaceProduct.findMany({
-        where: {
-            name: {
-                contains: productName, // Search for product name
-                // Remove the mode option
-            },
-        },
-        select: {
-            product_id: true,
-            name: true,
-            image_url: true,// Include sport details if needed
-        },
+      where: {
+        OR: [
+          { name: { contains: productName } },
+          { name: { startsWith: productName } }
+        ]
+      },
+      take: 10,
+      orderBy: [
+        { rating: 'desc' },
+        { review_count: 'desc' }
+      ],
+      include: {
+        sport: true,
+        reviews: true
+      }
     });
-    return res.json(products); // Return the found products as JSON
-} catch (error) {
-    console.error("Error searching products:", error); // Log the error
+
+    return res.json(products);
+  } catch (error) {
+    console.error('Error searching for products:', error);
     return res.status(500).json({ error: "An error occurred while searching for products." });
-}}
+  }
+}
 
 // Function to get discounted products by category
 async function getDiscountedProductsByCategory(req, res) {
     const { category } = req.params;
-    
+
     try {
+        // First find the sport by category
+        const sport = await prisma.sport.findFirst({
+            where: {
+                name: {
+                    equals: category,
+                    mode: 'insensitive'
+                }
+            }
+        });
+
+        if (!sport && category.toLowerCase() !== 'all') {
+            return res.status(404).json({ error: 'Sport category not found.' });
+        }
+
         let products;
         
         if (category.toLowerCase() === 'all') {
@@ -252,31 +321,15 @@ async function getDiscountedProductsByCategory(req, res) {
                         gt: 0
                     }
                 },
-                include: {
-                    sport: true
-                },
                 orderBy: {
                     discount: 'desc'
+                },
+                include: {
+                    sport: true,
+                    reviews: true
                 }
             });
         } else {
-            // Get the sport ID for the category name
-            const sport = await prisma.sport.findFirst({
-                where: {
-                    name: {
-                        equals: category,
-                        mode: 'insensitive'
-                    }
-                }
-            });
-
-            if (!sport) {
-                return res.status(404).json({ 
-                    success: false,
-                    message: `Sport category '${category}' not found`
-                });
-            }
-
             products = await prisma.marketplaceProduct.findMany({
                 where: {
                     AND: [
@@ -284,125 +337,69 @@ async function getDiscountedProductsByCategory(req, res) {
                         { discount: { gt: 0 } }
                     ]
                 },
-                include: {
-                    sport: true
-                },
                 orderBy: {
                     discount: 'desc'
+                },
+                include: {
+                    sport: true,
+                    reviews: true
                 }
             });
         }
 
-        if (!products || products.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: `No discounted products found in ${category}`
-            });
+        if (products.length === 0) {
+            return res.status(404).json({ error: 'No discounted products found in this category.' });
         }
 
-        // Add additional product information
-        const enhancedProducts = products.map(product => ({
-            ...product,
-            discounted_price: parseFloat((product.price * (1 - product.discount / 100)).toFixed(2)),
-            savings: parseFloat((product.price * (product.discount / 100)).toFixed(2)),
-            formatted_price: `$${product.price.toFixed(2)}`,
-            formatted_discounted_price: `$${(product.price * (1 - product.discount / 100)).toFixed(2)}`
-        }));
-
-        res.json({
-            success: true,
-            count: enhancedProducts.length,
-            category: category,
-            products: enhancedProducts
-        });
+        res.json(products);
     } catch (error) {
-        console.error('Error getting discounted products by category:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Failed to get discounted products for this category',
-            error: error.message
-        });
+        console.error(error);
+        res.status(500).json({ error: 'An error occurred while fetching discounted products by category.' });
     }
 }
 
 // Function to get all products by category
 async function getProductsByCategory(req, res) {
     const { category } = req.params;
-    
+
     try {
-        let products;
-        
-        if (category.toLowerCase() === 'all') {
-            products = await prisma.marketplaceProduct.findMany({
-                include: {
-                    sport: true
-                },
-                orderBy: {
-                    createdAt: 'desc'
+        // First find the sport by category
+        const sport = await prisma.sport.findFirst({
+            where: {
+                name: {
+                    equals: category,
+                    mode: 'insensitive'
                 }
-            });
-        } else {
-            // Get the sport ID for the category name
-            const sport = await prisma.sport.findFirst({
-                where: {
-                    name: {
-                        equals: category,
-                        mode: 'insensitive'
-                    }
-                }
-            });
-
-            if (!sport) {
-                return res.status(404).json({ 
-                    success: false,
-                    message: `Sport category '${category}' not found`
-                });
             }
-
-            products = await prisma.marketplaceProduct.findMany({
-                where: {
-                    sport_id: sport.sport_id
-                },
-                include: {
-                    sport: true
-                },
-                orderBy: {
-                    createdAt: 'desc'
-                }
-            });
-        }
-
-        if (!products || products.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: `No products found in ${category}`
-            });
-        }
-
-        // Add additional product information
-        const enhancedProducts = products.map(product => ({
-            ...product,
-            discounted_price: product.discount > 0 ? parseFloat((product.price * (1 - product.discount / 100)).toFixed(2)) : product.price,
-            savings: product.discount > 0 ? parseFloat((product.price * (product.discount / 100)).toFixed(2)) : 0,
-            formatted_price: `$${product.price.toFixed(2)}`,
-            formatted_discounted_price: product.discount > 0 ? 
-                `$${(product.price * (1 - product.discount / 100)).toFixed(2)}` : 
-                `$${product.price.toFixed(2)}`
-        }));
-
-        res.json({
-            success: true,
-            count: enhancedProducts.length,
-            category: category,
-            products: enhancedProducts
         });
+
+        if (!sport) {
+            return res.status(404).json({ error: 'Sport category not found.' });
+        }
+
+        // Get products for this sport
+        const products = await prisma.marketplaceProduct.findMany({
+            where: {
+                sport_id: sport.sport_id
+            },
+            orderBy: [
+                { rating: 'desc' },
+                { review_count: 'desc' }
+            ],
+            include: {
+                sport: true,
+                reviews: true
+            }
+        });
+
+        if (products.length === 0) {
+            return res.status(404).json({ error: 'No products found in this category.' });
+        }
+
+        res.json(products);
     } catch (error) {
-        console.error('Error getting products by category:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Failed to get products for this category',
-            error: error.message
-        });
+        console.error(error);
+        res.status(500).json({ error: 'An error occurred while fetching products by category.' });
     }
 }
 
@@ -414,31 +411,24 @@ const getAllProductsAdmin = async (req, res) => {
         sport: true,
         userProducts: {
           include: {
-            user: {
-              select: {
-                username: true,
-                email: true,
-                profile_picture: true
-              }
-            }
+            user: true
           }
-        }
+        },
+        reviews: true
       },
       orderBy: {
         created_at: 'desc'
       }
     });
 
-    const formattedProducts = products.map(product => ({
-      ...product,
-      seller: product.userProducts[0]?.user || null,
-      userProducts: undefined
-    }));
+    if (products.length === 0) {
+      return res.status(404).json({ error: 'No products found.' });
+    }
 
-    res.status(200).json(formattedProducts);
+    res.json(products);
   } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while fetching products.' });
   }
 };
 
@@ -452,46 +442,25 @@ const getProductDetailsAdmin = async (req, res) => {
         sport: true,
         userProducts: {
           include: {
-            user: {
-              select: {
-                username: true,
-                email: true,
-                profile_picture: true
-              }
-            }
+            user: true
           }
         },
         reviews: {
           include: {
-            user: {
-              select: {
-                username: true,
-                profile_picture: true
-              }
-            }
+            user: true
           }
         }
       }
     });
 
     if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ error: 'Product not found.' });
     }
 
-    const formattedProduct = {
-      ...product,
-      seller: product.userProducts[0]?.user || null,
-      userProducts: undefined,
-      total_reviews: product.reviews.length,
-      average_rating: product.reviews.length > 0 
-        ? (product.reviews.reduce((acc, rev) => acc + rev.rating, 0) / product.reviews.length).toFixed(1)
-        : 0
-    };
-
-    res.status(200).json(formattedProduct);
+    res.json(product);
   } catch (error) {
-    console.error('Error fetching product details:', error);
-    res.status(500).json({ error: 'Failed to fetch product details' });
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while fetching product details.' });
   }
 };
 
@@ -499,46 +468,32 @@ const getProductDetailsAdmin = async (req, res) => {
 const updateProductAdmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const updateData = { ...req.body };
 
-    // Validate and convert numeric fields
+    // Convert string numbers to actual numbers
     if (updateData.price) updateData.price = parseFloat(updateData.price);
     if (updateData.discount) updateData.discount = parseFloat(updateData.discount);
-    if (updateData.rating) updateData.rating = parseFloat(updateData.rating);
+    if (updateData.rating) updateData.rating = parseInt(updateData.rating);
     if (updateData.sport_id) updateData.sport_id = parseInt(updateData.sport_id);
 
     const updatedProduct = await prisma.marketplaceProduct.update({
       where: { product_id: parseInt(id) },
-      data: {
-        ...updateData,
-        updated_at: new Date()
-      },
+      data: updateData,
       include: {
         sport: true,
+        reviews: true,
         userProducts: {
           include: {
-            user: {
-              select: {
-                username: true,
-                email: true,
-                profile_picture: true
-              }
-            }
+            user: true
           }
         }
       }
     });
 
-    const formattedProduct = {
-      ...updatedProduct,
-      seller: updatedProduct.userProducts[0]?.user || null,
-      userProducts: undefined
-    };
-
-    res.status(200).json(formattedProduct);
+    res.json(updatedProduct);
   } catch (error) {
-    console.error('Error updating product:', error);
-    res.status(500).json({ error: 'Failed to update product' });
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while updating the product.' });
   }
 };
 
@@ -547,32 +502,55 @@ const deleteProductAdmin = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // First delete related records
-    await prisma.cartItem.deleteMany({
-      where: { product_id: parseInt(id) }
-    });
+    // Delete related records first
+    await prisma.$transaction([
+      prisma.cartItem.deleteMany({
+        where: { product_id: parseInt(id) }
+      }),
+      prisma.favorite.deleteMany({
+        where: { product_id: parseInt(id) }
+      }),
+      prisma.userProduct.deleteMany({
+        where: { product_id: parseInt(id) }
+      }),
+      prisma.review.deleteMany({
+        where: { product_id: parseInt(id) }
+      }),
+      prisma.marketplaceProduct.delete({
+        where: { product_id: parseInt(id) }
+      })
+    ]);
 
-    await prisma.favorite.deleteMany({
-      where: { product_id: parseInt(id) }
-    });
-
-    await prisma.orderItem.deleteMany({
-      where: { product_id: parseInt(id) }
-    });
-
-    await prisma.userProduct.deleteMany({
-      where: { product_id: parseInt(id) }
-    });
-
-    // Then delete the product
-    await prisma.marketplaceProduct.delete({
-      where: { product_id: parseInt(id) }
-    });
-
-    res.status(200).json({ message: 'Product deleted successfully' });
+    res.json({ message: 'Product deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ error: 'Failed to delete product' });
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while deleting the product.' });
+  }
+};
+
+const getTrendingProducts = async (req, res) => {
+  try {
+    const trendingProducts = await prisma.product.findMany({
+      take: 5,
+      orderBy: [
+        { review_count: 'desc' },
+        { rating: 'desc' }
+      ],
+      select: {
+        product_id: true,
+        name: true,
+        price: true,
+        image_url: true,
+        description: true,
+        rating: true,
+        review_count: true
+      }
+    });
+
+    res.json(trendingProducts);
+  } catch (error) {
+    console.error('Error fetching trending products:', error);
+    res.status(500).json({ error: 'Failed to fetch trending products' });
   }
 };
 
@@ -583,7 +561,7 @@ module.exports = {
     getLowestPriceProduct,
     getTwoLowestPriceProducts,
     getAllProductsBySport,
-    getTopTwoRatedProductsBySport,   
+    getTopTwoRatedProductsBySport,
     getAllDiscountedProducts,
     getTopThreeDiscountedProducts,
     getProductsByDiscount,
@@ -594,5 +572,6 @@ module.exports = {
     getAllProductsAdmin,
     getProductDetailsAdmin,
     updateProductAdmin,
-    deleteProductAdmin
+    deleteProductAdmin,
+    getTrendingProducts
 };
