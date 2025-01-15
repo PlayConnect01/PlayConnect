@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Alert, Modal, Image, ScrollView, ImageBackground, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, Switch, StyleSheet, TouchableOpacity, Modal, Image, ScrollView, ImageBackground, ActivityIndicator } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from 'axios';
@@ -12,6 +12,8 @@ import Navbar from "../navbar/Navbar";
 import { Buffer } from 'buffer';
 import { BASE_URL } from '../../Api.js';
 import LottieView from 'lottie-react-native';
+import CustomAlert from '../../Alerts/CustomAlert';
+import { Slider } from 'react-native-elements';
 
 const decodeToken = (token) => {
   try {
@@ -36,7 +38,7 @@ const AddNewEvent = () => {
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("Sports");
   const [participants, setParticipants] = useState("10");
-  const [price, setPrice] = useState("0");
+  const [price, setPrice] = useState(1);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
@@ -46,12 +48,17 @@ const AddNewEvent = () => {
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   useEffect(() => {
     (async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Sorry, we need camera roll permissions to make this work!');
+        setAlertTitle('Error');
+        setAlertMessage('Sorry, we need camera roll permissions to make this work!');
+        setAlertVisible(true);
       }
     })();
 
@@ -61,7 +68,9 @@ const AddNewEvent = () => {
       })
       .catch((error) => {
         console.error("Error fetching sports:", error);
-        Alert.alert('Error', 'Failed to load sports categories.');
+        setAlertTitle('Error');
+        setAlertMessage('Failed to load sports categories.');
+        setAlertVisible(true);
       });
   }, []);
 
@@ -79,7 +88,9 @@ const AddNewEvent = () => {
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      setAlertTitle('Error');
+      setAlertMessage('Failed to pick image');
+      setAlertVisible(true);
     }
   };
 
@@ -109,13 +120,14 @@ const AddNewEvent = () => {
     }
   };
 
-
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
       const currentDate = new Date();
       if (selectedDate < currentDate.setHours(0, 0, 0, 0)) {
-        Alert.alert('Invalid Date', 'You cannot select a past date.');
+        setAlertTitle('Invalid Date');
+        setAlertMessage('You cannot select a past date.');
+        setAlertVisible(true);
       } else {
         setDate(selectedDate);
       }
@@ -136,7 +148,9 @@ const AddNewEvent = () => {
     setShowEndTimePicker(false);
     if (selectedTime) {
       if (selectedTime < startTime) {
-        Alert.alert('Invalid Time', 'End time cannot be earlier than start time.');
+        setAlertTitle('Invalid Time');
+        setAlertMessage('End time cannot be earlier than start time.');
+        setAlertVisible(true);
       } else {
         setEndTime(selectedTime);
       }
@@ -156,11 +170,17 @@ const AddNewEvent = () => {
 
   const createEvent = async () => {
     if (!eventName || !note || !date || !startTime || !endTime || !location || !participants || !price) {
-      Alert.alert(
-        'Error!',
-        'Please fill in all fields before creating the event.',
-        [{ text: 'Okay' }]
-      );
+      setAlertTitle('Error');
+      setAlertMessage('Please fill in all fields before creating the event.');
+      setAlertVisible(true);
+      return;
+    }
+
+    // Validate end time is not before start time
+    if (endTime < startTime) {
+      setAlertTitle('Invalid Time');
+      setAlertMessage('End time cannot be earlier than start time.');
+      setAlertVisible(true);
       return;
     }
 
@@ -170,7 +190,9 @@ const AddNewEvent = () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert('Error!', 'No authentication token found. Please log in again.');
+        setAlertTitle('Error');
+        setAlertMessage('No authentication token found. Please log in again.');
+        setAlertVisible(true);
         return;
       }
   
@@ -222,11 +244,13 @@ const AddNewEvent = () => {
         },
       });
   
-      Alert.alert(
-        'Request Sent!',
-        'Your event request has been sent to the admin team for review. You will be notified once it is approved.',
-        [{ text: 'Okay', onPress: () => navigation.navigate('Home') }]
-      );
+      setAlertTitle('Success');
+      setAlertMessage('Your event request has been sent to the admin team for review. You will be notified once it is approved.');
+      setAlertVisible(true);
+
+      setTimeout(() => {
+        navigation.navigate('Home');
+      }, 2000);
 
       setEventName('');
       setNote('');
@@ -236,16 +260,14 @@ const AddNewEvent = () => {
       setLocation('');
       setCategory('Sports');
       setParticipants('10');
-      setPrice('0');
+      setPrice(1);
       setImage(null);
 
     } catch (error) {
       console.error('Full error details:', error);
-      Alert.alert(
-        'Error!',
-        'There was an issue creating the event. Please check the console for details.',
-        [{ text: 'Okay' }]
-      );
+      setAlertTitle('Error');
+      setAlertMessage('There was an issue creating the event. Please try again.');
+      setAlertVisible(true);
     } finally {
       setIsLoading(false); // Stop loading animation
       setIsProcessing(false); // Hide processing modal
@@ -262,6 +284,12 @@ const AddNewEvent = () => {
         <View style={styles.overlay}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.formContainer}>
+              <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={() => setAlertVisible(false)}
+              />
               <View style={styles.headerContainer}>
                 <Text style={styles.header}>Create New Event</Text>
                 <Text style={styles.subHeader}>Fill in the details below</Text>
@@ -415,19 +443,25 @@ const AddNewEvent = () => {
                 </View>
               </View>
               <View style={styles.inputSection}>
-                <Text style={styles.sectionTitle}>Price</Text>
-                <View style={styles.inputGroup}>
-                  <View style={styles.inlineInput}>
-                    <Icon name="wallet-outline" size={24} color="#8D8D8D" style={styles.inputIcon} />
-                    <Text style={styles.label}>Price:</Text>
-                    <TextInput
-                      style={[styles.numberInput, styles.smallInput]}
-                      keyboardType="numeric"
-                      value={price}
-                      onChangeText={setPrice}
-                    />
-                  </View>
-                  <Text style={styles.feeNote}>Please note: The app will take a 10% fee from each participant.</Text>
+                <Text style={styles.sectionTitle}>Price (TND)</Text>
+                <View style={styles.priceContainer}>
+                  <Slider
+                    style={styles.slider}
+                    value={price}
+                    onValueChange={(value) => setPrice(value)}
+                    minimumValue={1}
+                    maximumValue={200}
+                    step={1}
+                    thumbStyle={{ 
+                      backgroundColor: '#0095FF',
+                      width: 16,
+                      height: 16
+                    }}
+                    trackStyle={{ height: 4 }}
+                    minimumTrackTintColor="#0095FF"
+                    maximumTrackTintColor="#E8E8E8"
+                  />
+                  <Text style={styles.priceText}>{Math.round(price)} TND</Text>
                 </View>
               </View>
               <View style={styles.inputSection}>
@@ -684,6 +718,21 @@ const styles = StyleSheet.create({
   },
   participantsInput: {
     paddingRight: 30, // Add padding to make space for the arrows
+  },
+  priceContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  priceText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginTop: 8,
   },
   processingContainer: {
     flex: 1,

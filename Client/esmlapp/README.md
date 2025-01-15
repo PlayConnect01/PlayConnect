@@ -1,50 +1,79 @@
-# Welcome to your Expo app 👋
+# SportsMate Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+SportsMate is a social sports and gaming platform that connects athletes and gamers, facilitating community engagement through shared interests and activities.
 
-## Get started
+## Features
 
-1. Install dependencies
+- User Authentication & Profile Management
+- Sports & Gaming Interest Selection
+- Social Networking Capabilities
+- Real-time Messaging (coming soon)
+- Event Organization & Participation
+- Community Building Tools
 
+## Tech Stack
+
+- React Native / Expo
+- JavaScript/JSX
+- RESTful API Integration
+- AsyncStorage for Local Storage
+- Expo Image Picker
+- React Navigation
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- npm or yarn
+- Expo CLI
+- Android Studio (for Android development)
+- Xcode (for iOS development, macOS only)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone [repository-url]
+   cd SportsMate/Client/esmlapp
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. Start the development server:
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+4. Run on your preferred platform:
+   - Press 'a' for Android
+   - Press 'i' for iOS
+   - Press 'w' for web
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+esmlapp/
+├── app/                 # Main application code
+│   ├── profile/        # Profile-related components
+│   ├── auth/           # Authentication components
+│   ├── Homepage/       # Home screen components
+│   └── navbar/         # Navigation components
+├── assets/             # Static assets
+└── Api.js             # API configuration
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Contributing
 
-## Learn more
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-To learn more about developing your project with Expo, look at the following resources:
+## Contact
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+For any queries or support, please contact the development team.

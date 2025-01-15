@@ -63,7 +63,7 @@ router.post('/audio/:chatId', upload.single('audio'), async (req, res) => {
 
         // Generate the URL for the uploaded file
         const fileName = path.basename(req.file.path);
-        const fileUrl = `http://192.168.103.5:3000/uploads/${encodeURIComponent(fileName)}`;
+        const fileUrl = `http://192.168.103.15:3000/uploads/${encodeURIComponent(fileName)}`;
         
         console.log('Generated audio URL:', fileUrl);
         

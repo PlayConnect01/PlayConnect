@@ -49,13 +49,16 @@ const LeaderboardScreen = () => {
           <View style={[styles.topThreeItem, styles.secondPlace]}>
             <MaterialIcons name="star" size={24} color="#C0C0C0" />
             <Image
-              source={{ uri: topThree[1].profile_picture }}
+              source={{uri: topThree[1].profile_picture }}
               style={styles.topThreeImage}
             />
             <Text style={styles.topThreeName} numberOfLines={1}>
-              {topThree[1].username}
+              {topThree[1].username || 'User'}
             </Text>
-            <Text style={styles.topThreePoints}>{topThree[1].points} pts</Text>
+            <Text style={styles.topThreePoints}>
+              <Text>{topThree[1].points || 0}</Text>
+              <Text> pts</Text>
+            </Text>
           </View>
         )}
 
@@ -68,10 +71,11 @@ const LeaderboardScreen = () => {
               style={[styles.topThreeImage, styles.firstPlaceImage]}
             />
             <Text style={[styles.topThreeName, styles.firstPlaceName]} numberOfLines={1}>
-              {topThree[0].username}
+              {topThree[0].username || 'User'}
             </Text>
             <Text style={[styles.topThreePoints, styles.firstPlacePoints]}>
-              {topThree[0].points} pts
+              <Text>{topThree[0].points || 0}</Text>
+              <Text> pts</Text>
             </Text>
           </View>
         )}
@@ -85,9 +89,12 @@ const LeaderboardScreen = () => {
               style={styles.topThreeImage}
             />
             <Text style={styles.topThreeName} numberOfLines={1}>
-              {topThree[2].username}
+              {topThree[2].username || 'User'}
             </Text>
-            <Text style={styles.topThreePoints}>{topThree[2].points} pts</Text>
+            <Text style={styles.topThreePoints}>
+              <Text>{topThree[2].points || 0}</Text>
+              <Text> pts</Text>
+            </Text>
           </View>
         )}
       </View>
@@ -110,9 +117,12 @@ const LeaderboardScreen = () => {
           style={styles.profilePic}
         />
         <View style={styles.userInfo}>
-          <Text style={styles.username}>{item.username}</Text>
+          <Text style={styles.username}>{item.username || 'User'}</Text>
           <Text style={styles.stats}>
-            {item.points} Points • {item.events_created} Events
+            <Text>{item.points || 0}</Text>
+            <Text> Points • </Text>
+            <Text>{item.events_created || 0}</Text>
+            <Text> Events</Text>
           </Text>
         </View>
       </TouchableOpacity>

@@ -123,13 +123,18 @@ const App = () => {
       .get(`${BASE_URL}/events/approved`)
       .then((response) => {
         const fetchedEvents = response.data;
-        setEvents(fetchedEvents);
-        setFilteredEvents(fetchedEvents);
+        // Filter out past events
+        const currentEvents = fetchedEvents.filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate >= new Date();
+        });
+        setEvents(currentEvents);
+        setFilteredEvents(currentEvents);
 
         const uniqueCategories = [
           { id: "1", name: "All Type" },
           ...Array.from(
-            new Set(fetchedEvents.map((event) => event.category))
+            new Set(currentEvents.map((event) => event.category))
           ).map((category, index) => ({
             id: (index + 2).toString(),
             name: category,
@@ -267,9 +272,9 @@ const App = () => {
                     showsHorizontalScrollIndicator={false}
                     style={styles.categories}
                   >
-                    {categories.map((category) => (
+                    {categories.map((category, index) => (
                       <TouchableOpacity
-                        key={category.id} // Add unique key prop
+                        key={`category-${category.id || index}`}
                         onPress={() =>
                           navigation.navigate("CategoryEvents", {
                             categoryName: category.name,
@@ -306,9 +311,9 @@ const App = () => {
                     showsHorizontalScrollIndicator={false}
                     style={styles.competitions}
                   >
-                    {competitions.map((competition) => (
+                    {competitions.map((competition, index) => (
                       <TouchableOpacity
-                        key={competition.tournament_id} // Add unique key prop
+                        key={`competition-${competition.tournament_id || index}`}
                         style={styles.competitionItemWrapper}
                         onPress={() =>
                           navigation.navigate("TournamentDetail", {
@@ -344,9 +349,9 @@ const App = () => {
                   showsHorizontalScrollIndicator={false}
                   style={styles.categories}
                 >
-                  {eventCategories.map((category) => (
+                  {eventCategories.map((category, index) => (
                     <TouchableOpacity
-                      key={category.id}
+                      key={`event-category-${category.id || index}`}
                       style={[styles.categoryButton, selectedCategory === category.name && styles.selectedCategory]}
                       onPress={() => setSelectedCategory(category.name)}
                     >
@@ -363,9 +368,9 @@ const App = () => {
                   searchQuery ? styles.singleEventGrid : styles.eventsGrid
                 }
               >
-                {filteredEvents.map((event) => (
+                {filteredEvents.map((event, index) => (
                   <TouchableOpacity
-                    key={event.event_id}
+                    key={`event-${event.event_id || index}`}
                     style={
                       searchQuery ? styles.fullWidthEventItem : styles.eventItem
                     }

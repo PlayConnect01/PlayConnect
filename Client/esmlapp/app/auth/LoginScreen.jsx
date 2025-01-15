@@ -59,8 +59,6 @@ export default function Login() {
     }).start();
   }, []);
 
-
-
   const handleLogin = async () => {
     if (!email || !password) {
       setAlertTitle('Error');
@@ -90,26 +88,48 @@ export default function Login() {
         AsyncStorage.setItem('userData', JSON.stringify(user))
       ]);
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
+      // Check if it's first time user
+      const isFirstTimeUser = await AsyncStorage.getItem('isFirstTimeUser');
+      
+      if (isFirstTimeUser === 'true') {
+        // Remove the first-time user flag
+        await AsyncStorage.removeItem('isFirstTimeUser');
+        // Navigate to EditProfile
+        navigation.reset({
+          index: 0,
+          routes: [
+            { 
+              name: 'EditProfile',
+              params: { 
+                isFirstTime: true,
+                message: 'Welcome! Please complete your profile and select your interests to get started.'
+              }
+            }
+          ],
+        });
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      }
     } catch (error) {
-      console.log('Login error:', error.response?.data);
+      console.log('Login error:', error?.response?.data || error.message);
       
       if (error.response?.status === 403 && error.response?.data?.error === "Account banned") {
         setAlertTitle('Account Banned');
         setAlertMessage(`Your account has been banned.\nReason: ${error.response.data.ban_reason || 'Not specified'}`);
-        setAlertVisible(true);
       } else if (error.response?.status === 401 || error.response?.data?.error === "Invalid credentials") {
         setAlertTitle('Invalid Credentials');
         setAlertMessage('The email or password you entered is incorrect. Please try again.');
-        setAlertVisible(true);
+      } else if (error.response?.data?.error) {
+        setAlertTitle('Error');
+        setAlertMessage(error.response.data.error);
       } else {
         setAlertTitle('Error');
-        setAlertMessage('Something went wrong. Please try again later.');
-        setAlertVisible(true);
+        setAlertMessage('Something went wrong during login. Please try again.');
       }
+      setAlertVisible(true);
     } finally {
       setIsLoading(false);
     }

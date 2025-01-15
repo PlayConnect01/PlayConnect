@@ -392,7 +392,7 @@ const getAllUsers = async (req, res) => {
 
 const banUser = async (req, res) => {
   const { userId } = req.params;
-  const { banReason } = req.body;
+  const { ban_reason } = req.body;
 
   try {
     const updatedUser = await prisma.user.update({
@@ -401,7 +401,7 @@ const banUser = async (req, res) => {
       },
       data: {
         is_banned: true,
-        ban_reason: banReason
+        ban_reason: ban_reason
       }
     });
 

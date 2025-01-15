@@ -60,5 +60,45 @@ router.get("/count/total", getTotalUsers);
 router.post("/reports", reportUser);
 router.delete('/delete/:userId', deleteUser);
 
+router.post('/updatePoints', async (req, res) => {
+  const { userId, points, activity } = req.body;
+  
+  try {
+    // Update user points
+    const updatedUser = await prisma.user.update({
+      where: { user_id: parseInt(userId) },
+      data: {
+        points: {
+          increment: points
+        }
+      }
+    });
+
+    // Log the points transaction
+    await prisma.pointsLog.create({
+      data: {
+        user_id: parseInt(userId),
+        points: points,
+        activity: activity
+      }
+    });
+
+    // Create a notification for the user
+    await prisma.notification.create({
+      data: {
+        user_id: parseInt(userId),
+        title: "Points Awarded!",
+        content: `Congratulations! You received ${points} points for your event being approved.`,
+        type: "GENERAL",
+        is_read: false
+      }
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating points:', error);
+    res.status(500).json({ error: 'Failed to update points' });
+  }
+});
 
 module.exports = router;

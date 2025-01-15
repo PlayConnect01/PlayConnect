@@ -36,17 +36,50 @@ const Competitions = () => {
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it'
+        confirmButtonText: 'Yes, delete it',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
-        await axios.delete(`http://localhost:3000/competetion/${tournamentId}`);
+        await axios.delete(`http://localhost:3000/tournaments/${tournamentId}`);
         setTournaments(tournaments.filter(t => t.tournament_id !== tournamentId));
-        Swal.fire('Deleted!', 'Tournament has been deleted.', 'success');
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'Tournament has been deleted.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          width: '400px',
+          customClass: {
+            popup: 'large-popup',
+            title: 'large-title',
+            content: 'large-content'
+          }
+        });
       }
     } catch (error) {
       console.error('Error deleting tournament:', error);
-      Swal.fire('Error', 'Failed to delete tournament', 'error');
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to delete tournament',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content'
+        }
+      });
     }
   };
 
@@ -119,4 +152,3 @@ const Competitions = () => {
 };
 
 export default Competitions;
-

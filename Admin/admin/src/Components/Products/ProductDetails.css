@@ -30,7 +30,7 @@
 }
 
 .delete-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
@@ -41,6 +41,7 @@
   color: #f44336;
   font-weight: 500;
   transition: all 0.2s ease;
+  width: fit-content;
 }
 
 .delete-btn:hover {
@@ -200,17 +201,35 @@
 .icon-btn {
   padding: 4px;
   border: none;
-  background: none;
+  background: none !important;
   cursor: pointer;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  height: 100%;
 }
 
+/* Target the SVG icon directly */
+.icon-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.icon-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Remove any hover background effects */
 .icon-btn:hover {
-  background-color: rgba(0,0,0,0.05);
+  background: none !important;
+}
+
+/* Additional override to ensure no background color appears */
+.icon-btn:hover,
+.icon-btn:focus,
+.icon-btn:active {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 .delete-button,
@@ -229,6 +248,8 @@
 .edit-actions {
   display: flex;
   gap: 4px;
+  align-items: center;
+  height: 28px;
 }
 
 .delete-container {
@@ -237,4 +258,47 @@
   margin-top: 2rem;
   padding-top: 1rem;
   border-top: 1px solid #eee;
+}
+
+/* SweetAlert Custom Styles */
+.small-popup {
+  font-size: 0.85rem !important;
+  max-width: 280px !important;
+}
+
+.small-title {
+  font-size: 1rem !important;
+  padding: 0.4rem !important;
+}
+
+.small-content {
+  font-size: 0.85rem !important;
+  margin: 0.4rem 0 !important;
+  padding: 0 0.5rem !important;
+}
+
+.small-button {
+  font-size: 0.8rem !important;
+  padding: 0.3rem 0.6rem !important;
+}
+
+.swal2-popup {
+  padding: 0.4rem !important;
+  min-width: 280px !important;
+}
+
+.swal2-icon {
+  margin: 0.4rem auto !important;
+  transform: scale(0.6) !important;
+  width: 5em !important;
+  height: 5em !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.swal2-icon-content {
+  font-size: 2.75em !important;
+}
+
+.swal2-actions {
+  margin: 0.4rem auto !important;
 }

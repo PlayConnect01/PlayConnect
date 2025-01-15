@@ -34,6 +34,8 @@ const userproductRoutes = require('./routes/userproduct');
 const sportsProductRoutes = require('./routes/sportsProduct');
 const categoryProductRoutes = require('./routes/categoryRoutes');
 const userSportRoutes = require('./routes/userSport');
+const uploadRoutes = require('./routes/uploadRoutes');
+
 const app = express();
 
 // Middleware
@@ -46,7 +48,6 @@ const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(uploadDir));
 
@@ -110,7 +111,7 @@ app.use('/api/sports', sportsProductRoutes);
 app.use('/category', categoryProductRoutes);
 app.use('/api/user-sport', userSportRoutes);
 
-// Admin routes with prefix
+app.use('/upload', uploadRoutes);
 
 // Start the Server
 const PORT = process.env.PORT || 3000;

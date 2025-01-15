@@ -19,6 +19,37 @@ const getUserNotifications = async (userId) => {
             location: true,
           },
         },
+        match: {
+          include: {
+            user_1: {
+              select: {
+                user_id: true,
+                username: true,
+                profile_picture: true,
+                location: true,
+                sports: {
+                  include: {
+                    sport: true
+                  }
+                }
+              }
+            },
+            user_2: {
+              select: {
+                user_id: true,
+                username: true,
+                profile_picture: true,
+                location: true,
+                sports: {
+                  include: {
+                    sport: true
+                  }
+                }
+              }
+            },
+            sport: true
+          }
+        }
       },
     });
 

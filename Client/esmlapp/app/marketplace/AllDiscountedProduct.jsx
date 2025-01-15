@@ -147,7 +147,7 @@ const AllDiscountedProducts = () => {
       ]).start();
 
       await Share.share({
-        message: `Check out ${product.name} on PlayConnect! Price: ${product.formatted_price}`,
+        message: `Check out ${product.name} on SportsMate! Price: ${product.formatted_price}`,
         url: product.image_url,
         title: 'Share Product'
       });
