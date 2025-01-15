@@ -301,21 +301,14 @@ const AllDiscountedProducts = () => {
   const fetchDiscountedProducts = async () => {
     try {
       setLoading(true);
-      let productsResponse;
-
-      if (selectedCategory === 'All') {
-        productsResponse = await axios.get(`${BASE_URL}/product/discounted`);
-      } else {
-        productsResponse = await axios.get(`${BASE_URL}/product/discounted/category/${encodeURIComponent(selectedCategory)}`);
-      }
-
+      const response = await axios.get(`${BASE_URL}/product/discounted`);
       const favoritesResponse = await AsyncStorage.getItem('favoriteProducts');
-      const products = productsResponse.data.products || productsResponse.data;
+      const products = response.data.products || response.data;
       const userFavorites = favoritesResponse ? JSON.parse(favoritesResponse) : [];
       setFavorites(userFavorites);
 
       if (!products || products.length === 0) {
-        showNotification(`No discounted products found${selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}`, 'warning');
+        showNotification('No discounted products found', 'warning');
         setFilteredProducts([]);
         setCategorizedProducts({});
         return;
@@ -350,7 +343,16 @@ const AllDiscountedProducts = () => {
       }, {});
 
       setCategorizedProducts(categorized);
-      setFilteredProducts(sortedProducts);
+      
+      // Filter products based on selected category
+      let filtered = sortedProducts;
+      if (selectedCategory !== 'All') {
+        filtered = sortedProducts.filter(product => 
+          product.sport?.name === selectedCategory
+        );
+      }
+      
+      setFilteredProducts(filtered);
     } catch (error) {
       console.error("Error fetching discounted products:", error);
       showNotification(
@@ -406,23 +408,48 @@ const AllDiscountedProducts = () => {
 
   const filterProducts = useCallback(() => {
     let filtered = [];
+    
+    // Get all products first
     Object.values(categorizedProducts).forEach(products => {
       filtered = [...filtered, ...products];
     });
 
-    if (searchQuery) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    // Apply category filter
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(product => 
+        product.sport?.name?.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => product.sport?.name === selectedCategory);
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.sport?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
 
+    // Sort filtered products
+    filtered.sort((a, b) => {
+      switch (selectedSort.id) {
+        case 'discount':
+          return b.discount - a.discount;
+        case 'price_low':
+          return a.price - b.price;
+        case 'price_high':
+          return b.price - a.price;
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'newest':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        default:
+          return 0;
+      }
+    });
+
     setFilteredProducts(filtered);
-  }, [categorizedProducts, searchQuery, selectedCategory]);
+  }, [categorizedProducts, searchQuery, selectedCategory, selectedSort.id]);
 
   useEffect(() => {
     filterProducts();
@@ -544,7 +571,7 @@ const AllDiscountedProducts = () => {
             <MaterialIcons
               name={isFavorite ? 'favorite' : 'favorite-outline'}
               size={24}
-              color={isFavorite ? '#FF4B4B' : '#FFF'}
+              color={isFavorite ? '#FFFFFF' : '#FF4B4B'}
             />
           </TouchableOpacity>
           <Animated.View style={[
@@ -624,6 +651,21 @@ const AllDiscountedProducts = () => {
     );
   };
 
+  const getNotificationStyle = (type) => {
+    switch (type) {
+      case 'success':
+        return styles.notificationSuccess;
+      case 'error':
+        return styles.notificationError;
+      case 'warning':
+        return styles.notificationWarning;
+      case 'info':
+        return styles.notificationInfo;
+      default:
+        return styles.notificationInfo;
+    }
+  };
+
   const NotificationBanner = ({ message, type = 'info', onClose }) => {
     const [animation] = useState(new Animated.Value(0));
 
@@ -645,36 +687,11 @@ const AllDiscountedProducts = () => {
       ]).start(() => onClose());
     }, []);
 
-    const getBannerStyle = () => {
-      switch (type) {
-        case 'success':
-          return [styles.notification, styles.notificationSuccess];
-        case 'error':
-          return [styles.notification, styles.notificationError];
-        case 'warning':
-          return [styles.notification, styles.notificationWarning];
-        default:
-          return [styles.notification];
-      }
-    };
-
-    const getIcon = () => {
-      switch (type) {
-        case 'success':
-          return 'check-circle';
-        case 'error':
-          return 'error-outline';
-        case 'warning':
-          return 'warning';
-        default:
-          return 'info';
-      }
-    };
-
     return (
       <Animated.View 
         style={[
-          getBannerStyle(),
+          styles.notification,
+          getNotificationStyle(type),
           {
             transform: [
               { translateY: animation.interpolate({
@@ -687,10 +704,14 @@ const AllDiscountedProducts = () => {
         ]}
       >
         <MaterialIcons
-          name={getIcon()}
+          name={
+            type === 'success' ? 'check-circle' :
+            type === 'error' ? 'error' :
+            type === 'warning' ? 'warning' :
+            'info'
+          }
           size={24}
-          color="#FFF"
-          style={styles.notificationIcon}
+          color="#FFFFFF"
         />
         <Text style={styles.notificationText}>{message}</Text>
         <TouchableOpacity 
@@ -872,6 +893,8 @@ const AllDiscountedProducts = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        contentContainerStyle={styles.flatListContent}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.searchContainer}>
           <View style={styles.searchInputContainer}>
@@ -910,9 +933,33 @@ const AllDiscountedProducts = () => {
 
       <SortModal />
 
-      {notification.message && (
-        <NotificationBanner message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: '' })} />
-      )}
+      {notification.message ? (
+        <Animated.View
+          style={[
+            styles.notification,
+            getNotificationStyle(notification.type),
+          ]}
+        >
+          <MaterialIcons
+            name={
+              notification.type === 'success' ? 'check-circle' :
+              notification.type === 'error' ? 'error' :
+              notification.type === 'warning' ? 'warning' :
+              'info'
+            }
+            size={24}
+            color="#FFFFFF"
+          />
+          <Text style={styles.notificationText}>{notification.message}</Text>
+          <TouchableOpacity 
+            onPress={() => setNotification({ message: '', type: '' })} 
+            style={styles.notificationClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="close" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </Animated.View>
+      ) : null}
     </View>
   );
 };
@@ -920,7 +967,9 @@ const AllDiscountedProducts = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7FAFF',
+    backgroundColor: '#F7FAFC',
+    paddingTop: 20,
+    paddingBottom: 80,
   },
   loadingContainer: {
     flex: 1,
@@ -968,7 +1017,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
     marginBottom: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
@@ -1017,6 +1069,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+    marginBottom: 16,
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -1039,7 +1092,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 20,
+    marginBottom: 16,
+    marginTop: 8,
   },
   productCard: {
     width: cardWidth,
@@ -1093,30 +1150,27 @@ const styles = StyleSheet.create({
   },
   favoriteButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 10,
+    right: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 2,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 2,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   favoriteButtonActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 75, 75, 0.9)',
   },
   shareButton: {
     position: 'absolute',
-    top: 12,
+    top: 10,
     right: 56,
     backgroundColor: '#4299E1',
     width: 36,
@@ -1206,43 +1260,42 @@ const styles = StyleSheet.create({
   },
   notification: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 20,
-    left: 16,
-    right: 16,
-    backgroundColor: '#1A202C',
+    top: Platform.OS === 'ios' ? 50 : 30,
+    left: 20,
+    right: 20,
+    padding: 15,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
     zIndex: 1000,
   },
   notificationSuccess: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#2196F3', // Light blue
   },
   notificationError: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#1976D2', // Medium blue
   },
   notificationWarning: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#0D47A1', // Dark blue
   },
-  notificationIcon: {
-    marginRight: 12,
+  notificationInfo: {
+    backgroundColor: '#64B5F6', // Lighter blue
   },
   notificationText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
-    flex: 1,
-    lineHeight: 20,
+    textAlign: 'center',
+    marginLeft: 10,
   },
   notificationClose: {
     padding: 4,
@@ -1440,6 +1493,9 @@ const styles = StyleSheet.create({
   },
   notificationClose: {
     padding: 4,
+  },
+  flatListContent: {
+    paddingBottom: 40,
   },
 });
 
