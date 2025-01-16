@@ -652,17 +652,45 @@ const AllDiscountedProducts = () => {
   };
 
   const getNotificationStyle = (type) => {
+    const baseStyle = {
+      position: 'absolute',
+      bottom: 90,
+      left: 16,
+      right: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 5,
+      backgroundColor: '#4FA5F5',
+    };
+
     switch (type) {
       case 'success':
-        return styles.notificationSuccess;
+        return {
+          ...baseStyle,
+          backgroundColor: '#48BB78',
+        };
       case 'error':
-        return styles.notificationError;
+        return {
+          ...baseStyle,
+          backgroundColor: '#F56565',
+        };
       case 'warning':
-        return styles.notificationWarning;
-      case 'info':
-        return styles.notificationInfo;
+        return {
+          ...baseStyle,
+          backgroundColor: '#ED8936',
+        };
       default:
-        return styles.notificationInfo;
+        return {
+          ...baseStyle,
+          backgroundColor: '#4FA5F5',
+        };
     }
   };
 
@@ -1259,47 +1287,29 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   notification: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 30,
-    left: 20,
-    right: 20,
-    padding: 15,
-    borderRadius: 10,
+    zIndex: 1000,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 5,
-    zIndex: 1000,
-  },
-  notificationSuccess: {
-    backgroundColor: '#2196F3', // Light blue
-  },
-  notificationError: {
-    backgroundColor: '#1976D2', // Medium blue
-  },
-  notificationWarning: {
-    backgroundColor: '#0D47A1', // Dark blue
-  },
-  notificationInfo: {
-    backgroundColor: '#64B5F6', // Lighter blue
   },
   notificationText: {
+    flex: 1,
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
-    textAlign: 'center',
-    marginLeft: 10,
+    marginLeft: 12,
+    marginRight: 8,
   },
   notificationClose: {
     padding: 4,
-    marginLeft: 8,
   },
   loadingProductsContainer: {
     height: 300,

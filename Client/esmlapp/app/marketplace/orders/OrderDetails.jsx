@@ -25,6 +25,38 @@ const OrderDetails = ({ route, navigation }) => {
   const fetchOrderDetails = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/orders/${orderId}`);
+      
+      // Fetch product details for each item
+      if (response.data?.items) {
+        const itemsWithProducts = await Promise.all(
+          response.data.items.map(async (item) => {
+            try {
+              const productResponse = await axios.get(`${BASE_URL}/product/products/${item.product_id}`);
+              return {
+                ...item,
+                product: {
+                  ...item.product,
+                  ...productResponse.data,
+                  image_url: productResponse.data.image_url || 
+                           productResponse.data.image || 
+                           'https://res.cloudinary.com/sportsmate/image/upload/v1705330085/placeholder-image.jpg'
+                }
+              };
+            } catch (error) {
+              console.error(`Error fetching product ${item.product_id}:`, error.message);
+              return {
+                ...item,
+                product: {
+                  ...item.product,
+                  image_url: 'https://res.cloudinary.com/sportsmate/image/upload/v1705330085/placeholder-image.jpg'
+                }
+              };
+            }
+          })
+        );
+        response.data.items = itemsWithProducts;
+      }
+      
       setOrder(response.data);
     } catch (error) {
       console.error('Error fetching order details:', error);
@@ -87,61 +119,71 @@ const OrderDetails = ({ route, navigation }) => {
         <FontAwesome5 name="arrow-left" size={20} color="#4FA5F5" />
       </TouchableOpacity>
 
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+      >
         <Text style={styles.title}>Order Details</Text>
 
         <View style={styles.orderCard}>
           <View style={styles.headerTop}>
             <Text style={styles.orderId}>Order #{orderId}</Text>
-            <View style={[styles.statusContainer, { backgroundColor: getStatusColor(order.status) + '15' }]}>
+            <View style={[styles.statusContainer, { backgroundColor: getStatusColor(order.status) + '15' }]} >
               <FontAwesome5 
                 name={order.status === 'completed' ? 'check-circle' : 'clock'} 
                 size={16} 
                 color={getStatusColor(order.status)}
                 style={styles.statusIcon}
               />
-              <Text style={[styles.status, { color: getStatusColor(order.status) }]}>
+              <Text style={[styles.status, { color: getStatusColor(order.status) }]} >
                 {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
               </Text>
             </View>
           </View>
-          <Text style={styles.date}>
+          <Text style={styles.date} >
             Placed on {formatDate(order.created_at)}
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Items</Text>
+        <View style={styles.section} >
+          <Text style={styles.sectionTitle} >Items</Text>
           {order?.items?.map((item, index) => (
-            <View key={index} style={styles.itemCard}>
-              <Image
-                source={{ uri: item?.product?.image || 'https://via.placeholder.com/80' }}
-                style={styles.itemImage}
-                onError={(e) => console.log('Image loading error:', e.nativeEvent.error)}
-              />
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item?.product?.name || 'Unknown Product'}</Text>
-                <Text style={styles.itemQuantity}>Quantity: {item?.quantity || 0}</Text>
-                <Text style={styles.itemPrice}>${(item?.price || 0).toFixed(2)}</Text>
+            <View key={index} style={styles.itemCard} >
+              <View style={styles.itemImageContainerNew} >
+                <Image
+                  source={{ 
+                    uri: item?.product?.image_url || 
+                         item?.product?.image || 
+                         'https://res.cloudinary.com/sportsmate/image/upload/v1705330085/placeholder-image.jpg'
+                  }}
+                  style={styles.itemImageNew}
+                  resizeMode="cover"
+                  onError={(e) => console.log('Image loading error:', e.nativeEvent.error)}
+                />
+              </View>
+              <View style={styles.itemDetails} >
+                <Text style={styles.itemName} >{item?.product?.name || 'Unknown Product'}</Text>
+                <Text style={styles.itemQuantity} >Quantity: {item?.quantity || 0}</Text>
+                <Text style={styles.itemPrice} >${(item?.price || 0).toFixed(2)}</Text>
               </View>
             </View>
           ))}
         </View>
 
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Items Total</Text>
-            <Text style={styles.summaryValue}>
+        <View style={styles.summaryContainer} >
+          <View style={styles.summaryRow} >
+            <Text style={styles.summaryLabel} >Items Total</Text>
+            <Text style={styles.summaryValue} >
               ${(order?.total_amount || 0).toFixed(2)}
             </Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee</Text>
-            <Text style={styles.summaryValue}>$0.00</Text>
+          <View style={styles.summaryRow} >
+            <Text style={styles.summaryLabel} >Delivery Fee</Text>
+            <Text style={styles.summaryValue} >$0.00</Text>
           </View>
-          <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>
+          <View style={[styles.summaryRow, styles.totalRow]} >
+            <Text style={styles.totalLabel} >Total Amount</Text>
+            <Text style={styles.totalValue} >
               ${(order?.total_amount || 0).toFixed(2)}
             </Text>
           </View>
@@ -151,9 +193,9 @@ const OrderDetails = ({ route, navigation }) => {
           style={styles.continueButton}
           onPress={() => navigation.navigate('Cart', { orderId })}
         >
-          <View style={styles.buttonContent}>
+          <View style={styles.buttonContent} >
             <FontAwesome5 name="history" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-            <Text style={styles.continueButtonText}>View History & Comments</Text>
+            <Text style={styles.continueButtonText} >View History & Comments</Text>
           </View>
         </TouchableOpacity>
       </ScrollView>
@@ -169,6 +211,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  scrollContent: {
+    paddingBottom: 80, // Add padding for navbar
   },
   backButton: {
     position: 'absolute',
@@ -247,7 +292,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 12,
+    padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#EEF2FF',
@@ -256,11 +301,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
+    alignItems: 'center',
   },
-  itemImage: {
-    width: 80,
-    height: 80,
+  itemImageContainerNew: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    padding: 4,
+  },
+  itemImageNew: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFF',
+    resizeMode: 'cover',
   },
   itemDetails: {
     flex: 1,

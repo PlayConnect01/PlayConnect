@@ -9,6 +9,7 @@ import {
   Animated,
   Image,
   Pressable,
+  ScrollView
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -44,12 +45,38 @@ const SearchBar = ({ onSelectProduct }) => {
     try {
       let searches = [...recentSearches];
       searches = [searchTerm, ...searches.filter(term => term !== searchTerm)];
-      searches = searches.slice(0, 5);
+      searches = searches.slice(0, 10);
       await AsyncStorage.setItem('recentSearches', JSON.stringify(searches));
       setRecentSearches(searches);
     } catch (error) {
       console.error('Error saving recent search:', error);
     }
+  };
+
+  const removeSearchItem = async (indexToRemove) => {
+    try {
+      const updatedSearches = recentSearches.filter((_, index) => index !== indexToRemove);
+      await AsyncStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
+      setRecentSearches(updatedSearches);
+    } catch (error) {
+      console.error('Error removing search item:', error);
+    }
+  };
+
+  const clearRecentSearches = async () => {
+    try {
+      await AsyncStorage.removeItem('recentSearches');
+      setRecentSearches([]);
+    } catch (error) {
+      console.error('Error clearing recent searches:', error);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setResults([]);
+    setDropdownVisible(false);
+    searchRef.current?.focus();
   };
 
   useEffect(() => {
@@ -90,20 +117,24 @@ const SearchBar = ({ onSelectProduct }) => {
     }
   }, [searchTerm]);
 
-  const fetchSearchResults = async () => {
+  const fetchSearchResults = async (searchValue = searchTerm) => {
+    if (!searchValue.trim()) {
+      setResults([]);
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      console.log('Searching for:', searchTerm);
       const response = await axios.get(`${BASE_URL}/product/search`, {
-        params: { productName: searchTerm },
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        params: { productName: searchValue },
+        headers: { 'Content-Type': 'application/json' }
       });
-      console.log('Search response:', response.data);
       setResults(response.data);
+      if (searchValue.trim()) {
+        saveRecentSearch(searchValue.trim());
+      }
     } catch (error) {
-      console.error("Error fetching search results:", error.response?.data || error);
+      console.error("Error fetching search results:", error);
       setResults([]);
     } finally {
       setIsLoading(false);
@@ -120,20 +151,13 @@ const SearchBar = ({ onSelectProduct }) => {
     navigation.navigate('ProductDetail', { productId: product.product_id });
   };
 
-  const handleClearSearch = () => {
-    setSearchTerm('');
-    setResults([]);
-    setDropdownVisible(false);
-    searchRef.current?.focus();
-  };
-
   const handleRecentSearchSelect = (search) => {
     setSearchTerm(search);
-    fetchSearchResults();
+    fetchSearchResults(search);
   };
 
   const renderSearchResult = (item, index) => {
-    const imageUrl = item.image_url ? `${BASE_URL}/${item.image_url}` : null;
+    const imageUrl = item.image_url || item.image || 'https://res.cloudinary.com/sportsmate/image/upload/v1705330085/placeholder-image.jpg';
 
     return (
       <Animated.View
@@ -156,17 +180,12 @@ const SearchBar = ({ onSelectProduct }) => {
           onPress={() => handleSelectProduct(item)}
         >
           <View style={styles.imageContainer}>
-            {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.resultImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.resultImage, styles.placeholderImage]}>
-                <Ionicons name="image-outline" size={24} color="#999" />
-              </View>
-            )}
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.resultImage}
+              resizeMode="cover"
+              onError={(e) => console.log('Image loading error:', e.nativeEvent.error)}
+            />
           </View>
           <View style={styles.resultTextContainer}>
             <Text style={styles.resultTitle} numberOfLines={1}>{item.name}</Text>
@@ -182,81 +201,95 @@ const SearchBar = ({ onSelectProduct }) => {
     );
   };
 
-  const renderContent = () => {
-    if (isLoading) {
-      return <ActivityIndicator style={styles.loader} color="#0066cc" />;
-    }
-
-    if (results.length > 0) {
-      return (
-        <View style={styles.resultsList}>
-          {results.map((item, index) => (
-            renderSearchResult(item, index)
-          ))}
-        </View>
-      );
-    }
-
-    if (searchTerm.length > 0) {
-      return <Text style={styles.noResults}>No products found</Text>;
-    }
-
-    if (recentSearches.length > 0) {
-      return (
-        <View style={styles.recentSearches}>
-          <Text style={styles.recentTitle}>Recent Searches</Text>
-          {recentSearches.map((search, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.recentItem}
-              onPress={() => handleRecentSearchSelect(search)}
-            >
-              <Ionicons name="time-outline" size={16} color="#666" />
-              <Text style={styles.recentText}>{search}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      );
-    }
-
-    return null;
-  };
-
   return (
     <View style={styles.mainContainer}>
-      <View style={styles.container}>
-        <View style={[styles.searchContainer, isFocused && styles.searchContainerFocused]}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-          <TextInput
-            ref={searchRef}
-            style={styles.input}
-            placeholder="Search products..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            onFocus={() => {
-              setIsFocused(true);
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#A0AEC0" style={styles.searchIcon} />
+        <TextInput
+          ref={searchRef}
+          style={styles.searchInput}
+          placeholder="Search products..."
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          onFocus={() => {
+            setIsFocused(true);
+            if (searchTerm.length > 0 || recentSearches.length > 0) {
               setDropdownVisible(true);
-            }}
-            returnKeyType="search"
-            onSubmitEditing={fetchSearchResults}
-          />
-          {searchTerm.length > 0 && (
-            <TouchableOpacity 
-              onPress={handleClearSearch} 
-              style={styles.clearButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {dropdownVisible && (
-          <View style={styles.dropdownContainer}>
-            {renderContent()}
-          </View>
-        )}
+            }
+          }}
+          onBlur={() => {
+            setTimeout(() => {
+              if (!searchTerm.length) {
+                setDropdownVisible(false);
+              }
+            }, 200);
+          }}
+          placeholderTextColor="#A0AEC0"
+        />
+        {searchTerm ? (
+          <TouchableOpacity onPress={handleClearSearch} style={styles.clearButton}>
+            <Ionicons name="close-circle" size={20} color="#A0AEC0" />
+          </TouchableOpacity>
+        ) : null}
       </View>
+      
+      {dropdownVisible && (
+        <View style={styles.dropdownContainer}>
+          <ScrollView
+            style={styles.resultsList}
+            contentContainerStyle={styles.resultsContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
+            {isLoading ? (
+              <ActivityIndicator style={styles.loader} color="#4FA5F5" />
+            ) : results.length > 0 ? (
+              results.map((item, index) => renderSearchResult(item, index))
+            ) : searchTerm.length > 0 ? (
+              <Text style={styles.noResults}>No products found</Text>
+            ) : null}
+          </ScrollView>
+        </View>
+      )}
+      {!searchTerm && recentSearches.length > 0 && (
+        <View style={styles.recentSearchesContainer}>
+          <View style={styles.recentHeader}>
+            <Text style={styles.recentTitle}>Recent Searches</Text>
+            <TouchableOpacity 
+              onPress={clearRecentSearches}
+              style={styles.clearAllButton}
+            >
+              <Text style={styles.clearAllText}>Clear All</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView 
+            style={styles.recentList}
+            showsVerticalScrollIndicator={false}
+          >
+            {recentSearches.map((search, index) => (
+              <View
+                key={index}
+                style={styles.recentSearchItem}
+              >
+                <TouchableOpacity 
+                  style={styles.recentSearchContent}
+                  onPress={() => handleRecentSearchSelect(search)}
+                >
+                  <Ionicons name="time-outline" size={20} color="#A0AEC0" />
+                  <Text style={styles.recentSearchText}>{search}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.removeSearchButton}
+                  onPress={() => removeSearchItem(index)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#A0AEC0" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 };
@@ -265,72 +298,143 @@ const styles = StyleSheet.create({
   mainContainer: {
     position: 'relative',
     zIndex: 999,
-    elevation: 999,
-  },
-  container: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    position: 'relative',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 25,
-    paddingHorizontal: 16,
-    height: 50,
+    backgroundColor: '#F7FAFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    zIndex: 1000,
-    elevation: 1000,
+    borderColor: '#E2E8F0',
   },
-  searchContainerFocused: {
-    borderColor: '#0066cc',
-    backgroundColor: '#fff',
+  dropdownContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 16,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginTop: 4,
+    maxHeight: 400,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 1000,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  resultsList: {
+    maxHeight: 400,
+  },
+  resultsContent: {
+    paddingVertical: 4,
   },
   searchIcon: {
     marginRight: 8,
   },
-  input: {
+  searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
-    height: '100%',
-    paddingVertical: 8,
+    color: '#2D3748',
+    paddingVertical: 6,
+    height: 40,
   },
   clearButton: {
-    padding: 8,
+    padding: 4,
   },
-  dropdownContainer: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
+  loader: {
+    padding: 20,
+  },
+  noResults: {
+    padding: 16,
+    textAlign: 'center',
+    color: '#A0AEC0',
+    fontSize: 15,
+  },
+  recentSearchesContainer: {
+    marginTop: 8,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 8,
-    maxHeight: 300,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 998,
-    overflow: 'scroll',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  resultsList: {
-    maxHeight: 300,
-    paddingVertical: 4,
+  recentList: {
+    maxHeight: 200,
+  },
+  recentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  recentTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2D3748',
+  },
+  clearAllButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  clearAllText: {
+    color: '#4FA5F5',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  recentSearchItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  recentSearchContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 40,
+  },
+  recentSearchText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 15,
+    color: '#4A5568',
+  },
+  removeSearchButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
   },
   resultItem: {
-    marginBottom: 8,
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    marginHorizontal: 8,
+    marginVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     overflow: 'hidden',
   },
   resultButton: {
@@ -339,35 +443,37 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   imageContainer: {
-    marginRight: 12,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  resultImage: {
     width: 60,
     height: 60,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F7FAFF',
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  placeholderImage: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+  resultImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
   },
   resultTextContainer: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   resultTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
-    color: '#333',
+    color: '#2D3748',
     marginBottom: 4,
   },
   resultPrice: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#0066cc',
+    color: '#4FA5F5',
     marginBottom: 4,
   },
   ratingContainer: {
@@ -376,43 +482,13 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 14,
-    color: '#666',
+    color: '#4A5568',
     marginLeft: 4,
   },
   reviewCount: {
     fontSize: 14,
-    color: '#888',
+    color: '#A0AEC0',
     marginLeft: 4,
-  },
-  noResults: {
-    padding: 20,
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 16,
-  },
-  recentSearches: {
-    padding: 8,
-  },
-  recentTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
-    paddingHorizontal: 8,
-  },
-  recentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-  },
-  recentText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#333',
-  },
-  loader: {
-    padding: 20,
   },
 });
 
