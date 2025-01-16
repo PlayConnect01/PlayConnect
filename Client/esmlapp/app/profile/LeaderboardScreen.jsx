@@ -46,49 +46,65 @@ const LeaderboardScreen = () => {
       <View style={styles.topThreeContainer}>
         {/* Second Place */}
         {topThree[1] && (
-          <View style={[styles.topThreeItem, styles.secondPlace]}>
+          <TouchableOpacity 
+            style={[styles.topThreeItem, styles.secondPlace]}
+            onPress={() => navigation.navigate('UserProfile', { userId: topThree[1].id })}
+          >
             <MaterialIcons name="star" size={24} color="#C0C0C0" />
             <Image
-              source={{ uri: topThree[1].profile_picture }}
+              source={{uri: topThree[1].profile_picture }}
               style={styles.topThreeImage}
             />
             <Text style={styles.topThreeName} numberOfLines={1}>
-              {topThree[1].username}
+              {topThree[1].username || 'User'}
             </Text>
-            <Text style={styles.topThreePoints}>{topThree[1].points} pts</Text>
-          </View>
+            <Text style={styles.topThreePoints}>
+              <Text style={styles.pointsNumber}>{topThree[1].points || 0}</Text>
+              <Text style={styles.pointsText}> pts</Text>
+            </Text>
+          </TouchableOpacity>
         )}
 
         {/* First Place */}
         {topThree[0] && (
-          <View style={[styles.topThreeItem, styles.firstPlace]}>
+          <TouchableOpacity 
+            style={[styles.topThreeItem, styles.firstPlace]}
+            onPress={() => navigation.navigate('UserProfile', { userId: topThree[0].id })}
+          >
             <MaterialIcons name="star" size={32} color="#FFD700" />
             <Image
               source={{ uri: topThree[0].profile_picture }}
               style={[styles.topThreeImage, styles.firstPlaceImage]}
             />
             <Text style={[styles.topThreeName, styles.firstPlaceName]} numberOfLines={1}>
-              {topThree[0].username}
+              {topThree[0].username || 'User'}
             </Text>
             <Text style={[styles.topThreePoints, styles.firstPlacePoints]}>
-              {topThree[0].points} pts
+              <Text style={styles.pointsNumber}>{topThree[0].points || 0}</Text>
+              <Text style={styles.pointsText}> pts</Text>
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Third Place */}
         {topThree[2] && (
-          <View style={[styles.topThreeItem, styles.thirdPlace]}>
+          <TouchableOpacity 
+            style={[styles.topThreeItem, styles.thirdPlace]}
+            onPress={() => navigation.navigate('UserProfile', { userId: topThree[2].id })}
+          >
             <MaterialIcons name="star" size={24} color="#CD7F32" />
             <Image
               source={{ uri: topThree[2].profile_picture }}
               style={styles.topThreeImage}
             />
             <Text style={styles.topThreeName} numberOfLines={1}>
-              {topThree[2].username}
+              {topThree[2].username || 'User'}
             </Text>
-            <Text style={styles.topThreePoints}>{topThree[2].points} pts</Text>
-          </View>
+            <Text style={styles.topThreePoints}>
+              <Text style={styles.pointsNumber}>{topThree[2].points || 0}</Text>
+              <Text style={styles.pointsText}> pts</Text>
+            </Text>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -110,9 +126,12 @@ const LeaderboardScreen = () => {
           style={styles.profilePic}
         />
         <View style={styles.userInfo}>
-          <Text style={styles.username}>{item.username}</Text>
+          <Text style={styles.username}>{item.username || 'User'}</Text>
           <Text style={styles.stats}>
-            {item.points} Points • {item.events_created} Events
+            <Text style={styles.pointsNumber}>{item.points || 0}</Text>
+            <Text style={styles.statsText}> Points • </Text>
+            <Text style={styles.pointsNumber}>{item.events_created || 0}</Text>
+            <Text style={styles.statsText}> Events</Text>
           </Text>
         </View>
       </TouchableOpacity>
@@ -223,6 +242,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  pointsNumber: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  pointsText: {
+    fontSize: 12,
+    color: '#666',
+  },
   listContainer: {
     padding: 16,
   },
@@ -260,6 +287,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  statsText: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 

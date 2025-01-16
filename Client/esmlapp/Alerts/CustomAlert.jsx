@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { View, Text, Modal, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Modal, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 
-const CustomAlert = ({ visible, title, message, onClose, timeout = 3000 }) => {
+const CustomAlert = ({ visible, title, message, onClose, buttons, timeout = null }) => {
   useEffect(() => {
-    if (visible) {
+    if (visible && timeout) {
       const timer = setTimeout(() => {
         onClose();
       }, timeout);
@@ -14,6 +14,42 @@ const CustomAlert = ({ visible, title, message, onClose, timeout = 3000 }) => {
 
   const isError = title?.toLowerCase() === 'error';
   const isSuccess = title?.toLowerCase() === 'success';
+
+  const renderButtons = () => {
+    if (!buttons || buttons.length === 0) {
+      return (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={onClose}
+        >
+          <Text style={styles.buttonText}>OK</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <View style={styles.buttonContainer}>
+        {buttons.map((button, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.button,
+              index < buttons.length - 1 && styles.buttonMarginRight,
+              button.style?.backgroundColor && { backgroundColor: button.style.backgroundColor }
+            ]}
+            onPress={button.onPress}
+          >
+            <Text style={[
+              styles.buttonText,
+              button.style
+            ]}>
+              {button.text}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
 
   return (
     <Modal
@@ -32,6 +68,7 @@ const CustomAlert = ({ visible, title, message, onClose, timeout = 3000 }) => {
             {title}
           </Text>
           <Text style={styles.message}>{message}</Text>
+          {renderButtons()}
         </View>
       </View>
     </Modal>
@@ -72,6 +109,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     textAlign: 'center',
+    marginBottom: 20,
   },
   errorTitle: {
     color: '#ff0000',
@@ -79,6 +117,28 @@ const styles = StyleSheet.create({
   successTitle: {
     color: '#28a745',
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+    width: '100%',
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  buttonMarginRight: {
+    marginRight: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: '500',
+  }
 });
 
 export default CustomAlert;

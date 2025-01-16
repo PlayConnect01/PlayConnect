@@ -38,41 +38,89 @@ const CalendarPage = () => {
 
   const handleDayPress = (day) => {
     const selectedDate = day.dateString;
-    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+    setSelectedDate(selectedDate);
+    fetchEvents(selectedDate);
+  };
 
-    setSelectedDate(selectedDate); // Set the selected date for display purposes
 
-    if (selectedDate < today) {
-      // Check if the selected date is in the past
-      setEvents([]); // Clear events for past dates
-    } else {
-      fetchEvents(selectedDate); // Fetch events only for today or future dates
+  const getOrdinalSuffix = (day) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
     }
   };
 
-  const formatTime = (timeString) => {
-    const date = new Date(timeString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const formatDisplayDate = (dateString) => {
+    try {
+      // Ensure we're working with a valid date string
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        // If date is invalid, return today's date
+        return new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        });
+      }
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+    }
   };
+
+  const formatEventDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+    return `${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
+  };
+
 
   const getMarkedDates = () => {
     const marked = {};
-    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayString = today.toISOString().split('T')[0];
 
-    for (let i = 0; i < 30; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateString = date.toISOString().split("T")[0];
-      if (dateString !== today) {
-        // Skip greying out the current day date
-        marked[dateString] = { disabled: true, color: "#d3d3d3" }; // Grey out past dates
-      }
+    // Mark past dates as disabled
+    for (let i = 1; i <= 30; i++) {
+      const pastDate = new Date(today);
+      pastDate.setDate(today.getDate() - i);
+      const dateString = pastDate.toISOString().split('T')[0];
+      marked[dateString] = { 
+        disabled: true, 
+        disableTouchEvent: true,
+        marked: false,
+        dotColor: 'transparent'
+      };
     }
 
-    // Mark the selected date
-    marked[selectedDate] = {
-      selected: true,
-      marked: true,
+    // Only mark the selected date if it's today or in the future
+    if (selectedDate && selectedDate >= todayString) {
+      marked[selectedDate] = {
+        selected: true,
+        selectedColor: "#0095FF",
+      };
+    }
+
+    // Mark today
+    marked[todayString] = {
+      selected: selectedDate === todayString,
       selectedColor: "#0095FF",
     };
 
@@ -82,13 +130,14 @@ const CalendarPage = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate("Homepage/Homep")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Home")}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#555" />
         </TouchableOpacity>
       </View>
 
-      {/* Calendar Title */}
+      {/* Calendar Title and Selected Date */}
       <Text style={styles.calendarTitle}>Events Calendar</Text>
+      <Text style={styles.selectedDate}>{formatDisplayDate(selectedDate)}</Text>
 
       {/* Calendar */}
       <Calendar
@@ -117,36 +166,45 @@ const CalendarPage = () => {
               <TouchableOpacity
                 style={styles.eventItem}
                 onPress={() =>
-                  navigation.navigate("Homepage/EventDetails", {
+                  navigation.navigate("EventDetails", {
                     eventId: item.event_id,
                   })
                 }
               >
                 <Text style={styles.eventTitle}>{item.event_name}</Text>
-                <View style={styles.eventTimeContainer}>
-                  <MaterialCommunityIcons
-                    name="timer"
-                    size={16}
-                    color="#0095FF"
-                  />
-                  <Text style={styles.eventTime}>{`${formatTime(
-                    item.start_time
-                  )} - ${formatTime(item.end_time)}`}</Text>
-                  <MaterialCommunityIcons
-                    name="map-marker-outline"
-                    size={16}
-                    color="#0095FF"
-                  />
-                  <Text style={styles.eventLocation}>{item.location}</Text>
+                <View style={styles.eventDetailsContainer}>
+                  <View style={styles.eventDetail}>
+                    <MaterialCommunityIcons
+                      name="calendar"
+                      size={16}
+                      color="#0095FF"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.eventText}>
+                      {formatEventDate(item.date)}
+                    </Text>
+                  </View>
+                  <View style={styles.eventDetail}>
+                    <MaterialCommunityIcons
+                      name="map-marker-outline"
+                      size={16}
+                      color="#0095FF"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.eventText}>{item.location}</Text>
+                  </View>
+                  <View style={styles.eventDetail}>
+                    <MaterialCommunityIcons
+                      name="account-group-outline"
+                      size={16}
+                      color="#0095FF"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.eventText}>
+                      {item.participants} Participants
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.eventParticipants}>
-                  <MaterialCommunityIcons
-                    name="account-multiple"
-                    size={16}
-                    color="#555"
-                  />
-                  {` Participants: ${item.participants}`}
-                </Text>
               </TouchableOpacity>
             )}
           />
@@ -157,7 +215,7 @@ const CalendarPage = () => {
 
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={() => navigation.navigate("Homepage/CreateEvent")}
+        onPress={() => navigation.navigate("AddNewEvent")}
       >
         <MaterialCommunityIcons name="plus" size={24} color="#fff" />
       </TouchableOpacity>
@@ -201,29 +259,27 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
   },
-  eventTimeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
+  eventDetailsContainer: {
+    marginTop: 8,
   },
-  eventTime: {
-    fontSize: 14,
-    color: "#555",
-    marginRight: 5,
+  eventDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
-  eventLocation: {
+  icon: {
+    marginRight: 8,
+  },
+  eventText: {
     fontSize: 14,
-    color: "#555",
+    color: '#555',
+    flex: 1,
   },
   eventTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 5,
-  },
-  eventParticipants: {
-    fontSize: 14,
-    color: "#555",
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
   },
   floatingButton: {
     position: "absolute",
@@ -247,6 +303,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginVertical: 20,
+    color: "#333",
+  },
+  selectedDate: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
     color: "#333",
   },
 });

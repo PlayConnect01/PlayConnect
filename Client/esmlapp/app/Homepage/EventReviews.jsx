@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { BASE_URL } from '../../Api';
 import CustomAlert from '../../Alerts/CustomAlert';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
   const [reviews, setReviews] = useState([]);
@@ -16,6 +17,8 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
 
   useEffect(() => {
     fetchReviews();
@@ -103,31 +106,48 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
   };
 
   const handleDeleteReview = async (reviewId) => {
+    setReviewToDelete(reviewId);
     setAlertTitle('Delete Review');
     setAlertMessage('Are you sure you want to delete this review?');
+    setConfirmDelete(true);
     setAlertVisible(true);
-    const deleteReview = async () => {
-      try {
-        await axios.delete(`${BASE_URL}/review/events/${eventId}/reviews/${reviewId}`);
-        fetchReviews();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!reviewToDelete) return;
+
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await axios.delete(`${BASE_URL}/review/reviews/${reviewToDelete}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 200) {
+        await fetchReviews();
         setAlertTitle('Success');
         setAlertMessage('Review deleted successfully');
-        setAlertVisible(true);
-      } catch (error) {
-        setAlertTitle('Error');
-        setAlertMessage('Failed to delete review');
-        setAlertVisible(true);
       }
-    };
-    const handleAlertPress = (buttonIndex) => {
-      if (buttonIndex === 1) {
-        deleteReview();
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      setAlertTitle('Error');
+      if (error.response?.status === 404) {
+        setAlertMessage('Review not found or you are not authorized to delete it.');
+      } else if (error.response?.data?.message) {
+        setAlertMessage(error.response.data.message);
+      } else {
+        setAlertMessage('Failed to delete review. Please try again later.');
       }
-    };
-    const alertButtons = [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: handleAlertPress },
-    ];
+    } finally {
+      setConfirmDelete(false);
+      setReviewToDelete(null);
+      setAlertVisible(true);
+    }
+  };
+
+  const handleCloseAlert = () => {
+    setAlertVisible(false);
   };
 
   const renderStars = (rating) => (
@@ -159,7 +179,29 @@ const EventReviews = ({ eventId, navigation, userJoined, userId }) => {
         visible={alertVisible}
         title={alertTitle}
         message={alertMessage}
-        onClose={() => setAlertVisible(false)}
+        onClose={handleCloseAlert}
+        buttons={confirmDelete ? [
+          { 
+            text: 'Cancel', 
+            onPress: () => {
+              setConfirmDelete(false);
+              setReviewToDelete(null);
+              setAlertVisible(false);
+            },
+            style: {
+              color: '#666666',
+              backgroundColor: '#f0f0f0'
+            }
+          },
+          { 
+            text: 'Delete', 
+            onPress: handleConfirmDelete,
+            style: {
+              color: '#ffffff',
+              backgroundColor: '#FF3B30'
+            }
+          }
+        ] : [{ text: 'OK', onPress: handleCloseAlert }]}
       />
       <View style={styles.header}>
         <Text style={styles.title}>Reviews ({totalReviews})</Text>

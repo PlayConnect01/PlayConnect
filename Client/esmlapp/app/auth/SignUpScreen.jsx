@@ -100,24 +100,25 @@ const SignUpScreen = () => {
         email,
         password,
       });
+
+      // Store first-time user state
+      await AsyncStorage.setItem('isFirstTimeUser', 'true');
+
       setAlertTitle('Success');
-      setAlertMessage('Sign up successful! Please login.');
+      setAlertMessage('Account created successfully! Please login.');
       setAlertVisible(true);
       setTimeout(() => {
         navigation.navigate('Login');
       }, 2000);
     } catch (error) {
-      console.log('Signup error:', error.response?.data);
+      console.log('Signup error:', error?.response?.data || error.message);
       
-      if (error.response?.data?.error === 'Email already exists') {
-        setAlertTitle('Email Error');
-        setAlertMessage('This email is already registered. Please use a different email or login.');
-      } else if (error.response?.data?.error === 'Username already exists') {
-        setAlertTitle('Username Error');
-        setAlertMessage('This username is already taken. Please choose a different username.');
+      if (error.response?.data?.error) {
+        setAlertTitle('Error');
+        setAlertMessage(error.response.data.error);
       } else {
         setAlertTitle('Error');
-        setAlertMessage('Something went wrong. Please try again later.');
+        setAlertMessage('Something went wrong during signup. Please try again.');
       }
       setAlertVisible(true);
     } finally {
