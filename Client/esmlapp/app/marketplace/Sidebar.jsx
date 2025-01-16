@@ -10,7 +10,6 @@ const categories = [
   { name: 'Rowing', icon: 'rowing', screen: 'RowingProducts' },
   { name: 'Skating', icon: 'skateboarding', screen: 'SkatingProducts' },
   { name: 'E-Sports', icon: 'sports-esports', screen: 'ESportsProducts' },
-  { name: 'Trophies', icon: 'emoji-events', screen: 'TrophiesProducts' },
   { name: 'Walking', icon: 'directions-walk', screen: 'WalkingProducts' },
   { name: 'Football', icon: 'sports-football', screen: 'FootballProducts' },
   { name: 'Basketball', icon: 'sports-basketball', screen: 'BasketballProducts' },

@@ -328,7 +328,7 @@ const Users = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>User</th>
+              <th>     User</th>
               <th>Email</th>
               <th>Status</th>
               <th>Actions</th>

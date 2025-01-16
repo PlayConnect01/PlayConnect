@@ -328,12 +328,14 @@ model MarketplaceProduct {
   updated_at   DateTime @updatedAt
   sport_id     Int     
   rating       Int      @default(5)
+  review_count Int      @default(0)
 
   sport        Sport    @relation(fields: [sport_id], references: [sport_id])
   cart_items   CartItem[]
   favorites    Favorite[]
   order_items  OrderItem[]
   userProducts UserProduct[]
+  reviews      Review[]
 
   @@index([sport_id])
 }
@@ -518,16 +520,20 @@ model OrderItem {
 
 model Review {
   review_id    Int      @id @default(autoincrement())
-  event_id     Int
+  event_id     Int?     
+  product_id   Int?     
   user_id      Int
   rating       Int      // 1-5 stars
   comment      String?
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  event        Event    @relation(fields: [event_id], references: [event_id])
+  event        Event?    @relation(fields: [event_id], references: [event_id])
   user         User     @relation(fields: [user_id], references: [user_id])
+  product      MarketplaceProduct? @relation(fields: [product_id], references: [product_id])
 
   @@index([event_id])
   @@index([user_id])
+  @@index([product_id])
+  @@unique([user_id, product_id]) // One review per product per user (when it's a product review)
 }

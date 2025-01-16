@@ -55,14 +55,17 @@ th {
     align-items: center;
     gap: 12px;
     padding: 4px 0;
-    justify-content: center;
+    justify-content: flex-start;
+    text-align: left;
+    padding-left: 100px;
 }
 
 .user-avatar {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .action-buttons {
@@ -433,4 +436,50 @@ td:last-child {
 /* Make input placeholder text smaller */
 .swal2-input::placeholder {
   font-size: 0.85rem !important;
+}
+
+/* Add specific alignment for the user column */
+th:nth-child(2), 
+td:nth-child(2) {
+  text-align: center;
+  padding-right: 20px;
+}
+
+/* Keep table cell alignment */
+th, td {
+  padding: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Avatar styling */
+.user-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Keep column header centered */
+th:nth-child(2) {
+  text-align: center;
+}
+
+/* Adjust user cell alignment */
+td:nth-child(2) {
+  text-align: left;
+  padding-right: 20px;
+}
+
+/* Center the User column header above the content */
+th:nth-child(2) {
+  text-align: left;
+  padding-left: 100px; /* Match the padding of user-info */
+}
+
+td:nth-child(2) {
+  text-align: left;
 }

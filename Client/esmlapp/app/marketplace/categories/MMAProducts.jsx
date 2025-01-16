@@ -25,7 +25,7 @@ import { BlurView } from 'expo-blur';
 import Toast from 'react-native-toast-message';
 import { Easing } from 'react-native';
 
-const SPORT_ID = 2; // Cricket ID
+const SPORT_ID = 12; // Cricket ID
 
 const  MMAProducts= () => {
   const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
