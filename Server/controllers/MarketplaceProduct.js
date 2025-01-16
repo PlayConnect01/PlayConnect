@@ -414,7 +414,6 @@ const getAllProductsAdmin = async (req, res) => {
             user: true
           }
         },
-        reviews: true
       },
       orderBy: {
         created_at: 'desc'

@@ -67,7 +67,50 @@ const getReports = async (req, res) => {
   }
 };
 
+const updateReportStatus = async (req, res) => {
+  const { reportId } = req.params;
+  const { status, adminId } = req.body;
+
+  try {
+    // Use a transaction to handle both report update and notification
+    const [updatedReport, notification] = await prisma.$transaction([
+      // Update report status
+      prisma.report.update({
+        where: { report_id: parseInt(reportId) },
+        data: {
+          status: status.toUpperCase(),
+          handled_by: parseInt(adminId),
+          handled_at: new Date(),
+        },
+        include: {
+          reported_user: true,
+          reporter: true,
+        }
+      }),
+
+      // Create notification for the reporter
+      prisma.notification.create({
+        data: {
+          user_id: parseInt(req.body.reporterId),
+          title: `Report ${status === 'RESOLVED' ? 'Resolved' : 'Dismissed'}`,
+          content: status === 'RESOLVED' 
+            ? "We've reviewed your report and taken appropriate action. Thank you for helping keep our community safe."
+            : "We've reviewed your report and found no violation of our community guidelines.",
+          type: "GENERAL",
+          is_read: false,
+        }
+      })
+    ]);
+
+    res.json(updatedReport);
+  } catch (error) {
+    console.error('Error updating report:', error);
+    res.status(500).json({ error: 'Failed to update report status' });
+  }
+};
+
 module.exports = {
   createReport,
-  getReports
+  getReports,
+  updateReportStatus,
 };
