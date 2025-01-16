@@ -1,451 +1,68 @@
 .users-container {
-    padding: 2rem;
+  padding: 2rem;
+  height: calc(100vh - 80px); /* Adjust based on your header height */
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.users-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.users-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.users-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.users-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* For Firefox */
+.users-container {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
 }
 
 .users-header {
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
 }
 
 .filters {
-    margin-top: 1rem;
-    display: flex;
-    gap: 1rem;
-}
-
-.filters label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-}
-
-.filters input[type="checkbox"] {
-    cursor: pointer;
-}
-
-.users-table {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 0.75rem;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-    white-space: nowrap;
-    vertical-align: middle;
-}
-
-th {
-    background-color: #f8f9fa;
-    color: #666;
-    font-weight: 600;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    padding: 4px 0;
-    justify-content: flex-start;
-    text-align: left;
-    padding-left: 100px;
-}
-
-.user-avatar {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.action-buttons {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    margin-top: -12px;
-}
-
-.action-buttons button {
-    padding: 0.5rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    background: none;
-    transition: background-color 0.2s;
-}
-
-.action-buttons button:hover {
-    background-color: #f0f0f0;
-}
-
-.loading {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
-}
-
-.error {
-    text-align: center;
-    padding: 2rem;
-    color: #dc3545;
-}
-
-.banning-btn{
-    font-size: x-large;
-}
-
-.ban-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px;
+  margin-top: 1rem;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: #dc3545;
-}
-
-.ban-btn:hover {
-  opacity: 0.8;
-  transform: scale(1.1);
-}
-
-.ban-btn.banned {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.banned-user {
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-.status {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.status.active {
-  background-color: #28a745;
-  color: white;
-}
-
-.status.banned {
-  background-color: #dc3545;
-  color: white;
-}
-
-.ban-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 3rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  width: 800px;
-  max-width: 95vw;
-  min-height: 400px;
-}
-
-.ban-modal h2 {
-  margin-bottom: 2rem;
-  color: #333;
-  font-size: 1.8rem;
-}
-
-.ban-form {
-  display: flex;
-  flex-direction: column;
   gap: 1rem;
 }
 
-.ban-form textarea {
-  width: 100%;
-  min-height: 200px;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: vertical;
-  font-family: inherit;
-  font-size: 1.1rem;
-}
-
-.ban-form-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.ban-form button {
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 1.1rem;
-}
-
-.ban-form button.cancel {
-  background: #e0e0e0;
-}
-
-.ban-form button.submit {
-  background: #dc3545;
-  color: white;
-}
-
-.ban-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-}
-
-.swal2-popup {
-  padding: 1.5rem !important;
-  min-width: 400px !important;
-  font-size: 1rem !important;
-}
-
-.large-popup {
-  font-size: 1rem !important;
-  width: 400px !important;
-}
-
-.small-popup {
-  font-size: 0.9rem !important;
-  width: 320px !important;
-}
-
-.small-title {
-  font-size: 1.4rem !important;
-  padding: 1rem 1rem 0.5rem 1rem !important;
-  color: #545454 !important;
-}
-
-.small-content {
-  font-size: 0.9rem !important;
-  margin: 0.5rem 0 !important;
-  padding: 0 1rem !important;
-}
-
-.small-button {
-  font-size: 0.95rem !important;
-  padding: 0.6rem 0 !important;
-  width: 100% !important;
-  margin: 0.3rem 0 !important;
-}
-
-.swal2-icon {
-  margin: 0.4rem auto !important;
-  transform: scale(0.6) !important;
-  width: 5em !important;
-  height: 5em !important;
-  margin-bottom: 0.5rem !important;
-}
-
-.swal2-icon-content {
-  font-size: 2.75em !important;
-}
-
-.swal2-actions {
-  margin: 1.5rem auto 0.5rem auto !important;
-}
-
-/* Update SweetAlert button colors */
-.swal2-confirm.swal2-styled {
-  background-color: #dc3545 !important;
-  width: calc(100% - 2rem) !important;
-  margin: 0.3rem 1rem !important;
-}
-
-.swal2-cancel.swal2-styled {
-  background-color: #3085d6 !important;
-  width: calc(100% - 2rem) !important;
-  margin: 0.3rem 1rem !important;
-}
-
-/* Make sure hover states are consistent */
-.swal2-confirm.swal2-styled:hover {
-  background-color: #c82333 !important;
-}
-
-.swal2-cancel.swal2-styled:hover {
-  background-color: #2b77c0 !important;
-}
-
-/* Remove the old conflicting styles */
-.swal2-select {
-  width: 100% !important;
-  padding: 8px 12px !important;
-  font-size: 1rem !important;
-  margin: 0.8rem 0 !important;
-  border-radius: 4px !important;
-  border: 1px solid #ddd !important;
-  height: 40px !important;
-}
-
-.unban-btn {
-  font-size: 1.5rem !important;
-  padding: 8px;
-  color: #28a745;
-  opacity: 1 !important;
-  cursor: pointer !important;
-}
-
-.unban-btn:hover {
-  transform: scale(1.2);
-  text-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
-}
-
-.action-btn {
-  padding: 6px;
-  margin: 0 4px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background: transparent;
-  transition: background-color 0.2s;
-}
-
-.action-btn svg {
-  font-size: 20px;
-  vertical-align: middle;
-}
-
-.action-btn.info {
-  color: #1976d2;
-}
-
-.action-btn.block {
-  color: #ff9800;
-}
-
-.action-btn.ban {
-  color: #f44336;
-}
-
-.action-btn.delete {
-  color: #d32f2f;
-}
-
-.action-btn:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-.unban-btn, .ban-btn, .delete-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px;
+.filters label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  transition: all 0.2s ease;
-  color: #dc3545;
-}
-
-.unban-btn {
-  color: #28a745;
-}
-
-.ban-btn {
-  color: #dc3545;
-}
-
-.delete-btn {
-  color: #dc3545;
-}
-
-.unban-btn:hover, .ban-btn:hover, .delete-btn:hover {
-  opacity: 0.8;
-  transform: scale(1.1);
+  gap: 0.5rem;
   cursor: pointer;
 }
 
-th:last-child, 
-td:last-child {
-  width: 80px;
-  padding: 0.5rem;
+.filters input[type="checkbox"] {
+  cursor: pointer;
 }
 
-.highlighted-user {
-  animation: highlight 2s ease-in-out;
-  background-color: rgba(33, 150, 243, 0.1);
+.users-table {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
-@keyframes highlight {
-  0% {
-    background-color: rgba(33, 150, 243, 0.3);
-    transform: scale(1);
-  }
-  50% {
-    background-color: rgba(33, 150, 243, 0.1);
-    transform: scale(1.02);
-  }
-  100% {
-    background-color: rgba(33, 150, 243, 0.1);
-    transform: scale(1);
-  }
+table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-/* Custom styles for ban alert inputs */
-.swal2-select, .swal2-input {
-  width: 100% !important;
-  padding: 8px 12px !important;
-  font-size: 1rem !important;
-  margin: 0.8rem 0 !important;
-  border-radius: 4px !important;
-  border: 1px solid #ddd !important;
-  height: 40px !important;
-}
-
-/* Style for the custom reason input */
-#customReason {
-  height: 40px !important;
-  font-size: 1rem !important;
-  padding: 8px 12px !important;
-  margin-top: 10px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-/* Make input placeholder text smaller */
-.swal2-input::placeholder {
-  font-size: 0.85rem !important;
-}
-
-/* Add specific alignment for the user column */
-th:nth-child(2), 
-td:nth-child(2) {
-  text-align: center;
-  padding-right: 20px;
-}
-
-/* Keep table cell alignment */
 th, td {
   padding: 0.75rem;
   text-align: center;
@@ -454,7 +71,23 @@ th, td {
   vertical-align: middle;
 }
 
-/* Avatar styling */
+th {
+  background-color: #f8f9fa;
+  color: #666;
+  font-weight: 600;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+  justify-content: flex-start;
+  text-align: left;
+  padding-left: 100px;
+}
+
 .user-avatar {
   width: 35px;
   height: 35px;
@@ -463,23 +96,419 @@ th, td {
   flex-shrink: 0;
 }
 
+.action-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-top: -12px;
+}
+
+.action-buttons button {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+  transition: background-color 0.2s;
+}
+
+.action-buttons button:hover {
+  background-color: #f0f0f0;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: #dc3545;
+}
+
+.banning-btn{
+  font-size: x-large;
+}
+
+.ban-btn {
+background: none;
+border: none;
+cursor: pointer;
+padding: 2px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 16px;
+color: #dc3545;
+}
+
+.ban-btn:hover {
+opacity: 0.8;
+transform: scale(1.1);
+}
+
+.ban-btn.banned {
+cursor: not-allowed;
+opacity: 0.5;
+}
+
+.banned-user {
+background-color: rgba(220, 53, 69, 0.1);
+}
+
+.status {
+padding: 4px 8px;
+border-radius: 4px;
+font-size: 0.9rem;
+font-weight: 500;
+}
+
+.status.active {
+background-color: #28a745;
+color: white;
+}
+
+.status.banned {
+background-color: #dc3545;
+color: white;
+}
+
+.ban-modal {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background: white;
+padding: 3rem;
+border-radius: 8px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+z-index: 1000;
+width: 800px;
+max-width: 95vw;
+min-height: 400px;
+}
+
+.ban-modal h2 {
+margin-bottom: 2rem;
+color: #333;
+font-size: 1.8rem;
+}
+
+.ban-form {
+display: flex;
+flex-direction: column;
+gap: 1rem;
+}
+
+.ban-form textarea {
+width: 100%;
+min-height: 200px;
+padding: 1rem;
+border: 1px solid #ddd;
+border-radius: 4px;
+resize: vertical;
+font-family: inherit;
+font-size: 1.1rem;
+}
+
+.ban-form-buttons {
+display: flex;
+justify-content: flex-end;
+gap: 1.5rem;
+margin-top: 2rem;
+}
+
+.ban-form button {
+padding: 1rem 2rem;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+font-weight: 500;
+font-size: 1.1rem;
+}
+
+.ban-form button.cancel {
+background: #e0e0e0;
+}
+
+.ban-form button.submit {
+background: #dc3545;
+color: white;
+}
+
+.ban-overlay {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.5);
+z-index: 999;
+}
+
+.swal2-popup {
+padding: 1.5rem !important;
+min-width: 400px !important;
+font-size: 1rem !important;
+}
+
+.large-popup {
+font-size: 1rem !important;
+width: 400px !important;
+}
+
+.small-popup {
+font-size: 0.9rem !important;
+width: 320px !important;
+}
+
+.small-title {
+font-size: 1.4rem !important;
+padding: 1rem 1rem 0.5rem 1rem !important;
+color: #545454 !important;
+}
+
+.small-content {
+font-size: 0.9rem !important;
+margin: 0.5rem 0 !important;
+padding: 0 1rem !important;
+}
+
+.small-button {
+font-size: 0.95rem !important;
+padding: 0.6rem 0 !important;
+width: 100% !important;
+margin: 0.3rem 0 !important;
+}
+
+.swal2-icon {
+margin: 0.4rem auto !important;
+transform: scale(0.6) !important;
+width: 5em !important;
+height: 5em !important;
+margin-bottom: 0.5rem !important;
+}
+
+.swal2-icon-content {
+font-size: 2.75em !important;
+}
+
+.swal2-actions {
+margin: 1.5rem auto 0.5rem auto !important;
+}
+
+/* Update SweetAlert button colors */
+.swal2-confirm.swal2-styled {
+background-color: #dc3545 !important;
+width: calc(100% - 2rem) !important;
+margin: 0.3rem 1rem !important;
+}
+
+.swal2-cancel.swal2-styled {
+background-color: #3085d6 !important;
+width: calc(100% - 2rem) !important;
+margin: 0.3rem 1rem !important;
+}
+
+/* Make sure hover states are consistent */
+.swal2-confirm.swal2-styled:hover {
+background-color: #c82333 !important;
+}
+
+.swal2-cancel.swal2-styled:hover {
+background-color: #2b77c0 !important;
+}
+
+/* Remove the old conflicting styles */
+.swal2-select {
+width: 100% !important;
+padding: 8px 12px !important;
+font-size: 1rem !important;
+margin: 0.8rem 0 !important;
+border-radius: 4px !important;
+border: 1px solid #ddd !important;
+height: 40px !important;
+}
+
+.unban-btn {
+font-size: 1.5rem !important;
+padding: 8px;
+color: #28a745;
+opacity: 1 !important;
+cursor: pointer !important;
+}
+
+.unban-btn:hover {
+transform: scale(1.2);
+text-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+}
+
+.action-btn {
+padding: 6px;
+margin: 0 4px;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+background: transparent;
+transition: background-color 0.2s;
+}
+
+.action-btn svg {
+font-size: 20px;
+vertical-align: middle;
+}
+
+.action-btn.info {
+color: #1976d2;
+}
+
+.action-btn.block {
+color: #ff9800;
+}
+
+.action-btn.ban {
+color: #f44336;
+}
+
+.action-btn.delete {
+color: #d32f2f;
+}
+
+.action-btn:hover {
+background-color: rgba(0, 0, 0, 0.04);
+}
+
+.unban-btn, .ban-btn, .delete-btn {
+background: none;
+border: none;
+cursor: pointer;
+padding: 2px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 20px;
+transition: all 0.2s ease;
+color: #dc3545;
+}
+
+.unban-btn {
+color: #28a745;
+}
+
+.ban-btn {
+color: #dc3545;
+}
+
+.delete-btn {
+color: #dc3545;
+}
+
+.unban-btn:hover, .ban-btn:hover, .delete-btn:hover {
+opacity: 0.8;
+transform: scale(1.1);
+cursor: pointer;
+}
+
+th:last-child, 
+td:last-child {
+width: 80px;
+padding: 0.5rem;
+}
+
+.highlighted-user {
+animation: highlight 2s ease-in-out;
+background-color: rgba(33, 150, 243, 0.1);
+}
+
+@keyframes highlight {
+0% {
+  background-color: rgba(33, 150, 243, 0.3);
+  transform: scale(1);
+}
+50% {
+  background-color: rgba(33, 150, 243, 0.1);
+  transform: scale(1.02);
+}
+100% {
+  background-color: rgba(33, 150, 243, 0.1);
+  transform: scale(1);
+}
+}
+
+/* Custom styles for ban alert inputs */
+.swal2-select, .swal2-input {
+width: 100% !important;
+padding: 8px 12px !important;
+font-size: 1rem !important;
+margin: 0.8rem 0 !important;
+border-radius: 4px !important;
+border: 1px solid #ddd !important;
+height: 40px !important;
+}
+
+/* Style for the custom reason input */
+#customReason {
+height: 40px !important;
+font-size: 1rem !important;
+padding: 8px 12px !important;
+margin-top: 10px !important;
+width: 100% !important;
+box-sizing: border-box !important;
+}
+
+/* Make input placeholder text smaller */
+.swal2-input::placeholder {
+font-size: 0.85rem !important;
+}
+
+/* Add specific alignment for the user column */
+th:nth-child(2), 
+td:nth-child(2) {
+text-align: center;
+padding-right: 20px;
+}
+
+/* Keep table cell alignment */
+th, td {
+padding: 0.75rem;
+text-align: center;
+border-bottom: 1px solid #eee;
+white-space: nowrap;
+vertical-align: middle;
+}
+
+/* Avatar styling */
+.user-avatar {
+width: 35px;
+height: 35px;
+border-radius: 50%;
+object-fit: cover;
+flex-shrink: 0;
+}
+
 /* Keep column header centered */
 th:nth-child(2) {
-  text-align: center;
+text-align: center;
 }
 
 /* Adjust user cell alignment */
 td:nth-child(2) {
-  text-align: left;
-  padding-right: 20px;
+text-align: left;
+padding-right: 20px;
 }
 
 /* Center the User column header above the content */
 th:nth-child(2) {
-  text-align: left;
-  padding-left: 100px; /* Match the padding of user-info */
+text-align: left;
+padding-left: 100px; /* Match the padding of user-info */
 }
 
 td:nth-child(2) {
-  text-align: left;
+text-align: left;
 }
+

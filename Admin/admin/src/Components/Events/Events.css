@@ -1,12 +1,22 @@
+body {
+  overflow: hidden;
+}
+
 .events-container {
   padding: 2rem;
+  height: calc(100vh - 70px);
+  overflow-y: auto;
+  margin-left: 250px;
+  margin-top: 70px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 
 .events-header {
   margin-bottom: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .back-button {
@@ -28,7 +38,7 @@
 .events-header h1 {
   color: #333;
   font-size: 1.8rem;
-  margin: 0;
+  margin-bottom: 1rem;
 }
 
 .events-grid {
@@ -151,7 +161,7 @@
 }
 
 .filters {
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
 }
 
 .status-filter {

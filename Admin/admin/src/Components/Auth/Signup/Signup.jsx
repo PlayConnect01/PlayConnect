@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Signup.css';
 import Swal from 'sweetalert2';
+import { MdEmail, MdLock, MdPerson, MdVpnKey } from 'react-icons/md';
 
 const sweetAlertConfig = {
   width: '250px',
@@ -83,54 +84,73 @@ const Signup = () => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
+            <div className="input-with-icon">
+              <MdPerson className="input-icon" />
+              <input
+                type="text"
+                name="username"
+                placeholder="Enter Username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <div className="input-with-icon">
+              <MdEmail className="input-icon" />
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter Email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="input-with-icon">
+              <MdLock className="input-icon" />
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
           <div className="form-group">
             <label>Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
+            <div className="input-with-icon">
+              <MdLock className="input-icon" />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
           <div className="form-group">
             <label>Admin Registration Code</label>
-            <input
-              type="password"
-              name="adminCode"
-              value={formData.adminCode}
-              onChange={handleChange}
-              required
-              placeholder="Enter special admin code"
-            />
+            <div className="input-with-icon">
+              <MdVpnKey className="input-icon" />
+              <input
+                type="password"
+                name="adminCode"
+                placeholder="Enter special admin code"
+                value={formData.adminCode}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
           <button type="submit">Register</button>
         </form>

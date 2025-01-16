@@ -232,3 +232,34 @@
   .player-card:nth-child(3) .player-rank {
     color: #cd7f32;
   }
+  
+  /* Add these to your existing styles */
+  
+  .tournament-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .tournament-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .tournament-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    color: #1976d2;
+  }
+  
+  .tournament-sport,
+  .tournament-points {
+    margin: 1rem 0;
+  }
