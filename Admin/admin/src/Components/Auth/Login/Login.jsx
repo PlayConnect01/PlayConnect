@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
+import { MdEmail, MdLock } from 'react-icons/md';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -30,32 +31,45 @@ const Login = () => {
   return (
     <div className="admin-login-container">
       <div className="admin-login-card">
-        <h2>Admin Login</h2>
+        <h2>User Login</h2>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleLogin}>
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <div className="input-with-icon">
+              <MdEmail className="input-icon" />
+              <input
+                type="email"
+                placeholder="Enter email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="input-with-icon">
+              <MdLock className="input-icon" />
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
-          <button type="submit">Login</button>
+          <div className="remember-forgot">
+            <label>
+              <input type="checkbox" /> Remember me
+            </label>
+          </div>
+          <button type="submit">LOGIN</button>
+          <div className="signup-link">
+            Don't have an account? <span onClick={() => navigate('/admin/signup')}>Sign up</span>
+          </div>
         </form>
-        <p className="signup-link">
-          Don't have an account? <span onClick={() => navigate('/admin/signup')}>Sign up</span>
-        </p>
       </div>
     </div>
   );

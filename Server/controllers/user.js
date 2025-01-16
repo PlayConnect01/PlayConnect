@@ -315,7 +315,7 @@ const getAllUsers = async (req, res) => {
       includeBanned = 'true', 
       includeBlocked = 'true',
       page = 1,
-      limit = 10
+      limit = 1000
     } = req.query;
 
     // Convert string parameters to boolean

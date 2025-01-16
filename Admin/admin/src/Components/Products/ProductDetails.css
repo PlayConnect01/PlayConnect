@@ -302,3 +302,6 @@
 .swal2-actions {
   margin: 0.4rem auto !important;
 }
+
+/* Add this to prevent any unwanted animations */
+

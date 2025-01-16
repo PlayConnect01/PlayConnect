@@ -151,36 +151,44 @@ const Dashboard = () => {
         <div className="competition-section">
           <h2>Competition of The Day</h2>
           <div className="competition-content">
-            {todayTournaments.length > 0 ? (
-              <div className="tournament-grid">
-                {todayTournaments.map((tournament) => (
-                  <div key={tournament.tournament_id} className="tournament-card">
-                    <div className="tournament-time-label">{tournament.timeLabel}</div>
-                    <div className="tournament-info">
-                      <h3>{tournament.tournament_name}</h3>
-                      <p>
-                        <MdSportsSoccer className="tournament-icon" />
-                        {tournament.sport?.name}
-                      </p>
-                      <p>
-                        <MdAccessTime className="tournament-icon" />
-                        {new Date(tournament.start_date).toLocaleTimeString()}
-                      </p>
-                      <p>
-                        <MdPerson className="tournament-icon" />
-                        Created by: {tournament.creator?.username}
-                      </p>
-                      <p>
-                        <MdEmojiEvents className="tournament-icon" />
-                        Points: {tournament.point_reward}
-                      </p>
-                    </div>
+            <div className="tournament-grid">
+              <div className="tournament-card">
+
+                
+                <div className="tournament-time-label">
+                  Janury 18, 2025
+                </div>
+
+                <div className="tournament-info">
+                  <h3>Football Championship 2024</h3>
+                  
+                  <div className="tournament-sport">
+                    <MdSportsSoccer className="tournament-icon" />
+                    Football
                   </div>
-                ))}
+                  
+                  <p>
+                    <MdAccessTime className="tournament-icon" />
+                    2:00 PM
+                  </p>
+                  
+                  <p>
+                    <MdLocationOn className="tournament-icon" />
+                    Olympic Stadium, Tunisia
+                  </p>
+                  
+                  <p>
+                    <MdPerson className="tournament-icon" />
+                    Created by: SportsMate Admin
+                  </p>
+                  
+                  <div className="tournament-points">
+                    <MdEmojiEvents className="tournament-icon" />
+                    500 Points
+                  </div>
+                </div>
               </div>
-            ) : (
-              <p>No tournaments scheduled for today</p>
-            )}
+            </div>
           </div>
         </div>
         

@@ -243,45 +243,64 @@ const Users = () => {
     setBanFilter(event.target.value);
   };
 
-  const handleDeleteUser = async (userId, username) => {
+  const handleDelete = async (userId) => {
     try {
+      // Confirmation Alert
       const result = await Swal.fire({
         title: 'Delete User',
-        html: `
-          <div style="min-width: 300px;">
-            <p>Are You Sure You Want To Delete ${username}?</p>
-          </div>
-        `,
+        text: 'Are you sure you want to delete this user?',
         icon: 'warning',
-        width: 'auto',
-        grow: false,
         showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, delete permanently',
-        cancelButtonText: 'Cancel'
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it',
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content',
+          confirmButton: 'large-button',
+          cancelButton: 'large-button',
+          actions: 'large-actions'
+        }
       });
 
       if (result.isConfirmed) {
-        const response = await axios.delete(`http://localhost:3000/users/delete/${userId}`);
+        await axios.delete(`http://localhost:3000/users/delete/${userId}`);;
+        setUsers(users.filter(user => user.user_id !== userId));
         
-        if (response.status === 200) {
-          setUsers(users.filter(user => user.user_id !== userId));
-          
-          await Swal.fire(
-            'Deleted!',
-            `${username} has been permanently deleted.`,
-            'success'
-          );
-        }
+        // Success Alert - Auto close without OK button
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'User has been deleted.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          width: '400px',
+          customClass: {
+            popup: 'large-popup',
+            title: 'large-title',
+            content: 'large-content'
+          }
+        });
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      await Swal.fire(
-        'Error',
-        'Failed to delete user. Please try again.',
-        'error'
-      );
+      
+      // Error Alert - Auto close without OK button
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to delete user',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+        width: '400px',
+        customClass: {
+          popup: 'large-popup',
+          title: 'large-title',
+          content: 'large-content'
+        }
+      });
     }
   };
 
@@ -382,7 +401,7 @@ const Users = () => {
                         title="Ban user"
                       />
                       <MdGavel 
-                        onClick={() => handleDeleteUser(user.user_id, user.username)}
+                        onClick={() => handleDelete(user.user_id)}
                         className="delete-btn"
                         title="Delete user permanently"
                       />
