@@ -127,7 +127,7 @@ console.log("User Dataaaaaaa", userResponse.data.points);
       const today = new Date().toISOString().split("T")[0];
       if (date >= today) {
         // Mark only upcoming events
-        acc[date] = { marked: true, dotColor: "#007BFF" };
+        acc[date] = { marked: true, dotColor: "#0095FF" };
       }
       return acc;
     },
@@ -163,7 +163,7 @@ console.log("User Dataaaaaaa", userResponse.data.points);
   if (loading) {
     return (
       <View style={styles.fullPage}>
-        <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
+        <ActivityIndicator size="large" color="#0095FF" style={styles.loader} />
         <Navbar />
       </View>
     );
@@ -256,7 +256,7 @@ console.log("User Dataaaaaaa", userResponse.data.points);
                 onPress={() => navigation.navigate('LeaderboardScreen')}
               >
                 <View style={styles.iconCircle}>
-                  <MaterialIcons name="leaderboard" size={24} color="#007BFF" />
+                  <MaterialIcons name="leaderboard" size={24} color="#0095FF" />
                 </View>
                 <View style={styles.statTextContainer}>
                 {  console.log("Rank", rank)} 
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#0095FF",
   },
   tabText: {
     fontSize: 14,
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#2d4150",
+    color: "#0095FF",
   },
   statLabel: {
     fontSize: 12,
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
-    backgroundColor: "#007BFF",
+    backgroundColor: "#0095FF",
     borderRadius: 4,
   },
   pointsIndicator: {

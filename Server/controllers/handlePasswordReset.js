@@ -42,7 +42,7 @@ const sendCode = async (req, res) => {
     recoveryCodes[email] = code;
 
     const mailOptions = {
-      from: "ahmedboukottaya@zohomail.com",
+      from: "sportsmate@zohomail.com",
       to: email,
       subject: "Password Recovery Code",
       html: `

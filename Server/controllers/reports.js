@@ -2,21 +2,41 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const createReport = async (req, res) => {
-  const { userId, reason, reportedBy } = req.body;
+  const { reported_user_id, reported_by, reason } = req.body;
 
   try {
+    // Validate input
+    if (!reported_user_id || !reported_by || !reason) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if users exist
+    const [reportedUser, reporter] = await Promise.all([
+      prisma.user.findUnique({ where: { user_id: parseInt(reported_user_id) } }),
+      prisma.user.findUnique({ where: { user_id: parseInt(reported_by) } })
+    ]);
+
+    if (!reportedUser || !reporter) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Create report
     const report = await prisma.report.create({
       data: {
-        reported_user_id: userId,
-        reported_by: reportedBy, 
+        reported_user_id: parseInt(reported_user_id),
+        reported_by: parseInt(reported_by),
         reason,
-        status: 'PENDING', 
+        status: 'PENDING'
       },
     });
+
     res.status(201).json({ message: 'Report created successfully', report });
   } catch (error) {
-    console.error('Error creating report:', error);
-    res.status(500).json({ error: 'Failed to create report' });
+    console.error('Detailed error creating report:', error);
+    res.status(500).json({ 
+      error: 'Failed to create report',
+      details: error.message 
+    });
   }
 };
 

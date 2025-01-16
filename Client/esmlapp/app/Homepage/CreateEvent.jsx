@@ -13,6 +13,7 @@ import { Buffer } from 'buffer';
 import { BASE_URL } from '../../Api.js';
 import LottieView from 'lottie-react-native';
 import CustomAlert from '../../Alerts/CustomAlert';
+import { Slider } from 'react-native-elements';
 
 const decodeToken = (token) => {
   try {
@@ -37,7 +38,7 @@ const AddNewEvent = () => {
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("Sports");
   const [participants, setParticipants] = useState("10");
-  const [price, setPrice] = useState("0");
+  const [price, setPrice] = useState(1);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
@@ -175,6 +176,14 @@ const AddNewEvent = () => {
       return;
     }
 
+    // Validate end time is not before start time
+    if (endTime < startTime) {
+      setAlertTitle('Invalid Time');
+      setAlertMessage('End time cannot be earlier than start time.');
+      setAlertVisible(true);
+      return;
+    }
+
     setIsProcessing(true); // Show processing modal
     setIsLoading(true); // Start loading animation
 
@@ -251,7 +260,7 @@ const AddNewEvent = () => {
       setLocation('');
       setCategory('Sports');
       setParticipants('10');
-      setPrice('0');
+      setPrice(1);
       setImage(null);
 
     } catch (error) {
@@ -434,19 +443,25 @@ const AddNewEvent = () => {
                 </View>
               </View>
               <View style={styles.inputSection}>
-                <Text style={styles.sectionTitle}>Price</Text>
-                <View style={styles.inputGroup}>
-                  <View style={styles.inlineInput}>
-                    <Icon name="wallet-outline" size={24} color="#8D8D8D" style={styles.inputIcon} />
-                    <Text style={styles.label}>Price:</Text>
-                    <TextInput
-                      style={[styles.numberInput, styles.smallInput]}
-                      keyboardType="numeric"
-                      value={price}
-                      onChangeText={setPrice}
-                    />
-                  </View>
-                  <Text style={styles.feeNote}>Please note: The app will take a 10% fee from each participant.</Text>
+                <Text style={styles.sectionTitle}>Price (TND)</Text>
+                <View style={styles.priceContainer}>
+                  <Slider
+                    style={styles.slider}
+                    value={price}
+                    onValueChange={(value) => setPrice(value)}
+                    minimumValue={1}
+                    maximumValue={200}
+                    step={1}
+                    thumbStyle={{ 
+                      backgroundColor: '#0095FF',
+                      width: 16,
+                      height: 16
+                    }}
+                    trackStyle={{ height: 4 }}
+                    minimumTrackTintColor="#0095FF"
+                    maximumTrackTintColor="#E8E8E8"
+                  />
+                  <Text style={styles.priceText}>{Math.round(price)} TND</Text>
                 </View>
               </View>
               <View style={styles.inputSection}>
@@ -703,6 +718,21 @@ const styles = StyleSheet.create({
   },
   participantsInput: {
     paddingRight: 30, // Add padding to make space for the arrows
+  },
+  priceContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  priceText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginTop: 8,
   },
   processingContainer: {
     flex: 1,

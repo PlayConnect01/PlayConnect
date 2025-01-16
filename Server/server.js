@@ -33,6 +33,7 @@ const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const userproductRoutes = require('./routes/userproduct');
 const sportsProductRoutes = require('./routes/sportsProduct');
 const categoryProductRoutes = require('./routes/categoryRoutes');
+const userSportRoutes = require('./routes/userSport');
 const uploadRoutes = require('./routes/uploadRoutes');
 const marketplaceReviewRoutes = require('./routes/marketplaceReviews');
 const app = express();
@@ -108,10 +109,12 @@ app.use('/userproduct', userproductRoutes);
 app.use('/sportsproduct', sportsProductRoutes);
 app.use('/api/sports', sportsProductRoutes);
 app.use('/category', categoryProductRoutes);
+app.use('/api/user-sport', userSportRoutes);
+
 app.use('/upload', uploadRoutes);
 app.use('/marketplacereview', marketplaceReviewRoutes);
 // Start the Server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-}); 
+});

@@ -24,6 +24,22 @@ const decodeToken = (token) => {
   }
 };
 
+const iconMap = {
+  american_soccer_american_soccer_football_rugby_icon_209383: require('../Homepage/Icons/american_soccer_american_soccer_football_rugby_icon_209383.png'),
+  controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387: require('../Homepage/Icons/controller_gamepad_game_controller_joystick_console_gaming_console_video_game_egames_esports_icon_209387.png'),
+  court_sports_ball_basketball_icon_209379: require('../Homepage/Icons/court_sports_ball_basketball_icon_209379.png'),
+  equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384: require('../Homepage/Icons/equipment_weight_dumbbell_training_workout_exercise_fitness_gym_gymming_icon_209384.png'),
+  game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374: require('../Homepage/Icons/game_sports_feather_tennis_racquet_badminton_shuttle_cock_icon_209374.png'),
+  grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370: require('../Homepage/Icons/grandmaster_indoor_game_queen_king_piece_strategy_chess_icon_209370.png'),
+  olympic_sport_swim_water_pool_swimming_icon_209368: require('../Homepage/Icons/olympic_sport_swim_water_pool_swimming_icon_209368.png'),
+  play_ball_sports_sport_baseball_icon_209376: require('../Homepage/Icons/play_ball_sports_sport_baseball_icon_209376.png'),
+  player_gaming_sports_play_game_sport_table_tennis_icon_209385: require('../Homepage/Icons/player_gaming_sports_play_game_sport_table_tennis_icon_209385.png'),
+  schedule_alarm_watch_time_timer_stopwatch_icon_209377: require('../Homepage/Icons/schedule_alarm_watch_time_timer_stopwatch_icon_209377.png'),
+  sports_fitness_sport_gloves_boxing_icon_209382: require('../Homepage/Icons/sports_fitness_sport_gloves_boxing_icon_209382.png'),
+  sports_game_sport_ball_soccer_football_icon_209369: require('../Homepage/Icons/sports_game_sport_ball_soccer_football_icon_209369.png'),
+  tennis_ball_play_sport_game_ball_tennis_icon_209375: require('../Homepage/Icons/tennis_ball_play_sport_game_ball_tennis_icon_209375.png'),
+};
+
 const EditProfile = () => {
   const navigation = useNavigation();
   const [userData, setUserData] = useState(null);
@@ -43,23 +59,62 @@ const EditProfile = () => {
     phone_country_code: "+1",
   });
 
+  const [sports, setSports] = useState([]);
+  const [userSports, setUserSports] = useState([]);
+
+  const handleSportToggle = async (sportId) => {
+    try {      
+      const userId = userData?.user_id;
+      if (!userId) {
+        console.log('No userId found in userData:')
+        return;
+      }
+      
+      const isSportSelected = userSports.some(us => us.sport.sport_id === sportId);
+
+      if (isSportSelected) {
+        // Find the user_sport_id for deletion
+        const userSport = userSports.find(us => us.sport.sport_id === sportId);
+        if (!userSport) return;
+
+        await axios.delete(`${BASE_URL}/api/user-sport/${userId}/${sportId}`);
+        setUserSports(current => current.filter(us => us.sport.sport_id !== sportId));
+      } else {
+        const response = await axios.post(`${BASE_URL}/api/user-sport/add`, {
+          userId: parseInt(userId),
+          sportId: parseInt(sportId)
+        }); 
+        const newUserSport = response.data;
+        setUserSports(current => [...current, newUserSport]);
+      }
+    } catch (error) {
+      console.error('Error toggling sport:', error);
+    }
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
         const token = await AsyncStorage.getItem("userToken");
         if (!token) {
+          console.log('No token found');
           navigation.navigate('login'); 
           return;
         }
 
         const decodedToken = decodeToken(token);
+
         if (!decodedToken) {
+          console.log('Invalid token');
           throw new Error('Invalid token');
         }
 
         const userId = decodedToken.id || decodedToken.user_id || decodedToken.userId;
+        console.log('User ID from token:', userId);
+        
         if (!userId) {
+          console.log('No user ID in token');
           throw new Error('User ID not found in token');
         }
 
@@ -68,26 +123,7 @@ const EditProfile = () => {
         
         setUserData(user);
         
-        
-        // Only update form data if we have user data
         if (user) {
-          setFormData(prev => ({
-            ...prev,
-            username: user.username || "",
-            email: user.email || "",
-            profile_picture: user.profile_picture || "",
-            phone_number: user.phone_number || "",
-            phone_country_code: user.phone_country_code || "+1",
-            location: user.location || "",
-            // If birthdate exists, parse it
-            ...(user.birthdate && {
-              birthdate_day: new Date(user.birthdate).getDate().toString().padStart(2, '0'),
-              birthdate_month: (new Date(user.birthdate).getMonth() + 1).toString().padStart(2, '0'),
-              birthdate_year: new Date(user.birthdate).getFullYear().toString()
-            })
-          }));
-        }
-         if (user) {
           setFormData(prev => ({
             ...prev,
             username: user.username || "",
@@ -116,6 +152,37 @@ const EditProfile = () => {
     fetchUserData();
   }, [navigation]);
 
+
+  useEffect(() => {
+    const fetchSports = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/api/user-sport/sports`);
+        setSports(response.data);
+      } catch (error) {
+        console.error('Error fetching sports:', error);
+      }
+    };
+
+    fetchSports();
+  }, []);
+
+  useEffect(() => {
+    const fetchUserSports = async () => {
+      try {
+        if (!userData?.user_id) return;
+        
+        const response = await axios.get(`${BASE_URL}/api/user-sport/${userData.user_id}`);
+        setUserSports(response.data);
+      } catch (error) {
+        console.error('Error fetching user sports:', error);
+      }
+    };
+
+    if (userData?.user_id) {
+      fetchUserSports();
+    }
+  }, [userData?.user_id]);
+
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
@@ -123,6 +190,8 @@ const EditProfile = () => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [showSportsModal, setShowSportsModal] = useState(false);
 
   // Generate date options
   const days = Array.from({ length: 31 }, (_, i) =>
@@ -237,7 +306,6 @@ const EditProfile = () => {
         const formattedDay = formData.birthdate_day.padStart(2, '0');
         birthdateToSend = `${formData.birthdate_year}-${formattedMonth}-${formattedDay}`;
       }
-
       const requestData = {
         username: formData.username.trim(),
         email: formData.email.trim(),
@@ -266,7 +334,7 @@ const EditProfile = () => {
         setAlertMessage('Profile updated successfully!');
         setAlertVisible(true);
         setTimeout(() => {
-          navigation.navigate('profile/ProfilePage');
+          navigation.navigate('Profile');
         }, 2000);
       } else {
         throw new Error(response.data.error || 'Failed to update profile');
@@ -489,7 +557,7 @@ const EditProfile = () => {
             <View style={styles.pickerContainer}>
               <FlatList
                 data={days}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => `day-${item}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => handleSelectDay(item)}
@@ -514,7 +582,7 @@ const EditProfile = () => {
             <View style={styles.pickerContainer}>
               <FlatList
                 data={months}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => `month-${item}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => handleSelectMonth(item)}
@@ -539,7 +607,7 @@ const EditProfile = () => {
             <View style={styles.pickerContainer}>
               <FlatList
                 data={years}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => `year-${item}`}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => handleSelectYear(item)}
@@ -549,6 +617,61 @@ const EditProfile = () => {
                   </TouchableOpacity>
                 )}
               />
+            </View>
+          </View>
+        </Modal>
+
+        <TouchableOpacity
+          style={styles.interestsButton}
+          onPress={() => setShowSportsModal(true)}
+        >
+          <Text style={styles.interestsButtonText}>Edit Interests</Text>
+        </TouchableOpacity>
+
+        {/* Sports Modal */}
+        <Modal
+          transparent
+          animationType="slide"
+          visible={showSportsModal}
+          onRequestClose={() => setShowSportsModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.sportsModalContainer}>
+              <View style={styles.sportsModalHeader}>
+                <Text style={styles.sportsModalTitle}>Select Your Interests</Text>
+                <TouchableOpacity onPress={() => setShowSportsModal(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.sportsModalContent}>
+                <View style={styles.sportsContainer}>
+                  {sports.map((sport) => (
+                    <TouchableOpacity
+                      key={`sport-${sport.sport_id}`}
+                      style={[
+                        styles.sportItem,
+                        userSports.some(us => us.sport.sport_id === sport.sport_id) && styles.sportItemSelected
+                      ]}
+                      onPress={() => handleSportToggle(sport.sport_id)}
+                    >
+                      <View style={styles.sportContent}>
+                        <Text style={[
+                          styles.sportText,
+                          userSports.some(us => us.sport.sport_id === sport.sport_id) && styles.sportTextSelected
+                        ]}>
+                          {sport.name}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+              <TouchableOpacity 
+                style={styles.doneButton}
+                onPress={() => setShowSportsModal(false)}
+              >
+                <Text style={styles.doneButtonText}>Done</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
@@ -734,7 +857,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingBottom: 80, // Add padding to ensure button is not covered by navbar
+    paddingBottom: 80, 
     backgroundColor: '#fff',
   },
   loadingContainer: {
@@ -742,7 +865,102 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff'
-  }
+  },
+  sportsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    gap: 10,
+  },
+  sportItem: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 25,
+    padding: 16,
+    marginBottom: 12,
+    marginHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    width: '45%',
+  },
+  sportItemSelected: {
+    backgroundColor: '#0095FF',
+    borderColor: '#0095FF',
+  },
+  sportContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sportText: {
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '500',
+    color: '#666',
+  },
+  sportTextSelected: {
+    color: 'white',
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 10,
+  },
+  interestsButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  interestsButtonText: {
+    fontSize: 16,
+    color: '#0066FF',
+    fontWeight: '500',
+  },
+  sportsModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '80%',
+    marginTop: 'auto',
+  },
+  sportsModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  sportsModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0066FF',
+  },
+  sportsModalContent: {
+    padding: 16,
+  },
+  doneButton: {
+    backgroundColor: '#0095FF',
+    padding: 16,
+    margin: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default EditProfile;
