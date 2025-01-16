@@ -46,7 +46,10 @@ const LeaderboardScreen = () => {
       <View style={styles.topThreeContainer}>
         {/* Second Place */}
         {topThree[1] && (
-          <View style={[styles.topThreeItem, styles.secondPlace]}>
+          <TouchableOpacity 
+            style={[styles.topThreeItem, styles.secondPlace]}
+            onPress={() => navigation.navigate('UserProfile', { userId: topThree[1].id })}
+          >
             <MaterialIcons name="star" size={24} color="#C0C0C0" />
             <Image
               source={{uri: topThree[1].profile_picture }}
@@ -56,15 +59,18 @@ const LeaderboardScreen = () => {
               {topThree[1].username || 'User'}
             </Text>
             <Text style={styles.topThreePoints}>
-              <Text>{topThree[1].points || 0}</Text>
-              <Text> pts</Text>
+              <Text style={styles.pointsNumber}>{topThree[1].points || 0}</Text>
+              <Text style={styles.pointsText}> pts</Text>
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* First Place */}
         {topThree[0] && (
-          <View style={[styles.topThreeItem, styles.firstPlace]}>
+          <TouchableOpacity 
+            style={[styles.topThreeItem, styles.firstPlace]}
+            onPress={() => navigation.navigate('UserProfile', { userId: topThree[0].id })}
+          >
             <MaterialIcons name="star" size={32} color="#FFD700" />
             <Image
               source={{ uri: topThree[0].profile_picture }}
@@ -74,15 +80,18 @@ const LeaderboardScreen = () => {
               {topThree[0].username || 'User'}
             </Text>
             <Text style={[styles.topThreePoints, styles.firstPlacePoints]}>
-              <Text>{topThree[0].points || 0}</Text>
-              <Text> pts</Text>
+              <Text style={styles.pointsNumber}>{topThree[0].points || 0}</Text>
+              <Text style={styles.pointsText}> pts</Text>
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Third Place */}
         {topThree[2] && (
-          <View style={[styles.topThreeItem, styles.thirdPlace]}>
+          <TouchableOpacity 
+            style={[styles.topThreeItem, styles.thirdPlace]}
+            onPress={() => navigation.navigate('UserProfile', { userId: topThree[2].id })}
+          >
             <MaterialIcons name="star" size={24} color="#CD7F32" />
             <Image
               source={{ uri: topThree[2].profile_picture }}
@@ -92,10 +101,10 @@ const LeaderboardScreen = () => {
               {topThree[2].username || 'User'}
             </Text>
             <Text style={styles.topThreePoints}>
-              <Text>{topThree[2].points || 0}</Text>
-              <Text> pts</Text>
+              <Text style={styles.pointsNumber}>{topThree[2].points || 0}</Text>
+              <Text style={styles.pointsText}> pts</Text>
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -119,10 +128,10 @@ const LeaderboardScreen = () => {
         <View style={styles.userInfo}>
           <Text style={styles.username}>{item.username || 'User'}</Text>
           <Text style={styles.stats}>
-            <Text>{item.points || 0}</Text>
-            <Text> Points • </Text>
-            <Text>{item.events_created || 0}</Text>
-            <Text> Events</Text>
+            <Text style={styles.pointsNumber}>{item.points || 0}</Text>
+            <Text style={styles.statsText}> Points • </Text>
+            <Text style={styles.pointsNumber}>{item.events_created || 0}</Text>
+            <Text style={styles.statsText}> Events</Text>
           </Text>
         </View>
       </TouchableOpacity>
@@ -233,6 +242,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  pointsNumber: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  pointsText: {
+    fontSize: 12,
+    color: '#666',
+  },
   listContainer: {
     padding: 16,
   },
@@ -270,6 +287,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  statsText: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 

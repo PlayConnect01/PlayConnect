@@ -6,6 +6,9 @@ import { BASE_URL } from "../../Api";
 import Modal from 'react-native-modal';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialIcons } from '@expo/vector-icons'; 
+import CustomAlert from '../../Alerts/CustomAlert';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const UserProfilePage = () => {
   const route = useRoute();
@@ -17,6 +20,9 @@ const UserProfilePage = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedReason, setSelectedReason] = useState('');
   const [customReason, setCustomReason] = useState('');
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const banReasons = [
     "Inappropriate behavior",
     "Spam",
@@ -69,14 +75,43 @@ const UserProfilePage = () => {
     setModalVisible(!isModalVisible);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (selectedReason === 'Other' && !customReason.trim()) {
-      alert('Please enter a custom reason');
+      setAlertTitle('Error');
+      setAlertMessage('Please enter a custom reason');
+      setAlertVisible(true);
       return;
     }
+
     const reason = selectedReason === 'Other' ? customReason.trim() : selectedReason;
-    console.log('Selected reason:', reason);
-    toggleModal();
+    
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const decodedToken = JSON.parse(atob(token.split('.')[1]));
+      const reportedBy = parseInt(decodedToken.userId); 
+
+      const response = await axios.post(`${BASE_URL}/reports`, {
+        reported_user_id: parseInt(userId),
+        reported_by: reportedBy,
+        reason: reason
+      });
+
+      if (response.status === 201) {
+        setAlertTitle('Report Submitted');
+        setAlertMessage('Your report has been submitted and will be reviewed by our administrators.');
+        setAlertVisible(true);
+        toggleModal();
+      }
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      setAlertTitle('Error');
+      setAlertMessage(
+        error.response?.data?.error || 
+        error.response?.data?.details || 
+        'Failed to submit report. Please try again.'
+      );
+      setAlertVisible(true);
+    }
   };
 
   if (loading) {
@@ -207,6 +242,22 @@ const UserProfilePage = () => {
           )}
         </View>
       </ScrollView>
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+        buttons={[
+          {
+            text: 'OK',
+            onPress: () => setAlertVisible(false),
+            style: {
+              color: '#ffffff',
+              backgroundColor: '#0095FF'
+            }
+          }
+        ]}
+      />
       <Modal isVisible={isModalVisible}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Report User</Text>
@@ -216,21 +267,32 @@ const UserProfilePage = () => {
             style={styles.picker}
           >
             <Picker.Item label="Select a reason" value="" />
-            {banReasons.map((reason, index) => (
-              <Picker.Item key={index} label={reason} value={reason} />
+            {banReasons.map((reason) => (
+              <Picker.Item key={reason} label={reason} value={reason} />
             ))}
           </Picker>
           {selectedReason === 'Other' && (
             <TextInput
               style={styles.input}
-              placeholder="Enter custom reason..."
+              placeholder="Enter reason"
               value={customReason}
               onChangeText={setCustomReason}
+              multiline
             />
           )}
-          <View style={styles.buttonContainer}>
-            <Button title="Cancel" onPress={toggleModal} color="red" />
-            <Button title="Confirm" onPress={handleConfirm} />
+          <View style={styles.modalButtons}>
+            <TouchableOpacity 
+              style={[styles.modalButton, { backgroundColor: '#666666' }]}
+              onPress={toggleModal}
+            >
+              <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.modalButton, { backgroundColor: '#FF3B30' }]}
+              onPress={handleConfirm}
+            >
+              <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Report</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -363,10 +425,21 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 10,
   },
-  buttonContainer: {
+  modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
+  },
+  modalButton: {
+    width: '45%',
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   pastEventCard: {
     opacity: 0.7,

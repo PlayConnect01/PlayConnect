@@ -35,7 +35,7 @@ const sportsProductRoutes = require('./routes/sportsProduct');
 const categoryProductRoutes = require('./routes/categoryRoutes');
 const userSportRoutes = require('./routes/userSport');
 const uploadRoutes = require('./routes/uploadRoutes');
-
+const marketplaceReviewRoutes = require('./routes/marketplaceReviews');
 const app = express();
 
 // Middleware
@@ -112,7 +112,7 @@ app.use('/category', categoryProductRoutes);
 app.use('/api/user-sport', userSportRoutes);
 
 app.use('/upload', uploadRoutes);
-
+app.use('/marketplacereview', marketplaceReviewRoutes);
 // Start the Server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

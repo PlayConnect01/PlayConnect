@@ -31,13 +31,9 @@ const FavoritesScreen = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showMessage, setShowMessage] = useState("");
-  const [sortOption, setSortOption] = useState('date'); // 'date', 'price', 'name', 'rating'
-  const [filterQuery, setFilterQuery] = useState('');
-  const [showSortModal, setShowSortModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [showFilters, setShowFilters] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
 
   const fetchFavorites = useCallback(async () => {
@@ -184,45 +180,74 @@ const FavoritesScreen = () => {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/sports`);
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const sortFavorites = (items) => {
-    return [...items].sort((a, b) => {
-      switch (sortOption) {
-        case 'price':
-          return a.product.price - b.product.price;
-        case 'name':
-          return a.product.name.localeCompare(b.product.name);
-        case 'rating':
-          return (b.product.rating || 0) - (a.product.rating || 0);
-        case 'date':
-        default:
-          return new Date(b.created_at) - new Date(a.created_at);
-      }
+  const filterFavorites = (favorites) => {
+    return favorites.filter((favorite) => {
+      const matchesCategory = selectedCategory === 'All' || favorite.product.sport?.name === selectedCategory;
+      const matchesPrice = favorite.product.price >= priceRange[0] && favorite.product.price <= priceRange[1];
+      return matchesCategory && matchesPrice;
     });
   };
 
-  const filterFavorites = (items) => {
-    return items.filter(item => {
-      const matchesQuery = !filterQuery || 
-        item.product.name.toLowerCase().includes(filterQuery.toLowerCase());
-      const matchesCategory = selectedCategories.length === 0 || 
-        selectedCategories.includes(item.product.sport?.name);
-      const matchesPrice = item.product.price >= priceRange.min && 
-        item.product.price <= priceRange.max;
-      return matchesQuery && matchesCategory && matchesPrice;
-    });
+  const renderFilters = () => {
+    return (
+      <View style={styles.filtersContainer}>
+        <Text style={styles.filterTitle}>Filters</Text>
+        
+        {/* Category Filter */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterSectionTitle}>Category</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+            {['All', 'Baseball', 'Basketball', 'Football', 'Running', 'Tennis', 'Volleyball', 'Walking', 'Yoga'].map((category) => (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryChip,
+                  selectedCategory === category && styles.categoryChipSelected,
+                ]}
+                onPress={() => setSelectedCategory(category)}
+              >
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    selectedCategory === category && styles.categoryChipTextSelected,
+                  ]}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Price Range Filter */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterSectionTitle}>Price Range</Text>
+          <View style={styles.priceInputContainer}>
+            <TextInput
+              style={styles.priceInput}
+              keyboardType="numeric"
+              placeholder="Min"
+              value={priceRange[0].toString()}
+              onChangeText={(text) => {
+                const value = parseInt(text) || 0;
+                setPriceRange([value, priceRange[1]]);
+              }}
+            />
+            <Text style={styles.priceRangeSeparator}>-</Text>
+            <TextInput
+              style={styles.priceInput}
+              keyboardType="numeric"
+              placeholder="Max"
+              value={priceRange[1].toString()}
+              onChangeText={(text) => {
+                const value = parseInt(text) || 0;
+                setPriceRange([priceRange[0], value]);
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    );
   };
 
   const CustomToast = ({ message, type, onHide }) => {
@@ -382,16 +407,16 @@ const FavoritesScreen = () => {
 
   const renderSortModal = () => (
     <Modal
-      visible={showSortModal}
+      visible={false}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => setShowSortModal(false)}
+      onRequestClose={() => {}}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Sort By</Text>
-            <TouchableOpacity onPress={() => setShowSortModal(false)}>
+            <TouchableOpacity onPress={() => {}}>
               <MaterialIcons name="close" size={24} color="#666" />
             </TouchableOpacity>
           </View>
@@ -405,21 +430,18 @@ const FavoritesScreen = () => {
               key={`sort-${option.id}`}
               style={[
                 styles.sortOption,
-                sortOption === option.id && styles.sortOptionSelected
+                false && styles.sortOptionSelected
               ]}
-              onPress={() => {
-                setSortOption(option.id);
-                setShowSortModal(false);
-              }}
+              onPress={() => {}}
             >
               <MaterialIcons
                 name={option.icon}
                 size={24}
-                color={sortOption === option.id ? '#4FA5F5' : '#666'}
+                color={false ? '#4FA5F5' : '#666'}
               />
               <Text style={[
                 styles.sortOptionText,
-                sortOption === option.id && styles.sortOptionTextSelected
+                false && styles.sortOptionTextSelected
               ]}>
                 {option.label}
               </Text>
@@ -432,16 +454,16 @@ const FavoritesScreen = () => {
 
   const renderFilterModal = () => (
     <Modal
-      visible={showFilterModal}
+      visible={false}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => setShowFilterModal(false)}
+      onRequestClose={() => {}}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Filter</Text>
-            <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+            <TouchableOpacity onPress={() => {}}>
               <MaterialIcons name="close" size={24} color="#666" />
             </TouchableOpacity>
           </View>
@@ -449,29 +471,7 @@ const FavoritesScreen = () => {
           <Text style={styles.filterSectionTitle}>Categories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.categoryChips}>
-              {categories.map(category => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryChip,
-                    selectedCategories.includes(category.name) && styles.categoryChipSelected
-                  ]}
-                  onPress={() => {
-                    setSelectedCategories(prev =>
-                      prev.includes(category.name)
-                        ? prev.filter(c => c !== category.name)
-                        : [...prev, category.name]
-                    );
-                  }}
-                >
-                  <Text style={[
-                    styles.categoryChipText,
-                    selectedCategories.includes(category.name) && styles.categoryChipTextSelected
-                  ]}>
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {[]}
             </View>
           </ScrollView>
 
@@ -481,22 +481,28 @@ const FavoritesScreen = () => {
               style={styles.priceInput}
               placeholder="Min"
               keyboardType="numeric"
-              value={priceRange.min.toString()}
-              onChangeText={text => setPriceRange(prev => ({ ...prev, min: Number(text) || 0 }))}
+              value={priceRange[0].toString()}
+              onChangeText={(text) => {
+                const value = parseInt(text) || 0;
+                setPriceRange([value, priceRange[1]]);
+              }}
             />
             <Text style={styles.priceInputSeparator}>to</Text>
             <TextInput
               style={styles.priceInput}
               placeholder="Max"
               keyboardType="numeric"
-              value={priceRange.max.toString()}
-              onChangeText={text => setPriceRange(prev => ({ ...prev, max: Number(text) || 0 }))}
+              value={priceRange[1].toString()}
+              onChangeText={(text) => {
+                const value = parseInt(text) || 0;
+                setPriceRange([priceRange[0], value]);
+              }}
             />
           </View>
 
           <TouchableOpacity
             style={styles.applyFilterButton}
-            onPress={() => setShowFilterModal(false)}
+            onPress={() => {}}
           >
             <Text style={styles.applyFilterButtonText}>Apply Filters</Text>
           </TouchableOpacity>
@@ -537,18 +543,14 @@ const FavoritesScreen = () => {
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => setShowFilterModal(true)}
+              onPress={() => setShowFilters(!showFilters)}
             >
               <MaterialIcons name="filter-list" size={24} color="#4FA5F5" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => setShowSortModal(true)}
-            >
-              <MaterialIcons name="sort" size={24} color="#4FA5F5" />
-            </TouchableOpacity>
           </View>
         </View>
+        
+        {showFilters && renderFilters()}
         
         {loading ? (
           <ActivityIndicator size="large" color="#4FA5F5" />
@@ -575,8 +577,8 @@ const FavoritesScreen = () => {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
           >
-            <View style={styles.cardContainer}>
-              {sortFavorites(filterFavorites(favorites)).map((favorite) => (
+            <View style={styles.productGrid}>
+              {filterFavorites(favorites).map((favorite) => (
                 <TouchableOpacity
                   key={`product-${favorite.favorite_id}`}
                   onPress={() => navigateToProduct(favorite.product)}
@@ -736,26 +738,26 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     paddingHorizontal: 8,
   },
-  cardContainer: {
+  productGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 10,
+    gap: 20,
   },
   productCard: {
-    width: cardWidth,
+    width: Dimensions.get('window').width / 2 - 30,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: 12,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 3,
     overflow: 'hidden',
   },
   imageContainer: {
@@ -844,7 +846,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1A202C',
     marginBottom: 8,
-    lineHeight: 22,
+    height: 40, // Fixed height for 2 lines
+    lineHeight: 20,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -1048,7 +1051,6 @@ const styles = StyleSheet.create({
   priceInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
   },
   priceInput: {
     flex: 1,
@@ -1168,6 +1170,73 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     opacity: 0.95,
     lineHeight: 18,
+  },
+  filtersContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2D3748',
+    marginBottom: 16,
+  },
+  filterSection: {
+    marginBottom: 16,
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#4A5568',
+    marginBottom: 8,
+  },
+  categoryScroll: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F7FAFC',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  categoryChipSelected: {
+    backgroundColor: '#4FA5F5',
+    borderColor: '#4FA5F5',
+  },
+  categoryChipText: {
+    color: '#4A5568',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  categoryChipTextSelected: {
+    color: '#FFFFFF',
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  priceInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F7FAFC',
+  },
+  priceRangeSeparator: {
+    marginHorizontal: 8,
+    color: '#4A5568',
+    fontSize: 16,
+  },
+  filterButton: {
+    padding: 8,
   },
 });
 

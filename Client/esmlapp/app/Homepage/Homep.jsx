@@ -224,11 +224,18 @@ const App = () => {
             <View style={styles.headerIcons}>
               <TouchableOpacity
                 onPress={() => navigation.navigate("CalendarPage")}
+                style={styles.iconButton}
               >
                 <Ionicons name="calendar-outline" size={24} color="#555" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.notificationButton}
+                onPress={() => navigation.navigate("LeaderboardScreen")}
+                style={styles.iconButton}
+              >
+                <MaterialCommunityIcons name="trophy-outline" size={24} color="#555" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.notificationButton, styles.iconButton]}
                 onPress={handleNotificationPress}
               >
                 <Ionicons name="notifications-outline" size={24} color="#555" />
@@ -467,6 +474,14 @@ const styles = StyleSheet.create({
   },
   headerIcons: {
     flexDirection: "row",
+    alignItems: "center",
+  },
+  iconButton: {
+    marginLeft: 16,
+    padding: 4,
+  },
+  notificationButton: {
+    position: "relative",
   },
   searchBarContainer: {
     marginVertical: 20,
@@ -647,11 +662,6 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: 20,
-  },
-  notificationButton: {
-    position: "relative",
-    marginLeft: 15,
-    padding: 5,
   },
   badge: {
     position: "absolute",

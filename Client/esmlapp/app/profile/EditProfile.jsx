@@ -172,7 +172,6 @@ const EditProfile = () => {
         if (!userData?.user_id) return;
         
         const response = await axios.get(`${BASE_URL}/api/user-sport/${userData.user_id}`);
-        console.log('Fetched user sports:', response.data);
         setUserSports(response.data);
       } catch (error) {
         console.error('Error fetching user sports:', error);
@@ -656,10 +655,6 @@ const EditProfile = () => {
                       onPress={() => handleSportToggle(sport.sport_id)}
                     >
                       <View style={styles.sportContent}>
-                        <Image 
-                          source={iconMap[sport.icon]} 
-                          style={styles.sportIcon} 
-                        />
                         <Text style={[
                           styles.sportText,
                           userSports.some(us => us.sport.sport_id === sport.sport_id) && styles.sportTextSelected
@@ -881,11 +876,14 @@ const styles = StyleSheet.create({
   },
   sportItem: {
     backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    padding: 8,
-    marginBottom: 8,
-    marginHorizontal: 4,
-    width: '30%',
+    borderRadius: 25,
+    padding: 16,
+    marginBottom: 12,
+    marginHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    width: '45%',
   },
   sportItemSelected: {
     backgroundColor: '#0095FF',
@@ -895,15 +893,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sportIcon: {
-    width: 32,
-    height: 32,
-    marginBottom: 4,
-  },
   sportText: {
-    fontSize: 12,
+    fontSize: 16,
     textAlign: 'center',
-    color: '#333',
+    fontWeight: '500',
+    color: '#666',
   },
   sportTextSelected: {
     color: 'white',

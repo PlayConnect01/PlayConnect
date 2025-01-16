@@ -334,7 +334,6 @@ const initializePayment = async (amount, userId) => {
         }
       } else {
         await handleAddParticipant();
-        Alert.alert('Success', 'You have joined the event!');
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to join event. Please try again.');

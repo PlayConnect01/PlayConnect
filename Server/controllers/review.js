@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const { validateReview } = require('../controllers/reviewValidator');
+const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
@@ -140,18 +141,22 @@ const deleteReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
 
-    const existingReview = await prisma.review.findFirst({
+    const existingReview = await prisma.review.findUnique({
       where: {
-        review_id: parseInt(reviewId),
-        user_id: req.user.id,
-      },
+        review_id: parseInt(reviewId)
+      }
     });
 
     if (!existingReview) {
-      return res.status(404).json({ error: 'Review not found or unauthorized' });
+      return res.status(404).json({ error: 'Review not found' });
     }
 
-    await prisma.review.delete({ where: { review_id: parseInt(reviewId) } });
+    await prisma.review.delete({
+      where: {
+        review_id: parseInt(reviewId)
+      }
+    });
+
     res.json({ message: 'Review deleted successfully' });
   } catch (error) {
     console.error('Error deleting review:', error);
