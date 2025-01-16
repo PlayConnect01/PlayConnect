@@ -179,16 +179,18 @@ const FavoritesScreen = () => {
       setToast({ visible: true, message: 'Failed to add to cart', type: 'error' });
     }
   };
-
   const filterFavorites = (favorites) => {
     return favorites.filter((favorite) => {
-      const matchesCategory = selectedCategory === 'All' || favorite.product.sport?.name === selectedCategory;
-      const matchesPrice = favorite.product.price >= priceRange[0] && favorite.product.price <= priceRange[1];
+      const product = favorite.product;
+      const matchesCategory = selectedCategory === 'All' || 
+        (product.category && product.category.toLowerCase() === selectedCategory.toLowerCase());
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       return matchesCategory && matchesPrice;
     });
   };
 
   const renderFilters = () => {
+    const categories = ['All', 'Baseball', 'Basketball', 'Football', 'Running', 'Tennis', 'Volleyball', 'Walking', 'Yoga'];
     return (
       <View style={styles.filtersContainer}>
         <Text style={styles.filterTitle}>Filters</Text>
@@ -197,25 +199,25 @@ const FavoritesScreen = () => {
         <View style={styles.filterSection}>
           <Text style={styles.filterSectionTitle}>Category</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-            {['All', 'Baseball', 'Basketball', 'Football', 'Running', 'Tennis', 'Volleyball', 'Walking', 'Yoga'].map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={[
-                  styles.categoryChip,
-                  selectedCategory === category && styles.categoryChipSelected,
-                ]}
-                onPress={() => setSelectedCategory(category)}
-              >
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    selectedCategory === category && styles.categoryChipTextSelected,
-                  ]}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          {categories.map((category) => (
+  <TouchableOpacity
+    key={category}
+    style={[
+      styles.categoryChip,
+      selectedCategory === category && styles.categoryChipSelected
+    ]}
+    onPress={() => setSelectedCategory(category)}
+  >
+    <Text
+      style={[
+        styles.categoryChipText,
+        selectedCategory === category && styles.categoryChipTextSelected
+      ]}
+    >
+      {category}
+    </Text>
+  </TouchableOpacity>
+))}
           </ScrollView>
         </View>
 
